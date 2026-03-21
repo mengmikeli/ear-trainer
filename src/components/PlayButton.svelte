@@ -16,9 +16,9 @@
 
 	// Map semitones (0-12) to angle: 0=top (P1), clockwise
 	const ringAngle = $derived((semitones / 12) * 360);
-	// Offset the ring center in the direction of the angle
-	const ringOffsetX = $derived(Math.sin(ringAngle * Math.PI / 180) * 12);
-	const ringOffsetY = $derived(-Math.cos(ringAngle * Math.PI / 180) * 12);
+	// Shift transform-origin opposite to interval direction so scale biases toward it
+	const originX = $derived(75 - Math.sin(ringAngle * Math.PI / 180) * 15);
+	const originY = $derived(75 + Math.cos(ringAngle * Math.PI / 180) * 15);
 
 	let phase = $state(0);
 	let animFrame: number | null = null;
@@ -149,7 +149,7 @@
 <div class="play-wrapper">
 	{#if showRings}
 		<svg class="wave-rings" class:fading={ringsFading} viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg"
-			style="transform: translate({ringOffsetX}px, {ringOffsetY}px)">>
+			style="--ring-origin: {originX}px {originY}px">>>
 			<path d={ring1} class="ring ring-1" />
 			<path d={ring2} class="ring ring-2" />
 			<path d={ring3} class="ring ring-3" />
@@ -213,6 +213,7 @@
 		stroke: var(--accent);
 		stroke-width: 1.5;
 		opacity: 0;
+		transform-origin: var(--ring-origin, center);
 	}
 	.ring-1 {
 		animation: ring-propagate 3s linear infinite;
@@ -224,9 +225,9 @@
 		animation: ring-propagate 3s linear infinite 2s;
 	}
 	@keyframes ring-propagate {
-		0% { opacity: 0.5; transform-origin: center; transform: scale(1); }
-		80% { opacity: 0.3; transform-origin: center; transform: scale(1.8); }
-		100% { opacity: 0; transform-origin: center; transform: scale(2.2); }
+		0% { opacity: 0.5; transform: scale(1); }
+		80% { opacity: 0.3; transform: scale(1.8); }
+		100% { opacity: 0; transform: scale(2.2); }
 	}
 	.play-btn {
 		position: relative; z-index: 1;
