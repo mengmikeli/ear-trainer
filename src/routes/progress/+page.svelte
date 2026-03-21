@@ -68,7 +68,7 @@
 </div>
 
 <style>
-	.progress-page { display: flex; flex-direction: column; gap: 1.25rem; }
+	.progress-page { display: flex; flex-direction: column; gap: 1.5rem; }
 	.data-readout {
 		font-family: var(--mono); font-size: 0.55rem;
 		color: var(--accent); opacity: 0.3;
