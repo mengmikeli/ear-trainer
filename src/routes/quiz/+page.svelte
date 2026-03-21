@@ -50,7 +50,11 @@
 		questionNum++;
 
 		isGlitching = true;
-		setTimeout(() => { isGlitching = false; }, 100);
+		setTimeout(() => {
+			isGlitching = false;
+			// Auto-play the interval right after glitch settles
+			play();
+		}, 100);
 	}
 
 	function play() {
