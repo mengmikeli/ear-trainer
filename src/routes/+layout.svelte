@@ -4,12 +4,22 @@
 	import BottomNav from '../components/BottomNav.svelte';
 	import { initTheme } from '$lib/theme';
 	import { loadState } from '$lib/state';
+	import { warmUpAudio } from '$lib/audio';
 
 	let { children } = $props();
 
 	onMount(() => {
 		const state = loadState();
 		initTheme(state.settings.theme);
+
+		// Unlock iOS audio on first user interaction (touch or click)
+		const unlock = () => {
+			warmUpAudio();
+			document.removeEventListener('touchend', unlock);
+			document.removeEventListener('click', unlock);
+		};
+		document.addEventListener('touchend', unlock, { once: true });
+		document.addEventListener('click', unlock, { once: true });
 	});
 </script>
 

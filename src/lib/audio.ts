@@ -4,21 +4,34 @@ let ctx: AudioContext | null = null;
 
 /**
  * Ensure AudioContext exists and is running.
- * iOS Safari requires AudioContext creation AND resume() to happen
- * inside a direct user-gesture handler (touchend/click).
- * We also play a silent buffer on first init to fully unlock audio.
+ *
+ * iOS Safari quirks (all required for reliable playback):
+ * 1. Must use webkitAudioContext fallback on older iOS
+ * 2. AudioContext must be created AND resumed inside a user gesture
+ * 3. A silent buffer must be played to fully unlock the audio pipeline
+ * 4. navigator.audioSession.type = "playback" (iOS 17+) ensures sound
+ *    plays even when the device mute switch is on
  */
 function getContext(): AudioContext {
 	if (!ctx) {
-		ctx = new AudioContext();
-		// Play a silent buffer to unlock iOS audio pipeline
+		const AC = window.AudioContext || (window as any).webkitAudioContext;
+		ctx = new AC();
+
+		// iOS 17+: override audio session so sound plays even in silent mode
+		if ('audioSession' in navigator && 'type' in (navigator as any).audioSession) {
+			(navigator as any).audioSession.type = 'playback';
+		}
+
+		// Play a silent buffer to fully unlock iOS audio pipeline
 		const silent = ctx.createBuffer(1, 1, ctx.sampleRate);
 		const source = ctx.createBufferSource();
 		source.buffer = silent;
 		source.connect(ctx.destination);
 		source.start();
 	}
-	if (ctx.state === 'suspended') ctx.resume();
+	if (ctx.state === 'suspended' || (ctx.state as string) === 'interrupted') {
+		ctx.resume();
+	}
 	return ctx;
 }
 
@@ -143,6 +156,15 @@ function playPianoTone(freq: number, startTime: number, duration: number, audioC
 		osc.start(startTime);
 		osc.stop(startTime + padDuration);
 	});
+}
+
+/**
+ * Warm up the AudioContext on first user interaction.
+ * Call this once from a top-level touch/click handler to ensure
+ * iOS Safari has unlocked audio before the user reaches the quiz.
+ */
+export function warmUpAudio(): void {
+	getContext();
 }
 
 export function playInterval(
