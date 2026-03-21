@@ -172,7 +172,7 @@
 	.toggle-group { display: flex; gap: 0.5rem; }
 	.toggle-group button {
 		flex: 1; padding: 0.85rem;
-		background: var(--surface); border: 2px solid var(--border-heavy);
+		background: var(--surface); border: 1px solid var(--border-heavy);
 		border-radius: 0; font-size: 0.45rem;
 		font-weight: 400; letter-spacing: 0.08em;
 		color: var(--text-secondary);
@@ -188,7 +188,7 @@
 		position: relative;
 		overflow: hidden;
 		padding: 0.85rem; background: var(--surface);
-		border: 2px solid var(--hot); border-radius: 0;
+		border: 1px solid var(--hot); border-radius: 0;
 		color: var(--hot); font-size: 0.45rem;
 		font-weight: 400; letter-spacing: 0.08em;
 		font-family: var(--mono);
