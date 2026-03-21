@@ -82,7 +82,7 @@
 	}
 	.locked .id { color: var(--hot); font-size: 2rem; }
 	.name { font-weight: 400; font-size: 0.85rem; letter-spacing: 0.02em; font-family: var(--font-display); }
-	.stats { font-size: 0.4rem; color: var(--text-secondary); font-weight: 600; font-family: var(--mono); letter-spacing: 0.05em; display: flex; align-items: center; gap: 12px; }
+	.stats { font-size: 0.4rem; color: var(--text-secondary); font-weight: 600; font-family: var(--mono); letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px; }
 	.attempts { line-height: 1; }
 	.new { color: var(--accent); font-weight: 900; letter-spacing: 0.2em; }
 	.tier-tag {
