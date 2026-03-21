@@ -45,7 +45,7 @@
 				onpointerup={() => pressed = false}
 				onpointerleave={() => pressed = false}
 				onclick={handleToggle}>
-				{isOff ? '[OFF]' : '[ON]'}
+				{isOff ? 'OFF' : 'ON'}
 			</button>
 		{:else if istate.unlocked}
 			<div class="acc-value">{istate.attempts > 0 ? `${accuracy}%` : '—'}</div>
@@ -112,7 +112,7 @@
 		transition: all 0.15s;
 		display: inline-flex; align-items: center; justify-content: center;
 		line-height: 1;
-		min-width: 3.5rem;
+		width: 2.8rem;
 	}
 	.toggle-off {
 		border-color: var(--hot); background: #ED174F10;
