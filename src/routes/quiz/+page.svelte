@@ -119,7 +119,6 @@
 			setTimeout(() => { showFeedback = false; }, 1200);
 			setTimeout(() => nextQuestion(), 1500);
 		} else {
-			setTimeout(() => { showFeedback = false; }, 1200);
 			enterResultMode();
 		}
 	}
