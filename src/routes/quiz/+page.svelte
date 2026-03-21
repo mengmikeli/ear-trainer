@@ -265,14 +265,18 @@
 		font-size: 0.45rem; font-weight: 800;
 		font-family: var(--mono); color: var(--marathon-blue);
 		letter-spacing: 0.05em;
+		border: 1px solid var(--marathon-blue);
+		padding: 0 6px;
+		line-height: 1.6;
 	}
 	.close {
 		font-size: 0.6rem;
 		color: var(--marathon-blue);
-		padding: 0.25rem;
+		padding: 0.15rem 0.4rem;
 		font-weight: 900;
 		font-family: var(--mono);
 		letter-spacing: -0.05em;
+		border: 1px solid var(--marathon-blue);
 	}
 	.play-area {
 		display: flex;
