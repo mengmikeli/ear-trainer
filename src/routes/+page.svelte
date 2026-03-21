@@ -122,6 +122,8 @@
 		font-size: 0.5rem; color: #FFFFFF;
 		font-family: var(--mono); letter-spacing: 0.3em;
 		background: var(--marathon-blue); padding: 0.3rem 0.75rem;
+		display: inline-flex; align-items: center;
+		line-height: 1;
 	}
 
 	/* Center area: relative container for radar + button + coords */
