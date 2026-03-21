@@ -9,6 +9,7 @@ export interface IntervalState {
 	interval: string;
 	mode: 'choice' | 'free';
 	unlocked: boolean;
+	enabled: boolean;
 	attempts: number;
 	correct: number;
 	easeFactor: number;

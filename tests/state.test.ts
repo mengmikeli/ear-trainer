@@ -19,6 +19,7 @@ describe('createDefaultState', () => {
 		expect(state.intervals['P1'].unlocked).toBe(true);
 		expect(state.intervals['P5'].unlocked).toBe(true);
 		expect(state.intervals['P8'].unlocked).toBe(true);
+		expect(state.intervals['P1'].enabled).toBe(true);
 	});
 	it('tier 2+ intervals are locked by default', () => {
 		const state = createDefaultState();

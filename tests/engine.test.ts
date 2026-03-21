@@ -68,3 +68,18 @@ describe('generateQuestion', () => {
 		expect(q.choices.map(c => c.id)).toContain(q.interval.id);
 	});
 });
+
+describe('enabled filtering', () => {
+	it('pickInterval skips disabled intervals', () => {
+		const state = createDefaultState();
+		// Disable P1 and P5, leaving only P8
+		state.intervals['P1'].enabled = false;
+		state.intervals['P5'].enabled = false;
+		
+		// Pick 20 times — should always get P8
+		for (let i = 0; i < 20; i++) {
+			const picked = pickInterval(state);
+			expect(picked.id).toBe('P8');
+		}
+	});
+});

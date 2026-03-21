@@ -1,34 +1,50 @@
 <script lang="ts">
+	import { onMount, onDestroy } from 'svelte';
+
 	interface Props { onplay: () => void; replaying?: boolean; playing?: boolean; }
 	let { onplay, replaying = false, playing = false }: Props = $props();
+
+	let phase = $state(0);
+	let animFrame: number | null = null;
+
+	function generateWavyCircle(cx: number, cy: number, baseRadius: number, amplitude: number, frequency: number, phaseOffset: number): string {
+		const points: string[] = [];
+		const steps = 120;
+		for (let i = 0; i <= steps; i++) {
+			const angle = (i / steps) * Math.PI * 2;
+			const wave = Math.sin(angle * frequency + phaseOffset) * amplitude;
+			const r = baseRadius + wave;
+			const x = cx + Math.cos(angle) * r;
+			const y = cy + Math.sin(angle) * r;
+			points.push(`${i === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)}`);
+		}
+		return points.join(' ') + 'Z';
+	}
+
+	function animate() {
+		phase += 0.04;
+		animFrame = requestAnimationFrame(animate);
+	}
+
+	onMount(() => {
+		animFrame = requestAnimationFrame(animate);
+	});
+
+	onDestroy(() => {
+		if (animFrame !== null) cancelAnimationFrame(animFrame);
+	});
+
+	const ring1 = $derived(generateWavyCircle(150, 150, 85, 4, 8, phase));
+	const ring2 = $derived(generateWavyCircle(150, 150, 105, 5, 6, phase * 0.8 + 1));
+	const ring3 = $derived(generateWavyCircle(150, 150, 125, 6, 10, phase * 1.2 + 2));
 </script>
 
 <div class="play-wrapper">
 	{#if playing}
 		<svg class="wave-rings" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
-			<defs>
-				<filter id="wave-distort-1" x="-20%" y="-20%" width="140%" height="140%">
-					<feTurbulence type="turbulence" baseFrequency="0.015" numOctaves="3" seed="1">
-						<animate attributeName="baseFrequency" values="0.015;0.025;0.015" dur="1.2s" repeatCount="indefinite" />
-					</feTurbulence>
-					<feDisplacementMap in="SourceGraphic" scale="12" />
-				</filter>
-				<filter id="wave-distort-2" x="-20%" y="-20%" width="140%" height="140%">
-					<feTurbulence type="turbulence" baseFrequency="0.02" numOctaves="3" seed="42">
-						<animate attributeName="baseFrequency" values="0.02;0.03;0.02" dur="1.5s" repeatCount="indefinite" />
-					</feTurbulence>
-					<feDisplacementMap in="SourceGraphic" scale="15" />
-				</filter>
-				<filter id="wave-distort-3" x="-20%" y="-20%" width="140%" height="140%">
-					<feTurbulence type="turbulence" baseFrequency="0.018" numOctaves="4" seed="99">
-						<animate attributeName="baseFrequency" values="0.018;0.028;0.018" dur="1.8s" repeatCount="indefinite" />
-					</feTurbulence>
-					<feDisplacementMap in="SourceGraphic" scale="18" />
-				</filter>
-			</defs>
-			<circle cx="150" cy="150" r="85" class="ring ring-1" filter="url(#wave-distort-1)" />
-			<circle cx="150" cy="150" r="105" class="ring ring-2" filter="url(#wave-distort-2)" />
-			<circle cx="150" cy="150" r="125" class="ring ring-3" filter="url(#wave-distort-3)" />
+			<path d={ring1} class="ring ring-1" />
+			<path d={ring2} class="ring ring-2" />
+			<path d={ring3} class="ring ring-3" />
 		</svg>
 	{/if}
 	<button class="play-btn" class:replay={replaying} onclick={onplay}>
@@ -52,20 +68,20 @@
 		stroke-width: 1.5;
 	}
 	.ring-1 {
-		opacity: 0.7;
-		animation: ring-pulse 1.5s ease-out infinite;
+		opacity: 0.6;
+		animation: ring-pulse 1.8s ease-out infinite;
 	}
 	.ring-2 {
-		opacity: 0.5;
-		animation: ring-pulse 1.5s ease-out infinite 0.3s;
+		opacity: 0.4;
+		animation: ring-pulse 1.8s ease-out infinite 0.4s;
 	}
 	.ring-3 {
-		opacity: 0.3;
-		animation: ring-pulse 1.5s ease-out infinite 0.6s;
+		opacity: 0.25;
+		animation: ring-pulse 1.8s ease-out infinite 0.8s;
 	}
 	@keyframes ring-pulse {
-		0% { opacity: 0.7; transform-origin: center; transform: scale(0.85); }
-		100% { opacity: 0; transform-origin: center; transform: scale(1.15); }
+		0% { opacity: 0.6; transform-origin: center; transform: scale(0.9); }
+		100% { opacity: 0; transform-origin: center; transform: scale(1.1); }
 	}
 	.play-btn {
 		position: relative; z-index: 1;

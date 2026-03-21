@@ -1,14 +1,18 @@
 <script lang="ts">
 	import type { IntervalDef, IntervalState } from '$lib/types';
 
-	interface Props { def: IntervalDef; state: IntervalState; }
-	let { def, state }: Props = $props();
+	interface Props {
+		def: IntervalDef;
+		state: IntervalState;
+		ontoggle?: (id: string) => void;
+	}
+	let { def, state, ontoggle }: Props = $props();
 
 	const accuracy = $derived(state.attempts > 0 ? Math.round((state.correct / state.attempts) * 100) : 0);
 </script>
 
-<div class="card" class:locked={!state.unlocked}>
-	<div class="card-fill" style="width: {state.unlocked ? accuracy : 0}%"></div>
+<div class="card" class:locked={!state.unlocked} class:disabled={state.unlocked && !state.enabled}>
+	<div class="card-fill" style="width: {state.unlocked && state.enabled ? accuracy : 0}%"></div>
 	<div class="card-content">
 		<div class="id">{state.unlocked ? def.id : '⊘'}</div>
 		<div class="info">
@@ -19,7 +23,11 @@
 				<div class="stats">TIER {def.tier} // LOCKED</div>
 			{/if}
 		</div>
-		{#if state.unlocked}
+		{#if state.unlocked && ontoggle}
+			<button class="toggle" class:toggle-off={!state.enabled} onclick={() => ontoggle?.(def.id)}>
+				{state.enabled ? '[ON]' : '[OFF]'}
+			</button>
+		{:else if state.unlocked}
 			<div class="acc-value">{accuracy}%</div>
 		{/if}
 	</div>
@@ -44,6 +52,9 @@
 		align-items: center; gap: 0.75rem; padding: 0.85rem;
 	}
 	.locked { opacity: 0.4; border-left-color: var(--hot); }
+	.disabled { opacity: 0.35; border-left-color: var(--border-heavy); }
+	.disabled .id { color: var(--text-secondary); }
+	.disabled .name { color: var(--text-secondary); }
 	.id {
 		font-size: 1.2rem; font-weight: 900;
 		font-family: var(--mono); text-align: center;
@@ -56,5 +67,16 @@
 		font-size: 1.1rem; font-weight: 900;
 		font-family: var(--mono); color: var(--accent);
 		letter-spacing: -0.02em;
+	}
+	.toggle {
+		font-family: var(--mono); font-size: 0.7rem; font-weight: 900;
+		letter-spacing: 0.05em; padding: 0.3rem 0.5rem;
+		border: 1px solid var(--accent); background: var(--accent-dim);
+		color: var(--accent); cursor: pointer;
+		transition: all 0.15s;
+	}
+	.toggle-off {
+		border-color: var(--border-heavy); background: transparent;
+		color: var(--text-secondary);
 	}
 </style>

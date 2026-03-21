@@ -27,3 +27,7 @@ export function getIntervalById(id: string): IntervalDef | undefined {
 export function getUnlockedIntervals(states: Record<string, IntervalState>): IntervalDef[] {
 	return INTERVALS.filter((i) => states[i.id]?.unlocked);
 }
+
+export function getEnabledIntervals(states: Record<string, IntervalState>): IntervalDef[] {
+	return INTERVALS.filter((i) => states[i.id]?.unlocked && states[i.id]?.enabled);
+}

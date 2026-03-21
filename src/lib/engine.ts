@@ -1,8 +1,8 @@
 import type { UserState, Question, IntervalDef } from './types';
-import { INTERVALS, getUnlockedIntervals } from './intervals';
+import { INTERVALS, getUnlockedIntervals, getEnabledIntervals } from './intervals';
 
 export function pickInterval(state: UserState): IntervalDef {
-	const unlocked = getUnlockedIntervals(state.intervals);
+	const unlocked = getEnabledIntervals(state.intervals);
 	if (unlocked.length === 0) throw new Error('No unlocked intervals');
 
 	const now = Date.now();

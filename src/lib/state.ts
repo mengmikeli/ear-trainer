@@ -10,6 +10,7 @@ export function createDefaultState(): UserState {
 			interval: def.id,
 			mode: 'choice',
 			unlocked: def.tier === 1,
+			enabled: true,
 			attempts: 0,
 			correct: 0,
 			easeFactor: 2.5,
@@ -40,7 +41,14 @@ export function loadState(storage: Storage = localStorage): UserState {
 	try {
 		const raw = storage.getItem(STORAGE_KEY);
 		if (!raw) return createDefaultState();
-		return JSON.parse(raw) as UserState;
+		// Migrate: add enabled field if missing (backwards compat)
+		const parsed = JSON.parse(raw) as UserState;
+		for (const id of Object.keys(parsed.intervals)) {
+			if (parsed.intervals[id].enabled === undefined) {
+				parsed.intervals[id].enabled = true;
+			}
+		}
+		return parsed;
 	} catch {
 		return createDefaultState();
 	}

@@ -1,15 +1,38 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { loadState } from '$lib/state';
+	import { loadState, saveState } from '$lib/state';
 	import { INTERVALS } from '$lib/intervals';
 	import IntervalCard from '../../components/IntervalCard.svelte';
 	import type { UserState } from '$lib/types';
 
 	let state: UserState | null = $state(null);
+	let minWarning = $state(false);
 
 	onMount(() => {
 		state = loadState();
 	});
+
+	function toggleInterval(id: string) {
+		if (!state) return;
+
+		const s = state.intervals[id];
+		if (!s.unlocked) return;
+
+		// If turning OFF, check minimum 3 enabled
+		if (s.enabled) {
+			const enabledCount = Object.values(state.intervals).filter(i => i.unlocked && i.enabled).length;
+			if (enabledCount <= 3) {
+				minWarning = true;
+				setTimeout(() => { minWarning = false; }, 2000);
+				return;
+			}
+		}
+
+		state.intervals[id].enabled = !s.enabled;
+		// Trigger reactivity by reassigning
+		state = { ...state };
+		saveState(state);
+	}
 </script>
 
 <div class="progress-page">
@@ -32,9 +55,13 @@
 			</div>
 		</div>
 
+		{#if minWarning}
+			<div class="min-warn">⚠ MINIMUM 3 INTERVALS REQUIRED</div>
+		{/if}
+
 		<div class="interval-list">
 			{#each INTERVALS as def}
-				<IntervalCard {def} state={state.intervals[def.id]} />
+				<IntervalCard {def} state={state.intervals[def.id]} ontoggle={toggleInterval} />
 			{/each}
 		</div>
 	{/if}
@@ -69,4 +96,10 @@
 		letter-spacing: 0.2em; font-weight: 700;
 	}
 	.interval-list { display: flex; flex-direction: column; gap: 0.5rem; }
+	.min-warn {
+		font-family: var(--mono); font-size: 0.65rem; font-weight: 900;
+		color: var(--hot); letter-spacing: 0.15em; text-align: center;
+		padding: 0.5rem; border: 1px solid var(--hot);
+		background: #ED174F10; animation: flash 0.2s ease-out;
+	}
 </style>
