@@ -132,6 +132,7 @@
 		</div>
 
 		<div class="section danger">
+			<label class="field-label">DANGER ZONE</label>
 			<button
 				class="reset-btn"
 				class:holding={holdActive}
