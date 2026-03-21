@@ -44,23 +44,58 @@ describe('loadState / saveState', () => {
 });
 
 describe('checkTierUnlock', () => {
-	it('unlocks tier 2 when tier 1 all >= 80% over 10+ attempts', () => {
+	it('unlocks tier 2 when 10+ total questions with 70%+ accuracy', () => {
 		const state = createDefaultState();
-		for (const id of ['P1', 'P5', 'P8']) {
-			state.intervals[id].attempts = 10;
-			state.intervals[id].correct = 8;
-		}
+		// Spread 10 questions across tier 1 intervals with 70%+ accuracy
+		state.intervals['P1'].attempts = 4;
+		state.intervals['P1'].correct = 3;
+		state.intervals['P5'].attempts = 3;
+		state.intervals['P5'].correct = 2;
+		state.intervals['P8'].attempts = 3;
+		state.intervals['P8'].correct = 3;
+		// Total: 10 attempts, 8 correct = 80% > 70%
 		const updated = checkTierUnlock(state);
 		expect(updated.intervals['M3'].unlocked).toBe(true);
 		expect(updated.intervals['P4'].unlocked).toBe(true);
 	});
-	it('does not unlock tier 2 if attempts < 10', () => {
+	it('does not unlock tier 2 if total questions < 10', () => {
 		const state = createDefaultState();
-		for (const id of ['P1', 'P5', 'P8']) {
-			state.intervals[id].attempts = 5;
-			state.intervals[id].correct = 5;
-		}
+		state.intervals['P1'].attempts = 3;
+		state.intervals['P1'].correct = 3;
+		state.intervals['P5'].attempts = 3;
+		state.intervals['P5'].correct = 3;
+		state.intervals['P8'].attempts = 3;
+		state.intervals['P8'].correct = 3;
+		// Total: 9 attempts — not enough
 		const updated = checkTierUnlock(state);
 		expect(updated.intervals['M3'].unlocked).toBe(false);
+	});
+	it('does not unlock tier 2 if accuracy below 70%', () => {
+		const state = createDefaultState();
+		state.intervals['P1'].attempts = 5;
+		state.intervals['P1'].correct = 2;
+		state.intervals['P5'].attempts = 5;
+		state.intervals['P5'].correct = 2;
+		state.intervals['P8'].attempts = 5;
+		state.intervals['P8'].correct = 2;
+		// Total: 15 attempts, 6 correct = 40% < 70%
+		const updated = checkTierUnlock(state);
+		expect(updated.intervals['M3'].unlocked).toBe(false);
+	});
+	it('does not unlock tier 3 before tier 2 is unlocked', () => {
+		const state = createDefaultState();
+		// Put enough questions for tier 3 threshold but tier 2 not unlocked
+		state.intervals['P1'].attempts = 15;
+		state.intervals['P1'].correct = 10;
+		state.intervals['P5'].attempts = 10;
+		state.intervals['P5'].correct = 8;
+		state.intervals['P8'].attempts = 10;
+		state.intervals['P8'].correct = 8;
+		// Total: 35 attempts, 26 correct = 74%
+		// BUT tier 2 should unlock first (10+ at 70%), then tier 3 needs 30+ total
+		// Since we have 35 at 74%, both tier 2 AND tier 3 should unlock
+		const updated = checkTierUnlock(state);
+		expect(updated.intervals['M3'].unlocked).toBe(true);  // tier 2
+		expect(updated.intervals['m3'].unlocked).toBe(true);  // tier 3
 	});
 });

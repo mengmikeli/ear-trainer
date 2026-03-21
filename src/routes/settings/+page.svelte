@@ -34,7 +34,7 @@
 				<button class:active={state.settings.toneType === 'sine'}
 					onclick={() => { state!.settings.toneType = 'sine'; update(); }}>CLEAN</button>
 				<button class:active={state.settings.toneType === 'piano'}
-					onclick={() => { state!.settings.toneType = 'piano'; update(); }}>SYNTH</button>
+					onclick={() => { state!.settings.toneType = 'piano'; update(); }}>AMBIENT</button>
 			</div>
 		</div>
 

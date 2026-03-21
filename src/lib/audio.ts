@@ -49,62 +49,86 @@ function playSineTone(freq: number, startTime: number, duration: number, audioCt
 }
 
 /**
- * Synth tone — futuristic, FM synthesis inspired
- * Two-operator FM with detuned unison for thickness
+ * Ambient synth tone — pad-like, reverberant, dreamy
+ * Layered sine waves with slow attack, chorus detune, and convolution-like tail
  */
 function playPianoTone(freq: number, startTime: number, duration: number, audioCtx: AudioContext): void {
-	// Carrier oscillator
-	const carrier = audioCtx.createOscillator();
-	const carrierGain = audioCtx.createGain();
-	carrier.type = 'sawtooth';
-	carrier.frequency.value = freq;
+	const padDuration = duration + 0.4; // longer tail for ambient feel
 
-	// Detuned unison for width
-	const detune = audioCtx.createOscillator();
-	const detuneGain = audioCtx.createGain();
-	detune.type = 'sawtooth';
-	detune.frequency.value = freq * 1.003; // slight detune
-	detuneGain.gain.setValueAtTime(0.15, startTime);
-	detuneGain.gain.linearRampToValueAtTime(0, startTime + duration);
+	// Layer 1: Main sine
+	const osc1 = audioCtx.createOscillator();
+	const gain1 = audioCtx.createGain();
+	osc1.type = 'sine';
+	osc1.frequency.value = freq;
+	gain1.gain.setValueAtTime(0, startTime);
+	gain1.gain.linearRampToValueAtTime(0.2, startTime + 0.12); // slow attack
+	gain1.gain.setValueAtTime(0.2, startTime + padDuration - 0.3);
+	gain1.gain.linearRampToValueAtTime(0, startTime + padDuration);
+	osc1.connect(gain1);
 
-	// FM modulator for metallic attack
-	const modulator = audioCtx.createOscillator();
-	const modGain = audioCtx.createGain();
-	modulator.type = 'sine';
-	modulator.frequency.value = freq * 3; // 3:1 ratio
-	modGain.gain.setValueAtTime(freq * 0.5, startTime); // high mod index at attack
-	modGain.gain.exponentialRampToValueAtTime(1, startTime + 0.15); // decay to almost nothing
-	modulator.connect(modGain);
-	modGain.connect(carrier.frequency);
+	// Layer 2: Detuned +5 cents — chorus width
+	const osc2 = audioCtx.createOscillator();
+	const gain2 = audioCtx.createGain();
+	osc2.type = 'sine';
+	osc2.frequency.value = freq * 1.003;
+	gain2.gain.setValueAtTime(0, startTime);
+	gain2.gain.linearRampToValueAtTime(0.12, startTime + 0.15);
+	gain2.gain.setValueAtTime(0.12, startTime + padDuration - 0.3);
+	gain2.gain.linearRampToValueAtTime(0, startTime + padDuration);
+	osc2.connect(gain2);
 
-	// Low-pass filter for warmth
+	// Layer 3: Detuned -5 cents
+	const osc3 = audioCtx.createOscillator();
+	const gain3 = audioCtx.createGain();
+	osc3.type = 'sine';
+	osc3.frequency.value = freq * 0.997;
+	gain3.gain.setValueAtTime(0, startTime);
+	gain3.gain.linearRampToValueAtTime(0.12, startTime + 0.15);
+	gain3.gain.setValueAtTime(0.12, startTime + padDuration - 0.3);
+	gain3.gain.linearRampToValueAtTime(0, startTime + padDuration);
+	osc3.connect(gain3);
+
+	// Layer 4: Octave up, very quiet — shimmer
+	const osc4 = audioCtx.createOscillator();
+	const gain4 = audioCtx.createGain();
+	osc4.type = 'triangle';
+	osc4.frequency.value = freq * 2;
+	gain4.gain.setValueAtTime(0, startTime);
+	gain4.gain.linearRampToValueAtTime(0.04, startTime + 0.2);
+	gain4.gain.setValueAtTime(0.04, startTime + padDuration - 0.4);
+	gain4.gain.linearRampToValueAtTime(0, startTime + padDuration);
+	osc4.connect(gain4);
+
+	// Layer 5: Sub — one octave down
+	const sub = audioCtx.createOscillator();
+	const subGain = audioCtx.createGain();
+	sub.type = 'sine';
+	sub.frequency.value = freq / 2;
+	subGain.gain.setValueAtTime(0, startTime);
+	subGain.gain.linearRampToValueAtTime(0.06, startTime + 0.1);
+	subGain.gain.setValueAtTime(0.06, startTime + padDuration - 0.3);
+	subGain.gain.linearRampToValueAtTime(0, startTime + padDuration);
+	sub.connect(subGain);
+
+	// Low-pass filter on everything for warmth
 	const filter = audioCtx.createBiquadFilter();
 	filter.type = 'lowpass';
-	filter.frequency.setValueAtTime(freq * 6, startTime);
-	filter.frequency.exponentialRampToValueAtTime(freq * 1.5, startTime + duration * 0.7);
-	filter.Q.value = 1;
+	filter.frequency.value = freq * 3;
+	filter.Q.value = 0.5;
 
-	// Envelope — punchy attack, sustain, clean release
-	carrierGain.gain.setValueAtTime(0, startTime);
-	carrierGain.gain.linearRampToValueAtTime(0.3, startTime + 0.005);
-	carrierGain.gain.setValueAtTime(0.3, startTime + 0.005);
-	carrierGain.gain.exponentialRampToValueAtTime(0.18, startTime + 0.1);
-	carrierGain.gain.setValueAtTime(0.18, startTime + duration - 0.1);
-	carrierGain.gain.linearRampToValueAtTime(0, startTime + duration);
+	// Connect all through filter
+	gain1.connect(filter);
+	gain2.connect(filter);
+	gain3.connect(filter);
+	gain4.connect(filter);
+	subGain.connect(filter);
+	filter.connect(audioCtx.destination);
 
-	// Routing
-	carrier.connect(filter);
-	detune.connect(detuneGain);
-	detuneGain.connect(filter);
-	filter.connect(carrierGain);
-	carrierGain.connect(audioCtx.destination);
-
-	modulator.start(startTime);
-	modulator.stop(startTime + duration);
-	carrier.start(startTime);
-	carrier.stop(startTime + duration);
-	detune.start(startTime);
-	detune.stop(startTime + duration);
+	// Start/stop all
+	[osc1, osc2, osc3, osc4, sub].forEach(osc => {
+		osc.start(startTime);
+		osc.stop(startTime + padDuration);
+	});
 }
 
 export function playInterval(
@@ -121,7 +145,7 @@ export function playInterval(
 	const freq2 = midiToFreq(secondMidi);
 
 	const noteDuration = 0.6;
-	const gap = 0.15;
+	const gap = toneType === 'piano' ? 0.3 : 0.15; // more space for ambient tail
 
 	const playFn = toneType === 'piano' ? playPianoTone : playSineTone;
 	playFn(freq1, now, noteDuration, audioCtx);

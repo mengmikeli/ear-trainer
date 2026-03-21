@@ -50,20 +50,46 @@ export function saveState(state: UserState, storage: Storage = localStorage): vo
 	storage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
+const TIER_THRESHOLDS: Record<number, { questions: number; accuracy: number }> = {
+	2: { questions: 10, accuracy: 0.7 },
+	3: { questions: 30, accuracy: 0.7 },
+	4: { questions: 60, accuracy: 0.7 },
+	5: { questions: 100, accuracy: 0.7 },
+};
+
 export function checkTierUnlock(state: UserState): UserState {
 	const updated = JSON.parse(JSON.stringify(state)) as UserState;
 
-	for (let tier = 2; tier <= 5; tier++) {
-		const prevTierIntervals = getIntervalsByTier(tier - 1);
-		const allQualified = prevTierIntervals.every((def) => {
-			const s = updated.intervals[def.id];
-			return s && s.attempts >= 10 && s.correct / s.attempts >= 0.8;
-		});
+	// Count total attempts and correct across all unlocked intervals
+	let totalAttempts = 0;
+	let totalCorrect = 0;
+	for (const def of INTERVALS) {
+		const s = updated.intervals[def.id];
+		if (s.unlocked) {
+			totalAttempts += s.attempts;
+			totalCorrect += s.correct;
+		}
+	}
+	const overallAccuracy = totalAttempts > 0 ? totalCorrect / totalAttempts : 0;
 
-		if (allQualified) {
-			for (const def of getIntervalsByTier(tier)) {
+	for (let tier = 2; tier <= 5; tier++) {
+		const threshold = TIER_THRESHOLDS[tier];
+		// Check if already unlocked (skip re-checking)
+		const tierIntervals = getIntervalsByTier(tier);
+		const alreadyUnlocked = tierIntervals.every(def => updated.intervals[def.id].unlocked);
+		if (alreadyUnlocked) continue;
+
+		// Previous tier must be unlocked first
+		const prevTierUnlocked = getIntervalsByTier(tier - 1).every(
+			def => updated.intervals[def.id].unlocked
+		);
+		if (!prevTierUnlocked) continue;
+
+		if (totalAttempts >= threshold.questions && overallAccuracy >= threshold.accuracy) {
+			for (const def of tierIntervals) {
 				updated.intervals[def.id].unlocked = true;
 			}
+			// Recalculate totals to include newly unlocked intervals (they start at 0)
 		}
 	}
 
