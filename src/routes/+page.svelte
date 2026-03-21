@@ -81,24 +81,24 @@
 	}
 	.ascii-decor {
 		font-family: var(--mono); font-size: 0.5rem;
-		color: var(--accent); opacity: 0.25;
+		color: var(--marathon-blue); opacity: 0.25;
 		line-height: 1.3; letter-spacing: 0.1em;
 		margin-top: 0.75rem;
 	}
 	.stats {
 		display: flex; align-items: center; gap: 1.5rem;
 		padding: 1rem 1.5rem;
-		border: 1px solid var(--border-heavy);
+		border: 1px solid rgba(58, 44, 255, 0.25);
 		background: var(--surface);
 	}
 	.divider { width: 1px; height: 2.5rem; background: var(--border-heavy); }
 	.stat { display: flex; flex-direction: column; align-items: center; gap: 0.1rem; }
 	.value {
 		font-size: 2.5rem; font-weight: 900;
-		font-family: var(--mono); color: var(--accent);
+		font-family: var(--mono); color: var(--marathon-blue);
 	}
 	.label {
-		font-size: 0.55rem; color: var(--text-secondary);
+		font-size: 0.55rem; color: var(--marathon-blue);
 		letter-spacing: 0.25em; font-weight: 400;
 		font-family: var(--font-display);
 	}

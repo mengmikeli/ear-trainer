@@ -82,29 +82,29 @@
 	.settings-page { display: flex; flex-direction: column; gap: 1.5rem; }
 	.data-readout {
 		font-family: var(--mono); font-size: 0.55rem;
-		color: var(--accent); opacity: 0.3;
+		color: var(--marathon-blue); opacity: 0.3;
 		letter-spacing: 0.3em; text-align: center;
 		margin-top: -0.5rem;
 	}
 	.heading {
 		font-size: 0.85rem; font-weight: 400;
-		letter-spacing: 0.12em; color: var(--accent);
-		padding-bottom: 0.5rem; border-bottom: 2px solid var(--accent);
+		letter-spacing: 0.12em; color: var(--marathon-blue);
+		padding-bottom: 0.5rem; border-bottom: 2px solid var(--marathon-blue);
 		text-transform: uppercase; font-family: var(--font-display);
 	}
 	.section { display: flex; flex-direction: column; gap: 0.5rem; }
 	.field-label {
 		font-size: 0.6rem; font-weight: 400;
-		letter-spacing: 0.25em; color: var(--text-secondary);
+		letter-spacing: 0.25em; color: var(--marathon-blue);
 		font-family: var(--font-display);
 	}
 	.toggle-group { display: flex; gap: 0.5rem; }
 	.toggle-group button {
 		flex: 1; padding: 0.85rem;
-		background: var(--surface); border: 2px solid var(--border-heavy);
+		background: var(--surface); border: 2px solid var(--marathon-blue);
 		border-radius: 0; font-size: 0.75rem;
 		font-weight: 400; letter-spacing: 0.08em;
-		color: var(--text-secondary);
+		color: var(--marathon-blue);
 		transition: all 0.15s;
 		font-family: var(--font-display);
 	}

@@ -71,28 +71,28 @@
 	.progress-page { display: flex; flex-direction: column; gap: 1.5rem; }
 	.data-readout {
 		font-family: var(--mono); font-size: 0.55rem;
-		color: var(--accent); opacity: 0.3;
+		color: var(--marathon-blue); opacity: 0.3;
 		letter-spacing: 0.3em; text-align: center;
 		margin-top: -0.5rem;
 	}
 	.heading {
 		font-size: 0.85rem; font-weight: 400;
-		letter-spacing: 0.12em; color: var(--accent);
-		padding-bottom: 0.5rem; border-bottom: 2px solid var(--accent);
+		letter-spacing: 0.12em; color: var(--marathon-blue);
+		padding-bottom: 0.5rem; border-bottom: 2px solid var(--marathon-blue);
 		text-transform: uppercase; font-family: var(--font-display);
 	}
 	.global-stats {
 		display: flex; justify-content: space-around;
 		padding: 1.25rem; background: var(--surface);
-		border-left: 3px solid var(--accent);
+		border-left: 3px solid var(--marathon-blue);
 	}
 	.stat { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; }
 	.value {
 		font-size: 1.75rem; font-weight: 900;
-		font-family: var(--mono); color: var(--accent);
+		font-family: var(--mono); color: var(--marathon-blue);
 	}
 	.label {
-		font-size: 0.55rem; color: var(--text-secondary);
+		font-size: 0.55rem; color: var(--marathon-blue);
 		letter-spacing: 0.2em; font-weight: 400;
 		font-family: var(--font-display);
 	}

@@ -74,7 +74,7 @@
 	}
 	.ring {
 		fill: none;
-		stroke: var(--marathon-blue);
+		stroke: var(--accent);
 		stroke-width: 1.5;
 	}
 	.ring-1 {
