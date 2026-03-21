@@ -51,13 +51,13 @@
 }
 
 [data-theme="light"] {
-	--base: #FFFFFF;
-	--surface: #F5F5F5;
-	--surface-raised: #EBEBEB;
-	--border: #E0E0E0;
-	--border-heavy: #CCCCCC;
+	--base: #E8E8E8;
+	--surface: #DEDEDE;
+	--surface-raised: #D4D4D4;
+	--border: #C0C0C0;
+	--border-heavy: #A0A0A0;
 	--text-primary: #1A1A1A;
-	--text-secondary: #777777;
+	--text-secondary: #555555;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
