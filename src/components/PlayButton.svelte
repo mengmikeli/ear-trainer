@@ -221,13 +221,11 @@
 		background: var(--correct) !important;
 		color: var(--base) !important;
 		border-color: var(--correct) !important;
-		font-size: 2rem;
 	}
 	.feedback-wrong {
 		background: transparent !important;
 		color: var(--wrong) !important;
 		border: 2px solid var(--wrong) !important;
-		font-size: 2rem;
 	}
 	.feedback-glitch {
 		text-shadow: -2px 0 var(--accent), 2px 0 var(--hot);
