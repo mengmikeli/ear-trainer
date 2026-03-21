@@ -20,7 +20,8 @@
 
 	function randomGlitchText(): string {
 		const chars = [...baseText];
-		const count = 1 + Math.floor(Math.random() * 2); // 1 or 2 chars
+		const maxGlitch = Math.max(1, Math.ceil(holdProgress * chars.length * 0.6));
+		const count = 1 + Math.floor(Math.random() * Math.min(maxGlitch, chars.length));
 		for (let i = 0; i < count; i++) {
 			const idx = Math.floor(Math.random() * chars.length);
 			chars[idx] = glyphs[Math.floor(Math.random() * glyphs.length)];
@@ -201,7 +202,7 @@
 		transform: scaleX(0);
 		transition: none;
 		pointer-events: none;
-		opacity: 0.15;
+		opacity: 0.35;
 	}
 	.reset-text {
 		position: relative;
@@ -216,7 +217,7 @@
 	}
 	.reset-btn.done .reset-fill {
 		background: var(--correct);
-		opacity: 0.15;
+		opacity: 0.35;
 	}
 	@keyframes reset-shake {
 		0% { transform: translate(0); }
