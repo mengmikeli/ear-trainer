@@ -7,8 +7,8 @@
 }
 
 @font-face {
-	font-family: 'UAV OSD Sans Mono';
-	src: url('/fonts/UAV-OSD-Sans-Mono.woff2') format('woff2');
+	font-family: 'Matrix Mono';
+	src: url('/fonts/Matrix-Mono.woff2') format('woff2');
 	font-weight: 100 900;
 	font-style: normal;
 	font-display: swap;
@@ -39,7 +39,7 @@
 	/* Fonts */
 	--font-display: 'Maratype', 'Barlow Condensed', sans-serif;  /* titles, headings */
 	--font: 'Inter', system-ui, -apple-system, sans-serif;    /* body text */
-	--mono: 'UAV OSD Sans Mono', 'JetBrains Mono', monospace;  /* numbers, IDs, code */
+	--mono: 'Matrix Mono', 'JetBrains Mono', monospace;  /* numbers, IDs, code */
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
