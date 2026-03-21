@@ -43,13 +43,13 @@
 		display: grid; grid-template-columns: 3.5rem 1fr auto;
 		align-items: center; gap: 0.75rem; padding: 0.85rem;
 	}
-	.locked { opacity: 0.3; border-left-color: var(--border-heavy); }
+	.locked { opacity: 0.4; border-left-color: var(--hot); }
 	.id {
 		font-size: 1.2rem; font-weight: 900;
 		font-family: var(--mono); text-align: center;
 		color: var(--accent);
 	}
-	.locked .id { color: var(--text-secondary); }
+	.locked .id { color: var(--hot); font-size: 1.5rem; }
 	.name { font-weight: 700; font-size: 0.85rem; letter-spacing: 0.02em; font-family: var(--font-display); }
 	.stats { font-size: 0.65rem; color: var(--text-secondary); font-weight: 600; font-family: var(--mono); letter-spacing: 0.05em; }
 	.acc-value {

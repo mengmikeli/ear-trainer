@@ -21,6 +21,7 @@
 	let isCorrect = $state(false);
 	let startTime = $state(0);
 	let sessionCorrect = $state(0);
+	let isPlaying = $state(false);
 
 	onMount(() => {
 		state = loadState();
@@ -138,16 +139,16 @@
 
 <div class="quiz">
 	<div class="top">
-		<button class="close" onclick={endEarly}>✕</button>
+		<button class="close" onclick={endEarly}>[×]</button>
 		<ProgressBar current={questionNum} total={totalQuestions} />
 	</div>
 
 	{#if question}
 		<div class="play-area">
 			{#if !hasPlayed}
-				<PlayButton onplay={play} />
+				<PlayButton onplay={play} playing={isPlaying} />
 			{:else}
-				<PlayButton onplay={play} replaying={true} />
+				<PlayButton onplay={play} replaying={true} playing={isPlaying} />
 			{/if}
 		</div>
 
@@ -184,10 +185,12 @@
 		width: 100%;
 	}
 	.close {
-		font-size: 1.5rem;
+		font-size: 1rem;
 		color: var(--accent);
 		padding: 0.25rem;
-		font-weight: 700;
+		font-weight: 900;
+		font-family: var(--mono);
+		letter-spacing: -0.05em;
 	}
 	.play-area {
 		display: flex;

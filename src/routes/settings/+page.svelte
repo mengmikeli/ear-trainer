@@ -32,9 +32,9 @@
 			<label class="field-label">TONE TYPE</label>
 			<div class="toggle-group">
 				<button class:active={state.settings.toneType === 'sine'}
-					onclick={() => { state!.settings.toneType = 'sine'; update(); }}>SINE</button>
+					onclick={() => { state!.settings.toneType = 'sine'; update(); }}>CLEAN</button>
 				<button class:active={state.settings.toneType === 'piano'}
-					onclick={() => { state!.settings.toneType = 'piano'; update(); }}>PIANO</button>
+					onclick={() => { state!.settings.toneType = 'piano'; update(); }}>SYNTH</button>
 			</div>
 		</div>
 
