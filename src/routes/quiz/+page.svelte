@@ -195,7 +195,7 @@
 	{#if question}
 		<div class="play-area">
 			{#if !hasPlayed}
-				<PlayButton onplay={play} playing={isPlaying} questionNum={questionNum} glitching={isGlitching} feedback={feedbackState} />
+				<PlayButton onplay={play} playing={isPlaying} questionNum={questionNum} glitching={isGlitching} feedback={feedbackState} semitones={question.interval.semitones} />
 			{:else}
 				<PlayButton
 					onplay={inResultMode ? replayInResult : play}
@@ -205,6 +205,7 @@
 					questionNum={questionNum}
 					countdownPct={inResultMode ? countdownPct : -1}
 					feedback={feedbackState}
+					semitones={question.interval.semitones}
 				/>
 			{/if}
 		</div>

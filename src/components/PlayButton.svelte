@@ -10,8 +10,15 @@
 		glitching?: boolean;
 		countdownPct?: number;
 		feedback?: 'correct' | 'wrong' | null;
+		semitones?: number;
 	}
-	let { onplay, replaying = false, playing = false, noBorder = false, questionNum = 1, glitching = false, countdownPct = -1, feedback = null }: Props = $props();
+	let { onplay, replaying = false, playing = false, noBorder = false, questionNum = 1, glitching = false, countdownPct = -1, feedback = null, semitones = 0 }: Props = $props();
+
+	// Map semitones (0-12) to angle: 0=top (P1), clockwise
+	const ringAngle = $derived((semitones / 12) * 360);
+	// Offset the ring center in the direction of the angle
+	const ringOffsetX = $derived(Math.sin(ringAngle * Math.PI / 180) * 12);
+	const ringOffsetY = $derived(-Math.cos(ringAngle * Math.PI / 180) * 12);
 
 	let phase = $state(0);
 	let animFrame: number | null = null;
@@ -141,7 +148,8 @@
 
 <div class="play-wrapper">
 	{#if showRings}
-		<svg class="wave-rings" class:fading={ringsFading} viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg">
+		<svg class="wave-rings" class:fading={ringsFading} viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg"
+			style="transform: translate({ringOffsetX}px, {ringOffsetY}px)">>
 			<path d={ring1} class="ring ring-1" />
 			<path d={ring2} class="ring ring-2" />
 			<path d={ring3} class="ring ring-3" />
