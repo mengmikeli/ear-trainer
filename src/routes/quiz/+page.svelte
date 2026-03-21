@@ -238,6 +238,7 @@
 		align-items: center;
 		height: 100%;
 		gap: 1rem;
+		position: relative;
 	}
 	.heading {
 		font-size: 3rem; font-weight: 400;
