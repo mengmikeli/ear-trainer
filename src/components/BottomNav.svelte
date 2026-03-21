@@ -30,6 +30,6 @@
 		letter-spacing: 0.15em; text-transform: uppercase; transition: all 0.15s;
 		font-family: var(--font-display);
 	}
-	a.active { color: var(--accent); background: var(--accent-dim); }
+	a.active { color: var(--text-primary); border-bottom: 2px solid var(--marathon-blue); }
 	.icon { font-size: 1.2rem; }
 </style>

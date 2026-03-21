@@ -7,13 +7,23 @@
 	let phase = $state(0);
 	let animFrame: number | null = null;
 
-	function generateWavyCircle(cx: number, cy: number, baseRadius: number, amplitude: number, frequency: number, phaseOffset: number): string {
+	// Seeded pseudo-random for deterministic but organic-looking waves
+	function seededRandom(seed: number): number {
+		const x = Math.sin(seed * 127.1 + seed * 311.7) * 43758.5453;
+		return x - Math.floor(x);
+	}
+
+	function generateWavyCircle(cx: number, cy: number, baseRadius: number, amplitude: number, frequency: number, phaseOffset: number, seed: number): string {
 		const points: string[] = [];
 		const steps = 120;
 		for (let i = 0; i <= steps; i++) {
 			const angle = (i / steps) * Math.PI * 2;
-			const wave = Math.sin(angle * frequency + phaseOffset) * amplitude;
-			const r = baseRadius + wave;
+			// Layer multiple sine waves + noise for organic randomness
+			const wave1 = Math.sin(angle * frequency + phaseOffset) * amplitude;
+			const wave2 = Math.sin(angle * (frequency * 1.7) + phaseOffset * 0.6 + 3.1) * amplitude * 0.5;
+			const wave3 = Math.sin(angle * (frequency * 3.1) + phaseOffset * 1.3 + 1.7) * amplitude * 0.3;
+			const noise = (seededRandom(i + seed + Math.floor(phaseOffset * 2)) - 0.5) * amplitude * 0.6;
+			const r = baseRadius + wave1 + wave2 + wave3 + noise;
 			const x = cx + Math.cos(angle) * r;
 			const y = cy + Math.sin(angle) * r;
 			points.push(`${i === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)}`);
@@ -34,9 +44,9 @@
 		if (animFrame !== null) cancelAnimationFrame(animFrame);
 	});
 
-	const ring1 = $derived(generateWavyCircle(150, 150, 85, 4, 8, phase));
-	const ring2 = $derived(generateWavyCircle(150, 150, 105, 5, 6, phase * 0.8 + 1));
-	const ring3 = $derived(generateWavyCircle(150, 150, 125, 6, 10, phase * 1.2 + 2));
+	const ring1 = $derived(generateWavyCircle(150, 150, 85, 8, 6, phase, 1));
+	const ring2 = $derived(generateWavyCircle(150, 150, 105, 10, 5, phase * 0.7 + 1, 2));
+	const ring3 = $derived(generateWavyCircle(150, 150, 125, 12, 7, phase * 1.1 + 2, 3));
 </script>
 
 <div class="play-wrapper">
@@ -64,7 +74,7 @@
 	}
 	.ring {
 		fill: none;
-		stroke: var(--accent);
+		stroke: var(--marathon-blue);
 		stroke-width: 1.5;
 	}
 	.ring-1 {
