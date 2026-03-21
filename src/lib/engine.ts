@@ -45,8 +45,9 @@ export function generateDistractors(correctId: string, state: UserState): Interv
 
 	// Not enough unlocked distractors — fill remaining from locked intervals
 	// sorted by proximity in semitones to the correct answer (better confusables)
+	const usedIds = new Set([correctId, ...shuffledUnlocked.map(i => i.id)]);
 	const locked = INTERVALS.filter(
-		(i) => i.id !== correctId && !state.intervals[i.id]?.unlocked
+		(i) => !usedIds.has(i.id)
 	).sort(
 		(a, b) =>
 			Math.abs(a.semitones - correctSemitones) - Math.abs(b.semitones - correctSemitones)
@@ -75,7 +76,14 @@ export function generateQuestion(state: UserState): Question {
 	const rootNote = minRoot + Math.floor(Math.random() * (maxRoot - minRoot + 1));
 
 	const distractors = generateDistractors(interval.id, state);
-	const choices = [interval, ...distractors].sort(() => Math.random() - 0.5);
+	// Dedup safety: ensure no choice appears twice
+	const seen = new Set<string>();
+	const uniqueChoices = [interval, ...distractors].filter(c => {
+		if (seen.has(c.id)) return false;
+		seen.add(c.id);
+		return true;
+	});
+	const choices = uniqueChoices.sort(() => Math.random() - 0.5);
 
 	return {
 		rootNote,

@@ -177,7 +177,7 @@
 		flex-direction: column;
 		align-items: center;
 		height: 100%;
-		gap: 2rem;
+		gap: 1rem;
 	}
 	.heading {
 		font-size: 3rem; font-weight: 400;
@@ -193,7 +193,7 @@
 		width: 100%;
 	}
 	.close {
-		font-size: 1rem;
+		font-size: 0.75rem;
 		color: var(--marathon-blue);
 		padding: 0.25rem;
 		font-weight: 900;
