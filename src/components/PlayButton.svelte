@@ -186,11 +186,10 @@
 		position: absolute;
 		width: 150px; height: 150px;
 		pointer-events: none;
-		transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+		transition: opacity 0.6s ease-out;
 	}
 	.wave-rings.fading {
 		opacity: 0;
-		transform: scale(1.4);
 	}
 	.countdown-ring {
 		position: absolute;
@@ -206,16 +205,17 @@
 		opacity: 0;
 	}
 	.ring-1 {
-		animation: ring-propagate 3.5s ease-out infinite;
+		animation: ring-propagate 3s linear infinite;
 	}
 	.ring-2 {
-		animation: ring-propagate 3.5s ease-out infinite 1.15s;
+		animation: ring-propagate 3s linear infinite 1s;
 	}
 	.ring-3 {
-		animation: ring-propagate 3.5s ease-out infinite 2.3s;
+		animation: ring-propagate 3s linear infinite 2s;
 	}
 	@keyframes ring-propagate {
-		0% { opacity: 0.6; transform-origin: center; transform: scale(0.2); }
+		0% { opacity: 0.5; transform-origin: center; transform: scale(0.3); }
+		80% { opacity: 0.3; transform-origin: center; transform: scale(1.2); }
 		100% { opacity: 0; transform-origin: center; transform: scale(1.5); }
 	}
 	.play-btn {
