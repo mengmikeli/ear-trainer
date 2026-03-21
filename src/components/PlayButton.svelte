@@ -124,17 +124,19 @@
 
 <div class="play-wrapper">
 	{#each bursts as burst (burst.id)}
-		<svg class="wave-rings" viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg">
-			<defs>
-				<radialGradient id="ring-fade-{burst.id}" cx="50%" cy="50%" r="50%">
-					<stop offset="60%" stop-color="var(--accent)" stop-opacity="0" />
-					<stop offset="67%" stop-color="var(--accent)" stop-opacity="0.4" />
-					<stop offset="100%" stop-color="var(--accent)" stop-opacity="0" />
-				</radialGradient>
-			</defs>
-			<circle cx="75" cy="75" r="75" fill="url(#ring-fade-{burst.id})"
-				style="transform-origin: {burst.originX}px {burst.originY}px" class="burst-ring" />
-		</svg>
+		<div class="wave-rings-anchor">
+			<svg class="wave-rings" viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg">
+				<defs>
+					<radialGradient id="ring-fade-{burst.id}" cx="50%" cy="50%" r="50%">
+						<stop offset="60%" stop-color="var(--accent)" stop-opacity="0" />
+						<stop offset="67%" stop-color="var(--accent)" stop-opacity="0.4" />
+						<stop offset="100%" stop-color="var(--accent)" stop-opacity="0" />
+					</radialGradient>
+				</defs>
+				<circle cx="75" cy="75" r="75" fill="url(#ring-fade-{burst.id})"
+					style="transform-origin: {burst.originX}px {burst.originY}px" class="burst-ring" />
+			</svg>
+		</div>
 	{/each}
 	{#if countdownPct >= 0}
 		<svg class="countdown-ring" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -172,14 +174,16 @@
 		width: 100px; height: 100px;
 		overflow: visible;
 	}
-	.wave-rings {
+	.wave-rings-anchor {
 		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
 		width: 150px; height: 150px;
-		/* Center the 150px SVG over the 100px wrapper:
-		   offset = (wrapper - svg) / 2 = (100 - 150) / 2 = -25px */
-		top: -25px;
-		left: -25px;
 		pointer-events: none;
+	}
+	.wave-rings {
+		width: 150px; height: 150px;
 		overflow: visible;
 	}
 	.burst-ring {
