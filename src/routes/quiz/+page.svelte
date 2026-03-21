@@ -200,23 +200,17 @@
 
 	{#if question}
 		<div class="play-area">
-			{#if inResultMode}
-				<div class="countdown-wrapper">
-					<svg class="countdown-ring" viewBox="0 0 100 100">
-						<circle cx="50" cy="50" r="48"
-							stroke={countdownPct < 0.25 ? 'var(--hot)' : 'var(--marathon-blue)'}
-							stroke-width="2" fill="none"
-							stroke-dasharray={2 * Math.PI * 48}
-							stroke-dashoffset={2 * Math.PI * 48 * (1 - countdownPct)}
-							transform="rotate(-90 50 50)"
-						/>
-					</svg>
-					<PlayButton onplay={replayInResult} replaying={true} playing={isPlaying} noBorder={true} questionNum={questionNum} />
-				</div>
-			{:else if !hasPlayed}
+			{#if !hasPlayed}
 				<PlayButton onplay={play} playing={isPlaying} questionNum={questionNum} glitching={isGlitching} />
 			{:else}
-				<PlayButton onplay={play} replaying={true} playing={isPlaying} questionNum={questionNum} />
+				<PlayButton
+					onplay={inResultMode ? replayInResult : play}
+					replaying={true}
+					playing={isPlaying}
+					noBorder={inResultMode}
+					questionNum={questionNum}
+					countdownPct={inResultMode ? countdownPct : -1}
+				/>
 			{/if}
 		</div>
 
@@ -298,20 +292,5 @@
 		gap: 1rem;
 		flex: 1;
 		justify-content: center;
-	}
-	.countdown-wrapper {
-		position: relative;
-		width: 100px;
-		height: 100px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-	.countdown-ring {
-		position: absolute;
-		inset: 0;
-		width: 100px;
-		height: 100px;
-		pointer-events: none;
 	}
 </style>

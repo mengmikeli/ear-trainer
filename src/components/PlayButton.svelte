@@ -8,8 +8,9 @@
 		noBorder?: boolean;
 		questionNum?: number;
 		glitching?: boolean;
+		countdownPct?: number;
 	}
-	let { onplay, replaying = false, playing = false, noBorder = false, questionNum = 1, glitching = false }: Props = $props();
+	let { onplay, replaying = false, playing = false, noBorder = false, questionNum = 1, glitching = false, countdownPct = -1 }: Props = $props();
 
 	let phase = $state(0);
 	let animFrame: number | null = null;
@@ -75,7 +76,6 @@
 
 	const displayText = $derived.by(() => {
 		if (glitching) return glitchText;
-		if (replaying) return 'REPLAY';
 		return `Q${questionNum}`;
 	});
 </script>
@@ -88,6 +88,20 @@
 			<path d={ring3} class="ring ring-3" />
 		</svg>
 	{/if}
+	{#if countdownPct >= 0}
+		<svg class="countdown-ring" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+			<circle cx="50" cy="50" r="49"
+				stroke="var(--border-heavy)" stroke-width="2" fill="none"
+			/>
+			<circle cx="50" cy="50" r="49"
+				stroke={countdownPct < 0.25 ? 'var(--hot)' : 'var(--marathon-blue)'}
+				stroke-width="2" fill="none"
+				stroke-dasharray={2 * Math.PI * 49}
+				stroke-dashoffset={2 * Math.PI * 49 * (1 - countdownPct)}
+				transform="rotate(-90 50 50)"
+			/>
+		</svg>
+	{/if}
 	<button class="play-btn" class:replay={replaying} class:no-border={noBorder} class:glitch-text={glitching} onclick={onplay}>
 		{displayText}
 	</button>
@@ -97,11 +111,20 @@
 	.play-wrapper {
 		position: relative;
 		display: flex; align-items: center; justify-content: center;
+		width: 100px; height: 100px;
+		overflow: visible;
 	}
 	.wave-rings {
 		position: absolute;
 		width: 150px; height: 150px;
 		pointer-events: none;
+	}
+	.countdown-ring {
+		position: absolute;
+		inset: 0;
+		width: 100px; height: 100px;
+		pointer-events: none;
+		z-index: 2;
 	}
 	.ring {
 		fill: none;
@@ -130,7 +153,7 @@
 		background: var(--accent); border: none;
 		color: var(--base); font-size: 1rem; font-weight: 700;
 		letter-spacing: 0.05em; transition: transform 0.1s, opacity 0.15s;
-		font-family: 'Space Mono', monospace;
+		font-family: var(--mono);
 		display: flex; align-items: center; justify-content: center;
 		text-align: center; line-height: 1;
 	}
