@@ -51,7 +51,7 @@ export function saveState(state: UserState, storage: Storage = localStorage): vo
 }
 
 export function checkTierUnlock(state: UserState): UserState {
-	const updated = structuredClone(state);
+	const updated = JSON.parse(JSON.stringify(state)) as UserState;
 
 	for (let tier = 2; tier <= 5; tier++) {
 		const prevTierIntervals = getIntervalsByTier(tier - 1);

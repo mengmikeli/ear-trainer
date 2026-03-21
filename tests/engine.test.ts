@@ -39,6 +39,23 @@ describe('generateDistractors', () => {
 		const distractors = generateDistractors('P5', state);
 		expect(distractors.map(d => d.id)).not.toContain('P5');
 	});
+	it('prefers unlocked distractors and fills from locked when few unlocked', () => {
+		const state = createDefaultState();
+		// Default: only P1, P5, P8 unlocked (tier 1)
+		// Correct = P1 → only P5 and P8 are unlocked distractors (2 < 3)
+		const distractors = generateDistractors('P1', state);
+		expect(distractors).toHaveLength(3);
+		expect(distractors.map(d => d.id)).not.toContain('P1');
+
+		// Both unlocked distractors should be present
+		const ids = distractors.map(d => d.id);
+		expect(ids).toContain('P5');
+		expect(ids).toContain('P8');
+
+		// The third should be a locked interval (not P1, P5, or P8)
+		const lockedDistractor = distractors.find(d => !['P1', 'P5', 'P8'].includes(d.id));
+		expect(lockedDistractor).toBeDefined();
+	});
 });
 
 describe('generateQuestion', () => {

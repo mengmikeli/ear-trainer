@@ -33,10 +33,32 @@ export function pickInterval(state: UserState): IntervalDef {
 }
 
 export function generateDistractors(correctId: string, state: UserState): IntervalDef[] {
+	const correctDef = INTERVALS.find((i) => i.id === correctId);
+	const correctSemitones = correctDef?.semitones ?? 0;
+
 	const unlocked = getUnlockedIntervals(state.intervals).filter((i) => i.id !== correctId);
-	const pool = unlocked.length >= 3 ? unlocked : INTERVALS.filter((i) => i.id !== correctId);
-	const shuffled = [...pool].sort(() => Math.random() - 0.5);
-	return shuffled.slice(0, 3);
+	const shuffledUnlocked = [...unlocked].sort(() => Math.random() - 0.5);
+
+	if (shuffledUnlocked.length >= 3) {
+		return shuffledUnlocked.slice(0, 3);
+	}
+
+	// Not enough unlocked distractors — fill remaining from locked intervals
+	// sorted by proximity in semitones to the correct answer (better confusables)
+	const locked = INTERVALS.filter(
+		(i) => i.id !== correctId && !state.intervals[i.id]?.unlocked
+	).sort(
+		(a, b) =>
+			Math.abs(a.semitones - correctSemitones) - Math.abs(b.semitones - correctSemitones)
+	);
+
+	const result = [...shuffledUnlocked];
+	for (const def of locked) {
+		if (result.length >= 3) break;
+		result.push(def);
+	}
+
+	return result;
 }
 
 export function generateQuestion(state: UserState): Question {
