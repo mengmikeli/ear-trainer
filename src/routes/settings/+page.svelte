@@ -54,8 +54,10 @@
 
 	function tickHold(now: number) {
 		const elapsed = now - holdStart;
-		holdProgress = Math.min(1, elapsed / holdDuration);
-		if (holdProgress >= 1) {
+		const linear = Math.min(1, elapsed / holdDuration);
+		// ease-out cubic: fast start, slows near end
+		holdProgress = 1 - Math.pow(1 - linear, 3);
+		if (linear >= 1) {
 			executeReset();
 			return;
 		}
