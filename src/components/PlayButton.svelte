@@ -30,14 +30,11 @@
 
 	$effect(() => {
 		if (playing) {
-			burstCounter = 0;
-			bursts = [];
-			burstTimeouts.forEach(t => clearTimeout(t));
-			burstTimeouts = [];
+			// Don't reset counter or clear existing bursts — let old ones finish
 
 			// Burst 1: root note — centered (0ms)
 			const b1: WaveBurst = { id: ++burstCounter, originX: 75, originY: 75 };
-			bursts = [b1];
+			bursts = [...bursts, b1];
 
 			// Burst 2: interval note — biased (~750ms after)
 			burstTimeouts.push(setTimeout(() => {
@@ -45,12 +42,13 @@
 				const ox = 75 - Math.sin(ringAngle * Math.PI / 180) * bias;
 				const oy = 75 + Math.cos(ringAngle * Math.PI / 180) * bias;
 				const b2: WaveBurst = { id: ++burstCounter, originX: ox, originY: oy };
-				bursts = [b1, b2];
+				bursts = [...bursts, b2];
 			}, 750));
 
-			// Clean up bursts after they've fully expanded (2.5s after second burst)
+			// Remove these specific bursts after animation completes
+			const b1Id = burstCounter;
 			burstTimeouts.push(setTimeout(() => {
-				bursts = [];
+				bursts = bursts.filter(b => b.id !== b1Id && b.id !== b1Id + 1);
 			}, 3500));
 		}
 	});
