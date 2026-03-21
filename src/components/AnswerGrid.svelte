@@ -49,7 +49,7 @@
 	.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; width: 100%; }
 	.answer {
 		padding: 1.25rem 0.5rem; background: var(--surface);
-		border: 2px solid var(--border-heavy); border-radius: 0;
+		border: 1px solid var(--border-heavy); border-radius: 0;
 		text-align: center; transition: border-color 0.15s, background 0.15s;
 	}
 	.answer:not(:disabled):active { background: var(--surface-raised); border-color: var(--accent); }
