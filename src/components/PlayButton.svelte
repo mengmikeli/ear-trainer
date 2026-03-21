@@ -232,21 +232,39 @@
 	}
 	.play-btn:active { transform: scale(0.93); opacity: 0.9; }
 	.pulsing {
-		animation: btn-pulse 1.5s ease-in-out;
+		animation: btn-membrane 1.5s ease-in-out;
 	}
-	@keyframes btn-pulse {
+	@keyframes btn-membrane {
 		/* Note 1 attack */
-		0% { transform: scale(1); }
-		5% { transform: scale(1.08); }
-		/* Note 1 sustain + decay */
-		30% { transform: scale(1.04); }
-		/* Gap — settle */
+		0%  { transform: scale(1); }
+		3%  { transform: scale(1.07); }
+		6%  { transform: scale(1.04); }
+		9%  { transform: scale(1.06); }
+		12% { transform: scale(1.03); }
+		15% { transform: scale(1.05); }
+		18% { transform: scale(1.03); }
+		21% { transform: scale(1.04); }
+		24% { transform: scale(1.02); }
+		27% { transform: scale(1.03); }
+		30% { transform: scale(1.02); }
+		/* Decay to gap */
+		36% { transform: scale(1.01); }
+		42% { transform: scale(1); }
 		48% { transform: scale(1); }
 		/* Note 2 attack */
-		55% { transform: scale(1.08); }
-		/* Note 2 sustain + decay */
-		80% { transform: scale(1.04); }
-		/* Return to rest */
+		51% { transform: scale(1.07); }
+		54% { transform: scale(1.04); }
+		57% { transform: scale(1.06); }
+		60% { transform: scale(1.03); }
+		63% { transform: scale(1.05); }
+		66% { transform: scale(1.03); }
+		69% { transform: scale(1.04); }
+		72% { transform: scale(1.02); }
+		75% { transform: scale(1.03); }
+		78% { transform: scale(1.02); }
+		/* Decay to rest */
+		84% { transform: scale(1.01); }
+		90% { transform: scale(1); }
 		100% { transform: scale(1); }
 	}
 	.replay {
