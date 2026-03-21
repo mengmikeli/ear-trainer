@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
 	import { loadState } from '$lib/state';
 	import { INTERVALS } from '$lib/intervals';
 	import type { UserState } from '$lib/types';
@@ -7,10 +8,29 @@
 	import TelemetryBar from '../components/TelemetryBar.svelte';
 
 	let state: UserState | null = $state(null);
+	let goGlitching = $state(false);
+	let goText = $state('GO');
+
+	const glitchChars = ['\uE000', '\uE001', '\uE002', '\uE003', '\uE004', '\uE005', '\uE006', '\uE007', '\uE008', '\uE010', '\uE013', '\uE014', '\uE017'];
 
 	onMount(() => {
 		state = loadState();
 	});
+
+	function handleGo(e: Event) {
+		e.preventDefault();
+		if (goGlitching) return;
+		goGlitching = true;
+		let tick = 0;
+		const iv = setInterval(() => {
+			goText = glitchChars[Math.floor(Math.random() * glitchChars.length)];
+			tick++;
+			if (tick >= 6) {
+				clearInterval(iv);
+				goto('/quiz');
+			}
+		}, 50);
+	}
 
 	const accuracy = $derived(() => {
 		if (!state) return 0;
@@ -55,8 +75,8 @@
 		<div class="center-area">
 			<div class="radar-zone">
 				<RadarGrid size="280px" />
-				<a href="/quiz" class="start-btn">
-					<span class="btn-text">GO</span>
+				<a href="/quiz" class="start-btn" class:glitching={goGlitching} onclick={handleGo}>
+					<span class="btn-text">{goText}</span>
 				</a>
 			</div>
 
@@ -132,6 +152,17 @@
 		z-index: 1;
 	}
 	.start-btn:active { transform: scale(0.93); opacity: 0.9; }
+	.start-btn.glitching {
+		text-shadow: -2px 0 var(--accent), 2px 0 var(--hot);
+		animation: go-glitch 50ms infinite;
+	}
+	@keyframes go-glitch {
+		0% { transform: translate(0); }
+		25% { transform: translate(-2px, 1px); }
+		50% { transform: translate(2px, -1px); }
+		75% { transform: translate(-1px, -1px); }
+		100% { transform: translate(0); }
+	}
 	.btn-text {
 		color: var(--base); font-size: 2rem; font-weight: 400;
 		letter-spacing: 0.2em; text-transform: uppercase;

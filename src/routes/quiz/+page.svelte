@@ -49,10 +49,8 @@
 		countdownPct = 1.0;
 		questionNum++;
 
-		if (questionNum > 1) {
-			isGlitching = true;
-			setTimeout(() => { isGlitching = false; }, 300);
-		}
+		isGlitching = true;
+		setTimeout(() => { isGlitching = false; }, 300);
 	}
 
 	function play() {
