@@ -110,6 +110,9 @@
 		border: 1px solid var(--marathon-blue); background: var(--surface);
 		color: var(--marathon-blue); cursor: pointer;
 		transition: all 0.15s;
+		display: inline-flex; align-items: center; justify-content: center;
+		line-height: 1;
+		min-width: 3.5rem;
 	}
 	.toggle-off {
 		border-color: var(--hot); background: #ED174F10;
