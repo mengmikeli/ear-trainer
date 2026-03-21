@@ -186,7 +186,7 @@
 	}
 	.close {
 		font-size: 1rem;
-		color: var(--accent);
+		color: var(--marathon-blue);
 		padding: 0.25rem;
 		font-weight: 900;
 		font-family: var(--mono);
