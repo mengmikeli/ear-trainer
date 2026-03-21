@@ -206,19 +206,19 @@
 	}
 	.ring-1 {
 		opacity: 0.6;
-		animation: ring-pulse 1.8s ease-out infinite;
+		animation: ring-propagate 2s ease-out infinite;
 	}
 	.ring-2 {
 		opacity: 0.4;
-		animation: ring-pulse 1.8s ease-out infinite 0.4s;
+		animation: ring-propagate 2s ease-out infinite 0.6s;
 	}
 	.ring-3 {
 		opacity: 0.25;
-		animation: ring-pulse 1.8s ease-out infinite 0.8s;
+		animation: ring-propagate 2s ease-out infinite 1.2s;
 	}
-	@keyframes ring-pulse {
-		0% { opacity: 0.6; transform-origin: center; transform: scale(0.9); }
-		100% { opacity: 0; transform-origin: center; transform: scale(1.1); }
+	@keyframes ring-propagate {
+		0% { opacity: 0.7; transform-origin: center; transform: scale(0.5); }
+		100% { opacity: 0; transform-origin: center; transform: scale(1.3); }
 	}
 	.play-btn {
 		position: relative; z-index: 1;
