@@ -26,32 +26,32 @@
 	}
 	let bursts: WaveBurst[] = $state([]);
 	let burstCounter = 0;
-	let burstTimeouts: ReturnType<typeof setTimeout>[] = [];
 
-	$effect(() => {
-		if (playing) {
-			// Don't reset counter or clear existing bursts — let old ones finish
+	function spawnBursts() {
+		const id1 = ++burstCounter;
+		const b1: WaveBurst = { id: id1, originX: 75, originY: 75 };
+		bursts = [...bursts, b1];
 
-			// Burst 1: root note — centered (0ms)
-			const b1: WaveBurst = { id: ++burstCounter, originX: 75, originY: 75 };
-			bursts = [...bursts, b1];
+		// Burst 2: interval note — biased (~750ms after)
+		const id2 = ++burstCounter;
+		setTimeout(() => {
+			const bias = maxBias;
+			const ox = 75 - Math.sin(ringAngle * Math.PI / 180) * bias;
+			const oy = 75 + Math.cos(ringAngle * Math.PI / 180) * bias;
+			const b2: WaveBurst = { id: id2, originX: ox, originY: oy };
+			bursts = [...bursts, b2];
+		}, 750);
 
-			// Burst 2: interval note — biased (~750ms after)
-			burstTimeouts.push(setTimeout(() => {
-				const bias = maxBias;
-				const ox = 75 - Math.sin(ringAngle * Math.PI / 180) * bias;
-				const oy = 75 + Math.cos(ringAngle * Math.PI / 180) * bias;
-				const b2: WaveBurst = { id: ++burstCounter, originX: ox, originY: oy };
-				bursts = [...bursts, b2];
-			}, 750));
+		// Remove these bursts after animation completes
+		setTimeout(() => {
+			bursts = bursts.filter(b => b.id !== id1 && b.id !== id2);
+		}, 3500);
+	}
 
-			// Remove these specific bursts after animation completes
-			const b1Id = burstCounter;
-			burstTimeouts.push(setTimeout(() => {
-				bursts = bursts.filter(b => b.id !== b1Id && b.id !== b1Id + 1);
-			}, 3500));
-		}
-	});
+	function handlePlay() {
+		spawnBursts();
+		onplay();
+	}
 
 	let glitchText = $state('');
 	let feedbackGlyph = $state('');
@@ -110,7 +110,6 @@
 	onDestroy(() => {
 		if (glitchInterval) clearInterval(glitchInterval);
 		if (feedbackInterval) clearInterval(feedbackInterval);
-		burstTimeouts.forEach(t => clearTimeout(t));
 	});
 
 	const displayText = $derived.by(() => {
@@ -160,7 +159,7 @@
 		class:feedback-correct={feedbackCorrect}
 		class:feedback-wrong={feedbackWrong}
 		class:feedback-glitch={!!feedback}
-		onclick={onplay}
+		onclick={handlePlay}
 	>
 		{displayText}
 	</button>
