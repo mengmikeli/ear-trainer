@@ -101,7 +101,7 @@
 	.toggle-group button {
 		flex: 1; padding: 0.85rem;
 		background: var(--surface); border: 2px solid var(--border-heavy);
-		border-radius: 0; font-size: 0.75rem;
+		border-radius: 0; font-size: 0.55rem;
 		font-weight: 400; letter-spacing: 0.08em;
 		color: var(--text-secondary);
 		transition: all 0.15s;
