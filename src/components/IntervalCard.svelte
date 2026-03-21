@@ -109,10 +109,11 @@
 		letter-spacing: 0.05em; padding: 0.3rem 0.5rem;
 		border: 1px solid var(--marathon-blue); background: var(--surface);
 		color: var(--marathon-blue); cursor: pointer;
-		transition: all 0.15s;
+		transition: color 0.15s, border-color 0.15s, background 0.15s;
 		display: inline-flex; align-items: center; justify-content: center;
 		line-height: 1;
-		width: 2.8rem;
+		width: 2.8rem; height: 1.4rem;
+		box-sizing: border-box;
 	}
 	.toggle-off {
 		border-color: var(--hot); background: #ED174F10;
