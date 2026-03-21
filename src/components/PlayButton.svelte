@@ -203,6 +203,7 @@
 		fill: none;
 		stroke: var(--accent);
 		stroke-width: 1.5;
+		opacity: 0;
 	}
 	.ring-1 {
 		animation: ring-propagate 3.5s ease-out infinite;
