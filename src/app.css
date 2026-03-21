@@ -50,6 +50,19 @@
 	--mono: 'Matrix Mono', 'JetBrains Mono', monospace;  /* numbers, IDs, code */
 }
 
+[data-theme="light"] {
+	--base: #FFFFFF;
+	--surface: #F5F5F5;
+	--surface-raised: #EBEBEB;
+	--border: #E0E0E0;
+	--border-heavy: #CCCCCC;
+	--text-primary: #1A1A1A;
+	--text-secondary: #777777;
+	--accent: #4A7A00;
+	--accent-dim: #4A7A0015;
+	--correct: #4A7A00;
+}
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 html, body {

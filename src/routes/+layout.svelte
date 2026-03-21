@@ -1,8 +1,16 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import '../app.css';
 	import BottomNav from '../components/BottomNav.svelte';
+	import { initTheme } from '$lib/theme';
+	import { loadState } from '$lib/state';
 
 	let { children } = $props();
+
+	onMount(() => {
+		const state = loadState();
+		initTheme(state.settings.theme);
+	});
 </script>
 
 <div class="app scanlines">

@@ -21,11 +21,13 @@ export interface IntervalState {
 export type ToneType = 'sine' | 'piano';
 export type Direction = 'ascending' | 'descending' | 'random';
 export type SessionLength = 10 | 20 | 30;
+export type ThemeMode = 'light' | 'dark' | 'system';
 
 export interface Settings {
 	toneType: ToneType;
 	direction: Direction;
 	sessionLength: SessionLength;
+	theme: ThemeMode;
 }
 
 export interface GlobalStats {

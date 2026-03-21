@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 	import { loadState, saveState, createDefaultState } from '$lib/state';
-	import type { UserState, ToneType, Direction, SessionLength } from '$lib/types';
+	import type { UserState, ToneType, Direction, SessionLength, ThemeMode } from '$lib/types';
+	import { applyTheme, watchSystemTheme } from '$lib/theme';
 
 	let state: UserState | null = $state(null);
 
@@ -13,6 +14,7 @@
 	let resetDone = $state(false);
 	let glitchText = $state('RESET PROGRESS');
 	let glitchInterval: ReturnType<typeof setInterval> | null = null;
+	let systemThemeCleanup: (() => void) | undefined;
 
 	const holdDuration = 3500; // 3.5s hold to confirm
 	const baseText = 'RESET PROGRESS';
@@ -31,10 +33,14 @@
 
 	onMount(() => {
 		state = loadState();
+		if (state) {
+			systemThemeCleanup = watchSystemTheme(state.settings.theme, () => applyTheme('system'));
+		}
 	});
 
 	onDestroy(() => {
 		cancelHold();
+		systemThemeCleanup?.();
 	});
 
 	function update() {
@@ -97,6 +103,24 @@
 	<h2 class="heading">SETTINGS</h2>
 
 	{#if state}
+		<div class="section">
+			<label class="field-label">THEME</label>
+			<div class="toggle-group">
+				{#each ['dark', 'light', 'system'] as t}
+					<button class:active={state.settings.theme === t}
+						onclick={() => {
+							state!.settings.theme = t as ThemeMode;
+							applyTheme(t as ThemeMode);
+							systemThemeCleanup?.();
+							systemThemeCleanup = watchSystemTheme(t as ThemeMode, () => applyTheme('system'));
+							update();
+						}}>
+						{t.toUpperCase()}
+					</button>
+				{/each}
+			</div>
+		</div>
+
 		<div class="section">
 			<label class="field-label">TONE TYPE</label>
 			<div class="toggle-group">

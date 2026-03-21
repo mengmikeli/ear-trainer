@@ -24,6 +24,7 @@ export function createDefaultState(): UserState {
 		toneType: 'sine',
 		direction: 'ascending',
 		sessionLength: 20,
+		theme: 'dark',
 	};
 
 	const stats: GlobalStats = {
@@ -47,6 +48,9 @@ export function loadState(storage: Storage = localStorage): UserState {
 			if (parsed.intervals[id].enabled === undefined) {
 				parsed.intervals[id].enabled = true;
 			}
+		}
+		if (parsed.settings.theme === undefined) {
+			(parsed.settings as any).theme = 'dark';
 		}
 		const result = checkTierUnlock(parsed);
 		// Persist any newly unlocked tiers
