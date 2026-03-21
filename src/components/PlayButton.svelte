@@ -135,7 +135,7 @@
 				stroke="var(--border-heavy)" stroke-width="2" fill="none"
 			/>
 			<circle cx="50" cy="50" r="49"
-				stroke={countdownPct < 0.25 ? 'var(--hot)' : 'var(--marathon-blue)'}
+				stroke="var(--hot)"
 				stroke-width="2" fill="none"
 				stroke-dasharray={2 * Math.PI * 49}
 				stroke-dashoffset={2 * Math.PI * 49 * (1 - countdownPct)}
