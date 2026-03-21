@@ -75,6 +75,7 @@
 	.disabled { opacity: 0.55; border-left-color: var(--hot); transition: opacity 0.3s ease 0.3s; }
 	.disabled .id { color: var(--hot); }
 	.disabled .name { color: var(--text-secondary); }
+	.disabled .toggle { opacity: calc(1 / 0.55); }
 	.id {
 		font-size: 2rem; font-weight: 900;
 		font-family: 'BPdots', 'JetBrains Mono', monospace; text-align: center;
