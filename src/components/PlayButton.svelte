@@ -193,6 +193,7 @@
 		70% { opacity: 0.2; transform: scale(1.6); }
 		100% { opacity: 0; transform: scale(2); }
 	}
+	.countdown-ring {
 		position: absolute;
 		inset: 0;
 		width: 100px; height: 100px;
