@@ -21,59 +21,90 @@
 
 <div class="home">
 	<header>
-		<h1 class="title">EAR<br/>TRAINER</h1>
-		<span class="version">v1.0</span>
+		<div class="title-block">
+			<h1 class="title">EAR<br/><span class="title-accent">TRAINER</span></h1>
+		</div>
+		<div class="version-tag">
+			<span class="hazard-bar"></span>
+			<span class="version">SYS v1.0</span>
+			<span class="hazard-bar"></span>
+		</div>
 	</header>
 
 	{#if state}
 		<div class="stats">
 			<div class="stat">
 				<span class="value">{state.stats.currentStreak}</span>
-				<span class="label">DAY STREAK</span>
+				<span class="label">STREAK</span>
 			</div>
+			<div class="divider"></div>
 			<div class="stat">
 				<span class="value">{accuracy()}%</span>
 				<span class="label">ACCURACY</span>
 			</div>
 		</div>
 
-		<a href="/quiz" class="start-btn">▶ PRACTICE</a>
+		<a href="/quiz" class="start-btn">
+			<span class="btn-text">▶ PRACTICE</span>
+		</a>
 	{/if}
 </div>
 
 <style>
 	.home {
 		display: flex; flex-direction: column; align-items: center;
-		justify-content: center; height: 100%; gap: 3rem; text-align: center;
+		justify-content: center; height: 100%; gap: 2.5rem; text-align: center;
 	}
+	.title-block { position: relative; }
 	.title {
-		font-size: 4.5rem; font-weight: 900; letter-spacing: -0.04em;
-		line-height: 0.9; color: var(--text-primary); text-transform: uppercase;
+		font-size: 5rem; font-weight: 900; letter-spacing: -0.05em;
+		line-height: 0.85; color: var(--text-primary); text-transform: uppercase;
+	}
+	.title-accent {
+		color: var(--accent); font-size: 3.5rem;
+		letter-spacing: 0.15em;
+	}
+	.version-tag {
+		display: flex; align-items: center; gap: 0.5rem;
+		margin-top: 0.75rem; justify-content: center;
+	}
+	.hazard-bar {
+		display: block; width: 20px; height: 3px;
+		background: repeating-linear-gradient(
+			-45deg, var(--accent), var(--accent) 2px, transparent 2px, transparent 4px
+		);
 	}
 	.version {
-		display: inline-block; margin-top: 0.5rem;
-		font-size: 0.65rem; color: var(--text-secondary);
-		font-family: var(--mono);
-		letter-spacing: 0.2em;
-		border: 1px solid var(--border); padding: 0.15rem 0.5rem;
+		font-size: 0.6rem; color: var(--accent);
+		font-family: var(--mono); letter-spacing: 0.3em;
+		opacity: 0.7;
 	}
-	.stats { display: flex; gap: 3rem; }
-	.stat { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; }
+	.stats {
+		display: flex; align-items: center; gap: 1.5rem;
+		padding: 1rem 1.5rem;
+		border: 1px solid var(--border-heavy);
+		background: var(--surface);
+	}
+	.divider { width: 1px; height: 2.5rem; background: var(--border-heavy); }
+	.stat { display: flex; flex-direction: column; align-items: center; gap: 0.1rem; }
 	.value {
-		font-size: 2.25rem; font-weight: 800;
+		font-size: 2.5rem; font-weight: 900;
 		font-family: var(--mono); color: var(--accent);
 	}
 	.label {
-		font-size: 0.6rem; color: var(--text-secondary);
-		letter-spacing: 0.2em; font-weight: 700;
+		font-size: 0.55rem; color: var(--text-secondary);
+		letter-spacing: 0.25em; font-weight: 700;
 	}
 	.start-btn {
 		display: flex; align-items: center; justify-content: center;
 		width: 180px; height: 180px; border-radius: 50%;
-		background: var(--accent); border: 3px solid var(--accent);
-		color: var(--base); font-size: 1.2rem; font-weight: 800;
-		letter-spacing: 0.08em; transition: transform 0.1s, opacity 0.15s;
-		text-transform: uppercase;
+		background: var(--accent); border: none;
+		transition: transform 0.1s, opacity 0.15s;
+		position: relative;
 	}
 	.start-btn:active { transform: scale(0.93); opacity: 0.9; }
+	.btn-text {
+		color: var(--base); font-size: 1.1rem; font-weight: 900;
+		letter-spacing: 0.1em; text-transform: uppercase;
+	}
 </style>

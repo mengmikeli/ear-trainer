@@ -42,19 +42,20 @@
 <style>
 	.progress-page { display: flex; flex-direction: column; gap: 1.25rem; }
 	.heading {
-		font-size: 0.8rem; font-weight: 800;
-		letter-spacing: 0.2em; color: var(--text-secondary);
-		padding-bottom: 0.5rem; border-bottom: 2px solid var(--border);
+		font-size: 0.85rem; font-weight: 900;
+		letter-spacing: 0.3em; color: var(--accent);
+		padding-bottom: 0.5rem; border-bottom: 2px solid var(--accent);
+		text-transform: uppercase;
 	}
 	.global-stats {
 		display: flex; justify-content: space-around;
 		padding: 1.25rem; background: var(--surface);
-		border: 1px solid var(--border); border-radius: 2px;
+		border-left: 3px solid var(--cyan);
 	}
 	.stat { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; }
 	.value {
-		font-size: 1.75rem; font-weight: 800;
-		font-family: var(--mono); color: var(--accent);
+		font-size: 1.75rem; font-weight: 900;
+		font-family: var(--mono); color: var(--cyan);
 	}
 	.label {
 		font-size: 0.55rem; color: var(--text-secondary);

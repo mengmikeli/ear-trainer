@@ -180,7 +180,7 @@
 	}
 	.close {
 		font-size: 1.5rem;
-		color: var(--text-secondary);
+		color: var(--cyan);
 		padding: 0.25rem;
 		font-weight: 700;
 	}

@@ -31,20 +31,23 @@
 	.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; width: 100%; }
 	.answer {
 		padding: 1.25rem 0.5rem; background: var(--surface);
-		border: 2px solid var(--border-heavy); border-radius: 2px;
+		border: 2px solid var(--border-heavy); border-radius: 0;
 		text-align: center; transition: border-color 0.15s, background 0.15s;
 	}
-	.answer:not(:disabled):active { background: var(--surface-raised); border-color: var(--accent); }
+	.answer:not(:disabled):active { background: var(--surface-raised); border-color: var(--cyan); }
 	.id {
-		display: block; font-size: 1.5rem; font-weight: 800;
+		display: block; font-size: 1.5rem; font-weight: 900;
 		font-family: var(--mono); letter-spacing: -0.02em;
+		color: var(--cyan);
 	}
 	.name {
-		display: block; font-size: 0.7rem; color: var(--text-secondary);
-		margin-top: 0.2rem; letter-spacing: 0.05em; font-weight: 600;
+		display: block; font-size: 0.65rem; color: var(--text-secondary);
+		margin-top: 0.2rem; letter-spacing: 0.1em; font-weight: 700;
 		text-transform: uppercase;
 	}
-	.correct { border-color: var(--correct); background: #00ff8812; }
-	.wrong { border-color: var(--wrong); background: #ff335512; }
-	.dim { opacity: 0.25; }
+	.correct { border-color: var(--correct); background: #C2FE0C10; }
+	.correct .id { color: var(--correct); }
+	.wrong { border-color: var(--wrong); background: #ED174F10; }
+	.wrong .id { color: var(--wrong); }
+	.dim { opacity: 0.2; }
 </style>

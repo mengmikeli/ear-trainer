@@ -5,7 +5,7 @@
 	let { children } = $props();
 </script>
 
-<div class="app">
+<div class="app scanlines">
 	<main class="content">
 		{@render children()}
 	</main>
@@ -14,6 +14,7 @@
 
 <style>
 	.app {
+		position: relative;
 		display: flex; flex-direction: column; height: 100dvh;
 		max-width: 480px; margin: 0 auto;
 	}
