@@ -162,21 +162,29 @@ export function playFeedbackChime(correct: boolean): void {
 	const now = audioCtx.currentTime;
 
 	if (correct) {
-		// Rising two-note chirp
-		const notes = [880, 1320]; // A5 → E6
+		// Ascending two-note — bassy, muffled, ambient
+		const notes = [220, 330]; // A3 → E4
 		notes.forEach((freq, i) => {
 			const osc = audioCtx.createOscillator();
 			const gain = audioCtx.createGain();
 			osc.type = 'triangle';
 			osc.frequency.value = freq;
-			const t = now + i * 0.08;
+			const t = now + i * 0.1;
 			gain.gain.setValueAtTime(0, t);
-			gain.gain.linearRampToValueAtTime(0.2, t + 0.01);
-			gain.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
-			osc.connect(gain);
+			gain.gain.linearRampToValueAtTime(0.18, t + 0.02);
+			gain.gain.setValueAtTime(0.18, t + 0.08);
+			gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+
+			const filter = audioCtx.createBiquadFilter();
+			filter.type = 'lowpass';
+			filter.frequency.value = 600;
+			filter.Q.value = 1;
+
+			osc.connect(filter);
+			filter.connect(gain);
 			gain.connect(audioCtx.destination);
 			osc.start(t);
-			osc.stop(t + 0.15);
+			osc.stop(t + 0.4);
 		});
 	} else {
 		// Descending two-note — mirror of correct chirp, lower + muffled
