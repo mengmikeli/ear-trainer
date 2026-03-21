@@ -94,6 +94,7 @@
 	.label {
 		font-size: 0.55rem; color: var(--text-secondary);
 		letter-spacing: 0.2em; font-weight: 700;
+		font-family: var(--font-display);
 	}
 	.interval-list { display: flex; flex-direction: column; gap: 0.5rem; }
 	.min-warn {

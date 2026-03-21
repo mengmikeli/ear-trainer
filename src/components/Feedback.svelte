@@ -35,7 +35,7 @@
 	.correct .icon-char { color: var(--correct); text-shadow: 0 0 40px #C2FE0C50; }
 	.wrong .icon-char { color: var(--wrong); text-shadow: 0 0 40px #ED174F50; }
 	.icon-label {
-		font-size: 0.7rem; font-weight: 900; font-family: var(--mono);
+		font-size: 0.7rem; font-weight: 900; font-family: var(--font-display);
 		letter-spacing: 0.35em;
 	}
 	.correct .icon-label { color: var(--correct); }

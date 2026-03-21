@@ -89,7 +89,7 @@
 		background: var(--accent); border: none;
 		color: var(--base); font-size: 0.9rem; font-weight: 900;
 		letter-spacing: 0.05em; transition: transform 0.1s, opacity 0.15s;
-		font-family: var(--mono);
+		font-family: var(--font-display);
 		display: flex; align-items: center; justify-content: center;
 		text-align: center; line-height: 1;
 	}

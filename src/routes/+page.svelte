@@ -105,6 +105,7 @@
 	.label {
 		font-size: 0.55rem; color: var(--text-secondary);
 		letter-spacing: 0.25em; font-weight: 700;
+		font-family: var(--font-display);
 	}
 	.start-btn {
 		display: flex; align-items: center; justify-content: center;
@@ -117,5 +118,6 @@
 	.btn-text {
 		color: var(--base); font-size: 1.1rem; font-weight: 900;
 		letter-spacing: 0.1em; text-transform: uppercase;
+		font-family: var(--font-display);
 	}
 </style>

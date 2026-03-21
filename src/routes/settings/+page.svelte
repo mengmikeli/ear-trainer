@@ -96,6 +96,7 @@
 	.field-label {
 		font-size: 0.6rem; font-weight: 800;
 		letter-spacing: 0.25em; color: var(--text-secondary);
+		font-family: var(--font-display);
 	}
 	.toggle-group { display: flex; gap: 0.5rem; }
 	.toggle-group button {
@@ -105,6 +106,7 @@
 		font-weight: 700; letter-spacing: 0.08em;
 		color: var(--text-secondary);
 		transition: all 0.15s;
+		font-family: var(--font-display);
 	}
 	.toggle-group button.active {
 		border-color: var(--accent); color: var(--accent);
@@ -116,6 +118,7 @@
 		border: 2px solid var(--hot); border-radius: 0;
 		color: var(--hot); font-size: 0.75rem;
 		font-weight: 900; letter-spacing: 0.12em;
+		font-family: var(--font-display);
 	}
 	.reset-yes {
 		border-color: var(--hot) !important;
