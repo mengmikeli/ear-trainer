@@ -25,7 +25,6 @@
 
 <div class="settings-page">
 	<h2 class="heading">SETTINGS</h2>
-	<div class="data-readout interference">▌▌▌ SYSTEM CONFIG ▌▌▌</div>
 
 	{#if state}
 		<div class="section">
@@ -87,7 +86,7 @@
 		margin-top: -0.5rem;
 	}
 	.heading {
-		font-size: 0.85rem; font-weight: 400;
+		font-size: 1.7rem; font-weight: 400;
 		letter-spacing: 0.12em; color: var(--marathon-blue);
 		padding-bottom: 0.5rem; border-bottom: 2px solid var(--marathon-blue);
 		text-transform: uppercase; font-family: var(--font-display);

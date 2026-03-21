@@ -29,7 +29,6 @@
 			<span class="version">SYS v1.0</span>
 			<span class="hazard-bar"></span>
 		</div>
-		<pre class="ascii-decor interference">▌▌▌ INTERVAL TRAINING ▌▌▌</pre>
 	</header>
 
 	{#if state}
@@ -78,12 +77,6 @@
 		font-size: 0.6rem; color: #FFFFFF;
 		font-family: var(--mono); letter-spacing: 0.3em;
 		background: var(--marathon-blue); padding: 0.3rem 0.75rem;
-	}
-	.ascii-decor {
-		font-family: var(--mono); font-size: 0.5rem;
-		color: var(--marathon-blue); opacity: 0.25;
-		line-height: 1.3; letter-spacing: 0.1em;
-		margin-top: 0.75rem;
 	}
 	.stats {
 		display: flex; align-items: center; gap: 1.5rem;
