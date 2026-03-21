@@ -194,7 +194,7 @@
 	}
 	.top {
 		width: 100%;
-		margin-top: -0.5rem;
+		margin-top: -1rem;
 	}
 	.bar-track-full {
 		width: 100%;
