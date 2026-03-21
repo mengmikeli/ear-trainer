@@ -80,7 +80,7 @@
 		font-family: 'BPdots', 'JetBrains Mono', monospace; text-align: center;
 		color: var(--accent);
 		line-height: 1;
-		transform: translateY(-1px);
+		transform: translateY(-5px);
 	}
 	.locked .id { color: var(--hot); font-size: 2rem; }
 	.name { font-weight: 400; font-size: 0.85rem; letter-spacing: 0.02em; font-family: var(--font-display); }
