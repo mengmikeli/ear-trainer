@@ -29,7 +29,8 @@
 		color: var(--text-secondary); font-size: 0.6rem; font-weight: 400;
 		letter-spacing: 0.15em; text-transform: uppercase; transition: all 0.15s;
 		font-family: var(--font-display);
+		border-top: 2px solid transparent;
 	}
-	a.active { color: var(--marathon-blue); border-bottom: 2px solid var(--marathon-blue); }
+	a.active { color: var(--marathon-blue); border-top: 2px solid var(--marathon-blue); }
 	.icon { font-size: 1.2rem; }
 </style>
