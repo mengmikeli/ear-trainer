@@ -28,6 +28,7 @@
 		flex: 1; padding: 0.7rem 1rem;
 		color: var(--text-secondary); font-size: 0.6rem; font-weight: 700;
 		letter-spacing: 0.15em; text-transform: uppercase; transition: all 0.15s;
+		font-family: var(--font-display);
 	}
 	a.active { color: var(--accent); background: var(--accent-dim); }
 	.icon { font-size: 1.2rem; }

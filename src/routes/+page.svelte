@@ -62,7 +62,7 @@
 	}
 	.title-accent {
 		color: var(--accent); font-size: 3.5rem;
-		letter-spacing: 0.15em;
+		letter-spacing: 0.15em; font-family: var(--font-display);
 	}
 	.version-tag {
 		display: flex; align-items: center; gap: 0.5rem;
@@ -108,3 +108,4 @@
 		letter-spacing: 0.1em; text-transform: uppercase;
 	}
 </style>
+>

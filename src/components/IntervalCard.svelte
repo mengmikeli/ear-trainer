@@ -12,7 +12,7 @@
 	<div class="info">
 		<div class="name">{def.name}</div>
 		{#if state.unlocked}
-			<div class="stats">{accuracy}% · {state.attempts} attempts</div>
+			<div class="stats">{accuracy}% · {state.attempts} {state.attempts === 1 ? 'attempt' : 'attempts'}</div>
 		{:else}
 			<div class="stats">Tier {def.tier} — locked</div>
 		{/if}

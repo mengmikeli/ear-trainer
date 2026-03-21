@@ -9,8 +9,6 @@
 	/* Neon triad */
 	--accent: #C2FE0C;          /* acid yellow-green — PRIMARY */
 	--accent-dim: #C2FE0C15;
-	--cyan: #01FFFF;             /* electric cyan — SECONDARY */
-	--cyan-dim: #01FFFF12;
 	--hot: #ED174F;              /* spanish crimson — TERTIARY / danger */
 
 	/* Semantic */
@@ -22,8 +20,9 @@
 	--text-secondary: #666666;
 
 	/* Fonts */
-	--font: 'Inter', system-ui, -apple-system, sans-serif;
-	--mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+	--font-display: 'Space Grotesk', system-ui, sans-serif;  /* titles, headings */
+	--font: 'Inter', system-ui, -apple-system, sans-serif;    /* body text */
+	--mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;  /* numbers, IDs, code */
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -80,5 +79,5 @@ button {
 /* Glitch border — pixelated feel */
 .glitch-border {
 	border: 2px solid var(--accent);
-	box-shadow: 1px 1px 0 var(--hot), -1px -1px 0 var(--cyan);
+	box-shadow: 1px 1px 0 var(--hot), -1px -1px 0 var(--accent);
 }

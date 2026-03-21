@@ -34,16 +34,16 @@
 		border: 2px solid var(--border-heavy); border-radius: 0;
 		text-align: center; transition: border-color 0.15s, background 0.15s;
 	}
-	.answer:not(:disabled):active { background: var(--surface-raised); border-color: var(--cyan); }
+	.answer:not(:disabled):active { background: var(--surface-raised); border-color: var(--accent); }
 	.id {
 		display: block; font-size: 1.5rem; font-weight: 900;
 		font-family: var(--mono); letter-spacing: -0.02em;
-		color: var(--cyan);
+		color: var(--accent);
 	}
 	.name {
 		display: block; font-size: 0.65rem; color: var(--text-secondary);
 		margin-top: 0.2rem; letter-spacing: 0.1em; font-weight: 700;
-		text-transform: uppercase;
+		text-transform: uppercase; font-family: var(--font-display);
 	}
 	.correct { border-color: var(--correct); background: #C2FE0C10; }
 	.correct .id { color: var(--correct); }

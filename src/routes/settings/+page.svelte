@@ -83,7 +83,7 @@
 		font-size: 0.85rem; font-weight: 900;
 		letter-spacing: 0.3em; color: var(--accent);
 		padding-bottom: 0.5rem; border-bottom: 2px solid var(--accent);
-		text-transform: uppercase;
+		text-transform: uppercase; font-family: var(--font-display);
 	}
 	.section { display: flex; flex-direction: column; gap: 0.5rem; }
 	.field-label {

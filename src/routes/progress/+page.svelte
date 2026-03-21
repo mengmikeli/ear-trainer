@@ -45,17 +45,17 @@
 		font-size: 0.85rem; font-weight: 900;
 		letter-spacing: 0.3em; color: var(--accent);
 		padding-bottom: 0.5rem; border-bottom: 2px solid var(--accent);
-		text-transform: uppercase;
+		text-transform: uppercase; font-family: var(--font-display);
 	}
 	.global-stats {
 		display: flex; justify-content: space-around;
 		padding: 1.25rem; background: var(--surface);
-		border-left: 3px solid var(--cyan);
+		border-left: 3px solid var(--accent);
 	}
 	.stat { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; }
 	.value {
 		font-size: 1.75rem; font-weight: 900;
-		font-family: var(--mono); color: var(--cyan);
+		font-family: var(--mono); color: var(--accent);
 	}
 	.label {
 		font-size: 0.55rem; color: var(--text-secondary);
