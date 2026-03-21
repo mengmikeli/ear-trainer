@@ -17,9 +17,27 @@
 	// Map semitones (0-12) to angle: 0=top (P1), clockwise
 	const ringAngle = $derived((semitones / 12) * 360);
 	// Offset strength scales with semitones — P1 (0) has no bias, TT (6) has max
-	const biasStrength = $derived((semitones / 12) * 15);
-	const originX = $derived(75 - Math.sin(ringAngle * Math.PI / 180) * biasStrength);
-	const originY = $derived(75 + Math.cos(ringAngle * Math.PI / 180) * biasStrength);
+	const maxBias = $derived((semitones / 12) * 15);
+
+	// Phase: root note = centered, interval note = biased
+	let ringPhase: 'root' | 'interval' = $state('root');
+	let phaseTimeout: ReturnType<typeof setTimeout> | null = null;
+
+	$effect(() => {
+		if (playing) {
+			ringPhase = 'root';
+			if (phaseTimeout) clearTimeout(phaseTimeout);
+			// Switch to interval bias after first note + gap (~750ms)
+			phaseTimeout = setTimeout(() => { ringPhase = 'interval'; }, 750);
+		} else {
+			ringPhase = 'root';
+			if (phaseTimeout) { clearTimeout(phaseTimeout); phaseTimeout = null; }
+		}
+	});
+
+	const activeBias = $derived(ringPhase === 'interval' ? maxBias : 0);
+	const originX = $derived(75 - Math.sin(ringAngle * Math.PI / 180) * activeBias);
+	const originY = $derived(75 + Math.cos(ringAngle * Math.PI / 180) * activeBias);
 
 	let phase = $state(0);
 	let animFrame: number | null = null;
@@ -131,6 +149,7 @@
 		if (glitchInterval) clearInterval(glitchInterval);
 		if (feedbackInterval) clearInterval(feedbackInterval);
 		if (fadeTimeout) clearTimeout(fadeTimeout);
+		if (phaseTimeout) clearTimeout(phaseTimeout);
 	});
 
 	const ring1 = $derived(generateWavyCircle(75, 75, 42, 4, 6, phase, 1));
