@@ -20,7 +20,7 @@
 	--text-secondary: #666666;
 
 	/* Fonts */
-	--font-display: 'Space Grotesk', system-ui, sans-serif;  /* titles, headings */
+	--font-display: 'Barlow Condensed', sans-serif;  /* titles, headings */
 	--font: 'Inter', system-ui, -apple-system, sans-serif;    /* body text */
 	--mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;  /* numbers, IDs, code */
 }
@@ -80,4 +80,12 @@ button {
 .glitch-border {
 	border: 2px solid var(--accent);
 	box-shadow: 1px 1px 0 var(--hot), -1px -1px 0 var(--accent);
+}
+
+/* KH Interference-style RGB split for decorative text */
+.interference {
+	text-shadow:
+		-1px 0 rgba(194, 254, 12, 0.4),
+		1px 0 rgba(237, 23, 79, 0.3);
+	letter-spacing: 0.3em;
 }

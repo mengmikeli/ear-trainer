@@ -37,7 +37,7 @@
 
 <div class="progress-page">
 	<h2 class="heading">PROGRESS</h2>
-	<div class="data-readout">▌▌▌ TRAINING DATA ▌▌▌</div>
+	<div class="data-readout interference">▌▌▌ TRAINING DATA ▌▌▌</div>
 
 	{#if state}
 		<div class="global-stats">
@@ -77,7 +77,7 @@
 	}
 	.heading {
 		font-size: 0.85rem; font-weight: 900;
-		letter-spacing: 0.3em; color: var(--accent);
+		letter-spacing: 0.12em; color: var(--accent);
 		padding-bottom: 0.5rem; border-bottom: 2px solid var(--accent);
 		text-transform: uppercase; font-family: var(--font-display);
 	}

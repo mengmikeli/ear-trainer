@@ -29,7 +29,7 @@
 			<span class="version">SYS v1.0</span>
 			<span class="hazard-bar"></span>
 		</div>
-		<pre class="ascii-decor">╔══════════════════════╗
+		<pre class="ascii-decor interference">╔══════════════════════╗
 ║  INTERVAL TRAINING  ║
 ║  SYSTEM ONLINE      ║
 ╚══════════════════════╝</pre>
@@ -63,10 +63,11 @@
 	.title {
 		font-size: 5rem; font-weight: 900; letter-spacing: -0.05em;
 		line-height: 0.85; color: var(--text-primary); text-transform: uppercase;
+		font-family: var(--font-display);
 	}
 	.title-accent {
 		color: var(--accent); font-size: 3.5rem;
-		letter-spacing: 0.15em; font-family: var(--font-display);
+		letter-spacing: 0.12em; font-family: var(--font-display);
 	}
 	.version-tag {
 		display: flex; align-items: center; gap: 0.5rem;
