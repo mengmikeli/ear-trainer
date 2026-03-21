@@ -76,7 +76,7 @@
 		margin-top: -0.5rem;
 	}
 	.heading {
-		font-size: 0.85rem; font-weight: 900;
+		font-size: 0.85rem; font-weight: 400;
 		letter-spacing: 0.12em; color: var(--accent);
 		padding-bottom: 0.5rem; border-bottom: 2px solid var(--accent);
 		text-transform: uppercase; font-family: var(--font-display);
@@ -93,7 +93,7 @@
 	}
 	.label {
 		font-size: 0.55rem; color: var(--text-secondary);
-		letter-spacing: 0.2em; font-weight: 700;
+		letter-spacing: 0.2em; font-weight: 400;
 		font-family: var(--font-display);
 	}
 	.interval-list { display: flex; flex-direction: column; gap: 0.5rem; }

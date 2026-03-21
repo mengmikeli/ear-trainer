@@ -61,7 +61,7 @@
 	}
 	.title-block { position: relative; }
 	.title {
-		font-size: 5rem; font-weight: 900; letter-spacing: -0.05em;
+		font-size: 5rem; font-weight: 400; letter-spacing: -0.05em;
 		line-height: 0.85; color: var(--text-primary); text-transform: uppercase;
 		font-family: var(--font-display);
 	}
@@ -104,7 +104,7 @@
 	}
 	.label {
 		font-size: 0.55rem; color: var(--text-secondary);
-		letter-spacing: 0.25em; font-weight: 700;
+		letter-spacing: 0.25em; font-weight: 400;
 		font-family: var(--font-display);
 	}
 	.start-btn {
@@ -116,7 +116,7 @@
 	}
 	.start-btn:active { transform: scale(0.93); opacity: 0.9; }
 	.btn-text {
-		color: var(--base); font-size: 1.1rem; font-weight: 900;
+		color: var(--base); font-size: 1.1rem; font-weight: 400;
 		letter-spacing: 0.1em; text-transform: uppercase;
 		font-family: var(--font-display);
 	}

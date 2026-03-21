@@ -63,7 +63,7 @@
 		color: var(--accent);
 	}
 	.locked .id { color: var(--hot); font-size: 2rem; }
-	.name { font-weight: 700; font-size: 0.85rem; letter-spacing: 0.02em; font-family: var(--font-display); }
+	.name { font-weight: 400; font-size: 0.85rem; letter-spacing: 0.02em; font-family: var(--font-display); }
 	.stats { font-size: 0.65rem; color: var(--text-secondary); font-weight: 600; font-family: var(--mono); letter-spacing: 0.05em; }
 	.new { color: var(--accent); font-weight: 900; letter-spacing: 0.2em; }
 	.acc-value {

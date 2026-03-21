@@ -48,7 +48,7 @@
 	}
 	.name {
 		display: block; font-size: 0.65rem; color: var(--text-secondary);
-		margin-top: 0.2rem; letter-spacing: 0.1em; font-weight: 700;
+		margin-top: 0.2rem; letter-spacing: 0.1em; font-weight: 400;
 		text-transform: uppercase; font-family: var(--font-display);
 	}
 	.correct { border-color: var(--correct); background: #C2FE0C10; }

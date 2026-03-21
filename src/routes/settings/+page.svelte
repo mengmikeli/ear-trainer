@@ -87,14 +87,14 @@
 		margin-top: -0.5rem;
 	}
 	.heading {
-		font-size: 0.85rem; font-weight: 900;
+		font-size: 0.85rem; font-weight: 400;
 		letter-spacing: 0.12em; color: var(--accent);
 		padding-bottom: 0.5rem; border-bottom: 2px solid var(--accent);
 		text-transform: uppercase; font-family: var(--font-display);
 	}
 	.section { display: flex; flex-direction: column; gap: 0.5rem; }
 	.field-label {
-		font-size: 0.6rem; font-weight: 800;
+		font-size: 0.6rem; font-weight: 400;
 		letter-spacing: 0.25em; color: var(--text-secondary);
 		font-family: var(--font-display);
 	}
@@ -103,7 +103,7 @@
 		flex: 1; padding: 0.85rem;
 		background: var(--surface); border: 2px solid var(--border-heavy);
 		border-radius: 0; font-size: 0.75rem;
-		font-weight: 700; letter-spacing: 0.08em;
+		font-weight: 400; letter-spacing: 0.08em;
 		color: var(--text-secondary);
 		transition: all 0.15s;
 		font-family: var(--font-display);
@@ -117,7 +117,7 @@
 		padding: 0.85rem; background: var(--surface);
 		border: 2px solid var(--hot); border-radius: 0;
 		color: var(--hot); font-size: 0.75rem;
-		font-weight: 900; letter-spacing: 0.12em;
+		font-weight: 400; letter-spacing: 0.12em;
 		font-family: var(--font-display);
 	}
 	.reset-yes {

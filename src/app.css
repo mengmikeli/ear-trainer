@@ -1,3 +1,11 @@
+@font-face {
+	font-family: 'Maratype';
+	src: url('/fonts/Maratype.woff2') format('woff2');
+	font-weight: 100 900;
+	font-style: normal;
+	font-display: swap;
+}
+
 :root {
 	/* Marathon palette */
 	--base: #000000;

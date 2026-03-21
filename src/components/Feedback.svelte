@@ -35,13 +35,13 @@
 	.correct .icon-char { color: var(--correct); text-shadow: 0 0 40px #C2FE0C50; }
 	.wrong .icon-char { color: var(--wrong); text-shadow: 0 0 40px #ED174F50; }
 	.icon-label {
-		font-size: 0.7rem; font-weight: 900; font-family: var(--font-display);
+		font-size: 0.7rem; font-weight: 400; font-family: var(--font-display);
 		letter-spacing: 0.35em;
 	}
 	.correct .icon-label { color: var(--correct); }
 	.wrong .icon-label { color: var(--wrong); }
 	.answer {
-		font-size: 1.3rem; font-weight: 800; margin-top: 0.5rem;
+		font-size: 1.3rem; font-weight: 400; margin-top: 0.5rem;
 		color: var(--text-primary); letter-spacing: 0.05em;
 		font-family: var(--font-display);
 	}

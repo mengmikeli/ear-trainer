@@ -87,7 +87,7 @@
 		position: relative; z-index: 1;
 		width: 140px; height: 140px; border-radius: 50%;
 		background: var(--accent); border: none;
-		color: var(--base); font-size: 0.9rem; font-weight: 900;
+		color: var(--base); font-size: 0.9rem; font-weight: 400;
 		letter-spacing: 0.05em; transition: transform 0.1s, opacity 0.15s;
 		font-family: var(--font-display);
 		display: flex; align-items: center; justify-content: center;

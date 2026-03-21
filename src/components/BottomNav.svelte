@@ -26,7 +26,7 @@
 	a {
 		display: flex; flex-direction: column; align-items: center; gap: 0.15rem;
 		flex: 1; padding: 0.7rem 1rem;
-		color: var(--text-secondary); font-size: 0.6rem; font-weight: 700;
+		color: var(--text-secondary); font-size: 0.6rem; font-weight: 400;
 		letter-spacing: 0.15em; text-transform: uppercase; transition: all 0.15s;
 		font-family: var(--font-display);
 	}
