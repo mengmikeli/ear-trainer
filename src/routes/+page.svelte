@@ -61,7 +61,7 @@
 	}
 	.title-block { position: relative; }
 	.title {
-		font-size: 5rem; font-weight: 400; letter-spacing: -0.05em;
+		font-size: 5rem; font-weight: 400; letter-spacing: 0.35em;
 		line-height: 0.85; color: var(--text-primary); text-transform: uppercase;
 		font-family: var(--font-display);
 	}
