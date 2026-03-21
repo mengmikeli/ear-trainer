@@ -2,9 +2,9 @@
 	import { page } from '$app/state';
 
 	const tabs = [
-		{ href: '/', label: 'PRACTICE', icon: '[▶]' },
-		{ href: '/progress', label: 'PROGRESS', icon: '[≡]' },
-		{ href: '/settings', label: 'SETTINGS', icon: '[⚙]' },
+		{ href: '/', label: 'PRACTICE', icon: '\uE014' },
+		{ href: '/progress', label: 'PROGRESS', icon: '\uE002' },
+		{ href: '/settings', label: 'SETTINGS', icon: '\uE015' },
 	];
 
 	const isQuiz = $derived(page.url.pathname === '/quiz');
@@ -48,5 +48,5 @@
 	}
 	a.active, .nav-item.active { color: var(--marathon-blue); border-top: 2px solid var(--marathon-blue); }
 	.disabled { cursor: default; }
-	.icon { font-size: 1rem; }
+	.icon { font-size: 1rem; font-family: var(--mono); }
 </style>
