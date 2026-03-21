@@ -68,7 +68,7 @@
 	.card-fill {
 		position: absolute; top: 0; left: 0; bottom: 0;
 		background: var(--accent);
-		opacity: 0.07;
+		opacity: 0.12;
 		transition: width 0.6s ease-out;
 	}
 	.card-content {
@@ -77,7 +77,7 @@
 		align-items: center; gap: 0.75rem; padding: 0.85rem;
 	}
 	.locked { opacity: 0.4; border-left-color: var(--hot); }
-	.disabled { opacity: 0.55; border-left-color: var(--hot); }
+	.disabled { opacity: 0.55; border-left-color: var(--hot); transition: opacity 0.6s ease 0.5s; }
 	.disabled .id { color: var(--hot); }
 	.disabled .name { color: var(--text-secondary); }
 	.id {
