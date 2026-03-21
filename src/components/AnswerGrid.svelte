@@ -30,7 +30,7 @@
 <style>
 	.grid-container { width: 100%; }
 	.grid-label {
-		font-family: var(--mono); font-size: 0.55rem;
+		font-family: var(--mono); font-size: 0.45rem;
 		color: var(--accent); opacity: 0.4;
 		letter-spacing: 0.15em; margin-bottom: 0.5rem;
 	}

@@ -74,7 +74,7 @@
 		background: var(--marathon-blue);
 	}
 	.version {
-		font-size: 0.6rem; color: #FFFFFF;
+		font-size: 0.5rem; color: #FFFFFF;
 		font-family: var(--mono); letter-spacing: 0.3em;
 		background: var(--marathon-blue); padding: 0.3rem 0.75rem;
 	}
@@ -87,7 +87,7 @@
 	.divider { width: 1px; height: 2.5rem; background: var(--border-heavy); }
 	.stat { display: flex; flex-direction: column; align-items: center; gap: 0.1rem; }
 	.value {
-		font-size: 1.75rem; font-weight: 900;
+		font-size: 1.5rem; font-weight: 900;
 		font-family: var(--mono); color: var(--text-primary);
 	}
 	.label {

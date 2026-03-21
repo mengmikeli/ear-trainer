@@ -64,7 +64,7 @@
 	}
 	.locked .id { color: var(--hot); font-size: 2rem; }
 	.name { font-weight: 400; font-size: 0.85rem; letter-spacing: 0.02em; font-family: var(--font-display); }
-	.stats { font-size: 0.5rem; color: var(--text-secondary); font-weight: 600; font-family: var(--mono); letter-spacing: 0.05em; }
+	.stats { font-size: 0.4rem; color: var(--text-secondary); font-weight: 600; font-family: var(--mono); letter-spacing: 0.05em; }
 	.new { color: var(--accent); font-weight: 900; letter-spacing: 0.2em; }
 	.acc-value {
 		font-size: 0.85rem; font-weight: 900;
@@ -72,7 +72,7 @@
 		letter-spacing: -0.02em;
 	}
 	.toggle {
-		font-family: var(--mono); font-size: 0.55rem; font-weight: 900;
+		font-family: var(--mono); font-size: 0.45rem; font-weight: 900;
 		letter-spacing: 0.05em; padding: 0.3rem 0.5rem;
 		border: 1px solid var(--border-heavy); background: var(--surface);
 		color: var(--text-secondary); cursor: pointer;

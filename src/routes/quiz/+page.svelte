@@ -193,7 +193,7 @@
 		width: 100%;
 	}
 	.close {
-		font-size: 0.75rem;
+		font-size: 0.6rem;
 		color: var(--marathon-blue);
 		padding: 0.25rem;
 		font-weight: 900;

@@ -31,7 +31,7 @@
 		display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
 	}
 	.icon-char {
-		font-size: 3.5rem; font-weight: 900; font-family: var(--mono);
+		font-size: 2.5rem; font-weight: 900; font-family: var(--mono);
 	}
 	.correct .icon-char { color: var(--correct); text-shadow: 0 0 40px #C2FE0C50; }
 	.wrong .icon-char { color: var(--wrong); text-shadow: 0 0 40px #ED174F50; }

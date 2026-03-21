@@ -80,7 +80,7 @@
 <style>
 	.settings-page { display: flex; flex-direction: column; gap: 1.5rem; }
 	.data-readout {
-		font-family: var(--mono); font-size: 0.55rem;
+		font-family: var(--mono); font-size: 0.45rem;
 		color: var(--marathon-blue); opacity: 0.3;
 		letter-spacing: 0.3em; text-align: center;
 		margin-top: -0.5rem;
@@ -101,7 +101,7 @@
 	.toggle-group button {
 		flex: 1; padding: 0.85rem;
 		background: var(--surface); border: 2px solid var(--border-heavy);
-		border-radius: 0; font-size: 0.55rem;
+		border-radius: 0; font-size: 0.45rem;
 		font-weight: 400; letter-spacing: 0.08em;
 		color: var(--text-secondary);
 		transition: all 0.15s;
