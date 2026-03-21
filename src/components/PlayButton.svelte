@@ -128,12 +128,15 @@
 <div class="play-wrapper">
 	{#each bursts as burst (burst.id)}
 		<svg class="wave-rings" viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg">
-			<circle cx="75" cy="75" r="42" fill="none" stroke="var(--accent)" stroke-width="1.5"
+			<defs>
+				<radialGradient id="ring-fade-{burst.id}" cx="50%" cy="50%" r="50%">
+					<stop offset="70%" stop-color="var(--accent)" stop-opacity="0" />
+					<stop offset="85%" stop-color="var(--accent)" stop-opacity="0.4" />
+					<stop offset="100%" stop-color="var(--accent)" stop-opacity="0" />
+				</radialGradient>
+			</defs>
+			<circle cx="75" cy="75" r="50" fill="url(#ring-fade-{burst.id})"
 				style="transform-origin: {burst.originX}px {burst.originY}px" class="burst-ring" />
-			<circle cx="75" cy="75" r="52" fill="none" stroke="var(--accent)" stroke-width="1.5"
-				style="transform-origin: {burst.originX}px {burst.originY}px" class="burst-ring delay-1" />
-			<circle cx="75" cy="75" r="62" fill="none" stroke="var(--accent)" stroke-width="1.5"
-				style="transform-origin: {burst.originX}px {burst.originY}px" class="burst-ring delay-2" />
 		</svg>
 	{/each}
 	{#if countdownPct >= 0}
@@ -180,18 +183,11 @@
 	}
 	.burst-ring {
 		opacity: 0;
-		animation: burst-expand 2s ease-out forwards;
-	}
-	.burst-ring.delay-1 {
-		animation-delay: 0.15s;
-	}
-	.burst-ring.delay-2 {
-		animation-delay: 0.3s;
+		animation: burst-expand 2s linear forwards;
 	}
 	@keyframes burst-expand {
-		0% { opacity: 0.5; transform: scale(1); }
-		70% { opacity: 0.2; transform: scale(1.6); }
-		100% { opacity: 0; transform: scale(2); }
+		0% { opacity: 1; transform: scale(1); }
+		100% { opacity: 0; transform: scale(2.5); }
 	}
 	.countdown-ring {
 		position: absolute;
