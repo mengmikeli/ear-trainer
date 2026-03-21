@@ -179,34 +179,29 @@ export function playFeedbackChime(correct: boolean): void {
 			osc.stop(t + 0.15);
 		});
 	} else {
-		// Sci-fi error tone — metallic dissonant cluster with filter sweep
-		const baseFreq = 220;
-
-		// Dissonant tritone cluster
-		const freqs = [baseFreq, baseFreq * 1.414, baseFreq * 0.5]; // root, tritone, sub
-		freqs.forEach((freq, i) => {
+		// Descending two-note — mirror of correct chirp, lower + muffled
+		const notes = [330, 220]; // E4 → A3 (descending, one octave below correct)
+		notes.forEach((freq, i) => {
 			const osc = audioCtx.createOscillator();
 			const gain = audioCtx.createGain();
-			osc.type = i === 2 ? 'sine' : 'sawtooth';
-			osc.frequency.setValueAtTime(freq, now);
-			osc.frequency.exponentialRampToValueAtTime(freq * 0.85, now + 0.4);
-			const vol = i === 2 ? 0.06 : 0.05;
-			gain.gain.setValueAtTime(0, now);
-			gain.gain.linearRampToValueAtTime(vol, now + 0.01);
-			gain.gain.setValueAtTime(vol, now + 0.15);
-			gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+			osc.type = 'triangle';
+			osc.frequency.value = freq;
+			const t = now + i * 0.1;
+			gain.gain.setValueAtTime(0, t);
+			gain.gain.linearRampToValueAtTime(0.18, t + 0.02);
+			gain.gain.setValueAtTime(0.18, t + 0.08);
+			gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
 
 			const filter = audioCtx.createBiquadFilter();
 			filter.type = 'lowpass';
-			filter.frequency.setValueAtTime(3000, now);
-			filter.frequency.exponentialRampToValueAtTime(200, now + 0.4);
-			filter.Q.value = 4;
+			filter.frequency.value = 600;
+			filter.Q.value = 1;
 
 			osc.connect(filter);
 			filter.connect(gain);
 			gain.connect(audioCtx.destination);
-			osc.start(now);
-			osc.stop(now + 0.5);
+			osc.start(t);
+			osc.stop(t + 0.4);
 		});
 	}
 }
