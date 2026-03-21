@@ -28,7 +28,7 @@
 <div class="card" class:locked={!istate.unlocked} class:disabled={istate.unlocked && !istate.enabled}>
 	<div class="card-fill" style="width: {istate.unlocked && istate.enabled ? accuracy : 0}%"></div>
 	<div class="card-content">
-		<div class="id">{istate.unlocked ? def.id : '⊘'}</div>
+		<div class="id">{istate.unlocked ? def.id : 'NA'}</div>
 		<div class="info">
 			<div class="name">{def.name}</div>
 			{#if istate.unlocked && istate.attempts === 0}
