@@ -86,9 +86,9 @@
 		margin-top: -0.5rem;
 	}
 	.heading {
-		font-size: 1.7rem; font-weight: 400;
+		font-size: 1rem; font-weight: 400;
 		letter-spacing: 0.12em; color: var(--text-primary);
-		padding-bottom: 0.5rem; border-bottom: 2px solid var(--marathon-blue);
+		padding-bottom: 0.5rem; border-bottom: 2px solid var(--border-heavy);
 		text-transform: uppercase; font-family: var(--font-display);
 	}
 	.section { display: flex; flex-direction: column; gap: 0.5rem; }
