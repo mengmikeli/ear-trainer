@@ -62,7 +62,7 @@
 	.title-block { position: relative; }
 	.title {
 		font-size: 6.5rem; font-weight: 400; letter-spacing: 0.05em;
-		line-height: 0.75; color: var(--text-primary); text-transform: uppercase;
+		line-height: 0.9; color: var(--text-primary); text-transform: uppercase;
 		font-family: var(--font-display);
 	}
 	.title-accent {
@@ -71,7 +71,7 @@
 	}
 	.version-tag {
 		display: flex; align-items: center; gap: 0.5rem;
-		margin-top: 0.75rem; justify-content: center;
+		margin-top: 0.25rem; justify-content: center;
 	}
 	.hazard-bar {
 		display: block; width: 20px; height: 3px;
