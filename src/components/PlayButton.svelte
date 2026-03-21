@@ -19,6 +19,23 @@
 	let feedbackGlyph = $state('');
 	let glitchInterval: ReturnType<typeof setInterval> | null = null;
 	let feedbackInterval: ReturnType<typeof setInterval> | null = null;
+	let showRings = $state(false);
+	let ringsFading = $state(false);
+	let fadeTimeout: ReturnType<typeof setTimeout> | null = null;
+
+	$effect(() => {
+		if (playing) {
+			if (fadeTimeout) { clearTimeout(fadeTimeout); fadeTimeout = null; }
+			ringsFading = false;
+			showRings = true;
+		} else if (showRings) {
+			ringsFading = true;
+			fadeTimeout = setTimeout(() => {
+				showRings = false;
+				ringsFading = false;
+			}, 600);
+		}
+	});
 
 	// Matrix Mono PUA glyphs
 	const correctGlyphs = ['\uE018', '\uE013', '\uE014', '\uE012', '\uE011']; // FaceHappy, Crosshair, Target, Frame, ArrowRight
@@ -105,6 +122,7 @@
 		if (animFrame !== null) cancelAnimationFrame(animFrame);
 		if (glitchInterval) clearInterval(glitchInterval);
 		if (feedbackInterval) clearInterval(feedbackInterval);
+		if (fadeTimeout) clearTimeout(fadeTimeout);
 	});
 
 	const ring1 = $derived(generateWavyCircle(75, 75, 42, 4, 6, phase, 1));
@@ -122,8 +140,8 @@
 </script>
 
 <div class="play-wrapper">
-	{#if playing}
-		<svg class="wave-rings" viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg">
+	{#if showRings}
+		<svg class="wave-rings" class:fading={ringsFading} viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg">
 			<path d={ring1} class="ring ring-1" />
 			<path d={ring2} class="ring ring-2" />
 			<path d={ring3} class="ring ring-3" />
@@ -168,6 +186,10 @@
 		position: absolute;
 		width: 150px; height: 150px;
 		pointer-events: none;
+		transition: opacity 0.6s ease-out;
+	}
+	.wave-rings.fading {
+		opacity: 0;
 	}
 	.countdown-ring {
 		position: absolute;
