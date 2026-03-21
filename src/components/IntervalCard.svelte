@@ -76,7 +76,7 @@
 	.disabled .id { color: var(--hot); }
 	.disabled .name { color: var(--text-secondary); }
 	.id {
-		font-size: 1.7rem; font-weight: 900;
+		font-size: 2rem; font-weight: 900;
 		font-family: 'BPdots', 'JetBrains Mono', monospace; text-align: center;
 		color: var(--accent);
 		line-height: 1;
