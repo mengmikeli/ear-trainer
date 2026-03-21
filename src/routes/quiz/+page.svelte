@@ -24,7 +24,7 @@
 	let inResultMode = $state(false);
 	let countdownPct = $state(1.0);
 	let countdownStart = 0;
-	let countdownDuration = 6000;
+	let countdownDuration = 4000;
 	let rafId: number | null = null;
 	let isGlitching = $state(false);
 
@@ -50,7 +50,7 @@
 		questionNum++;
 
 		isGlitching = true;
-		setTimeout(() => { isGlitching = false; }, 200);
+		setTimeout(() => { isGlitching = false; }, 100);
 	}
 
 	function play() {
