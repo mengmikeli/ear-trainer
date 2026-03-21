@@ -84,15 +84,15 @@
 	.global-stats {
 		display: flex; justify-content: space-around;
 		padding: 1.25rem; background: var(--surface);
-		border-left: 3px solid var(--marathon-blue);
+		border-left: 3px solid var(--border-heavy);
 	}
 	.stat { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; }
 	.value {
 		font-size: 1.75rem; font-weight: 900;
-		font-family: var(--mono); color: var(--marathon-blue);
+		font-family: var(--mono); color: var(--text-primary);
 	}
 	.label {
-		font-size: 0.55rem; color: var(--marathon-blue);
+		font-size: 0.55rem; color: var(--text-secondary);
 		letter-spacing: 0.2em; font-weight: 400;
 		font-family: var(--font-display);
 	}

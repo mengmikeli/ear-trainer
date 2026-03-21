@@ -88,17 +88,17 @@
 	.stats {
 		display: flex; align-items: center; gap: 1.5rem;
 		padding: 1rem 1.5rem;
-		border: 1px solid rgba(58, 44, 255, 0.25);
+		border: 1px solid var(--border-heavy);
 		background: var(--surface);
 	}
 	.divider { width: 1px; height: 2.5rem; background: var(--border-heavy); }
 	.stat { display: flex; flex-direction: column; align-items: center; gap: 0.1rem; }
 	.value {
 		font-size: 2.5rem; font-weight: 900;
-		font-family: var(--mono); color: var(--marathon-blue);
+		font-family: var(--mono); color: var(--text-primary);
 	}
 	.label {
-		font-size: 0.55rem; color: var(--marathon-blue);
+		font-size: 0.55rem; color: var(--text-secondary);
 		letter-spacing: 0.25em; font-weight: 400;
 		font-family: var(--font-display);
 	}

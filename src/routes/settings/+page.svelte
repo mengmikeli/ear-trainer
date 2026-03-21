@@ -95,16 +95,16 @@
 	.section { display: flex; flex-direction: column; gap: 0.5rem; }
 	.field-label {
 		font-size: 0.6rem; font-weight: 400;
-		letter-spacing: 0.25em; color: var(--marathon-blue);
+		letter-spacing: 0.25em; color: var(--text-secondary);
 		font-family: var(--font-display);
 	}
 	.toggle-group { display: flex; gap: 0.5rem; }
 	.toggle-group button {
 		flex: 1; padding: 0.85rem;
-		background: var(--surface); border: 2px solid var(--marathon-blue);
+		background: var(--surface); border: 2px solid var(--border-heavy);
 		border-radius: 0; font-size: 0.75rem;
 		font-weight: 400; letter-spacing: 0.08em;
-		color: var(--marathon-blue);
+		color: var(--text-secondary);
 		transition: all 0.15s;
 		font-family: var(--font-display);
 	}
