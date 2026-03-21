@@ -166,7 +166,7 @@
 	.section { display: flex; flex-direction: column; gap: 0.5rem; }
 	.field-label {
 		font-size: 0.6rem; font-weight: 400;
-		letter-spacing: 0.25em; color: var(--text-secondary);
+		letter-spacing: 0.25em; color: var(--text-primary);
 		font-family: var(--font-display);
 	}
 	.toggle-group { display: flex; gap: 0.5rem; }
@@ -180,8 +180,8 @@
 		font-family: var(--mono);
 	}
 	.toggle-group button.active {
-		border-color: var(--accent); color: var(--accent);
-		background: var(--accent-dim);
+		border-color: var(--marathon-blue); color: var(--marathon-blue);
+		background: #3A2CFF10;
 	}
 	.danger { margin-top: 2rem; }
 	.reset-btn {
