@@ -62,7 +62,7 @@
 	svg :global(circle),
 	svg :global(line) {
 		stroke: var(--marathon-blue, #3a2cff);
-		stroke-opacity: 0.12;
+		stroke-opacity: 0.35;
 		stroke-width: 0.5;
 	}
 
