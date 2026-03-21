@@ -185,8 +185,8 @@
 		overflow: hidden;
 		padding: 0.85rem; background: var(--surface);
 		border: 2px solid var(--hot); border-radius: 0;
-		color: var(--hot); font-size: 0.75rem;
-		font-weight: 400; letter-spacing: 0.12em;
+		color: var(--hot); font-size: 0.45rem;
+		font-weight: 400; letter-spacing: 0.08em;
 		font-family: var(--mono);
 		width: 100%;
 		touch-action: none;
@@ -201,20 +201,14 @@
 		transform: scaleX(0);
 		transition: none;
 		pointer-events: none;
+		opacity: 0.15;
 	}
 	.reset-text {
 		position: relative;
 		z-index: 1;
 	}
-	.reset-btn.holding {
-		color: var(--base);
-	}
-	.reset-btn.holding .reset-text {
-		text-shadow: -1px 0 var(--accent), 1px 0 var(--hot);
-	}
 	.glitching {
 		animation: reset-shake 60ms infinite;
-		letter-spacing: 0.02em;
 	}
 	.reset-btn.done {
 		border-color: var(--correct);
@@ -222,10 +216,7 @@
 	}
 	.reset-btn.done .reset-fill {
 		background: var(--correct);
-	}
-	.reset-btn.done .reset-text {
-		color: var(--base);
-		font-family: var(--mono);
+		opacity: 0.15;
 	}
 	@keyframes reset-shake {
 		0% { transform: translate(0); }
