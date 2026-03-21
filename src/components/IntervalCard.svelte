@@ -9,6 +9,30 @@
 	let { def, state, ontoggle }: Props = $props();
 
 	const accuracy = $derived(state.attempts > 0 ? Math.round((state.correct / state.attempts) * 100) : 0);
+
+	let toggleGlitch = $state(false);
+	let toggleText = $derived(state.enabled ? '[ON]' : '[OFF]');
+	let displayText = $state('');
+	const glyphs = ['\uE000', '\uE002', '\uE013', '\uE014', '\uE015', '\uE017'];
+
+	$effect(() => {
+		displayText = toggleText;
+	});
+
+	function handleToggle() {
+		if (!ontoggle) return;
+		toggleGlitch = true;
+		let tick = 0;
+		const iv = setInterval(() => {
+			displayText = '[' + glyphs[Math.floor(Math.random() * glyphs.length)] + ']';
+			tick++;
+			if (tick >= 4) {
+				clearInterval(iv);
+				toggleGlitch = false;
+				ontoggle(def.id);
+			}
+		}, 40);
+	}
 </script>
 
 <div class="card" class:locked={!state.unlocked} class:disabled={state.unlocked && !state.enabled}>
@@ -26,8 +50,8 @@
 			{/if}
 		</div>
 		{#if state.unlocked && ontoggle}
-			<button class="toggle" class:toggle-off={!state.enabled} onclick={() => ontoggle?.(def.id)}>
-				{state.enabled ? '[ON]' : '[OFF]'}
+			<button class="toggle" class:toggle-off={!state.enabled} class:glitching={toggleGlitch} onclick={handleToggle}>
+				{displayText}
 			</button>
 		{:else if state.unlocked}
 			<div class="acc-value">{state.attempts > 0 ? `${accuracy}%` : '—'}</div>
@@ -93,5 +117,16 @@
 	.toggle-off {
 		border-color: var(--hot); background: #ED174F10;
 		color: var(--hot);
+	}
+	.toggle.glitching {
+		text-shadow: -1px 0 var(--accent), 1px 0 var(--hot);
+		animation: toggle-shake 40ms infinite;
+	}
+	@keyframes toggle-shake {
+		0% { transform: translate(0); }
+		25% { transform: translate(-1px, 1px); }
+		50% { transform: translate(1px, -1px); }
+		75% { transform: translate(-1px, -1px); }
+		100% { transform: translate(0); }
 	}
 </style>
