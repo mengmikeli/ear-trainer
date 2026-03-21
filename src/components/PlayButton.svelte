@@ -186,10 +186,11 @@
 		position: absolute;
 		width: 150px; height: 150px;
 		pointer-events: none;
-		transition: opacity 0.6s ease-out;
+		transition: opacity 0.6s ease-out, transform 0.6s ease-out;
 	}
 	.wave-rings.fading {
 		opacity: 0;
+		transform: scale(1.4);
 	}
 	.countdown-ring {
 		position: absolute;
