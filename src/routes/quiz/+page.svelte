@@ -262,7 +262,7 @@
 		margin-top: 0.5rem;
 	}
 	.counter {
-		font-size: 0.5rem; font-weight: 800;
+		font-size: 0.4rem; font-weight: 800;
 		font-family: var(--mono); color: var(--marathon-blue);
 		letter-spacing: 0.05em;
 		border: 1px solid var(--marathon-blue);
@@ -270,7 +270,7 @@
 		line-height: 1.6;
 	}
 	.close {
-		font-size: 0.5rem;
+		font-size: 0.4rem;
 		color: var(--marathon-blue);
 		padding: 0 6px;
 		font-weight: 900;
