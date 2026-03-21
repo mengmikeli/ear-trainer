@@ -23,6 +23,8 @@
   }
 
   .tag {
+    display: inline-flex;
+    align-items: center;
     border: 1px solid var(--accent, #C2FE0C);
     padding: 0 6px;
     font-size: 0.4rem;
@@ -34,10 +36,13 @@
   }
 
   .val {
+    display: inline-flex;
+    align-items: center;
     font-size: 0.4rem;
     font-family: var(--mono, 'Matrix Mono', 'JetBrains Mono', monospace);
     color: var(--text-primary, #F0F0F0);
     padding: 0 8px 0 4px;
     white-space: nowrap;
+    line-height: 1.6;
   }
 </style>
