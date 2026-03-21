@@ -11,11 +11,13 @@
 	const accuracy = $derived(istate.attempts > 0 ? Math.round((istate.correct / istate.attempts) * 100) : 0);
 
 	let pendingFlip = $state(false);
-	const isOff = $derived(pendingFlip ? istate.enabled : !istate.enabled);
+	let pressed = $state(false);
+	const isOff = $derived(pressed || pendingFlip ? istate.enabled : !istate.enabled);
 
 	function handleToggle() {
 		if (!ontoggle) return;
 		pendingFlip = true;
+		pressed = false;
 		requestAnimationFrame(() => {
 			ontoggle(def.id);
 			pendingFlip = false;
@@ -38,7 +40,11 @@
 			{/if}
 		</div>
 		{#if istate.unlocked && ontoggle}
-			<button class="toggle" class:toggle-off={isOff} onclick={handleToggle}>
+			<button class="toggle" class:toggle-off={isOff}
+				onpointerdown={() => pressed = true}
+				onpointerup={() => pressed = false}
+				onpointerleave={() => pressed = false}
+				onclick={handleToggle}>
 				{isOff ? '[OFF]' : '[ON]'}
 			</button>
 		{:else if istate.unlocked}
