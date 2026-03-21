@@ -80,8 +80,8 @@ button {
 		0deg,
 		transparent,
 		transparent 2px,
-		rgba(0,0,0,0.03) 2px,
-		rgba(0,0,0,0.03) 4px
+		rgba(0,0,0,0.05) 2px,
+		rgba(0,0,0,0.05) 4px
 	);
 	pointer-events: none;
 	z-index: 1;
@@ -105,4 +105,41 @@ button {
 		-1px 0 rgba(194, 254, 12, 0.4),
 		1px 0 rgba(237, 23, 79, 0.3);
 	letter-spacing: 0.3em;
+}
+
+/* HUD tag utility classes */
+.hud-tag {
+	display: inline-flex;
+	align-items: center;
+	border: 1px solid var(--accent);
+	padding: 0 6px;
+	font-family: var(--mono);
+	font-size: 0.4rem;
+	letter-spacing: 0.05em;
+	color: var(--accent);
+	text-transform: uppercase;
+	white-space: nowrap;
+	line-height: 1.6;
+}
+
+.hud-tag--hot {
+	border-color: var(--hot);
+	color: var(--hot);
+}
+
+.hud-tag--blue {
+	border-color: var(--marathon-blue);
+	color: var(--marathon-blue);
+}
+
+.tick-ruler {
+	height: 4px;
+	background: repeating-linear-gradient(
+		90deg,
+		var(--accent) 0px,
+		var(--accent) 1px,
+		transparent 1px,
+		transparent 8px
+	);
+	opacity: 0.15;
 }
