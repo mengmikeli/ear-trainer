@@ -14,7 +14,7 @@
 	let glitchText = $state('RESET PROGRESS');
 	let glitchInterval: ReturnType<typeof setInterval> | null = null;
 
-	const holdDuration = 2000; // 2s hold to confirm
+	const holdDuration = 3500; // 3.5s hold to confirm
 	const baseText = 'RESET PROGRESS';
 	const glyphs = ['\uE000', '\uE001', '\uE002', '\uE003', '\uE004', '\uE005', '\uE006', '\uE007', '\uE008', '\uE010', '\uE011', '\uE012', '\uE013', '\uE014', '\uE015', '\uE016', '\uE017', '\uE018', '\uE019'];
 
