@@ -127,12 +127,12 @@
 		<svg class="wave-rings" viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg">
 			<defs>
 				<radialGradient id="ring-fade-{burst.id}" cx="50%" cy="50%" r="50%">
-					<stop offset="70%" stop-color="var(--accent)" stop-opacity="0" />
-					<stop offset="85%" stop-color="var(--accent)" stop-opacity="0.4" />
+					<stop offset="60%" stop-color="var(--accent)" stop-opacity="0" />
+					<stop offset="67%" stop-color="var(--accent)" stop-opacity="0.4" />
 					<stop offset="100%" stop-color="var(--accent)" stop-opacity="0" />
 				</radialGradient>
 			</defs>
-			<circle cx="75" cy="75" r="50" fill="url(#ring-fade-{burst.id})"
+			<circle cx="75" cy="75" r="75" fill="url(#ring-fade-{burst.id})"
 				style="transform-origin: {burst.originX}px {burst.originY}px" class="burst-ring" />
 		</svg>
 	{/each}
