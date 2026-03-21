@@ -57,6 +57,8 @@
 		display: block; font-size: 2rem; font-weight: 900;
 		font-family: 'BPdots', 'JetBrains Mono', monospace; letter-spacing: -0.02em;
 		color: var(--accent);
+		line-height: 1;
+		transform: translateY(-1px);
 	}
 	.name {
 		display: block; font-size: 0.65rem; color: var(--text-secondary);
