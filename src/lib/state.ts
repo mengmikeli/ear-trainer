@@ -48,7 +48,12 @@ export function loadState(storage: Storage = localStorage): UserState {
 				parsed.intervals[id].enabled = true;
 			}
 		}
-		return parsed;
+		const result = checkTierUnlock(parsed);
+		// Persist any newly unlocked tiers
+		if (JSON.stringify(result) !== JSON.stringify(parsed)) {
+			try { storage.setItem(STORAGE_KEY, JSON.stringify(result)); } catch {}
+		}
+		return result;
 	} catch {
 		return createDefaultState();
 	}

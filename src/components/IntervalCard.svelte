@@ -17,7 +17,9 @@
 		<div class="id">{state.unlocked ? def.id : '⊘'}</div>
 		<div class="info">
 			<div class="name">{def.name}</div>
-			{#if state.unlocked}
+			{#if state.unlocked && state.attempts === 0}
+				<div class="stats new">NEW</div>
+			{:else if state.unlocked}
 				<div class="stats">{accuracy}% · {state.attempts} {state.attempts === 1 ? 'attempt' : 'attempts'}</div>
 			{:else}
 				<div class="stats">TIER {def.tier} // LOCKED</div>
@@ -28,7 +30,7 @@
 				{state.enabled ? '[ON]' : '[OFF]'}
 			</button>
 		{:else if state.unlocked}
-			<div class="acc-value">{accuracy}%</div>
+			<div class="acc-value">{state.attempts > 0 ? `${accuracy}%` : '—'}</div>
 		{/if}
 	</div>
 </div>
@@ -52,8 +54,8 @@
 		align-items: center; gap: 0.75rem; padding: 0.85rem;
 	}
 	.locked { opacity: 0.4; border-left-color: var(--hot); }
-	.disabled { opacity: 0.35; border-left-color: var(--border-heavy); }
-	.disabled .id { color: var(--text-secondary); }
+	.disabled { opacity: 0.35; border-left-color: var(--hot); }
+	.disabled .id { color: var(--hot); }
 	.disabled .name { color: var(--text-secondary); }
 	.id {
 		font-size: 1.2rem; font-weight: 900;
@@ -63,6 +65,7 @@
 	.locked .id { color: var(--hot); font-size: 2rem; }
 	.name { font-weight: 700; font-size: 0.85rem; letter-spacing: 0.02em; font-family: var(--font-display); }
 	.stats { font-size: 0.65rem; color: var(--text-secondary); font-weight: 600; font-family: var(--mono); letter-spacing: 0.05em; }
+	.new { color: var(--accent); font-weight: 900; letter-spacing: 0.2em; }
 	.acc-value {
 		font-size: 1.1rem; font-weight: 900;
 		font-family: var(--mono); color: var(--accent);
@@ -76,7 +79,7 @@
 		transition: all 0.15s;
 	}
 	.toggle-off {
-		border-color: var(--border-heavy); background: transparent;
-		color: var(--text-secondary);
+		border-color: var(--hot); background: #ED174F10;
+		color: var(--hot);
 	}
 </style>
