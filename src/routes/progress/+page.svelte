@@ -3,6 +3,7 @@
 	import { loadState, saveState } from '$lib/state';
 	import { INTERVALS } from '$lib/intervals';
 	import IntervalCard from '../../components/IntervalCard.svelte';
+	import TelemetryBar from '../../components/TelemetryBar.svelte';
 	import type { UserState } from '$lib/types';
 
 	let state: UserState | null = $state(null);
@@ -18,7 +19,6 @@
 		const s = state.intervals[id];
 		if (!s.unlocked) return;
 
-		// If turning OFF, check minimum 3 enabled
 		if (s.enabled) {
 			const enabledCount = Object.values(state.intervals).filter(i => i.unlocked && i.enabled).length;
 			if (enabledCount <= 3) {
@@ -29,7 +29,6 @@
 		}
 
 		state.intervals[id].enabled = !s.enabled;
-		// Trigger reactivity by reassigning
 		state = { ...state };
 		saveState(state);
 	}
@@ -39,20 +38,11 @@
 	<h2 class="heading">PROGRESS</h2>
 
 	{#if state}
-		<div class="global-stats">
-			<div class="stat">
-				<span class="value">{state.stats.totalSessions}</span>
-				<span class="label">SESSIONS</span>
-			</div>
-			<div class="stat">
-				<span class="value">{state.stats.totalQuestions}</span>
-				<span class="label">QUESTIONS</span>
-			</div>
-			<div class="stat">
-				<span class="value">{state.stats.bestStreak}</span>
-				<span class="label">BEST STREAK</span>
-			</div>
-		</div>
+		<TelemetryBar segments={[
+			{ label: 'SES', value: state.stats.totalSessions },
+			{ label: 'Q', value: state.stats.totalQuestions },
+			{ label: 'BST', value: state.stats.bestStreak }
+		]} />
 
 		{#if minWarning}
 			<div class="min-warn">⚠ MINIMUM 3 INTERVALS REQUIRED</div>
@@ -79,21 +69,6 @@
 		letter-spacing: 0.12em; color: var(--text-primary);
 		padding-bottom: 0.5rem; border-bottom: 2px solid var(--border-heavy);
 		text-transform: uppercase; font-family: var(--font-display);
-	}
-	.global-stats {
-		display: flex; justify-content: space-around;
-		padding: 1.25rem; background: var(--surface);
-		border-left: 3px solid var(--border-heavy);
-	}
-	.stat { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; }
-	.value {
-		font-size: 0.85rem; font-weight: 900;
-		font-family: var(--mono); color: var(--text-primary);
-	}
-	.label {
-		font-size: 0.55rem; color: var(--text-secondary);
-		letter-spacing: 0.2em; font-weight: 400;
-		font-family: var(--font-display);
 	}
 	.interval-list { display: flex; flex-direction: column; gap: 0.5rem; }
 	.min-warn {

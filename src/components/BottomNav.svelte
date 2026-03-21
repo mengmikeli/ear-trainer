@@ -16,26 +16,30 @@
 </script>
 
 <nav class="bottom-nav">
-	{#each tabs as tab}
-		{#if isQuiz && tab.href === '/'}
-			<span class="nav-item active disabled">
-				<span class="icon">{tab.icon}</span>
-				<span class="label">{tab.label}</span>
-			</span>
-		{:else}
-			<a href={tab.href} class:active={isActive(tab.href)}>
-				<span class="icon">{tab.icon}</span>
-				<span class="label">{tab.label}</span>
-			</a>
-		{/if}
-	{/each}
+	<div class="tick-ruler"></div>
+	<div class="nav-tabs">
+		{#each tabs as tab}
+			{#if isQuiz && tab.href === '/'}
+				<span class="nav-item active disabled">
+					<span class="icon">{tab.icon}</span>
+					<span class="label">{tab.label}</span>
+				</span>
+			{:else}
+				<a href={tab.href} class:active={isActive(tab.href)}>
+					<span class="icon">{tab.icon}</span>
+					<span class="label">{tab.label}</span>
+				</a>
+			{/if}
+		{/each}
+	</div>
 </nav>
 
 <style>
 	.bottom-nav {
-		display: flex; justify-content: center; gap: 0;
 		background: var(--surface);
-		border-top: 2px solid var(--border-heavy);
+	}
+	.nav-tabs {
+		display: flex; justify-content: center; gap: 2px;
 	}
 	a, .nav-item {
 		display: flex; flex-direction: column; align-items: center; gap: 0.15rem;
@@ -43,10 +47,12 @@
 		color: var(--text-secondary); font-size: 0.6rem; font-weight: 400;
 		letter-spacing: 0.15em; text-transform: uppercase; transition: all 0.15s;
 		font-family: var(--font-display);
-		border-top: 2px solid transparent;
-		margin-top: -2px;
+		border: 1px solid var(--border-heavy);
 	}
-	a.active, .nav-item.active { color: var(--marathon-blue); border-top: 2px solid var(--marathon-blue); }
+	a.active, .nav-item.active {
+		color: var(--accent);
+		border-color: var(--accent);
+	}
 	.disabled { cursor: default; }
 	.icon { font-size: 1.25rem; font-family: var(--mono); }
 </style>

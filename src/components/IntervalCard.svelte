@@ -20,9 +20,9 @@
 			{#if state.unlocked && state.attempts === 0}
 				<div class="stats new">NEW</div>
 			{:else if state.unlocked}
-				<div class="stats">{accuracy}% · {state.attempts} {state.attempts === 1 ? 'attempt' : 'attempts'}</div>
+				<div class="stats"><span class="acc-tag">{accuracy}%</span> · {state.attempts} {state.attempts === 1 ? 'attempt' : 'attempts'}</div>
 			{:else}
-				<div class="stats">TIER {def.tier} // LOCKED</div>
+				<div class="stats"><span class="tier-tag">T{def.tier}</span> LOCKED</div>
 			{/if}
 		</div>
 		{#if state.unlocked && ontoggle}
@@ -66,6 +66,18 @@
 	.name { font-weight: 400; font-size: 0.85rem; letter-spacing: 0.02em; font-family: var(--font-display); }
 	.stats { font-size: 0.4rem; color: var(--text-secondary); font-weight: 600; font-family: var(--mono); letter-spacing: 0.05em; }
 	.new { color: var(--accent); font-weight: 900; letter-spacing: 0.2em; }
+	.tier-tag {
+		display: inline-flex; align-items: center;
+		border: 1px solid var(--hot); padding: 0 4px;
+		font-size: 0.35rem; font-family: var(--mono);
+		color: var(--hot); margin-right: 4px;
+	}
+	.acc-tag {
+		display: inline-flex; align-items: center;
+		border: 1px solid var(--accent); padding: 0 4px;
+		font-size: 0.35rem; font-family: var(--mono);
+		color: var(--accent);
+	}
 	.acc-value {
 		font-size: 0.7rem; font-weight: 900;
 		font-family: var(--mono); color: var(--text-primary);
