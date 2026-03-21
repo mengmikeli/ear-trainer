@@ -10,7 +10,7 @@
 
 <nav class="bottom-nav">
 	{#each tabs as tab}
-		<a href={tab.href} class="nav-tab chromatic" class:active={page.url.pathname === tab.href}>
+		<a href={tab.href} class:active={page.url.pathname === tab.href}>
 			<span class="icon">{tab.icon}</span>
 			<span class="label">{tab.label}</span>
 		</a>
@@ -19,34 +19,16 @@
 
 <style>
 	.bottom-nav {
-		display: flex;
-		justify-content: center;
+		display: flex; justify-content: center; gap: 0;
 		background: var(--surface);
-		border-top: 1px solid var(--accent);
+		border-top: 2px solid var(--accent);
 	}
-
-	.nav-tab {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 0.15rem;
-		flex: 1;
-		padding: 0.7rem 1rem;
-		color: var(--text-secondary);
-		font-family: var(--font-mono);
-		font-size: 0.55rem;
-		font-weight: 500;
-		letter-spacing: 0.15em;
-		text-transform: uppercase;
-		transition: color 0.15s, background 0.15s;
+	a {
+		display: flex; flex-direction: column; align-items: center; gap: 0.15rem;
+		flex: 1; padding: 0.7rem 1rem;
+		color: var(--text-secondary); font-size: 0.6rem; font-weight: 700;
+		letter-spacing: 0.15em; text-transform: uppercase; transition: all 0.15s;
 	}
-
-	.nav-tab.active {
-		color: var(--accent);
-		background: var(--accent-dim);
-	}
-
-	.icon {
-		font-size: 1.1rem;
-	}
+	a.active { color: var(--accent); background: var(--accent-dim); }
+	.icon { font-size: 1.2rem; }
 </style>

@@ -16,42 +16,33 @@
 
 	function resetProgress() {
 		const fresh = createDefaultState();
-		if (state) fresh.settings = { ...state.settings };
+		if (state) fresh.settings = state.settings; // keep settings
 		state = fresh;
 		saveState(state);
 		showResetConfirm = false;
 	}
 </script>
 
-<div class="settings-page screen-enter">
+<div class="settings-page">
 	<h2 class="heading">SETTINGS</h2>
 
 	{#if state}
 		<div class="section">
-			<span class="field-label">TONE TYPE</span>
+			<label class="field-label">TONE TYPE</label>
 			<div class="toggle-group">
-				<button
-					class="toggle-btn chromatic"
-					class:active={state.settings.toneType === 'sine'}
-					onclick={() => { state!.settings.toneType = 'sine'; update(); }}
-				>SINE</button>
-				<button
-					class="toggle-btn chromatic"
-					class:active={state.settings.toneType === 'piano'}
-					onclick={() => { state!.settings.toneType = 'piano'; update(); }}
-				>PIANO</button>
+				<button class:active={state.settings.toneType === 'sine'}
+					onclick={() => { state!.settings.toneType = 'sine'; update(); }}>SINE</button>
+				<button class:active={state.settings.toneType === 'piano'}
+					onclick={() => { state!.settings.toneType = 'piano'; update(); }}>PIANO</button>
 			</div>
 		</div>
 
 		<div class="section">
-			<span class="field-label">DIRECTION</span>
+			<label class="field-label">DIRECTION</label>
 			<div class="toggle-group">
 				{#each ['ascending', 'descending', 'random'] as dir}
-					<button
-						class="toggle-btn chromatic"
-						class:active={state.settings.direction === dir}
-						onclick={() => { state!.settings.direction = dir as Direction; update(); }}
-					>
+					<button class:active={state.settings.direction === dir}
+						onclick={() => { state!.settings.direction = dir as Direction; update(); }}>
 						{dir.toUpperCase()}
 					</button>
 				{/each}
@@ -59,29 +50,26 @@
 		</div>
 
 		<div class="section">
-			<span class="field-label">SESSION LENGTH</span>
+			<label class="field-label">SESSION LENGTH</label>
 			<div class="toggle-group">
 				{#each [10, 20, 30] as len}
-					<button
-						class="toggle-btn chromatic"
-						class:active={state.settings.sessionLength === len}
-						onclick={() => { state!.settings.sessionLength = len as SessionLength; update(); }}
-					>
+					<button class:active={state.settings.sessionLength === len}
+						onclick={() => { state!.settings.sessionLength = len as SessionLength; update(); }}>
 						{len}
 					</button>
 				{/each}
 			</div>
 		</div>
 
-		<div class="section danger-section">
+		<div class="section danger">
 			{#if showResetConfirm}
-				<p class="warn-text">ERASE ALL PROGRESS?</p>
+				<p class="warn">This will erase all progress. Are you sure?</p>
 				<div class="toggle-group">
-					<button class="toggle-btn danger-btn" onclick={resetProgress}>CONFIRM RESET</button>
-					<button class="toggle-btn" onclick={() => showResetConfirm = false}>CANCEL</button>
+					<button class="reset-yes" onclick={resetProgress}>RESET</button>
+					<button onclick={() => showResetConfirm = false}>CANCEL</button>
 				</div>
 			{:else}
-				<button class="reset-btn chromatic" onclick={() => showResetConfirm = true}>
+				<button class="reset-btn" onclick={() => showResetConfirm = true}>
 					RESET PROGRESS
 				</button>
 			{/if}
@@ -90,97 +78,42 @@
 </div>
 
 <style>
-	.settings-page {
-		display: flex;
-		flex-direction: column;
-		gap: 1.5rem;
-	}
-
+	.settings-page { display: flex; flex-direction: column; gap: 1.5rem; }
 	.heading {
-		font-family: var(--font-display);
-		font-size: 1.5rem;
-		font-weight: 800;
-		letter-spacing: -0.02em;
-		color: var(--accent);
+		font-size: 0.85rem; font-weight: 900;
+		letter-spacing: 0.3em; color: var(--accent);
+		padding-bottom: 0.5rem; border-bottom: 2px solid var(--accent);
 		text-transform: uppercase;
-		padding-bottom: 0.5rem;
-		border-bottom: 1px solid var(--accent);
 	}
-
-	.section {
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-	}
-
+	.section { display: flex; flex-direction: column; gap: 0.5rem; }
 	.field-label {
-		font-family: var(--font-mono);
-		font-size: 0.55rem;
-		font-weight: 700;
-		letter-spacing: 0.2em;
-		color: var(--text-secondary);
+		font-size: 0.6rem; font-weight: 800;
+		letter-spacing: 0.25em; color: var(--text-secondary);
 	}
-
-	.toggle-group {
-		display: flex;
-		gap: 0.5rem;
-	}
-
-	.toggle-btn {
-		flex: 1;
-		padding: 0.85rem;
-		background: var(--surface);
-		border: 1px solid var(--border);
-		font-family: var(--font-mono);
-		font-size: 0.7rem;
-		font-weight: 700;
-		letter-spacing: 0.08em;
+	.toggle-group { display: flex; gap: 0.5rem; }
+	.toggle-group button {
+		flex: 1; padding: 0.85rem;
+		background: var(--surface); border: 2px solid var(--border-heavy);
+		border-radius: 0; font-size: 0.75rem;
+		font-weight: 700; letter-spacing: 0.08em;
 		color: var(--text-secondary);
 		transition: all 0.15s;
 	}
-
-	.toggle-btn.active {
-		border-color: var(--accent);
-		color: var(--accent);
+	.toggle-group button.active {
+		border-color: var(--accent); color: var(--accent);
 		background: var(--accent-dim);
 	}
-
-	.toggle-btn:hover:not(.active) {
-		border-color: var(--border-heavy);
-	}
-
-	.danger-section {
-		margin-top: 2rem;
-	}
-
+	.danger { margin-top: 2rem; }
 	.reset-btn {
-		width: 100%;
-		padding: 0.85rem;
-		background: var(--surface);
-		border: 1px solid var(--hot);
-		font-family: var(--font-mono);
-		font-size: 0.7rem;
-		font-weight: 700;
-		letter-spacing: 0.12em;
-		color: var(--hot);
-		transition: background 0.15s;
+		padding: 0.85rem; background: var(--surface);
+		border: 2px solid var(--hot); border-radius: 0;
+		color: var(--hot); font-size: 0.75rem;
+		font-weight: 900; letter-spacing: 0.12em;
 	}
-
-	.reset-btn:hover {
-		background: var(--hot-dim);
-	}
-
-	.danger-btn {
+	.reset-yes {
 		border-color: var(--hot) !important;
 		color: var(--hot) !important;
-		background: var(--hot-dim) !important;
+		background: #ED174F15 !important;
 	}
-
-	.warn-text {
-		font-family: var(--font-mono);
-		font-size: 0.75rem;
-		font-weight: 700;
-		color: var(--hot);
-		letter-spacing: 0.1em;
-	}
+	.warn { font-size: 0.85rem; color: var(--hot); font-weight: 700; }
 </style>
