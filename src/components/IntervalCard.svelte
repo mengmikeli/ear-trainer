@@ -6,21 +6,18 @@
 		state: IntervalState;
 		ontoggle?: (id: string) => void;
 	}
-	let { def, state, ontoggle }: Props = $props();
+	let { def, state: istate, ontoggle }: Props = $props();
 
-	const accuracy = $derived(state.attempts > 0 ? Math.round((state.correct / state.attempts) * 100) : 0);
+	const accuracy = $derived(istate.attempts > 0 ? Math.round((istate.correct / istate.attempts) * 100) : 0);
 
 	let toggleGlitch = $state(false);
-	let toggleText = $derived(state.enabled ? '[ON]' : '[OFF]');
 	let displayText = $state('');
 	const glyphs = ['\uE000', '\uE002', '\uE013', '\uE014', '\uE015', '\uE017'];
 
-	$effect(() => {
-		displayText = toggleText;
-	});
+	const currentToggleText = $derived(istate.enabled ? '[ON]' : '[OFF]');
 
 	function handleToggle() {
-		if (!ontoggle) return;
+		if (!ontoggle || toggleGlitch) return;
 		toggleGlitch = true;
 		let tick = 0;
 		const iv = setInterval(() => {
@@ -29,32 +26,33 @@
 			if (tick >= 4) {
 				clearInterval(iv);
 				toggleGlitch = false;
+				displayText = '';
 				ontoggle(def.id);
 			}
 		}, 40);
 	}
 </script>
 
-<div class="card" class:locked={!state.unlocked} class:disabled={state.unlocked && !state.enabled}>
-	<div class="card-fill" style="width: {state.unlocked && state.enabled ? accuracy : 0}%"></div>
+<div class="card" class:locked={!istate.unlocked} class:disabled={istate.unlocked && !istate.enabled}>
+	<div class="card-fill" style="width: {istate.unlocked && istate.enabled ? accuracy : 0}%"></div>
 	<div class="card-content">
-		<div class="id">{state.unlocked ? def.id : '⊘'}</div>
+		<div class="id">{istate.unlocked ? def.id : '⊘'}</div>
 		<div class="info">
 			<div class="name">{def.name}</div>
-			{#if state.unlocked && state.attempts === 0}
+			{#if istate.unlocked && istate.attempts === 0}
 				<div class="stats new">NEW</div>
-			{:else if state.unlocked}
-				<div class="stats"><span class="acc-tag">{accuracy}%</span> · {state.attempts} {state.attempts === 1 ? 'attempt' : 'attempts'}</div>
+			{:else if istate.unlocked}
+				<div class="stats"><span class="acc-tag">{accuracy}%</span> · {istate.attempts} {istate.attempts === 1 ? 'attempt' : 'attempts'}</div>
 			{:else}
 				<div class="stats"><span class="tier-tag">T{def.tier}</span> LOCKED</div>
 			{/if}
 		</div>
-		{#if state.unlocked && ontoggle}
-			<button class="toggle" class:toggle-off={!state.enabled} class:glitching={toggleGlitch} onclick={handleToggle}>
-				{displayText}
+		{#if istate.unlocked && ontoggle}
+			<button class="toggle" class:toggle-off={!istate.enabled} class:glitching={toggleGlitch} onclick={handleToggle}>
+				{displayText || currentToggleText}
 			</button>
-		{:else if state.unlocked}
-			<div class="acc-value">{state.attempts > 0 ? `${accuracy}%` : '—'}</div>
+		{:else if istate.unlocked}
+			<div class="acc-value">{istate.attempts > 0 ? `${accuracy}%` : '—'}</div>
 		{/if}
 	</div>
 </div>
