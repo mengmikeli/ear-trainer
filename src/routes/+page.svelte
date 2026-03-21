@@ -44,32 +44,36 @@
 <style>
 	.home {
 		display: flex; flex-direction: column; align-items: center;
-		justify-content: center; height: 100%; gap: 2.5rem; text-align: center;
+		justify-content: center; height: 100%; gap: 3rem; text-align: center;
 	}
 	.title {
-		font-size: 3rem; font-weight: 700; letter-spacing: -0.03em;
-		line-height: 1; color: var(--text-primary);
+		font-size: 4.5rem; font-weight: 900; letter-spacing: -0.04em;
+		line-height: 0.9; color: var(--text-primary); text-transform: uppercase;
 	}
 	.version {
-		font-size: 0.7rem; color: var(--text-secondary);
-		font-family: 'SF Mono', 'Fira Code', monospace;
+		display: inline-block; margin-top: 0.5rem;
+		font-size: 0.65rem; color: var(--text-secondary);
+		font-family: var(--mono);
+		letter-spacing: 0.2em;
+		border: 1px solid var(--border); padding: 0.15rem 0.5rem;
 	}
 	.stats { display: flex; gap: 3rem; }
-	.stat { display: flex; flex-direction: column; align-items: center; }
+	.stat { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; }
 	.value {
-		font-size: 2rem; font-weight: 700;
-		font-family: 'SF Mono', 'Fira Code', monospace;
+		font-size: 2.25rem; font-weight: 800;
+		font-family: var(--mono); color: var(--accent);
 	}
 	.label {
 		font-size: 0.6rem; color: var(--text-secondary);
-		letter-spacing: 0.15em; font-weight: 600;
+		letter-spacing: 0.2em; font-weight: 700;
 	}
 	.start-btn {
 		display: flex; align-items: center; justify-content: center;
 		width: 180px; height: 180px; border-radius: 50%;
-		background: var(--surface); border: 2px solid var(--accent);
-		color: var(--accent); font-size: 1.1rem; font-weight: 700;
-		letter-spacing: 0.05em; transition: transform 0.1s;
+		background: var(--accent); border: 3px solid var(--accent);
+		color: var(--base); font-size: 1.2rem; font-weight: 800;
+		letter-spacing: 0.08em; transition: transform 0.1s, opacity 0.15s;
+		text-transform: uppercase;
 	}
-	.start-btn:active { transform: scale(0.95); }
+	.start-btn:active { transform: scale(0.93); opacity: 0.9; }
 </style>

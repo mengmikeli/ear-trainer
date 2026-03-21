@@ -30,13 +30,21 @@
 <style>
 	.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; width: 100%; }
 	.answer {
-		padding: 1.25rem 0.5rem; background: var(--surface); border: 1px solid #333;
-		border-radius: 4px; text-align: center; transition: border-color 0.15s, background 0.15s;
+		padding: 1.25rem 0.5rem; background: var(--surface);
+		border: 2px solid var(--border-heavy); border-radius: 2px;
+		text-align: center; transition: border-color 0.15s, background 0.15s;
 	}
-	.answer:not(:disabled):active { background: #252525; }
-	.id { display: block; font-size: 1.25rem; font-weight: 700; font-family: 'SF Mono', 'Fira Code', monospace; letter-spacing: -0.02em; }
-	.name { display: block; font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem; }
-	.correct { border-color: var(--correct); background: #00ff8810; }
-	.wrong { border-color: var(--wrong); background: #ff335510; }
-	.dim { opacity: 0.3; }
+	.answer:not(:disabled):active { background: var(--surface-raised); border-color: var(--accent); }
+	.id {
+		display: block; font-size: 1.5rem; font-weight: 800;
+		font-family: var(--mono); letter-spacing: -0.02em;
+	}
+	.name {
+		display: block; font-size: 0.7rem; color: var(--text-secondary);
+		margin-top: 0.2rem; letter-spacing: 0.05em; font-weight: 600;
+		text-transform: uppercase;
+	}
+	.correct { border-color: var(--correct); background: #00ff8812; }
+	.wrong { border-color: var(--wrong); background: #ff335512; }
+	.dim { opacity: 0.25; }
 </style>

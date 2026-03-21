@@ -19,14 +19,16 @@
 
 <style>
 	.bottom-nav {
-		display: flex; justify-content: center; gap: 2rem;
-		padding: 0.75rem 1rem; background: var(--surface); border-top: 1px solid #222;
+		display: flex; justify-content: center; gap: 0;
+		background: var(--surface); border-top: 2px solid var(--border-heavy);
 	}
 	a {
-		display: flex; flex-direction: column; align-items: center; gap: 0.2rem;
-		color: var(--text-secondary); font-size: 0.65rem; font-weight: 600;
-		letter-spacing: 0.1em; text-transform: uppercase; transition: color 0.15s;
+		display: flex; flex-direction: column; align-items: center; gap: 0.15rem;
+		flex: 1; padding: 0.75rem 1rem;
+		color: var(--text-secondary); font-size: 0.6rem; font-weight: 700;
+		letter-spacing: 0.15em; text-transform: uppercase; transition: all 0.15s;
+		border-top: 2px solid transparent; margin-top: -2px;
 	}
-	a.active { color: var(--accent); }
-	.icon { font-size: 1.25rem; }
+	a.active { color: var(--accent); border-top-color: var(--accent); background: var(--accent-dim); }
+	.icon { font-size: 1.2rem; }
 </style>

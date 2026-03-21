@@ -25,11 +25,21 @@
 </div>
 
 <style>
-	.card { display: grid; grid-template-columns: 3rem 1fr 60px; align-items: center; gap: 0.75rem; padding: 0.75rem; background: var(--surface); border-radius: 4px; }
-	.locked { opacity: 0.4; }
-	.id { font-size: 1.1rem; font-weight: 700; font-family: 'SF Mono', 'Fira Code', monospace; text-align: center; }
-	.name { font-weight: 600; font-size: 0.9rem; }
-	.stats { font-size: 0.75rem; color: var(--text-secondary); }
-	.bar { height: 4px; background: #222; border-radius: 2px; overflow: hidden; }
+	.card {
+		display: grid; grid-template-columns: 3.5rem 1fr 70px;
+		align-items: center; gap: 0.75rem; padding: 0.85rem;
+		background: var(--surface); border: 1px solid var(--border);
+		border-radius: 2px;
+	}
+	.locked { opacity: 0.35; }
+	.id {
+		font-size: 1.2rem; font-weight: 800;
+		font-family: var(--mono); text-align: center;
+		color: var(--accent);
+	}
+	.locked .id { color: var(--text-secondary); }
+	.name { font-weight: 700; font-size: 0.85rem; letter-spacing: 0.02em; }
+	.stats { font-size: 0.7rem; color: var(--text-secondary); font-weight: 600; }
+	.bar { height: 6px; background: var(--border); border-radius: 1px; overflow: hidden; }
 	.bar-fill { height: 100%; background: var(--accent); }
 </style>

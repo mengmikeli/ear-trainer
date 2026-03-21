@@ -40,23 +40,25 @@
 </div>
 
 <style>
-	.progress-page { display: flex; flex-direction: column; gap: 1.5rem; }
+	.progress-page { display: flex; flex-direction: column; gap: 1.25rem; }
 	.heading {
-		font-size: 0.75rem; font-weight: 700;
-		letter-spacing: 0.15em; color: var(--text-secondary);
+		font-size: 0.8rem; font-weight: 800;
+		letter-spacing: 0.2em; color: var(--text-secondary);
+		padding-bottom: 0.5rem; border-bottom: 2px solid var(--border);
 	}
 	.global-stats {
 		display: flex; justify-content: space-around;
-		padding: 1rem; background: var(--surface); border-radius: 4px;
+		padding: 1.25rem; background: var(--surface);
+		border: 1px solid var(--border); border-radius: 2px;
 	}
-	.stat { display: flex; flex-direction: column; align-items: center; }
+	.stat { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; }
 	.value {
-		font-size: 1.5rem; font-weight: 700;
-		font-family: 'SF Mono', 'Fira Code', monospace;
+		font-size: 1.75rem; font-weight: 800;
+		font-family: var(--mono); color: var(--accent);
 	}
 	.label {
 		font-size: 0.55rem; color: var(--text-secondary);
-		letter-spacing: 0.15em; font-weight: 600;
+		letter-spacing: 0.2em; font-weight: 700;
 	}
 	.interval-list { display: flex; flex-direction: column; gap: 0.5rem; }
 </style>

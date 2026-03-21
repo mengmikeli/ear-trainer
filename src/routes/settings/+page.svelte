@@ -80,36 +80,39 @@
 <style>
 	.settings-page { display: flex; flex-direction: column; gap: 1.5rem; }
 	.heading {
-		font-size: 0.75rem; font-weight: 700;
-		letter-spacing: 0.15em; color: var(--text-secondary);
+		font-size: 0.8rem; font-weight: 800;
+		letter-spacing: 0.2em; color: var(--text-secondary);
+		padding-bottom: 0.5rem; border-bottom: 2px solid var(--border);
 	}
 	.section { display: flex; flex-direction: column; gap: 0.5rem; }
 	.field-label {
-		font-size: 0.6rem; font-weight: 700;
-		letter-spacing: 0.15em; color: var(--text-secondary);
+		font-size: 0.6rem; font-weight: 800;
+		letter-spacing: 0.2em; color: var(--text-secondary);
 	}
 	.toggle-group { display: flex; gap: 0.5rem; }
 	.toggle-group button {
-		flex: 1; padding: 0.75rem;
-		background: var(--surface); border: 1px solid #333;
-		border-radius: 4px; font-size: 0.75rem;
-		font-weight: 600; letter-spacing: 0.05em;
+		flex: 1; padding: 0.85rem;
+		background: var(--surface); border: 2px solid var(--border-heavy);
+		border-radius: 2px; font-size: 0.75rem;
+		font-weight: 700; letter-spacing: 0.08em;
 		color: var(--text-secondary);
-		transition: border-color 0.15s, color 0.15s;
+		transition: all 0.15s;
 	}
 	.toggle-group button.active {
 		border-color: var(--accent); color: var(--accent);
+		background: var(--accent-dim);
 	}
 	.danger { margin-top: 2rem; }
 	.reset-btn {
-		padding: 0.75rem; background: var(--surface);
-		border: 1px solid var(--wrong); border-radius: 4px;
+		padding: 0.85rem; background: var(--surface);
+		border: 2px solid var(--wrong); border-radius: 2px;
 		color: var(--wrong); font-size: 0.75rem;
-		font-weight: 700; letter-spacing: 0.1em;
+		font-weight: 800; letter-spacing: 0.12em;
 	}
 	.reset-yes {
 		border-color: var(--wrong) !important;
 		color: var(--wrong) !important;
+		background: #ff335515 !important;
 	}
-	.warn { font-size: 0.8rem; color: var(--wrong); }
+	.warn { font-size: 0.85rem; color: var(--wrong); font-weight: 700; }
 </style>

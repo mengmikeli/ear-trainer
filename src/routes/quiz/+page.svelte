@@ -179,9 +179,10 @@
 		width: 100%;
 	}
 	.close {
-		font-size: 1.25rem;
+		font-size: 1.5rem;
 		color: var(--text-secondary);
 		padding: 0.25rem;
+		font-weight: 700;
 	}
 	.play-area {
 		display: flex;

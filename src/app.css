@@ -1,12 +1,18 @@
 :root {
 	--base: #0A0A0A;
-	--surface: #1A1A1A;
-	--text-primary: #E8E8E8;
-	--text-secondary: #666666;
+	--surface: #151515;
+	--surface-raised: #1E1E1E;
+	--border: #2A2A2A;
+	--border-heavy: #444444;
+	--text-primary: #F0F0F0;
+	--text-secondary: #777777;
 	--accent: #00D4FF;
+	--accent-dim: #00D4FF22;
+	--hot: #FF2D78;
 	--correct: #00FF88;
 	--wrong: #FF3355;
-	--font: 'Inter', 'Barlow', system-ui, -apple-system, sans-serif;
+	--font: 'Inter', system-ui, -apple-system, sans-serif;
+	--mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -17,7 +23,7 @@ html, body {
 	color: var(--text-primary);
 	font-family: var(--font);
 	font-size: 16px;
-	line-height: 1.5;
+	line-height: 1.4;
 	-webkit-font-smoothing: antialiased;
 }
 
