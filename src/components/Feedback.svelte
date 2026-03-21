@@ -21,7 +21,8 @@
 <style>
 	.feedback {
 		position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-		display: flex; flex-direction: column; align-items: center; justify-content: center;
+		display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+		padding-top: 25vh;
 		pointer-events: none; z-index: 100; animation: flash 0.25s ease-out;
 	}
 	.correct { background: #C2FE0C12; }
@@ -30,7 +31,7 @@
 		display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
 	}
 	.icon-char {
-		font-size: 5rem; font-weight: 900; font-family: var(--mono);
+		font-size: 3.5rem; font-weight: 900; font-family: var(--mono);
 	}
 	.correct .icon-char { color: var(--correct); text-shadow: 0 0 40px #C2FE0C50; }
 	.wrong .icon-char { color: var(--wrong); text-shadow: 0 0 40px #ED174F50; }
