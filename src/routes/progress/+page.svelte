@@ -87,7 +87,7 @@
 	}
 	.stat { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; }
 	.value {
-		font-size: 1rem; font-weight: 900;
+		font-size: 0.85rem; font-weight: 900;
 		font-family: var(--mono); color: var(--text-primary);
 	}
 	.label {
@@ -97,7 +97,7 @@
 	}
 	.interval-list { display: flex; flex-direction: column; gap: 0.5rem; }
 	.min-warn {
-		font-family: var(--mono); font-size: 0.55rem; font-weight: 900;
+		font-family: var(--mono); font-size: 0.45rem; font-weight: 900;
 		color: var(--hot); letter-spacing: 0.15em; text-align: center;
 		padding: 0.5rem; border: 1px solid var(--hot);
 		background: #ED174F10; animation: flash 0.2s ease-out;

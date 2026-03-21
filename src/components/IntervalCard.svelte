@@ -67,7 +67,7 @@
 	.stats { font-size: 0.4rem; color: var(--text-secondary); font-weight: 600; font-family: var(--mono); letter-spacing: 0.05em; }
 	.new { color: var(--accent); font-weight: 900; letter-spacing: 0.2em; }
 	.acc-value {
-		font-size: 0.85rem; font-weight: 900;
+		font-size: 0.7rem; font-weight: 900;
 		font-family: var(--mono); color: var(--text-primary);
 		letter-spacing: -0.02em;
 	}
