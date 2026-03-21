@@ -22,6 +22,11 @@
 	let startTime = $state(0);
 	let sessionCorrect = $state(0);
 	let isPlaying = $state(false);
+	let inResultMode = $state(false);
+	let countdownPct = $state(1.0);
+	let countdownStart = 0;
+	let countdownDuration = 8000;
+	let rafId: number | null = null;
 
 	onMount(() => {
 		state = loadState();
@@ -30,6 +35,8 @@
 	});
 
 	function nextQuestion() {
+		inResultMode = false;
+		if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
 		if (!state) return;
 		if (questionNum >= totalQuestions) {
 			finishSession();
@@ -39,6 +46,7 @@
 		hasPlayed = false;
 		selectedId = null;
 		showFeedback = false;
+		countdownPct = 1.0;
 		questionNum++;
 	}
 
@@ -101,8 +109,38 @@
 		state.stats.totalQuestions++;
 		saveState(state);
 
-		// Auto-advance after delay
-		setTimeout(() => nextQuestion(), correct ? 1000 : 2000);
+		if (correct) {
+			setTimeout(() => { showFeedback = false; }, 400);
+			setTimeout(() => nextQuestion(), 1500);
+		} else {
+			setTimeout(() => { showFeedback = false; }, 400);
+			enterResultMode();
+		}
+	}
+
+	function enterResultMode() {
+		inResultMode = true;
+		countdownStart = performance.now();
+		countdownDuration = 8000;
+		countdownPct = 1.0;
+		rafId = requestAnimationFrame(tickCountdown);
+	}
+
+	function tickCountdown(now: number) {
+		const elapsed = now - countdownStart;
+		countdownPct = Math.max(0, 1 - elapsed / countdownDuration);
+		if (countdownPct <= 0) {
+			inResultMode = false;
+			nextQuestion();
+			return;
+		}
+		rafId = requestAnimationFrame(tickCountdown);
+	}
+
+	function replayInResult() {
+		play();
+		countdownStart = performance.now();
+		countdownPct = 1.0;
 	}
 
 	function finishSession() {
@@ -144,14 +182,31 @@
 			<ProgressBar current={questionNum} total={totalQuestions} />
 		</div>
 		<div class="top-controls">
-			<button class="close" onclick={endEarly}>[×]</button>
+			{#if inResultMode}
+				<button class="close" onclick={nextQuestion}>[→]</button>
+			{:else}
+				<button class="close" onclick={endEarly}>[×]</button>
+			{/if}
 			<span class="counter">{questionNum}/{totalQuestions}</span>
 		</div>
 	</div>
 
 	{#if question}
 		<div class="play-area">
-			{#if !hasPlayed}
+			{#if inResultMode}
+				<div class="countdown-wrapper">
+					<svg class="countdown-ring" viewBox="0 0 160 160">
+						<circle cx="80" cy="80" r="74"
+							stroke={countdownPct < 0.25 ? 'var(--hot)' : 'var(--marathon-blue)'}
+							stroke-width="3" fill="none"
+							stroke-dasharray={2 * Math.PI * 74}
+							stroke-dashoffset={2 * Math.PI * 74 * (1 - countdownPct)}
+							transform="rotate(-90 80 80)"
+						/>
+					</svg>
+					<PlayButton onplay={replayInResult} replaying={true} playing={isPlaying} />
+				</div>
+			{:else if !hasPlayed}
 				<PlayButton onplay={play} playing={isPlaying} />
 			{:else}
 				<PlayButton onplay={play} replaying={true} playing={isPlaying} />
@@ -235,5 +290,18 @@
 		gap: 1rem;
 		flex: 1;
 		justify-content: center;
+	}
+	.countdown-wrapper {
+		position: relative;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+	.countdown-ring {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		pointer-events: none;
 	}
 </style>
