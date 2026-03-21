@@ -27,6 +27,7 @@
 	let countdownStart = 0;
 	let countdownDuration = 8000;
 	let rafId: number | null = null;
+	let isGlitching = $state(false);
 
 	onMount(() => {
 		state = loadState();
@@ -35,6 +36,7 @@
 	});
 
 	function nextQuestion() {
+		const wasInResult = inResultMode;
 		inResultMode = false;
 		if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
 		if (!state) return;
@@ -48,6 +50,11 @@
 		showFeedback = false;
 		countdownPct = 1.0;
 		questionNum++;
+
+		if (wasInResult) {
+			isGlitching = true;
+			setTimeout(() => { isGlitching = false; }, 300);
+		}
 	}
 
 	function play() {
@@ -195,21 +202,21 @@
 		<div class="play-area">
 			{#if inResultMode}
 				<div class="countdown-wrapper">
-					<svg class="countdown-ring" viewBox="0 0 160 160">
-						<circle cx="80" cy="80" r="74"
+					<svg class="countdown-ring" viewBox="0 0 100 100">
+						<circle cx="50" cy="50" r="48"
 							stroke={countdownPct < 0.25 ? 'var(--hot)' : 'var(--marathon-blue)'}
-							stroke-width="3" fill="none"
-							stroke-dasharray={2 * Math.PI * 74}
-							stroke-dashoffset={2 * Math.PI * 74 * (1 - countdownPct)}
-							transform="rotate(-90 80 80)"
+							stroke-width="2" fill="none"
+							stroke-dasharray={2 * Math.PI * 48}
+							stroke-dashoffset={2 * Math.PI * 48 * (1 - countdownPct)}
+							transform="rotate(-90 50 50)"
 						/>
 					</svg>
-					<PlayButton onplay={replayInResult} replaying={true} playing={isPlaying} />
+					<PlayButton onplay={replayInResult} replaying={true} playing={isPlaying} noBorder={true} questionNum={questionNum} />
 				</div>
 			{:else if !hasPlayed}
-				<PlayButton onplay={play} playing={isPlaying} />
+				<PlayButton onplay={play} playing={isPlaying} questionNum={questionNum} glitching={isGlitching} />
 			{:else}
-				<PlayButton onplay={play} replaying={true} playing={isPlaying} />
+				<PlayButton onplay={play} replaying={true} playing={isPlaying} questionNum={questionNum} />
 			{/if}
 		</div>
 
@@ -220,6 +227,7 @@
 				disabled={!!selectedId}
 				correctId={selectedId ? question.interval.id : null}
 				{selectedId}
+				onCorrectClick={inResultMode ? nextQuestion : null}
 			/>
 		{/if}
 	{/if}
@@ -293,6 +301,8 @@
 	}
 	.countdown-wrapper {
 		position: relative;
+		width: 100px;
+		height: 100px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -300,8 +310,8 @@
 	.countdown-ring {
 		position: absolute;
 		inset: 0;
-		width: 100%;
-		height: 100%;
+		width: 100px;
+		height: 100px;
 		pointer-events: none;
 	}
 </style>

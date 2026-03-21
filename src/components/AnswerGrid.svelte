@@ -7,8 +7,9 @@
 		disabled?: boolean;
 		correctId?: string | null;
 		selectedId?: string | null;
+		onCorrectClick?: (() => void) | null;
 	}
-	let { choices, onselect, disabled = false, correctId = null, selectedId = null }: Props = $props();
+	let { choices, onselect, disabled = false, correctId = null, selectedId = null, onCorrectClick = null }: Props = $props();
 
 	function btnClass(id: string): string {
 		if (!selectedId) return '';
@@ -20,7 +21,18 @@
 
 <div class="grid">
 	{#each choices as choice}
-		<button class="answer {btnClass(choice.id)}" onclick={() => onselect(choice)} disabled={disabled}>
+		{@const isCorrectBtn = correctId != null && choice.id === correctId}
+		<button
+			class="answer {btnClass(choice.id)}"
+			onclick={() => {
+				if (isCorrectBtn && onCorrectClick) {
+					onCorrectClick();
+				} else {
+					onselect(choice);
+				}
+			}}
+			disabled={isCorrectBtn && onCorrectClick ? false : disabled}
+		>
 			<span class="id">{choice.id}</span>
 			<span class="name">{choice.name}</span>
 		</button>
