@@ -138,6 +138,7 @@
 </script>
 
 <div class="quiz">
+	<h2 class="heading">PRACTICE</h2>
 	<div class="top">
 		<button class="close" onclick={endEarly}>[×]</button>
 		<ProgressBar current={questionNum} total={totalQuestions} />
@@ -177,6 +178,13 @@
 		align-items: center;
 		height: 100%;
 		gap: 2rem;
+	}
+	.heading {
+		font-size: 3rem; font-weight: 400;
+		letter-spacing: 0.12em; color: var(--text-primary);
+		padding-bottom: 0.5rem; border-bottom: 2px solid var(--border-heavy);
+		text-transform: uppercase; font-family: var(--font-display);
+		width: 100%;
 	}
 	.top {
 		display: flex;
