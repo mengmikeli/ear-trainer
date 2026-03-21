@@ -16,9 +16,10 @@
 
 	// Map semitones (0-12) to angle: 0=top (P1), clockwise
 	const ringAngle = $derived((semitones / 12) * 360);
-	// Shift transform-origin opposite to interval direction so scale biases toward it
-	const originX = $derived(75 - Math.sin(ringAngle * Math.PI / 180) * 15);
-	const originY = $derived(75 + Math.cos(ringAngle * Math.PI / 180) * 15);
+	// Offset strength scales with semitones — P1 (0) has no bias, TT (6) has max
+	const biasStrength = $derived((semitones / 12) * 15);
+	const originX = $derived(75 - Math.sin(ringAngle * Math.PI / 180) * biasStrength);
+	const originY = $derived(75 + Math.cos(ringAngle * Math.PI / 180) * biasStrength);
 
 	let phase = $state(0);
 	let animFrame: number | null = null;
