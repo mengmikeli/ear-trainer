@@ -51,13 +51,13 @@
 }
 
 [data-theme="light"] {
-	--base: #D0D0D0;
-	--surface: #C6C6C6;
-	--surface-raised: #BCBCBC;
-	--border: #A8A8A8;
-	--border-heavy: #888888;
-	--text-primary: #111111;
-	--text-secondary: #444444;
+	--base: #B8B8B8;
+	--surface: #AEAEAE;
+	--surface-raised: #A4A4A4;
+	--border: #929292;
+	--border-heavy: #707070;
+	--text-primary: #0A0A0A;
+	--text-secondary: #383838;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -160,4 +160,15 @@ button {
 		transparent 8px
 	);
 	opacity: 0.15;
+}
+
+[data-theme="light"] .tick-ruler {
+	background: repeating-linear-gradient(
+		90deg,
+		var(--text-primary) 0px,
+		var(--text-primary) 1px,
+		transparent 1px,
+		transparent 8px
+	);
+	opacity: 0.2;
 }
