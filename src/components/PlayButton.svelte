@@ -165,6 +165,7 @@
 		class="play-btn"
 		class:replay={replaying}
 		class:no-border={noBorder}
+		class:pulsing={playing}
 		class:glitch-text={glitching}
 		class:feedback-correct={feedbackCorrect}
 		class:feedback-wrong={feedbackWrong}
@@ -224,12 +225,30 @@
 		width: 100px; height: 100px; border-radius: 50%;
 		background: var(--accent); border: none;
 		color: var(--base); font-size: 1rem; font-weight: 700;
-		letter-spacing: 0.05em; transition: transform 0.1s, opacity 0.15s;
+		letter-spacing: 0.05em; transition: transform 0.3s ease-out, opacity 0.15s;
 		font-family: var(--mono);
 		display: flex; align-items: center; justify-content: center;
 		text-align: center; line-height: 1;
 	}
 	.play-btn:active { transform: scale(0.93); opacity: 0.9; }
+	.pulsing {
+		animation: btn-pulse 1.5s ease-in-out;
+	}
+	@keyframes btn-pulse {
+		/* Note 1 attack */
+		0% { transform: scale(1); }
+		5% { transform: scale(1.08); }
+		/* Note 1 sustain + decay */
+		30% { transform: scale(1.04); }
+		/* Gap — settle */
+		48% { transform: scale(1); }
+		/* Note 2 attack */
+		55% { transform: scale(1.08); }
+		/* Note 2 sustain + decay */
+		80% { transform: scale(1.04); }
+		/* Return to rest */
+		100% { transform: scale(1); }
+	}
 	.replay {
 		background: transparent; border: 2px solid var(--accent);
 		color: var(--accent);
