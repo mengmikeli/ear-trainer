@@ -1,25 +1,86 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { loadState, saveState, createDefaultState } from '$lib/state';
 	import type { UserState, ToneType, Direction, SessionLength } from '$lib/types';
 
 	let state: UserState | null = $state(null);
-	let showResetConfirm = $state(false);
+
+	// Long-press reset
+	let holdProgress = $state(0);
+	let holdActive = $state(false);
+	let holdStart = 0;
+	let holdRaf: number | null = null;
+	let resetDone = $state(false);
+	let glitchText = $state('RESET PROGRESS');
+	let glitchInterval: ReturnType<typeof setInterval> | null = null;
+
+	const holdDuration = 2000; // 2s hold to confirm
+	const glyphs = ['\uE000', '\uE001', '\uE002', '\uE003', '\uE004', '\uE005', '\uE006', '\uE007', '\uE008', '\uE010', '\uE011', '\uE012', '\uE013', '\uE014', '\uE015', '\uE016', '\uE017', '\uE018', '\uE019'];
+
+	function randomGlitchText(): string {
+		const len = 6 + Math.floor(Math.random() * 4);
+		return Array.from({ length: len }, () => glyphs[Math.floor(Math.random() * glyphs.length)]).join('');
+	}
 
 	onMount(() => {
 		state = loadState();
+	});
+
+	onDestroy(() => {
+		cancelHold();
 	});
 
 	function update() {
 		if (state) saveState(state);
 	}
 
-	function resetProgress() {
+	function startHold() {
+		if (resetDone) return;
+		holdActive = true;
+		holdStart = performance.now();
+		holdProgress = 0;
+		glitchInterval = setInterval(() => {
+			glitchText = randomGlitchText();
+		}, 60);
+		holdRaf = requestAnimationFrame(tickHold);
+	}
+
+	function tickHold(now: number) {
+		const elapsed = now - holdStart;
+		holdProgress = Math.min(1, elapsed / holdDuration);
+		if (holdProgress >= 1) {
+			executeReset();
+			return;
+		}
+		holdRaf = requestAnimationFrame(tickHold);
+	}
+
+	function cancelHold() {
+		holdActive = false;
+		holdProgress = 0;
+		glitchText = 'RESET PROGRESS';
+		if (holdRaf) { cancelAnimationFrame(holdRaf); holdRaf = null; }
+		if (glitchInterval) { clearInterval(glitchInterval); glitchInterval = null; }
+	}
+
+	function executeReset() {
+		holdActive = false;
+		if (holdRaf) { cancelAnimationFrame(holdRaf); holdRaf = null; }
+		if (glitchInterval) { clearInterval(glitchInterval); glitchInterval = null; }
+
 		const fresh = createDefaultState();
-		if (state) fresh.settings = state.settings; // keep settings
+		if (state) fresh.settings = state.settings;
 		state = fresh;
 		saveState(state);
-		showResetConfirm = false;
+
+		resetDone = true;
+		glitchText = '\uE018 RESET \uE018';
+		holdProgress = 1;
+		setTimeout(() => {
+			resetDone = false;
+			holdProgress = 0;
+			glitchText = 'RESET PROGRESS';
+		}, 2000);
 	}
 </script>
 
@@ -62,17 +123,18 @@
 		</div>
 
 		<div class="section danger">
-			{#if showResetConfirm}
-				<p class="warn">This will erase all progress. Are you sure?</p>
-				<div class="toggle-group">
-					<button class="reset-yes" onclick={resetProgress}>RESET</button>
-					<button onclick={() => showResetConfirm = false}>CANCEL</button>
-				</div>
-			{:else}
-				<button class="reset-btn" onclick={() => showResetConfirm = true}>
-					RESET PROGRESS
-				</button>
-			{/if}
+			<button
+				class="reset-btn"
+				class:holding={holdActive}
+				class:done={resetDone}
+				onpointerdown={startHold}
+				onpointerup={cancelHold}
+				onpointerleave={cancelHold}
+				oncontextmenu={(e) => e.preventDefault()}
+			>
+				<div class="reset-fill" style="transform: scaleX({holdProgress})"></div>
+				<span class="reset-text" class:glitching={holdActive}>{glitchText}</span>
+			</button>
 		</div>
 	{/if}
 </div>
@@ -113,16 +175,58 @@
 	}
 	.danger { margin-top: 2rem; }
 	.reset-btn {
+		position: relative;
+		overflow: hidden;
 		padding: 0.85rem; background: var(--surface);
 		border: 2px solid var(--hot); border-radius: 0;
 		color: var(--hot); font-size: 0.75rem;
 		font-weight: 400; letter-spacing: 0.12em;
 		font-family: var(--font-display);
+		width: 100%;
+		touch-action: none;
+		user-select: none;
+		-webkit-user-select: none;
 	}
-	.reset-yes {
-		border-color: var(--hot) !important;
-		color: var(--hot) !important;
-		background: #ED174F15 !important;
+	.reset-fill {
+		position: absolute;
+		inset: 0;
+		background: var(--hot);
+		transform-origin: left;
+		transform: scaleX(0);
+		transition: none;
+		pointer-events: none;
 	}
-	.warn { font-size: 0.85rem; color: var(--hot); font-weight: 700; }
+	.reset-text {
+		position: relative;
+		z-index: 1;
+	}
+	.reset-btn.holding {
+		color: var(--base);
+	}
+	.reset-btn.holding .reset-text {
+		text-shadow: -1px 0 var(--accent), 1px 0 var(--hot);
+	}
+	.glitching {
+		animation: reset-shake 60ms infinite;
+		font-family: var(--mono);
+		letter-spacing: 0.02em;
+	}
+	.reset-btn.done {
+		border-color: var(--correct);
+		color: var(--correct);
+	}
+	.reset-btn.done .reset-fill {
+		background: var(--correct);
+	}
+	.reset-btn.done .reset-text {
+		color: var(--base);
+		font-family: var(--mono);
+	}
+	@keyframes reset-shake {
+		0% { transform: translate(0); }
+		25% { transform: translate(-1px, 1px); }
+		50% { transform: translate(1px, -1px); }
+		75% { transform: translate(-1px, -1px); }
+		100% { transform: translate(0); }
+	}
 </style>
