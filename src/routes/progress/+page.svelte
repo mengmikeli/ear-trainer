@@ -87,7 +87,7 @@
 	}
 	.stat { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; }
 	.value {
-		font-size: 1.75rem; font-weight: 900;
+		font-size: 1.25rem; font-weight: 900;
 		font-family: var(--mono); color: var(--text-primary);
 	}
 	.label {

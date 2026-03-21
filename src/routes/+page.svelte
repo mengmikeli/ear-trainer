@@ -87,7 +87,7 @@
 	.divider { width: 1px; height: 2.5rem; background: var(--border-heavy); }
 	.stat { display: flex; flex-direction: column; align-items: center; gap: 0.1rem; }
 	.value {
-		font-size: 2.5rem; font-weight: 900;
+		font-size: 1.75rem; font-weight: 900;
 		font-family: var(--mono); color: var(--text-primary);
 	}
 	.label {
