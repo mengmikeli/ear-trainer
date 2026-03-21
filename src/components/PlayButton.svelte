@@ -9,15 +9,21 @@
 		questionNum?: number;
 		glitching?: boolean;
 		countdownPct?: number;
+		feedback?: 'correct' | 'wrong' | null;
 	}
-	let { onplay, replaying = false, playing = false, noBorder = false, questionNum = 1, glitching = false, countdownPct = -1 }: Props = $props();
+	let { onplay, replaying = false, playing = false, noBorder = false, questionNum = 1, glitching = false, countdownPct = -1, feedback = null }: Props = $props();
 
 	let phase = $state(0);
 	let animFrame: number | null = null;
 	let glitchText = $state('');
+	let feedbackGlyph = $state('');
 	let glitchInterval: ReturnType<typeof setInterval> | null = null;
+	let feedbackInterval: ReturnType<typeof setInterval> | null = null;
 
-	const glitchChars = ['#7', 'Q_', '>>', '//', '??', '<!', '}{', '0x', '~~', '##', '$_', '&&'];
+	// Matrix Mono PUA glyphs
+	const correctGlyphs = ['\uE018', '\uE013', '\uE014', '\uE012', '\uE011']; // FaceHappy, Crosshair, Target, Frame, ArrowRight
+	const wrongGlyphs = ['\uE019', '\uE015', '\uE016']; // FaceSad, Star, QR
+	const glitchChars = ['\uE000', '\uE001', '\uE002', '\uE003', '\uE004', '\uE005', '\uE006', '\uE007', '\uE008', '\uE010', '\uE017']; // Checker, Grid, Arrows, Swoosh
 
 	$effect(() => {
 		if (glitching) {
@@ -30,6 +36,36 @@
 				glitchInterval = null;
 			}
 			glitchText = '';
+		}
+	});
+
+	$effect(() => {
+		if (feedback) {
+			const pool = feedback === 'correct' ? correctGlyphs : wrongGlyphs;
+			// Initial fast glitch through random glyphs, then settle
+			let tick = 0;
+			feedbackGlyph = glitchChars[Math.floor(Math.random() * glitchChars.length)];
+			feedbackInterval = setInterval(() => {
+				tick++;
+				if (tick < 6) {
+					// Fast glitch: random from all glyphs
+					feedbackGlyph = glitchChars[Math.floor(Math.random() * glitchChars.length)];
+				} else if (tick < 10) {
+					// Settling: mix of target pool and glitch
+					feedbackGlyph = Math.random() > 0.4
+						? pool[Math.floor(Math.random() * pool.length)]
+						: glitchChars[Math.floor(Math.random() * glitchChars.length)];
+				} else {
+					// Settled: cycle through target pool
+					feedbackGlyph = pool[Math.floor(Math.random() * pool.length)];
+				}
+			}, 60);
+		} else {
+			if (feedbackInterval) {
+				clearInterval(feedbackInterval);
+				feedbackInterval = null;
+			}
+			feedbackGlyph = '';
 		}
 	});
 
@@ -68,6 +104,7 @@
 	onDestroy(() => {
 		if (animFrame !== null) cancelAnimationFrame(animFrame);
 		if (glitchInterval) clearInterval(glitchInterval);
+		if (feedbackInterval) clearInterval(feedbackInterval);
 	});
 
 	const ring1 = $derived(generateWavyCircle(75, 75, 42, 4, 6, phase, 1));
@@ -75,9 +112,13 @@
 	const ring3 = $derived(generateWavyCircle(75, 75, 62, 6, 7, phase * 1.1 + 2, 3));
 
 	const displayText = $derived.by(() => {
+		if (feedbackGlyph) return feedbackGlyph;
 		if (glitching) return glitchText;
 		return `Q${questionNum}`;
 	});
+
+	const feedbackCorrect = $derived(feedback === 'correct');
+	const feedbackWrong = $derived(feedback === 'wrong');
 </script>
 
 <div class="play-wrapper">
@@ -102,7 +143,16 @@
 			/>
 		</svg>
 	{/if}
-	<button class="play-btn" class:replay={replaying} class:no-border={noBorder} class:glitch-text={glitching} onclick={onplay}>
+	<button
+		class="play-btn"
+		class:replay={replaying}
+		class:no-border={noBorder}
+		class:glitch-text={glitching}
+		class:feedback-correct={feedbackCorrect}
+		class:feedback-wrong={feedbackWrong}
+		class:feedback-glitch={!!feedback}
+		onclick={onplay}
+	>
 		{displayText}
 	</button>
 </div>
@@ -166,6 +216,32 @@
 	.no-border {
 		border: none !important;
 	}
+	/* Feedback states */
+	.feedback-correct {
+		background: var(--correct) !important;
+		color: var(--base) !important;
+		border-color: var(--correct) !important;
+		font-size: 2rem;
+	}
+	.feedback-wrong {
+		background: transparent !important;
+		color: var(--wrong) !important;
+		border: 2px solid var(--wrong) !important;
+		font-size: 2rem;
+	}
+	.feedback-glitch {
+		text-shadow: -2px 0 var(--accent), 2px 0 var(--hot);
+		animation: feedback-shake 80ms infinite;
+	}
+	@keyframes feedback-shake {
+		0% { transform: translate(0) rotate(0); }
+		20% { transform: translate(-1px, 1px) rotate(-0.5deg); }
+		40% { transform: translate(1px, -1px) rotate(0.5deg); }
+		60% { transform: translate(-1px, 0) rotate(-0.3deg); }
+		80% { transform: translate(1px, 1px) rotate(0.3deg); }
+		100% { transform: translate(0) rotate(0); }
+	}
+	/* Transition glitch */
 	.glitch-text {
 		text-shadow: -2px 0 var(--accent), 2px 0 var(--hot);
 		animation: glitch-shake 50ms infinite;

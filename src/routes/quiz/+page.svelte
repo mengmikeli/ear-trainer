@@ -9,7 +9,6 @@
 	import PlayButton from '../../components/PlayButton.svelte';
 	import AnswerGrid from '../../components/AnswerGrid.svelte';
 	import ProgressBar from '../../components/ProgressBar.svelte';
-	import Feedback from '../../components/Feedback.svelte';
 
 	let state: UserState | null = $state(null);
 	let question: Question | null = $state(null);
@@ -17,7 +16,7 @@
 	let totalQuestions = $state(20);
 	let hasPlayed = $state(false);
 	let selectedId: string | null = $state(null);
-	let showFeedback = $state(false);
+	let feedbackState: 'correct' | 'wrong' | null = $state(null);
 	let isCorrect = $state(false);
 	let startTime = $state(0);
 	let sessionCorrect = $state(0);
@@ -46,7 +45,7 @@
 		question = generateQuestion(state);
 		hasPlayed = false;
 		selectedId = null;
-		showFeedback = false;
+		feedbackState = null;
 		countdownPct = 1.0;
 		questionNum++;
 
@@ -83,7 +82,7 @@
 		const correct = choice.id === question.interval.id;
 		selectedId = choice.id;
 		isCorrect = correct;
-		showFeedback = true;
+		feedbackState = correct ? 'correct' : 'wrong';
 
 		if (correct) sessionCorrect++;
 
@@ -116,7 +115,7 @@
 		saveState(state);
 
 		if (correct) {
-			setTimeout(() => { showFeedback = false; }, 1200);
+			setTimeout(() => { feedbackState = null; }, 1200);
 			setTimeout(() => nextQuestion(), 1500);
 		} else {
 			enterResultMode();
@@ -199,7 +198,7 @@
 	{#if question}
 		<div class="play-area">
 			{#if !hasPlayed}
-				<PlayButton onplay={play} playing={isPlaying} questionNum={questionNum} glitching={isGlitching} />
+				<PlayButton onplay={play} playing={isPlaying} questionNum={questionNum} glitching={isGlitching} feedback={feedbackState} />
 			{:else}
 				<PlayButton
 					onplay={inResultMode ? replayInResult : play}
@@ -208,6 +207,7 @@
 					noBorder={inResultMode}
 					questionNum={questionNum}
 					countdownPct={inResultMode ? countdownPct : -1}
+					feedback={feedbackState}
 				/>
 			{/if}
 		</div>
@@ -223,12 +223,6 @@
 			/>
 		</div>
 	{/if}
-
-	<Feedback
-		correct={isCorrect}
-		correctAnswer={question?.interval.name ?? ''}
-		visible={showFeedback}
-	/>
 </div>
 
 <style>
@@ -238,7 +232,6 @@
 		align-items: center;
 		height: 100%;
 		gap: 1rem;
-		position: relative;
 	}
 	.heading {
 		font-size: 3rem; font-weight: 400;
