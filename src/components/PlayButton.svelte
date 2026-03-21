@@ -205,20 +205,17 @@
 		stroke-width: 1.5;
 	}
 	.ring-1 {
-		opacity: 0.6;
-		animation: ring-propagate 2s ease-out infinite;
+		animation: ring-propagate 3.5s ease-out infinite;
 	}
 	.ring-2 {
-		opacity: 0.4;
-		animation: ring-propagate 2s ease-out infinite 0.6s;
+		animation: ring-propagate 3.5s ease-out infinite 1.15s;
 	}
 	.ring-3 {
-		opacity: 0.25;
-		animation: ring-propagate 2s ease-out infinite 1.2s;
+		animation: ring-propagate 3.5s ease-out infinite 2.3s;
 	}
 	@keyframes ring-propagate {
-		0% { opacity: 0.7; transform-origin: center; transform: scale(0.5); }
-		100% { opacity: 0; transform-origin: center; transform: scale(1.3); }
+		0% { opacity: 0.6; transform-origin: center; transform: scale(0.2); }
+		100% { opacity: 0; transform-origin: center; transform: scale(1.5); }
 	}
 	.play-btn {
 		position: relative; z-index: 1;
