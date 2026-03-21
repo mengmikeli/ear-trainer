@@ -48,5 +48,5 @@
 	}
 	a.active, .nav-item.active { color: var(--marathon-blue); border-top: 2px solid var(--marathon-blue); }
 	.disabled { cursor: default; }
-	.icon { font-size: 1rem; font-family: var(--mono); }
+	.icon { font-size: 1.25rem; font-family: var(--mono); }
 </style>
