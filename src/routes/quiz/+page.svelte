@@ -214,16 +214,16 @@
 			{/if}
 		</div>
 
-		{#if hasPlayed}
+		<div class="answer-area" class:hidden={!hasPlayed}>
 			<AnswerGrid
 				choices={question.choices}
 				onselect={selectAnswer}
-				disabled={!!selectedId}
+				disabled={!hasPlayed || !!selectedId}
 				correctId={selectedId ? question.interval.id : null}
 				{selectedId}
 				onCorrectClick={inResultMode ? nextQuestion : null}
 			/>
-		{/if}
+		</div>
 	{/if}
 
 	<Feedback
@@ -292,5 +292,11 @@
 		gap: 1rem;
 		flex: 1;
 		justify-content: center;
+	}
+	.answer-area {
+		width: 100%;
+	}
+	.answer-area.hidden {
+		visibility: hidden;
 	}
 </style>
