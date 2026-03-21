@@ -70,19 +70,17 @@
 		letter-spacing: 0.12em; font-family: var(--font-display);
 	}
 	.version-tag {
-		display: flex; align-items: center; gap: 0.5rem;
+		display: flex; align-items: center; gap: 0;
 		margin-top: 0.625rem; justify-content: center;
 	}
 	.hazard-bar {
-		display: block; width: 20px; height: 3px;
-		background: repeating-linear-gradient(
-			-45deg, var(--accent), var(--accent) 2px, transparent 2px, transparent 4px
-		);
+		display: block; width: 20px; height: 100%;
+		background: var(--marathon-blue);
 	}
 	.version {
-		font-size: 0.6rem; color: var(--accent);
+		font-size: 0.6rem; color: #FFFFFF;
 		font-family: var(--mono); letter-spacing: 0.3em;
-		opacity: 0.7;
+		background: var(--marathon-blue); padding: 0.3rem 0.75rem;
 	}
 	.ascii-decor {
 		font-family: var(--mono); font-size: 0.5rem;
