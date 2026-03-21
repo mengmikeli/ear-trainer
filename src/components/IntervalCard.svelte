@@ -4,42 +4,112 @@
 	interface Props { def: IntervalDef; state: IntervalState; }
 	let { def, state }: Props = $props();
 
-	const accuracy = $derived(state.attempts > 0 ? Math.round((state.correct / state.attempts) * 100) : 0);
+	const accuracy = $derived(
+		state.attempts > 0 ? Math.round((state.correct / state.attempts) * 100) : 0
+	);
 </script>
 
 <div class="card" class:locked={!state.unlocked}>
-	<div class="id">{state.unlocked ? def.id : '🔒'}</div>
-	<div class="info">
+	<div class="id-col">
+		{#if state.unlocked}
+			<span class="interval-id">{def.id}</span>
+		{:else}
+			<span class="lock-icon">🔒</span>
+		{/if}
+	</div>
+	<div class="info-col">
 		<div class="name">{def.name}</div>
 		{#if state.unlocked}
-			<div class="stats">{accuracy}% · {state.attempts} attempts</div>
+			<div class="meta">{accuracy}% · {state.attempts} attempts</div>
 		{:else}
-			<div class="stats">Tier {def.tier} — locked</div>
+			<div class="meta">TIER {def.tier} — LOCKED</div>
 		{/if}
 	</div>
 	{#if state.unlocked}
-		<div class="bar">
-			<div class="bar-fill" style="width: {accuracy}%"></div>
+		<div class="bar-col">
+			<div class="bar">
+				<div
+					class="bar-fill"
+					style="width: {accuracy}%"
+					class:high={accuracy >= 80}
+					class:low={accuracy < 50 && state.attempts > 0}
+				></div>
+			</div>
 		</div>
 	{/if}
 </div>
 
 <style>
 	.card {
-		display: grid; grid-template-columns: 3.5rem 1fr 70px;
-		align-items: center; gap: 0.75rem; padding: 0.85rem;
-		background: var(--surface); border-left: 3px solid var(--accent);
-		border-radius: 0;
+		display: grid;
+		grid-template-columns: 3.5rem 1fr 70px;
+		align-items: center;
+		gap: 0.75rem;
+		padding: 0.85rem;
+		background: var(--surface);
+		border-left: 2px solid var(--accent);
 	}
-	.locked { opacity: 0.3; border-left-color: var(--border-heavy); }
-	.id {
-		font-size: 1.2rem; font-weight: 900;
-		font-family: var(--mono); text-align: center;
+
+	.locked {
+		opacity: 0.25;
+		border-left-color: var(--border);
+	}
+
+	.id-col {
+		text-align: center;
+	}
+
+	.interval-id {
+		font-family: var(--font-mono);
+		font-size: 1.1rem;
+		font-weight: 700;
+		letter-spacing: 0.15em;
 		color: var(--accent);
 	}
-	.locked .id { color: var(--text-secondary); }
-	.name { font-weight: 700; font-size: 0.85rem; letter-spacing: 0.02em; }
-	.stats { font-size: 0.7rem; color: var(--text-secondary); font-weight: 600; }
-	.bar { height: 6px; background: var(--border-heavy); border-radius: 0; overflow: hidden; }
-	.bar-fill { height: 100%; background: var(--accent); }
+
+	.lock-icon {
+		font-size: 1rem;
+		opacity: 0.6;
+	}
+
+	.name {
+		font-family: var(--font-body);
+		font-weight: 600;
+		font-size: 0.85rem;
+		letter-spacing: 0.02em;
+	}
+
+	.meta {
+		font-family: var(--font-mono);
+		font-size: 0.6rem;
+		font-weight: 500;
+		color: var(--text-secondary);
+		letter-spacing: 0.08em;
+	}
+
+	.bar-col {
+		display: flex;
+		align-items: center;
+	}
+
+	.bar {
+		width: 100%;
+		height: 4px;
+		background: var(--border);
+		overflow: hidden;
+	}
+
+	.bar-fill {
+		height: 100%;
+		background: var(--accent);
+		transition: width 0.3s ease;
+	}
+
+	.bar-fill.high {
+		background: var(--correct);
+	}
+
+	.bar-fill.low {
+		background: var(--hot);
+	}
 </style>

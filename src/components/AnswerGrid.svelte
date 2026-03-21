@@ -20,7 +20,11 @@
 
 <div class="grid">
 	{#each choices as choice}
-		<button class="answer {btnClass(choice.id)}" onclick={() => onselect(choice)} disabled={disabled}>
+		<button
+			class="answer chromatic {btnClass(choice.id)}"
+			onclick={() => onselect(choice)}
+			disabled={disabled}
+		>
 			<span class="id">{choice.id}</span>
 			<span class="name">{choice.name}</span>
 		</button>
@@ -28,26 +32,65 @@
 </div>
 
 <style>
-	.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; width: 100%; }
+	.grid {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 0.75rem;
+		width: 100%;
+	}
+
 	.answer {
-		padding: 1.25rem 0.5rem; background: var(--surface);
-		border: 2px solid var(--border-heavy); border-radius: 0;
-		text-align: center; transition: border-color 0.15s, background 0.15s;
+		padding: 1.25rem 0.5rem;
+		background: var(--surface);
+		border: 1px solid var(--border);
+		text-align: center;
+		transition: border-color 0.15s, background 0.15s;
 	}
-	.answer:not(:disabled):active { background: var(--surface-raised); border-color: var(--cyan); }
+
+	.answer:not(:disabled):hover {
+		border-color: var(--accent);
+		background: var(--accent-dim);
+	}
+
+	.answer:not(:disabled):active {
+		background: var(--surface-raised);
+		border-color: var(--accent);
+	}
+
 	.id {
-		display: block; font-size: 1.5rem; font-weight: 900;
-		font-family: var(--mono); letter-spacing: -0.02em;
-		color: var(--cyan);
+		display: block;
+		font-family: var(--font-mono);
+		font-size: 1.5rem;
+		font-weight: 700;
+		letter-spacing: 0.15em;
+		color: var(--accent);
 	}
+
 	.name {
-		display: block; font-size: 0.65rem; color: var(--text-secondary);
-		margin-top: 0.2rem; letter-spacing: 0.1em; font-weight: 700;
+		display: block;
+		font-family: var(--font-body);
+		font-size: 0.6rem;
+		color: var(--text-secondary);
+		margin-top: 0.25rem;
+		letter-spacing: 0.08em;
+		font-weight: 500;
 		text-transform: uppercase;
 	}
-	.correct { border-color: var(--correct); background: #C2FE0C10; }
+
+	/* Correct */
+	.correct {
+		border-color: var(--correct) !important;
+		background: var(--correct-dim) !important;
+	}
 	.correct .id { color: var(--correct); }
-	.wrong { border-color: var(--wrong); background: #ED174F10; }
+
+	/* Wrong */
+	.wrong {
+		border-color: var(--wrong) !important;
+		background: var(--hot-dim) !important;
+	}
 	.wrong .id { color: var(--wrong); }
-	.dim { opacity: 0.2; }
+
+	/* Dim other options */
+	.dim { opacity: 0.15; }
 </style>

@@ -11,12 +11,34 @@
 </div>
 
 <style>
-	.progress-bar { display: flex; align-items: center; gap: 0.75rem; width: 100%; }
-	.track { flex: 1; height: 6px; background: var(--border-heavy); border-radius: 0; overflow: hidden; }
-	.fill { height: 100%; background: var(--accent); transition: width 0.3s ease; }
+	.progress-bar {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		width: 100%;
+	}
+
+	.track {
+		flex: 1;
+		height: 4px;
+		background: var(--border);
+		overflow: hidden;
+	}
+
+	.fill {
+		height: 100%;
+		background: var(--accent);
+		transition: width 0.3s ease;
+	}
+
 	.label {
-		font-size: 0.8rem; font-weight: 800;
-		font-family: var(--mono); color: var(--accent);
-		min-width: 3rem; text-align: right; letter-spacing: 0.05em;
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		font-weight: 700;
+		color: var(--accent);
+		min-width: 3rem;
+		text-align: right;
+		letter-spacing: 0.05em;
+		font-variant-numeric: tabular-nums;
 	}
 </style>
