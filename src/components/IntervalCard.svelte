@@ -10,27 +10,9 @@
 
 	const accuracy = $derived(istate.attempts > 0 ? Math.round((istate.correct / istate.attempts) * 100) : 0);
 
-	let toggleGlitch = $state(false);
-	let displayText = $state('');
-	const glyphs = ['\uE000', '\uE002', '\uE013', '\uE014', '\uE015', '\uE017'];
-
-	const currentToggleText = $derived(istate.enabled ? '[ON]' : '[OFF]');
-
 	function handleToggle() {
-		if (!ontoggle || toggleGlitch) return;
-		toggleGlitch = true;
-		let tick = 0;
-		const totalTicks = 8;
-		const iv = setInterval(() => {
-			displayText = '[' + glyphs[Math.floor(Math.random() * glyphs.length)] + ']';
-			tick++;
-			if (tick >= totalTicks) {
-				clearInterval(iv);
-				toggleGlitch = false;
-				displayText = '';
-				ontoggle(def.id);
-			}
-		}, 60);
+		if (!ontoggle) return;
+		ontoggle(def.id);
 	}
 </script>
 
@@ -49,8 +31,8 @@
 			{/if}
 		</div>
 		{#if istate.unlocked && ontoggle}
-			<button class="toggle" class:toggle-off={!istate.enabled} class:glitching={toggleGlitch} onclick={handleToggle}>
-				{displayText || currentToggleText}
+			<button class="toggle" class:toggle-off={!istate.enabled} onclick={handleToggle}>
+				{istate.enabled ? '[ON]' : '[OFF]'}
 			</button>
 		{:else if istate.unlocked}
 			<div class="acc-value">{istate.attempts > 0 ? `${accuracy}%` : '—'}</div>
@@ -69,7 +51,7 @@
 		position: absolute; top: 0; left: 0; bottom: 0;
 		background: var(--accent);
 		opacity: 0.12;
-		transition: width 0.6s ease-out;
+		transition: width 0.35s ease-out;
 	}
 	.card-content {
 		position: relative; z-index: 1;
@@ -77,7 +59,7 @@
 		align-items: center; gap: 0.75rem; padding: 0.85rem;
 	}
 	.locked { opacity: 0.4; border-left-color: var(--hot); }
-	.disabled { opacity: 0.55; border-left-color: var(--hot); transition: opacity 0.6s ease 0.5s; }
+	.disabled { opacity: 0.55; border-left-color: var(--hot); transition: opacity 0.3s ease 0.3s; }
 	.disabled .id { color: var(--hot); }
 	.disabled .name { color: var(--text-secondary); }
 	.id {
@@ -116,16 +98,5 @@
 	.toggle-off {
 		border-color: var(--hot); background: #ED174F10;
 		color: var(--hot);
-	}
-	.toggle.glitching {
-		text-shadow: -1px 0 var(--accent), 1px 0 var(--hot);
-		animation: toggle-shake 40ms infinite;
-	}
-	@keyframes toggle-shake {
-		0% { transform: translate(0); }
-		25% { transform: translate(-1px, 1px); }
-		50% { transform: translate(1px, -1px); }
-		75% { transform: translate(-1px, -1px); }
-		100% { transform: translate(0); }
 	}
 </style>
