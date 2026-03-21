@@ -14,6 +14,7 @@
 
 <div class="progress-page">
 	<h2 class="heading">PROGRESS</h2>
+	<div class="data-readout">▌▌▌ TRAINING DATA ▌▌▌</div>
 
 	{#if state}
 		<div class="global-stats">
@@ -41,6 +42,12 @@
 
 <style>
 	.progress-page { display: flex; flex-direction: column; gap: 1.25rem; }
+	.data-readout {
+		font-family: var(--mono); font-size: 0.55rem;
+		color: var(--accent); opacity: 0.3;
+		letter-spacing: 0.3em; text-align: center;
+		margin-top: -0.5rem;
+	}
 	.heading {
 		font-size: 0.85rem; font-weight: 900;
 		letter-spacing: 0.3em; color: var(--accent);

@@ -2,9 +2,9 @@
 	import { page } from '$app/state';
 
 	const tabs = [
-		{ href: '/', label: 'PRACTICE', icon: '▶' },
-		{ href: '/progress', label: 'PROGRESS', icon: '◉' },
-		{ href: '/settings', label: 'SETTINGS', icon: '⚙' },
+		{ href: '/', label: 'PRACTICE', icon: '[▶]' },
+		{ href: '/progress', label: 'PROGRESS', icon: '[≡]' },
+		{ href: '/settings', label: 'SETTINGS', icon: '[⚙]' },
 	];
 </script>
 

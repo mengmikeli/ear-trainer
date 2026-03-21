@@ -29,6 +29,10 @@
 			<span class="version">SYS v1.0</span>
 			<span class="hazard-bar"></span>
 		</div>
+		<pre class="ascii-decor">╔══════════════════════╗
+║  INTERVAL TRAINING  ║
+║  SYSTEM ONLINE      ║
+╚══════════════════════╝</pre>
 	</header>
 
 	{#if state}
@@ -45,7 +49,7 @@
 		</div>
 
 		<a href="/quiz" class="start-btn">
-			<span class="btn-text">▶ PRACTICE</span>
+			<span class="btn-text">[▶] PRACTICE</span>
 		</a>
 	{/if}
 </div>
@@ -79,6 +83,12 @@
 		font-family: var(--mono); letter-spacing: 0.3em;
 		opacity: 0.7;
 	}
+	.ascii-decor {
+		font-family: var(--mono); font-size: 0.5rem;
+		color: var(--accent); opacity: 0.25;
+		line-height: 1.3; letter-spacing: 0.1em;
+		margin-top: 0.75rem;
+	}
 	.stats {
 		display: flex; align-items: center; gap: 1.5rem;
 		padding: 1rem 1.5rem;
@@ -108,4 +118,3 @@
 		letter-spacing: 0.1em; text-transform: uppercase;
 	}
 </style>
->

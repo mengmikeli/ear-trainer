@@ -55,6 +55,11 @@
 		} else {
 			question.replays++;
 		}
+		isPlaying = true;
+		const noteDuration = 0.6;
+		const gap = 0.15;
+		const totalMs = (noteDuration * 2 + gap) * 1000 + 200;
+		setTimeout(() => { isPlaying = false; }, totalMs);
 	}
 
 	function selectAnswer(choice: IntervalDef) {
