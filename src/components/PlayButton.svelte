@@ -175,6 +175,10 @@
 	.wave-rings {
 		position: absolute;
 		width: 150px; height: 150px;
+		/* Center the 150px SVG over the 100px wrapper:
+		   offset = (wrapper - svg) / 2 = (100 - 150) / 2 = -25px */
+		top: -25px;
+		left: -25px;
 		pointer-events: none;
 		overflow: visible;
 	}

@@ -2,8 +2,22 @@ import type { ToneType } from './types';
 
 let ctx: AudioContext | null = null;
 
+/**
+ * Ensure AudioContext exists and is running.
+ * iOS Safari requires AudioContext creation AND resume() to happen
+ * inside a direct user-gesture handler (touchend/click).
+ * We also play a silent buffer on first init to fully unlock audio.
+ */
 function getContext(): AudioContext {
-	if (!ctx) ctx = new AudioContext();
+	if (!ctx) {
+		ctx = new AudioContext();
+		// Play a silent buffer to unlock iOS audio pipeline
+		const silent = ctx.createBuffer(1, 1, ctx.sampleRate);
+		const source = ctx.createBufferSource();
+		source.buffer = silent;
+		source.connect(ctx.destination);
+		source.start();
+	}
 	if (ctx.state === 'suspended') ctx.resume();
 	return ctx;
 }
