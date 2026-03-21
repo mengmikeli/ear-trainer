@@ -18,38 +18,7 @@
 	const ringAngle = $derived((semitones / 12) * 360);
 	const maxBias = $derived((semitones / 12) * 15);
 
-	// Discrete wave bursts — one per note event
-	interface WaveBurst {
-		id: number;
-		originX: number;
-		originY: number;
-	}
-	let bursts: WaveBurst[] = $state([]);
-	let burstCounter = 0;
-
-	function spawnBursts() {
-		const id1 = ++burstCounter;
-		const b1: WaveBurst = { id: id1, originX: 75, originY: 75 };
-		bursts = [...bursts, b1];
-
-		// Burst 2: interval note — biased (~750ms after)
-		const id2 = ++burstCounter;
-		setTimeout(() => {
-			const bias = maxBias;
-			const ox = 75 - Math.sin(ringAngle * Math.PI / 180) * bias;
-			const oy = 75 + Math.cos(ringAngle * Math.PI / 180) * bias;
-			const b2: WaveBurst = { id: id2, originX: ox, originY: oy };
-			bursts = [...bursts, b2];
-		}, 750);
-
-		// Remove these bursts after animation completes
-		setTimeout(() => {
-			bursts = bursts.filter(b => b.id !== id1 && b.id !== id2);
-		}, 3500);
-	}
-
 	function handlePlay() {
-		spawnBursts();
 		onplay();
 	}
 
@@ -123,21 +92,6 @@
 </script>
 
 <div class="play-wrapper">
-	{#each bursts as burst (burst.id)}
-		<div class="wave-rings-anchor">
-			<svg class="wave-rings" viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg">
-				<defs>
-					<radialGradient id="ring-fade-{burst.id}" cx="50%" cy="50%" r="50%">
-						<stop offset="60%" stop-color="var(--accent)" stop-opacity="0" />
-						<stop offset="67%" stop-color="var(--accent)" stop-opacity="0.4" />
-						<stop offset="100%" stop-color="var(--accent)" stop-opacity="0" />
-					</radialGradient>
-				</defs>
-				<circle cx="75" cy="75" r="75" fill="url(#ring-fade-{burst.id})"
-					style="transform-origin: {burst.originX}px {burst.originY}px" class="burst-ring" />
-			</svg>
-		</div>
-	{/each}
 	{#if countdownPct >= 0}
 		<svg class="countdown-ring" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
 			<circle cx="50" cy="50" r="49"
@@ -156,7 +110,6 @@
 		class="play-btn"
 		class:replay={replaying}
 		class:no-border={noBorder}
-		class:pulsing={playing}
 		class:glitch-text={glitching}
 		class:feedback-correct={feedbackCorrect}
 		class:feedback-wrong={feedbackWrong}
@@ -173,26 +126,6 @@
 		display: flex; align-items: center; justify-content: center;
 		width: 100px; height: 100px;
 		overflow: visible;
-	}
-	.wave-rings-anchor {
-		position: absolute;
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%, -50%);
-		width: 150px; height: 150px;
-		pointer-events: none;
-	}
-	.wave-rings {
-		width: 150px; height: 150px;
-		overflow: visible;
-	}
-	.burst-ring {
-		opacity: 0;
-		animation: burst-expand 2s linear forwards;
-	}
-	@keyframes burst-expand {
-		0% { opacity: 1; transform: scale(1); }
-		100% { opacity: 0; transform: scale(2.5); }
 	}
 	.countdown-ring {
 		position: absolute;
@@ -212,42 +145,6 @@
 		text-align: center; line-height: 1;
 	}
 	.play-btn:active { transform: scale(0.93); opacity: 0.9; }
-	.pulsing {
-		animation: btn-membrane 1.5s ease-in-out;
-	}
-	@keyframes btn-membrane {
-		/* Note 1 attack */
-		0%  { transform: scale(1); }
-		3%  { transform: scale(1.07); }
-		6%  { transform: scale(1.04); }
-		9%  { transform: scale(1.06); }
-		12% { transform: scale(1.03); }
-		15% { transform: scale(1.05); }
-		18% { transform: scale(1.03); }
-		21% { transform: scale(1.04); }
-		24% { transform: scale(1.02); }
-		27% { transform: scale(1.03); }
-		30% { transform: scale(1.02); }
-		/* Decay to gap */
-		36% { transform: scale(1.01); }
-		42% { transform: scale(1); }
-		48% { transform: scale(1); }
-		/* Note 2 attack */
-		51% { transform: scale(1.07); }
-		54% { transform: scale(1.04); }
-		57% { transform: scale(1.06); }
-		60% { transform: scale(1.03); }
-		63% { transform: scale(1.05); }
-		66% { transform: scale(1.03); }
-		69% { transform: scale(1.04); }
-		72% { transform: scale(1.02); }
-		75% { transform: scale(1.03); }
-		78% { transform: scale(1.02); }
-		/* Decay to rest */
-		84% { transform: scale(1.01); }
-		90% { transform: scale(1); }
-		100% { transform: scale(1); }
-	}
 	.replay {
 		background: transparent; border: 2px solid var(--accent);
 		color: var(--accent);
