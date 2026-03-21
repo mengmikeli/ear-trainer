@@ -49,7 +49,7 @@
 		</div>
 
 		<a href="/quiz" class="start-btn">
-			<span class="btn-text">[▶] PRACTICE</span>
+			<span class="btn-text">PRACTICE</span>
 		</a>
 	{/if}
 </div>
@@ -62,7 +62,7 @@
 	.title-block { position: relative; }
 	.title {
 		font-size: 6.5rem; font-weight: 400; letter-spacing: 0.05em;
-		line-height: 0.85; color: var(--text-primary); text-transform: uppercase;
+		line-height: 0.75; color: var(--text-primary); text-transform: uppercase;
 		font-family: var(--font-display);
 	}
 	.title-accent {
@@ -116,8 +116,8 @@
 	}
 	.start-btn:active { transform: scale(0.93); opacity: 0.9; }
 	.btn-text {
-		color: var(--base); font-size: 1.1rem; font-weight: 400;
-		letter-spacing: 0.1em; text-transform: uppercase;
+		color: var(--base); font-size: 1.4rem; font-weight: 400;
+		letter-spacing: 0.15em; text-transform: uppercase;
 		font-family: var(--font-display);
 	}
 </style>

@@ -48,7 +48,7 @@
 		</svg>
 	{/if}
 	<button class="play-btn" class:replay={replaying} onclick={onplay}>
-		{replaying ? '[↻] REPLAY' : '[▶] PLAY'}
+		{replaying ? 'REPLAY' : 'PLAY'}
 	</button>
 </div>
 
@@ -87,7 +87,7 @@
 		position: relative; z-index: 1;
 		width: 140px; height: 140px; border-radius: 50%;
 		background: var(--accent); border: none;
-		color: var(--base); font-size: 0.9rem; font-weight: 400;
+		color: var(--base); font-size: 1.3rem; font-weight: 400;
 		letter-spacing: 0.05em; transition: transform 0.1s, opacity 0.15s;
 		font-family: var(--font-display);
 		display: flex; align-items: center; justify-content: center;
@@ -95,7 +95,7 @@
 	}
 	.play-btn:active { transform: scale(0.93); opacity: 0.9; }
 	.replay {
-		width: 100px; height: 100px; font-size: 0.75rem;
+		width: 100px; height: 100px; font-size: 1rem;
 		background: transparent; border: 2px solid var(--accent);
 		color: var(--accent);
 	}
