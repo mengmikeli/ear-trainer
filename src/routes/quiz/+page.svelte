@@ -186,7 +186,7 @@
 			{#if inResultMode}
 				<button class="close" onclick={nextQuestion}>[→]</button>
 			{:else}
-				<button class="close" onclick={endEarly}>[×]</button>
+				<button class="close" onclick={endEarly}>{'\uE010'}</button>
 			{/if}
 			<span class="counter">{questionNum}/{totalQuestions}</span>
 		</div>
