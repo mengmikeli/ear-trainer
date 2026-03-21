@@ -10,9 +10,16 @@
 
 	const accuracy = $derived(istate.attempts > 0 ? Math.round((istate.correct / istate.attempts) * 100) : 0);
 
+	let pendingFlip = $state(false);
+	const isOff = $derived(pendingFlip ? istate.enabled : !istate.enabled);
+
 	function handleToggle() {
 		if (!ontoggle) return;
-		ontoggle(def.id);
+		pendingFlip = true;
+		requestAnimationFrame(() => {
+			ontoggle(def.id);
+			pendingFlip = false;
+		});
 	}
 </script>
 
@@ -31,8 +38,8 @@
 			{/if}
 		</div>
 		{#if istate.unlocked && ontoggle}
-			<button class="toggle" class:toggle-off={!istate.enabled} onclick={handleToggle}>
-				{istate.enabled ? '[ON]' : '[OFF]'}
+			<button class="toggle" class:toggle-off={isOff} onclick={handleToggle}>
+				{isOff ? '[OFF]' : '[ON]'}
 			</button>
 		{:else if istate.unlocked}
 			<div class="acc-value">{istate.attempts > 0 ? `${accuracy}%` : '—'}</div>
