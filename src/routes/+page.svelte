@@ -1,7 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { loadState } from '$lib/state';
+	import { INTERVALS } from '$lib/intervals';
 	import type { UserState } from '$lib/types';
+	import RadarGrid from '../components/RadarGrid.svelte';
+	import TelemetryBar from '../components/TelemetryBar.svelte';
 
 	let state: UserState | null = $state(null);
 
@@ -16,6 +19,23 @@
 		const total = vals.reduce((sum, s) => sum + s.correct, 0);
 		const attempts = vals.reduce((sum, s) => sum + s.attempts, 0);
 		return Math.round((total / attempts) * 100);
+	});
+
+	const currentTier = $derived(() => {
+		if (!state) return 1;
+		let highest = 1;
+		for (const def of INTERVALS) {
+			const s = state.intervals[def.id];
+			if (s?.unlocked && def.tier > highest) {
+				highest = def.tier;
+			}
+		}
+		return highest;
+	});
+
+	const intervalsMastered = $derived(() => {
+		if (!state) return 0;
+		return Object.values(state.intervals).filter(s => s.attempts > 0).length;
 	});
 </script>
 
@@ -32,21 +52,25 @@
 	</header>
 
 	{#if state}
-		<div class="stats">
-			<div class="stat">
-				<span class="value">{state.stats.currentStreak}</span>
-				<span class="label">STREAK</span>
-			</div>
-			<div class="divider"></div>
-			<div class="stat">
-				<span class="value">{accuracy()}%</span>
-				<span class="label">ACCURACY</span>
+		<div class="center-area">
+			<RadarGrid size="320px" />
+
+			<a href="/quiz" class="start-btn">
+				<span class="btn-text">PRACTICE</span>
+			</a>
+
+			<span class="coord coord-tr">INT: {intervalsMastered()}/13</span>
+			<span class="coord coord-bl">T{currentTier()}</span>
+
+			<div class="telemetry-row">
+				<TelemetryBar segments={[
+					{ label: 'STK', value: state.stats.currentStreak },
+					{ label: 'ACC', value: accuracy() + '%' },
+					{ label: 'Q', value: state.stats.totalQuestions },
+					{ label: 'TIER', value: currentTier() }
+				]} />
 			</div>
 		</div>
-
-		<a href="/quiz" class="start-btn">
-			<span class="btn-text">PRACTICE</span>
-		</a>
 	{/if}
 </div>
 
@@ -78,34 +102,55 @@
 		font-family: var(--mono); letter-spacing: 0.3em;
 		background: var(--marathon-blue); padding: 0.3rem 0.75rem;
 	}
-	.stats {
-		display: flex; align-items: center; gap: 1.5rem;
-		padding: 1rem 1.5rem;
-		border: 1px solid var(--border-heavy);
-		background: var(--surface);
+
+	/* Center area: relative container for radar + button + coords */
+	.center-area {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		width: 320px;
+		min-height: 320px;
 	}
-	.divider { width: 1px; height: 2.5rem; background: var(--border-heavy); }
-	.stat { display: flex; flex-direction: column; align-items: center; gap: 0.1rem; }
-	.value {
-		font-size: 1.25rem; font-weight: 900;
-		font-family: var(--mono); color: var(--text-primary);
-	}
-	.label {
-		font-size: 0.55rem; color: var(--text-secondary);
-		letter-spacing: 0.25em; font-weight: 400;
-		font-family: var(--font-display);
-	}
+
 	.start-btn {
 		display: flex; align-items: center; justify-content: center;
 		width: 180px; height: 180px; border-radius: 50%;
 		background: var(--accent); border: none;
 		transition: transform 0.1s, opacity 0.15s;
 		position: relative;
+		z-index: 1;
 	}
 	.start-btn:active { transform: scale(0.93); opacity: 0.9; }
 	.btn-text {
 		color: var(--base); font-size: 1.4rem; font-weight: 400;
 		letter-spacing: 0.15em; text-transform: uppercase;
 		font-family: var(--font-display);
+	}
+
+	/* Floating coordinate labels */
+	.coord {
+		position: absolute;
+		font-family: var(--mono);
+		font-size: 0.3rem;
+		color: var(--accent);
+		opacity: 0.3;
+		letter-spacing: 0.1em;
+	}
+	.coord-tr {
+		top: 0.5rem;
+		right: 0.5rem;
+	}
+	.coord-bl {
+		bottom: 2.5rem;
+		left: 0.5rem;
+	}
+
+	/* TelemetryBar wrapper */
+	.telemetry-row {
+		position: relative;
+		z-index: 1;
+		margin-top: 1.5rem;
 	}
 </style>
