@@ -96,7 +96,7 @@
 	.acc-tag {
 		display: inline-flex; align-items: center;
 		border: 1px solid var(--accent); padding: 0 4px;
-		font-size: 0.35rem; font-family: var(--mono);
+		font-size: 0.4rem; font-family: var(--mono);
 		color: var(--accent); vertical-align: middle;
 	}
 	.acc-value {
