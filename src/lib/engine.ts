@@ -36,7 +36,7 @@ export function generateDistractors(correctId: string, state: UserState): Interv
 	const correctDef = INTERVALS.find((i) => i.id === correctId);
 	const correctSemitones = correctDef?.semitones ?? 0;
 
-	const unlocked = getUnlockedIntervals(state.intervals).filter((i) => i.id !== correctId);
+	const unlocked = getEnabledIntervals(state.intervals).filter((i) => i.id !== correctId);
 	const shuffledUnlocked = [...unlocked].sort(() => Math.random() - 0.5);
 
 	if (shuffledUnlocked.length >= 3) {
