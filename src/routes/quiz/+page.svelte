@@ -140,8 +140,13 @@
 <div class="quiz">
 	<h2 class="heading">PRACTICE</h2>
 	<div class="top">
-		<button class="close" onclick={endEarly}>[×]</button>
-		<ProgressBar current={questionNum} total={totalQuestions} />
+		<div class="bar-track-full">
+			<ProgressBar current={questionNum} total={totalQuestions} />
+		</div>
+		<div class="top-controls">
+			<button class="close" onclick={endEarly}>[×]</button>
+			<span class="counter">{questionNum}/{totalQuestions}</span>
+		</div>
 	</div>
 
 	{#if question}
@@ -185,12 +190,35 @@
 		padding-bottom: 0.5rem; border-bottom: 2px solid var(--border-heavy);
 		text-transform: uppercase; font-family: var(--font-display);
 		width: 100%;
+		margin-bottom: 0;
 	}
 	.top {
+		width: 100%;
+		margin-top: -4px;
+	}
+	.bar-track-full {
+		width: 100%;
+	}
+	.bar-track-full :global(.progress-bar) {
+		gap: 0;
+	}
+	.bar-track-full :global(.label) {
+		display: none;
+	}
+	.bar-track-full :global(.track) {
+		height: 4px;
+	}
+	.top-controls {
 		display: flex;
 		align-items: center;
-		gap: 0.75rem;
+		justify-content: space-between;
 		width: 100%;
+		margin-top: 0.5rem;
+	}
+	.counter {
+		font-size: 0.45rem; font-weight: 800;
+		font-family: var(--mono); color: var(--marathon-blue);
+		letter-spacing: 0.05em;
 	}
 	.close {
 		font-size: 0.6rem;
