@@ -5,9 +5,31 @@
 
 <div class="play-wrapper">
 	{#if playing}
-		<div class="wave-ring ring-1"></div>
-		<div class="wave-ring ring-2"></div>
-		<div class="wave-ring ring-3"></div>
+		<svg class="wave-rings" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+			<defs>
+				<filter id="wave-distort-1" x="-20%" y="-20%" width="140%" height="140%">
+					<feTurbulence type="turbulence" baseFrequency="0.015" numOctaves="3" seed="1">
+						<animate attributeName="baseFrequency" values="0.015;0.025;0.015" dur="1.2s" repeatCount="indefinite" />
+					</feTurbulence>
+					<feDisplacementMap in="SourceGraphic" scale="12" />
+				</filter>
+				<filter id="wave-distort-2" x="-20%" y="-20%" width="140%" height="140%">
+					<feTurbulence type="turbulence" baseFrequency="0.02" numOctaves="3" seed="42">
+						<animate attributeName="baseFrequency" values="0.02;0.03;0.02" dur="1.5s" repeatCount="indefinite" />
+					</feTurbulence>
+					<feDisplacementMap in="SourceGraphic" scale="15" />
+				</filter>
+				<filter id="wave-distort-3" x="-20%" y="-20%" width="140%" height="140%">
+					<feTurbulence type="turbulence" baseFrequency="0.018" numOctaves="4" seed="99">
+						<animate attributeName="baseFrequency" values="0.018;0.028;0.018" dur="1.8s" repeatCount="indefinite" />
+					</feTurbulence>
+					<feDisplacementMap in="SourceGraphic" scale="18" />
+				</filter>
+			</defs>
+			<circle cx="150" cy="150" r="85" class="ring ring-1" filter="url(#wave-distort-1)" />
+			<circle cx="150" cy="150" r="105" class="ring ring-2" filter="url(#wave-distort-2)" />
+			<circle cx="150" cy="150" r="125" class="ring ring-3" filter="url(#wave-distort-3)" />
+		</svg>
 	{/if}
 	<button class="play-btn" class:replay={replaying} onclick={onplay}>
 		{replaying ? '[↻] REPLAY' : '[▶] PLAY'}
@@ -19,19 +41,31 @@
 		position: relative;
 		display: flex; align-items: center; justify-content: center;
 	}
-	.wave-ring {
+	.wave-rings {
 		position: absolute;
-		border-radius: 50%;
-		border: 1px solid var(--accent);
-		animation: pulse 1.5s ease-out infinite;
+		width: 300px; height: 300px;
 		pointer-events: none;
 	}
-	.ring-1 { width: 170px; height: 170px; animation-delay: 0s; }
-	.ring-2 { width: 210px; height: 210px; animation-delay: 0.3s; }
-	.ring-3 { width: 250px; height: 250px; animation-delay: 0.6s; }
-	@keyframes pulse {
-		0% { opacity: 0.6; transform: scale(0.8); }
-		100% { opacity: 0; transform: scale(1.2); }
+	.ring {
+		fill: none;
+		stroke: var(--accent);
+		stroke-width: 1.5;
+	}
+	.ring-1 {
+		opacity: 0.7;
+		animation: ring-pulse 1.5s ease-out infinite;
+	}
+	.ring-2 {
+		opacity: 0.5;
+		animation: ring-pulse 1.5s ease-out infinite 0.3s;
+	}
+	.ring-3 {
+		opacity: 0.3;
+		animation: ring-pulse 1.5s ease-out infinite 0.6s;
+	}
+	@keyframes ring-pulse {
+		0% { opacity: 0.7; transform-origin: center; transform: scale(0.85); }
+		100% { opacity: 0; transform-origin: center; transform: scale(1.15); }
 	}
 	.play-btn {
 		position: relative; z-index: 1;
