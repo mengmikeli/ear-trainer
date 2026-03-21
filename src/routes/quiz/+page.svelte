@@ -36,7 +36,6 @@
 	});
 
 	function nextQuestion() {
-		const wasInResult = inResultMode;
 		inResultMode = false;
 		if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
 		if (!state) return;
@@ -51,7 +50,7 @@
 		countdownPct = 1.0;
 		questionNum++;
 
-		if (wasInResult) {
+		if (questionNum > 1) {
 			isGlitching = true;
 			setTimeout(() => { isGlitching = false; }, 300);
 		}
