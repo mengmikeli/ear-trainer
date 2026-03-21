@@ -186,6 +186,7 @@
 		position: absolute;
 		width: 150px; height: 150px;
 		pointer-events: none;
+		overflow: visible;
 		transition: opacity 0.6s ease-out;
 	}
 	.wave-rings.fading {
@@ -214,9 +215,9 @@
 		animation: ring-propagate 3s linear infinite 2s;
 	}
 	@keyframes ring-propagate {
-		0% { opacity: 0.5; transform-origin: center; transform: scale(0.3); }
-		80% { opacity: 0.3; transform-origin: center; transform: scale(1.2); }
-		100% { opacity: 0; transform-origin: center; transform: scale(1.5); }
+		0% { opacity: 0.5; transform-origin: center; transform: scale(1); }
+		80% { opacity: 0.3; transform-origin: center; transform: scale(1.8); }
+		100% { opacity: 0; transform-origin: center; transform: scale(2.2); }
 	}
 	.play-btn {
 		position: relative; z-index: 1;
