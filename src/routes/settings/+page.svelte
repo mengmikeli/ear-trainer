@@ -87,7 +87,7 @@
 	}
 	.heading {
 		font-size: 1.7rem; font-weight: 400;
-		letter-spacing: 0.12em; color: var(--marathon-blue);
+		letter-spacing: 0.12em; color: var(--text-primary);
 		padding-bottom: 0.5rem; border-bottom: 2px solid var(--marathon-blue);
 		text-transform: uppercase; font-family: var(--font-display);
 	}
