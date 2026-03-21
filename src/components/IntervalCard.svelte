@@ -86,8 +86,8 @@
 	.toggle {
 		font-family: var(--mono); font-size: 0.45rem; font-weight: 900;
 		letter-spacing: 0.05em; padding: 0.3rem 0.5rem;
-		border: 1px solid var(--border-heavy); background: var(--surface);
-		color: var(--text-secondary); cursor: pointer;
+		border: 1px solid var(--marathon-blue); background: var(--surface);
+		color: var(--marathon-blue); cursor: pointer;
 		transition: all 0.15s;
 	}
 	.toggle-off {
