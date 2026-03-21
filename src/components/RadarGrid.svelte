@@ -41,6 +41,8 @@
 <style>
 	.radar-wrapper {
 		position: absolute;
+		inset: 0;
+		margin: auto;
 		pointer-events: none;
 		z-index: 0;
 		display: flex;

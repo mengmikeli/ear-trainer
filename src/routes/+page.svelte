@@ -53,11 +53,12 @@
 
 	{#if state}
 		<div class="center-area">
-			<RadarGrid size="320px" />
-
-			<a href="/quiz" class="start-btn">
-				<span class="btn-text">PRACTICE</span>
-			</a>
+			<div class="radar-zone">
+				<RadarGrid size="280px" />
+				<a href="/quiz" class="start-btn">
+					<span class="btn-text">GO</span>
+				</a>
+			</div>
 
 			<span class="coord coord-tr">INT: {intervalsMastered()}/13</span>
 			<span class="coord coord-bl">T{currentTier()}</span>
@@ -109,9 +110,17 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		justify-content: center;
 		width: 320px;
-		min-height: 320px;
+	}
+
+	/* Radar zone: square container that centers both radar + button */
+	.radar-zone {
+		position: relative;
+		width: 280px;
+		height: 280px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 	}
 
 	.start-btn {
@@ -124,9 +133,9 @@
 	}
 	.start-btn:active { transform: scale(0.93); opacity: 0.9; }
 	.btn-text {
-		color: var(--base); font-size: 1.4rem; font-weight: 400;
-		letter-spacing: 0.15em; text-transform: uppercase;
-		font-family: var(--font-display);
+		color: var(--base); font-size: 2rem; font-weight: 400;
+		letter-spacing: 0.2em; text-transform: uppercase;
+		font-family: var(--mono);
 	}
 
 	/* Floating coordinate labels */
