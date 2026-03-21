@@ -187,14 +187,14 @@
 	.heading {
 		font-size: 3rem; font-weight: 400;
 		letter-spacing: 0.12em; color: var(--text-primary);
-		padding-bottom: 0.5rem; border-bottom: 2px solid var(--border-heavy);
+		padding-bottom: 0;
 		text-transform: uppercase; font-family: var(--font-display);
 		width: 100%;
 		margin-bottom: 0;
 	}
 	.top {
 		width: 100%;
-		margin-top: -4px;
+		margin-top: 0;
 	}
 	.bar-track-full {
 		width: 100%;
@@ -206,7 +206,7 @@
 		display: none;
 	}
 	.bar-track-full :global(.track) {
-		height: 4px;
+		height: 2px;
 	}
 	.top-controls {
 		display: flex;
