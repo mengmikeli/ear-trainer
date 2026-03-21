@@ -55,7 +55,7 @@
 	.answer:not(:disabled):active { background: var(--surface-raised); border-color: var(--accent); }
 	.id {
 		display: block; font-size: 1rem; font-weight: 900;
-		font-family: 'JetBrains Mono', monospace; letter-spacing: -0.02em;
+		font-family: 'BPdots', 'JetBrains Mono', monospace; letter-spacing: -0.02em;
 		color: var(--accent);
 	}
 	.name {

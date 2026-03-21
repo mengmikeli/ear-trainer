@@ -77,7 +77,7 @@
 	.disabled .name { color: var(--text-secondary); }
 	.id {
 		font-size: 1.2rem; font-weight: 900;
-		font-family: 'JetBrains Mono', monospace; text-align: center;
+		font-family: 'BPdots', 'JetBrains Mono', monospace; text-align: center;
 		color: var(--accent);
 	}
 	.locked .id { color: var(--hot); font-size: 2rem; }
