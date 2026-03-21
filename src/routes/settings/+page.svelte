@@ -105,7 +105,7 @@
 		font-weight: 400; letter-spacing: 0.08em;
 		color: var(--text-secondary);
 		transition: all 0.15s;
-		font-family: var(--font-display);
+		font-family: var(--mono);
 	}
 	.toggle-group button.active {
 		border-color: var(--accent); color: var(--accent);
