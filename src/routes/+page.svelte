@@ -62,7 +62,7 @@
 	.title-block { position: relative; }
 	.title {
 		font-size: 6.5rem; font-weight: 400; letter-spacing: 0.05em;
-		line-height: 0.9; color: var(--text-primary); text-transform: uppercase;
+		line-height: 0.7; color: var(--text-primary); text-transform: uppercase;
 		font-family: var(--font-display);
 	}
 	.title-accent {
