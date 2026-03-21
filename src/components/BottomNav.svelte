@@ -50,8 +50,8 @@
 		border: 1px solid var(--border-heavy);
 	}
 	a.active, .nav-item.active {
-		color: var(--accent);
-		border-color: var(--accent);
+		color: var(--marathon-blue);
+		border-color: var(--marathon-blue);
 	}
 	.disabled { cursor: default; }
 	.icon { font-size: 1.25rem; font-family: var(--mono); }
