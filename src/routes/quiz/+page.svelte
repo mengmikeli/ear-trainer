@@ -270,13 +270,14 @@
 		line-height: 1.6;
 	}
 	.close {
-		font-size: 0.6rem;
+		font-size: 0.45rem;
 		color: var(--marathon-blue);
-		padding: 0.15rem 0.4rem;
+		padding: 0 6px;
 		font-weight: 900;
 		font-family: var(--mono);
 		letter-spacing: -0.05em;
 		border: 1px solid var(--marathon-blue);
+		line-height: 1.6;
 	}
 	.play-area {
 		display: flex;
