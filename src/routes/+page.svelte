@@ -29,10 +29,7 @@
 			<span class="version">SYS v1.0</span>
 			<span class="hazard-bar"></span>
 		</div>
-		<pre class="ascii-decor interference">╔══════════════════════╗
-║  INTERVAL TRAINING  ║
-║  SYSTEM ONLINE      ║
-╚══════════════════════╝</pre>
+		<pre class="ascii-decor interference">▌▌▌ INTERVAL TRAINING ▌▌▌</pre>
 	</header>
 
 	{#if state}
