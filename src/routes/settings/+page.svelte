@@ -15,11 +15,17 @@
 	let glitchInterval: ReturnType<typeof setInterval> | null = null;
 
 	const holdDuration = 2000; // 2s hold to confirm
+	const baseText = 'RESET PROGRESS';
 	const glyphs = ['\uE000', '\uE001', '\uE002', '\uE003', '\uE004', '\uE005', '\uE006', '\uE007', '\uE008', '\uE010', '\uE011', '\uE012', '\uE013', '\uE014', '\uE015', '\uE016', '\uE017', '\uE018', '\uE019'];
 
 	function randomGlitchText(): string {
-		const len = 6 + Math.floor(Math.random() * 4);
-		return Array.from({ length: len }, () => glyphs[Math.floor(Math.random() * glyphs.length)]).join('');
+		const chars = [...baseText];
+		const count = 1 + Math.floor(Math.random() * 2); // 1 or 2 chars
+		for (let i = 0; i < count; i++) {
+			const idx = Math.floor(Math.random() * chars.length);
+			chars[idx] = glyphs[Math.floor(Math.random() * glyphs.length)];
+		}
+		return chars.join('');
 	}
 
 	onMount(() => {
@@ -181,7 +187,7 @@
 		border: 2px solid var(--hot); border-radius: 0;
 		color: var(--hot); font-size: 0.75rem;
 		font-weight: 400; letter-spacing: 0.12em;
-		font-family: var(--font-display);
+		font-family: var(--mono);
 		width: 100%;
 		touch-action: none;
 		user-select: none;
@@ -208,7 +214,6 @@
 	}
 	.glitching {
 		animation: reset-shake 60ms infinite;
-		font-family: var(--mono);
 		letter-spacing: 0.02em;
 	}
 	.reset-btn.done {
