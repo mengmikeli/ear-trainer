@@ -71,7 +71,7 @@
 	}
 	.version-tag {
 		display: flex; align-items: center; gap: 0;
-		margin-top: 0.625rem; justify-content: center;
+		margin-top: 1rem; justify-content: center;
 	}
 	.hazard-bar {
 		display: block; width: 20px; height: 100%;
