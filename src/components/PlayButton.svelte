@@ -92,20 +92,18 @@
 </script>
 
 <div class="play-wrapper">
-	{#if countdownPct >= 0}
-		<svg class="countdown-ring" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-			<circle cx="50" cy="50" r="49"
-				stroke="var(--border-heavy)" stroke-width="2" fill="none"
-			/>
-			<circle cx="50" cy="50" r="49"
-				stroke="var(--hot)"
-				stroke-width="2" fill="none"
-				stroke-dasharray={2 * Math.PI * 49}
-				stroke-dashoffset={2 * Math.PI * 49 * (1 - countdownPct)}
-				transform="rotate(-90 50 50)"
-			/>
-		</svg>
-	{/if}
+	<svg class="countdown-ring" class:ring-visible={countdownPct >= 0} class:ring-fading={glitching} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+		<circle cx="50" cy="50" r="49"
+			stroke="var(--border-heavy)" stroke-width="2" fill="none"
+		/>
+		<circle cx="50" cy="50" r="49"
+			stroke="var(--hot)"
+			stroke-width="2" fill="none"
+			stroke-dasharray={2 * Math.PI * 49}
+			stroke-dashoffset={2 * Math.PI * 49 * (1 - Math.max(0, countdownPct))}
+			transform="rotate(-90 50 50)"
+		/>
+	</svg>
 	<button
 		class="play-btn"
 		class:replay={replaying}
@@ -133,6 +131,15 @@
 		width: 100px; height: 100px;
 		pointer-events: none;
 		z-index: 2;
+		opacity: 0;
+		transition: opacity 0.3s ease-out;
+	}
+	.countdown-ring.ring-visible {
+		opacity: 1;
+	}
+	.countdown-ring.ring-fading {
+		opacity: 0;
+		transition: opacity 0.3s ease-out;
 	}
 	.play-btn {
 		position: relative; z-index: 1;
