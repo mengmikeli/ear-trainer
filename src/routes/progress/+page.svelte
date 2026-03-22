@@ -65,7 +65,7 @@
 			return [
 				{ label: 'SES', value: state.stats.totalSessions },
 				{ label: 'Q', value: state.stats.totalQuestions },
-				{ label: 'BST', value: state.stats.bestStreak },
+				{ label: 'STK', value: state.stats.currentStreak },
 			];
 		}
 		// Per-mode aggregates
