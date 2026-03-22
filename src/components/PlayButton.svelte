@@ -139,7 +139,7 @@
 		width: 100px; height: 100px; border-radius: 50%;
 		background: var(--accent); border: none;
 		color: var(--base); font-size: 1rem; font-weight: 700;
-		letter-spacing: 0.05em; transition: transform 0.3s ease-out, opacity 0.15s, background 0.15s ease-out, border-color 0.15s ease-out, color 0.15s ease-out;
+		letter-spacing: 0.05em; transition: transform 0.3s ease-out, opacity 0.15s, background 0.3s ease-out, border-color 0.3s ease-out, color 0.3s ease-out;
 		font-family: var(--mono);
 		display: flex; align-items: center; justify-content: center;
 		text-align: center; line-height: 1;
