@@ -212,12 +212,7 @@
 		<div class="top-controls">
 			<button class="close" onclick={endEarly}>{'\uE010'}</button>
 			<span class="mode-icon">{question ? (question.playMode === 'ascending' ? '\uE007' : question.playMode === 'descending' ? '\uE008' : '\uE000') : ''}</span>
-			<div class="right-controls">
-				{#if inResultMode}
-					<button class="close" onclick={nextQuestion}>[→]</button>
-				{/if}
-				<span class="counter">{questionNum}/{totalQuestions}</span>
-			</div>
+			<span class="counter">{questionNum}/{totalQuestions}</span>
 		</div>
 	</div>
 
@@ -296,11 +291,6 @@
 		border: 1px solid var(--marathon-blue);
 		padding: 0 6px;
 		line-height: 1.6;
-	}
-	.right-controls {
-		display: flex;
-		align-items: center;
-		gap: 0.4rem;
 	}
 	.mode-icon {
 		position: absolute;

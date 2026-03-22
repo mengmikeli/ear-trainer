@@ -24,6 +24,7 @@
 		{@const isCorrectBtn = correctId != null && choice.id === correctId}
 		<button
 			class="answer {btnClass(choice.id)}"
+			class:skip={isCorrectBtn && onCorrectClick}
 			onclick={() => {
 				if (isCorrectBtn && onCorrectClick) {
 					onCorrectClick();
@@ -35,6 +36,9 @@
 		>
 			<span class="id">{choice.id}</span>
 			<span class="name">{choice.name}</span>
+			{#if isCorrectBtn && onCorrectClick}
+				<span class="skip-arrow">{'\uE011'}</span>
+			{/if}
 		</button>
 	{/each}
 </div>
@@ -48,6 +52,7 @@
 	}
 	.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; width: 100%; }
 	.answer {
+		position: relative;
 		padding: 1.25rem 0.5rem; background: var(--surface);
 		border: 1px solid var(--border-heavy); border-radius: 0;
 		text-align: center; transition: border-color 0.15s, background 0.15s;
@@ -70,4 +75,14 @@
 	.wrong { border-color: var(--wrong); background: #ED174F10; }
 	.wrong .id { color: var(--wrong); }
 	.dim { opacity: 0.2; }
+	.skip-arrow {
+		position: absolute;
+		right: 0.5rem;
+		top: 50%;
+		transform: translateY(-50%);
+		font-family: var(--mono);
+		font-size: 0.8rem;
+		color: var(--correct);
+		opacity: 0.7;
+	}
 </style>
