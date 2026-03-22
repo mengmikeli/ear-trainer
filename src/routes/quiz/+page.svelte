@@ -27,6 +27,7 @@
 	let countdownDuration = 4000;
 	let rafId: number | null = null;
 	let isGlitching = $state(false);
+	let correctTimeout: ReturnType<typeof setTimeout> | null = null;
 
 	onMount(() => {
 		state = loadState();
@@ -140,7 +141,7 @@
 		saveState(state);
 
 		if (correct) {
-			setTimeout(() => nextQuestion(), 1350);
+			correctTimeout = setTimeout(() => nextQuestion(), 1350);
 		} else {
 			enterResultMode();
 		}
@@ -193,6 +194,11 @@
 		goto('/');
 	}
 
+	function skipCorrect() {
+		if (correctTimeout) { clearTimeout(correctTimeout); correctTimeout = null; }
+		nextQuestion();
+	}
+
 	function endEarly() {
 		if (questionNum > 1 && state) {
 			state.stats.totalSessions++;
@@ -238,7 +244,7 @@
 				disabled={!hasPlayed || !!selectedId}
 				correctId={selectedId ? question.interval.id : null}
 				{selectedId}
-				onCorrectClick={inResultMode ? nextQuestion : null}
+				onCorrectClick={selectedId ? (inResultMode ? nextQuestion : skipCorrect) : null}
 			/>
 		</div>
 	{/if}
