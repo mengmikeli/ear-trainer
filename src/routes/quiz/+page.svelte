@@ -481,6 +481,7 @@
 		letter-spacing: 0.15em; align-self: flex-start;
 		border-bottom: 1px solid var(--marathon-blue);
 		padding-bottom: 0.2rem; width: 100%;
+		margin-bottom: -0.75rem;
 	}
 	.section-label.missed-label {
 		color: var(--hot);
@@ -490,19 +491,19 @@
 		display: flex; flex-direction: column; gap: 0.4rem; width: 100%;
 	}
 	.mode-row {
-		display: flex; align-items: center; gap: 0.75rem;
+		display: flex; align-items: baseline; gap: 0.75rem;
 		font-family: var(--mono); font-size: 0.5rem;
 		color: var(--text-primary);
 	}
 	.mode-glyph {
 		font-size: 0.65rem; color: var(--marathon-blue); width: 1.5rem; text-align: center;
+		transform: translateY(1px);
 	}
 	.mode-stat {
 		font-weight: 900; letter-spacing: 0.05em;
 	}
 	.mode-acc {
 		color: var(--text-secondary); font-size: 0.4rem;
-		border: 1px solid var(--border-heavy); padding: 0 4px;
 	}
 	.missed-list {
 		display: flex; flex-direction: column; gap: 0.5rem; width: 100%;
@@ -530,6 +531,7 @@
 		font-size: 1.5rem; font-weight: 900;
 		font-family: 'BPdots', var(--mono); text-align: center;
 		color: var(--hot); line-height: 1;
+		transform: translateY(-5px);
 	}
 	.missed-card.replaying .missed-id { color: var(--accent); }
 	.missed-info {
@@ -541,7 +543,7 @@
 	}
 	.missed-detail {
 		font-family: var(--mono); font-size: 0.35rem;
-		color: var(--text-secondary); letter-spacing: 0.05em;
+		color: var(--hot); letter-spacing: 0.05em;
 	}
 	.missed-mode {
 		font-size: 0.55rem; font-family: var(--mono);
