@@ -1,7 +1,18 @@
-import type { UserState, IntervalState, Settings, GlobalStats } from './types';
+import type { UserState, IntervalState, Settings, GlobalStats, ModeStats } from './types';
 import { INTERVALS, getIntervalsByTier } from './intervals';
 
 const STORAGE_KEY = 'ear-trainer-state';
+
+function createDefaultModeStats(): ModeStats {
+	return {
+		attempts: 0,
+		correct: 0,
+		streak: 0,
+		lastSeen: 0,
+		easeFactor: 2.5,
+		nextReview: 0,
+	};
+}
 
 export function createDefaultState(): UserState {
 	const intervals: Record<string, IntervalState> = {};
@@ -17,6 +28,11 @@ export function createDefaultState(): UserState {
 			nextReview: 0,
 			streak: 0,
 			lastSeen: 0,
+			modes: {
+				ascending: createDefaultModeStats(),
+				descending: createDefaultModeStats(),
+				harmonic: createDefaultModeStats(),
+			},
 		};
 	}
 
@@ -25,6 +41,11 @@ export function createDefaultState(): UserState {
 		direction: 'ascending',
 		sessionLength: 20,
 		theme: 'dark',
+		enabledModes: {
+			ascending: true,
+			descending: true,
+			harmonic: true,
+		},
 	};
 
 	const stats: GlobalStats = {
@@ -42,17 +63,59 @@ export function loadState(storage: Storage = localStorage): UserState {
 	try {
 		const raw = storage.getItem(STORAGE_KEY);
 		if (!raw) return createDefaultState();
-		// Migrate: add enabled field if missing (backwards compat)
-		const parsed = JSON.parse(raw) as UserState;
+		const parsed = JSON.parse(raw) as any;
+
+		// Migrate: add enabled field if missing (v1 compat)
 		for (const id of Object.keys(parsed.intervals)) {
 			if (parsed.intervals[id].enabled === undefined) {
 				parsed.intervals[id].enabled = true;
 			}
 		}
 		if (parsed.settings.theme === undefined) {
-			(parsed.settings as any).theme = 'dark';
+			parsed.settings.theme = 'dark';
 		}
-		const result = checkTierUnlock(parsed);
+
+		// Migrate v2 → v3: add per-mode stats if missing
+		for (const id of Object.keys(parsed.intervals)) {
+			const interval = parsed.intervals[id];
+			if (!interval.modes) {
+				const oldDirection = parsed.settings?.direction ?? 'ascending';
+
+				// Determine which mode gets the existing stats
+				const targetMode: 'ascending' | 'descending' =
+					oldDirection === 'descending' ? 'descending' : 'ascending';
+
+				const existingStats: ModeStats = {
+					attempts: interval.attempts ?? 0,
+					correct: interval.correct ?? 0,
+					streak: interval.streak ?? 0,
+					lastSeen: interval.lastSeen ?? 0,
+					easeFactor: interval.easeFactor ?? 2.5,
+					nextReview: interval.nextReview ?? 0,
+				};
+
+				interval.modes = {
+					ascending: targetMode === 'ascending' ? { ...existingStats } : createDefaultModeStats(),
+					descending: targetMode === 'descending' ? { ...existingStats } : createDefaultModeStats(),
+					harmonic: createDefaultModeStats(),
+				};
+			}
+		}
+
+		// Migrate settings: add enabledModes if missing
+		if (!parsed.settings.enabledModes) {
+			const oldDirection = parsed.settings?.direction ?? 'ascending';
+			if (oldDirection === 'descending') {
+				parsed.settings.enabledModes = { ascending: false, descending: true, harmonic: false };
+			} else if (oldDirection === 'random') {
+				parsed.settings.enabledModes = { ascending: true, descending: true, harmonic: false };
+			} else {
+				// ascending or any unknown
+				parsed.settings.enabledModes = { ascending: true, descending: false, harmonic: false };
+			}
+		}
+
+		const result = checkTierUnlock(parsed as UserState);
 		// Persist any newly unlocked tiers
 		if (JSON.stringify(result) !== JSON.stringify(parsed)) {
 			try { storage.setItem(STORAGE_KEY, JSON.stringify(result)); } catch {}
@@ -67,6 +130,13 @@ export function saveState(state: UserState, storage: Storage = localStorage): vo
 	storage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
+export function getAggregateStats(state: IntervalState): { attempts: number; correct: number; accuracy: number } {
+	const attempts = state.modes.ascending.attempts + state.modes.descending.attempts + state.modes.harmonic.attempts;
+	const correct = state.modes.ascending.correct + state.modes.descending.correct + state.modes.harmonic.correct;
+	const accuracy = attempts > 0 ? correct / attempts : 0;
+	return { attempts, correct, accuracy };
+}
+
 const TIER_THRESHOLDS: Record<number, { questions: number; accuracy: number }> = {
 	2: { questions: 10, accuracy: 0.7 },
 	3: { questions: 30, accuracy: 0.7 },
@@ -77,14 +147,15 @@ const TIER_THRESHOLDS: Record<number, { questions: number; accuracy: number }> =
 export function checkTierUnlock(state: UserState): UserState {
 	const updated = JSON.parse(JSON.stringify(state)) as UserState;
 
-	// Count total attempts and correct across all unlocked intervals
+	// Count total attempts and correct across all unlocked intervals using aggregate stats from modes
 	let totalAttempts = 0;
 	let totalCorrect = 0;
 	for (const def of INTERVALS) {
 		const s = updated.intervals[def.id];
 		if (s.unlocked) {
-			totalAttempts += s.attempts;
-			totalCorrect += s.correct;
+			const agg = getAggregateStats(s);
+			totalAttempts += agg.attempts;
+			totalCorrect += agg.correct;
 		}
 	}
 	const overallAccuracy = totalAttempts > 0 ? totalCorrect / totalAttempts : 0;

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { IntervalDef, IntervalState } from '$lib/types';
+	import { getMasteryLevel } from '$lib/mastery';
 
 	interface Props {
 		def: IntervalDef;
@@ -9,6 +10,13 @@
 	let { def, state: istate, ontoggle }: Props = $props();
 
 	const accuracy = $derived(istate.attempts > 0 ? Math.round((istate.correct / istate.attempts) * 100) : 0);
+	const mastery = $derived(getMasteryLevel(istate));
+	const masteryDots = $derived(
+		mastery === 'gold' ? '●●●' : mastery === 'silver' ? '●●' : mastery === 'bronze' ? '●' : ''
+	);
+	const masteryColor = $derived(
+		mastery === 'gold' ? '#FFD700' : mastery === 'silver' ? '#C0C0C0' : '#CD7F32'
+	);
 
 	let pendingFlip = $state(false);
 	let pressed = $state(false);
@@ -28,7 +36,12 @@
 <div class="card" class:locked={!istate.unlocked} class:disabled={istate.unlocked && !istate.enabled}>
 	<div class="card-fill" style="width: {istate.unlocked && istate.enabled ? accuracy : 0}%"></div>
 	<div class="card-content">
-		<div class="id">{istate.unlocked ? def.id : 'NA'}</div>
+		<div class="id">
+			{istate.unlocked ? def.id : 'NA'}
+			{#if masteryDots}
+				<span class="mastery-dots" style="color: {masteryColor}">{masteryDots}</span>
+			{/if}
+		</div>
 		<div class="info">
 			<div class="name">{def.name}</div>
 			{#if istate.unlocked && istate.attempts === 0}
@@ -84,6 +97,13 @@
 		transform: translateY(-5px);
 	}
 	.locked .id { color: var(--hot); font-size: 2rem; }
+	.mastery-dots {
+		display: block;
+		font-size: 0.5rem;
+		line-height: 1;
+		letter-spacing: 0.1em;
+		margin-top: 2px;
+	}
 	.name { font-weight: 400; font-size: 0.85rem; letter-spacing: 0.02em; font-family: var(--font-display); }
 	.stats { font-size: 0.4rem; color: var(--text-secondary); font-weight: 600; font-family: var(--mono); letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px; }
 	.attempts { line-height: 1; }

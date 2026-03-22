@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { pickInterval, generateQuestion, generateDistractors } from '$lib/engine';
+import { pickInterval, pickMode, generateQuestion, generateDistractors } from '$lib/engine';
 import { createDefaultState } from '$lib/state';
+import { INTERVALS } from '$lib/intervals';
 
 describe('pickInterval', () => {
 	it('only picks from unlocked intervals', () => {
@@ -59,13 +60,91 @@ describe('generateDistractors', () => {
 });
 
 describe('generateQuestion', () => {
-	it('returns a valid question', () => {
+	it('returns a valid question with playMode', () => {
 		const state = createDefaultState();
 		const q = generateQuestion(state);
 		expect(q.rootNote).toBeGreaterThanOrEqual(48); // C3
 		expect(q.rootNote).toBeLessThanOrEqual(84);    // C6
 		expect(q.choices).toHaveLength(4);
 		expect(q.choices.map(c => c.id)).toContain(q.interval.id);
+		expect(['ascending', 'descending', 'harmonic']).toContain(q.playMode);
+		expect(q.direction).toBeDefined();
+	});
+
+	it('playMode matches an enabled mode', () => {
+		const state = createDefaultState();
+		state.settings.enabledModes = { ascending: false, descending: false, harmonic: true };
+		for (let i = 0; i < 20; i++) {
+			const q = generateQuestion(state);
+			expect(q.playMode).toBe('harmonic');
+		}
+	});
+});
+
+describe('pickMode', () => {
+	it('returns only enabled modes', () => {
+		const state = createDefaultState();
+		state.settings.enabledModes = { ascending: true, descending: false, harmonic: false };
+		const interval = INTERVALS.find(i => i.id === 'P5')!;
+		for (let i = 0; i < 30; i++) {
+			expect(pickMode(state, interval)).toBe('ascending');
+		}
+	});
+
+	it('respects multiple enabled modes', () => {
+		const state = createDefaultState();
+		state.settings.enabledModes = { ascending: true, descending: true, harmonic: false };
+		const interval = INTERVALS.find(i => i.id === 'P5')!;
+		const seen = new Set<string>();
+		for (let i = 0; i < 100; i++) {
+			seen.add(pickMode(state, interval));
+		}
+		expect(seen).toContain('ascending');
+		expect(seen).toContain('descending');
+		expect(seen).not.toContain('harmonic');
+	});
+
+	it('weights toward weak modes', () => {
+		const state = createDefaultState();
+		const interval = INTERVALS.find(i => i.id === 'P5')!;
+		// Make ascending strong (100%), descending weak (25%), harmonic untouched
+		state.intervals['P5'].modes.ascending.attempts = 20;
+		state.intervals['P5'].modes.ascending.correct = 20;
+		state.intervals['P5'].modes.descending.attempts = 20;
+		state.intervals['P5'].modes.descending.correct = 5;
+		state.intervals['P5'].modes.harmonic.attempts = 20;
+		state.intervals['P5'].modes.harmonic.correct = 20;
+
+		const counts: Record<string, number> = { ascending: 0, descending: 0, harmonic: 0 };
+		for (let i = 0; i < 300; i++) {
+			counts[pickMode(state, interval)]++;
+		}
+		expect(counts['descending']).toBeGreaterThan(counts['ascending']);
+		expect(counts['descending']).toBeGreaterThan(counts['harmonic']);
+	});
+
+	it('throws when no modes are enabled', () => {
+		const state = createDefaultState();
+		state.settings.enabledModes = { ascending: false, descending: false, harmonic: false };
+		const interval = INTERVALS.find(i => i.id === 'P5')!;
+		expect(() => pickMode(state, interval)).toThrow('No enabled play modes');
+	});
+
+	it('gives new boost to untried modes', () => {
+		const state = createDefaultState();
+		const interval = INTERVALS.find(i => i.id === 'P5')!;
+		// ascending has many attempts with high accuracy, harmonic is untried
+		state.intervals['P5'].modes.ascending.attempts = 50;
+		state.intervals['P5'].modes.ascending.correct = 48;
+		state.intervals['P5'].modes.descending.attempts = 50;
+		state.intervals['P5'].modes.descending.correct = 48;
+		// harmonic: 0 attempts → should get new boost
+
+		const counts: Record<string, number> = { ascending: 0, descending: 0, harmonic: 0 };
+		for (let i = 0; i < 300; i++) {
+			counts[pickMode(state, interval)]++;
+		}
+		expect(counts['harmonic']).toBeGreaterThan(counts['ascending']);
 	});
 });
 

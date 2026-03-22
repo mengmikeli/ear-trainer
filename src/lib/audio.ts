@@ -159,6 +159,151 @@ function playPianoTone(freq: number, startTime: number, duration: number, audioC
 }
 
 /**
+ * Play two notes simultaneously through a shared gain node to avoid clipping.
+ * Used for harmonic interval playback.
+ */
+function playHarmonicPair(
+	freq1: number,
+	freq2: number,
+	startTime: number,
+	duration: number,
+	audioCtx: AudioContext,
+	toneType: ToneType
+): void {
+	// Route both notes through a master gain node at 0.7 to avoid clipping
+	const masterGain = audioCtx.createGain();
+	masterGain.gain.value = 0.7;
+	masterGain.connect(audioCtx.destination);
+
+	if (toneType === 'piano') {
+		playPianoToneToNode(freq1, startTime, duration, audioCtx, masterGain);
+		playPianoToneToNode(freq2, startTime, duration, audioCtx, masterGain);
+	} else {
+		playSineToneToNode(freq1, startTime, duration, audioCtx, masterGain);
+		playSineToneToNode(freq2, startTime, duration, audioCtx, masterGain);
+	}
+}
+
+/**
+ * Sine tone routed to a specific destination node (for harmonic stacking).
+ */
+function playSineToneToNode(
+	freq: number,
+	startTime: number,
+	duration: number,
+	audioCtx: AudioContext,
+	destNode: AudioNode
+): void {
+	const osc = audioCtx.createOscillator();
+	const gain = audioCtx.createGain();
+
+	osc.type = 'triangle';
+	osc.frequency.value = freq;
+
+	const subOsc = audioCtx.createOscillator();
+	const subGain = audioCtx.createGain();
+	subOsc.type = 'sine';
+	subOsc.frequency.value = freq / 2;
+	subGain.gain.setValueAtTime(0.08, startTime);
+	subGain.gain.linearRampToValueAtTime(0, startTime + duration);
+	subOsc.connect(subGain);
+	subGain.connect(destNode);
+	subOsc.start(startTime);
+	subOsc.stop(startTime + duration);
+
+	gain.gain.setValueAtTime(0, startTime);
+	gain.gain.linearRampToValueAtTime(0.4, startTime + 0.01);
+	gain.gain.exponentialRampToValueAtTime(0.25, startTime + 0.08);
+	gain.gain.setValueAtTime(0.25, startTime + duration - 0.15);
+	gain.gain.linearRampToValueAtTime(0, startTime + duration);
+
+	osc.connect(gain);
+	gain.connect(destNode);
+	osc.start(startTime);
+	osc.stop(startTime + duration);
+}
+
+/**
+ * Piano tone routed to a specific destination node (for harmonic stacking).
+ */
+function playPianoToneToNode(
+	freq: number,
+	startTime: number,
+	duration: number,
+	audioCtx: AudioContext,
+	destNode: AudioNode
+): void {
+	const padDuration = duration + 0.4;
+
+	const osc1 = audioCtx.createOscillator();
+	const gain1 = audioCtx.createGain();
+	osc1.type = 'sine';
+	osc1.frequency.value = freq;
+	gain1.gain.setValueAtTime(0, startTime);
+	gain1.gain.linearRampToValueAtTime(0.2, startTime + 0.12);
+	gain1.gain.setValueAtTime(0.2, startTime + padDuration - 0.3);
+	gain1.gain.linearRampToValueAtTime(0, startTime + padDuration);
+	osc1.connect(gain1);
+
+	const osc2 = audioCtx.createOscillator();
+	const gain2 = audioCtx.createGain();
+	osc2.type = 'sine';
+	osc2.frequency.value = freq * 1.003;
+	gain2.gain.setValueAtTime(0, startTime);
+	gain2.gain.linearRampToValueAtTime(0.12, startTime + 0.15);
+	gain2.gain.setValueAtTime(0.12, startTime + padDuration - 0.3);
+	gain2.gain.linearRampToValueAtTime(0, startTime + padDuration);
+	osc2.connect(gain2);
+
+	const osc3 = audioCtx.createOscillator();
+	const gain3 = audioCtx.createGain();
+	osc3.type = 'sine';
+	osc3.frequency.value = freq * 0.997;
+	gain3.gain.setValueAtTime(0, startTime);
+	gain3.gain.linearRampToValueAtTime(0.12, startTime + 0.15);
+	gain3.gain.setValueAtTime(0.12, startTime + padDuration - 0.3);
+	gain3.gain.linearRampToValueAtTime(0, startTime + padDuration);
+	osc3.connect(gain3);
+
+	const osc4 = audioCtx.createOscillator();
+	const gain4 = audioCtx.createGain();
+	osc4.type = 'triangle';
+	osc4.frequency.value = freq * 2;
+	gain4.gain.setValueAtTime(0, startTime);
+	gain4.gain.linearRampToValueAtTime(0.04, startTime + 0.2);
+	gain4.gain.setValueAtTime(0.04, startTime + padDuration - 0.4);
+	gain4.gain.linearRampToValueAtTime(0, startTime + padDuration);
+	osc4.connect(gain4);
+
+	const sub = audioCtx.createOscillator();
+	const subGain = audioCtx.createGain();
+	sub.type = 'sine';
+	sub.frequency.value = freq / 2;
+	subGain.gain.setValueAtTime(0, startTime);
+	subGain.gain.linearRampToValueAtTime(0.06, startTime + 0.1);
+	subGain.gain.setValueAtTime(0.06, startTime + padDuration - 0.3);
+	subGain.gain.linearRampToValueAtTime(0, startTime + padDuration);
+	sub.connect(subGain);
+
+	const filter = audioCtx.createBiquadFilter();
+	filter.type = 'lowpass';
+	filter.frequency.value = freq * 3;
+	filter.Q.value = 0.5;
+
+	gain1.connect(filter);
+	gain2.connect(filter);
+	gain3.connect(filter);
+	gain4.connect(filter);
+	subGain.connect(filter);
+	filter.connect(destNode);
+
+	[osc1, osc2, osc3, osc4, sub].forEach(osc => {
+		osc.start(startTime);
+		osc.stop(startTime + padDuration);
+	});
+}
+
+/**
  * Warm up the AudioContext on first user interaction.
  * Call this once from a top-level touch/click handler to ensure
  * iOS Safari has unlocked audio before the user reaches the quiz.
@@ -170,22 +315,27 @@ export function warmUpAudio(): void {
 export function playInterval(
 	rootMidi: number,
 	semitones: number,
-	direction: 'ascending' | 'descending',
+	direction: 'ascending' | 'descending' | 'harmonic',
 	toneType: ToneType = 'sine'
 ): void {
 	const audioCtx = getContext();
 	const now = audioCtx.currentTime;
 
 	const freq1 = midiToFreq(rootMidi);
-	const secondMidi = direction === 'ascending' ? rootMidi + semitones : rootMidi - semitones;
+	const secondMidi = direction === 'descending' ? rootMidi - semitones : rootMidi + semitones;
 	const freq2 = midiToFreq(secondMidi);
 
 	const noteDuration = 0.6;
-	const gap = toneType === 'piano' ? 0.3 : 0.15; // more space for ambient tail
-
 	const playFn = toneType === 'piano' ? playPianoTone : playSineTone;
-	playFn(freq1, now, noteDuration, audioCtx);
-	playFn(freq2, now + noteDuration + gap, noteDuration, audioCtx);
+
+	if (direction === 'harmonic') {
+		// Play both notes simultaneously with reduced gain to avoid clipping
+		playHarmonicPair(freq1, freq2, now, noteDuration, audioCtx, toneType);
+	} else {
+		const gap = toneType === 'piano' ? 0.3 : 0.15; // more space for ambient tail
+		playFn(freq1, now, noteDuration, audioCtx);
+		playFn(freq2, now + noteDuration + gap, noteDuration, audioCtx);
+	}
 }
 
 /**

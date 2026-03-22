@@ -10,6 +10,12 @@
 	import AnswerGrid from '../../components/AnswerGrid.svelte';
 	import ProgressBar from '../../components/ProgressBar.svelte';
 
+	const modeLabelMap: Record<string, string> = {
+		ascending: '▲',
+		descending: '▼',
+		harmonic: '═',
+	};
+
 	let state: UserState | null = $state(null);
 	let question: Question | null = $state(null);
 	let questionNum = $state(0);
@@ -62,7 +68,7 @@
 		playInterval(
 			question.rootNote,
 			question.interval.semitones,
-			question.direction,
+			question.playMode,
 			state.settings.toneType
 		);
 		if (!hasPlayed) {
@@ -90,7 +96,7 @@
 
 		playFeedbackChime(correct);
 
-		// Update interval state
+		// Update interval state (flat fields for backward compat)
 		const s = state.intervals[question.interval.id];
 		s.attempts++;
 		if (correct) {
@@ -101,7 +107,7 @@
 		}
 		s.lastSeen = Date.now();
 
-		// SM-2 update
+		// SM-2 update (flat)
 		const quality = responseQuality({
 			correct,
 			replays: question.replays,
@@ -110,6 +116,23 @@
 		const sm2 = calculateSm2(s.easeFactor, quality);
 		s.easeFactor = sm2.easeFactor;
 		s.nextReview = Date.now() + sm2.intervalMs;
+
+		// Per-mode stat recording
+		const mode = question.playMode;
+		const modeStats = s.modes[mode];
+		modeStats.attempts++;
+		if (correct) {
+			modeStats.correct++;
+			modeStats.streak++;
+		} else {
+			modeStats.streak = 0;
+		}
+		modeStats.lastSeen = Date.now();
+
+		// SM-2 update per mode
+		const sm2mode = calculateSm2(modeStats.easeFactor, quality);
+		modeStats.easeFactor = sm2mode.easeFactor;
+		modeStats.nextReview = Date.now() + sm2mode.intervalMs;
 
 		// Check tier unlocks
 		state = checkTierUnlock(state);
@@ -208,6 +231,7 @@
 				glitching={isGlitching}
 				feedback={feedbackState}
 				semitones={question.interval.semitones}
+				modeLabel={modeLabelMap[question.playMode] ?? ''}
 			/>
 		</div>
 

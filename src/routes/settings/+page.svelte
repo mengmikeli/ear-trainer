@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 	import { loadState, saveState, createDefaultState } from '$lib/state';
-	import type { UserState, ToneType, Direction, SessionLength, ThemeMode } from '$lib/types';
+	import type { UserState, ToneType, SessionLength, ThemeMode } from '$lib/types';
 	import { applyTheme, watchSystemTheme } from '$lib/theme';
 
 	let state: UserState | null = $state(null);
@@ -132,14 +132,32 @@
 		</div>
 
 		<div class="section">
-			<label class="field-label">DIRECTION</label>
+			<label class="field-label">PLAY MODES</label>
 			<div class="toggle-group">
-				{#each ['ascending', 'descending', 'random'] as dir}
-					<button class:active={state.settings.direction === dir}
-						onclick={() => { state!.settings.direction = dir as Direction; update(); }}>
-						{dir.toUpperCase()}
-					</button>
-				{/each}
+				<button class:active={state.settings.enabledModes.ascending}
+					onclick={() => {
+						const m = state!.settings.enabledModes;
+						const activeCount = +m.ascending + +m.descending + +m.harmonic;
+						if (m.ascending && activeCount <= 1) return;
+						m.ascending = !m.ascending;
+						update();
+					}}>▲ ASC</button>
+				<button class:active={state.settings.enabledModes.descending}
+					onclick={() => {
+						const m = state!.settings.enabledModes;
+						const activeCount = +m.ascending + +m.descending + +m.harmonic;
+						if (m.descending && activeCount <= 1) return;
+						m.descending = !m.descending;
+						update();
+					}}>▼ DESC</button>
+				<button class:active={state.settings.enabledModes.harmonic}
+					onclick={() => {
+						const m = state!.settings.enabledModes;
+						const activeCount = +m.ascending + +m.descending + +m.harmonic;
+						if (m.harmonic && activeCount <= 1) return;
+						m.harmonic = !m.harmonic;
+						update();
+					}}>═ HARM</button>
 			</div>
 		</div>
 

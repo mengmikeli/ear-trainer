@@ -1,4 +1,4 @@
-import type { UserState, Question, IntervalDef } from './types';
+import type { UserState, Question, IntervalDef, PlayMode } from './types';
 import { INTERVALS, getUnlockedIntervals, getEnabledIntervals } from './intervals';
 
 export function pickInterval(state: UserState): IntervalDef {
@@ -30,6 +30,37 @@ export function pickInterval(state: UserState): IntervalDef {
 		if (roll <= 0) return w.def;
 	}
 	return weights[weights.length - 1].def;
+}
+
+export function pickMode(state: UserState, interval: IntervalDef): PlayMode {
+	const enabledModes = state.settings.enabledModes;
+	const modes: PlayMode[] = (['ascending', 'descending', 'harmonic'] as PlayMode[]).filter(
+		(m) => enabledModes[m]
+	);
+	if (modes.length === 0) throw new Error('No enabled play modes');
+	if (modes.length === 1) return modes[0];
+
+	const intervalState = state.intervals[interval.id];
+
+	const weights = modes.map((mode) => {
+		const modeStats = intervalState.modes[mode];
+		const accuracy = modeStats.attempts > 0 ? modeStats.correct / modeStats.attempts : 0.5;
+		const weaknessWeight = 1 - accuracy;
+		const newBoost = modeStats.attempts === 0 ? 0.5 : 0;
+
+		return {
+			mode,
+			weight: 0.1 + weaknessWeight + newBoost
+		};
+	});
+
+	const totalWeight = weights.reduce((sum, w) => sum + w.weight, 0);
+	let roll = Math.random() * totalWeight;
+	for (const w of weights) {
+		roll -= w.weight;
+		if (roll <= 0) return w.mode;
+	}
+	return weights[weights.length - 1].mode;
 }
 
 export function generateDistractors(correctId: string, state: UserState): IntervalDef[] {
@@ -64,14 +95,10 @@ export function generateDistractors(correctId: string, state: UserState): Interv
 
 export function generateQuestion(state: UserState): Question {
 	const interval = pickInterval(state);
-	const direction: 'ascending' | 'descending' =
-		state.settings.direction === 'random'
-			? Math.random() < 0.5
-				? 'ascending'
-				: 'descending'
-			: state.settings.direction;
+	const playMode = pickMode(state, interval);
+	const direction = playMode as 'ascending' | 'descending';
 
-	const maxRoot = direction === 'ascending' ? 84 - interval.semitones : 84;
+	const maxRoot = direction === 'ascending' || playMode === 'harmonic' ? 84 - interval.semitones : 84;
 	const minRoot = direction === 'descending' ? 48 + interval.semitones : 48;
 	const rootNote = minRoot + Math.floor(Math.random() * (maxRoot - minRoot + 1));
 
@@ -89,6 +116,7 @@ export function generateQuestion(state: UserState): Question {
 		rootNote,
 		interval,
 		direction,
+		playMode,
 		choices,
 		replays: 0
 	};
