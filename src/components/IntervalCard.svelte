@@ -133,14 +133,16 @@
 		border: 1px solid var(--accent); padding: 0 6px;
 		font-size: 0.4rem; font-family: var(--mono);
 		color: var(--accent); font-weight: 900;
-		white-space: nowrap; line-height: 1.6;
+		white-space: nowrap; line-height: 1;
+		height: 1rem; box-sizing: border-box;
 	}
 	.stat-value {
 		display: inline-flex; align-items: center;
 		font-size: 0.4rem; font-family: var(--mono);
 		color: var(--text-primary); font-weight: 900;
 		padding: 0 8px 0 4px;
-		white-space: nowrap; line-height: 1.6;
+		white-space: nowrap; line-height: 1;
+		height: 1rem;
 	}
 	.new { color: var(--accent); font-weight: 900; letter-spacing: 0.2em; }
 	.tier-tag {
