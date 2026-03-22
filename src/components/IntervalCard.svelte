@@ -71,10 +71,10 @@
 		</div>
 		{#if istate.unlocked && ontoggle}
 			<button class="toggle" class:toggle-off={isOff}
-				onpointerdown={() => pressed = true}
+				onpointerdown={(e) => { e.stopPropagation(); pressed = true; }}
 				onpointerup={() => pressed = false}
 				onpointerleave={() => pressed = false}
-				onclick={handleToggle}>
+				onclick={(e) => { e.stopPropagation(); handleToggle(); }}>
 				{isOff ? 'OFF' : 'ON'}
 			</button>
 		{:else if istate.unlocked}
