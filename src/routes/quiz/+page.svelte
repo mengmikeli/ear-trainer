@@ -5,10 +5,18 @@
 	import { generateQuestion } from '$lib/engine';
 	import { playInterval, playFeedbackChime } from '$lib/audio';
 	import { responseQuality, calculateSm2 } from '$lib/sm2';
-	import type { UserState, Question, IntervalDef } from '$lib/types';
+	import type { UserState, Question, IntervalDef, PlayMode } from '$lib/types';
 	import PlayButton from '../../components/PlayButton.svelte';
 	import AnswerGrid from '../../components/AnswerGrid.svelte';
 	import ProgressBar from '../../components/ProgressBar.svelte';
+	import TelemetryBar from '../../components/TelemetryBar.svelte';
+
+	interface QuestionResult {
+		interval: IntervalDef;
+		mode: PlayMode;
+		correct: boolean;
+		selectedId: string;
+	}
 
 	let state: UserState | null = $state(null);
 	let question: Question | null = $state(null);
@@ -28,6 +36,10 @@
 	let rafId: number | null = null;
 	let isGlitching = $state(false);
 	let correctTimeout: ReturnType<typeof setTimeout> | null = null;
+
+	// Summary state
+	let showSummary = $state(false);
+	let results: QuestionResult[] = $state([]);
 
 	onMount(() => {
 		state = loadState();
@@ -94,6 +106,14 @@
 		feedbackState = correct ? 'correct' : 'wrong';
 
 		if (correct) sessionCorrect++;
+
+		// Track result for summary
+		results.push({
+			interval: question.interval,
+			mode: question.playMode,
+			correct,
+			selectedId: choice.id,
+		});
 
 		playFeedbackChime(correct);
 
@@ -191,8 +211,38 @@
 		state.stats.lastPractice = Date.now();
 
 		saveState(state);
-		goto('/');
+		showSummary = true;
 	}
+
+	function restartQuiz() {
+		showSummary = false;
+		sessionCorrect = 0;
+		questionNum = 0;
+		results = [];
+		state = loadState();
+		nextQuestion();
+	}
+
+	// Summary derived stats
+	const summaryAccuracy = $derived(results.length > 0 ? Math.round((sessionCorrect / results.length) * 100) : 0);
+
+	const wrongAnswers = $derived(results.filter(r => !r.correct));
+
+	const modeBreakdown = $derived(() => {
+		const modes: Record<string, { total: number; correct: number }> = {};
+		for (const r of results) {
+			if (!modes[r.mode]) modes[r.mode] = { total: 0, correct: 0 };
+			modes[r.mode].total++;
+			if (r.correct) modes[r.mode].correct++;
+		}
+		return modes;
+	});
+
+	const modeGlyph: Record<string, string> = {
+		ascending: '\uE007',
+		descending: '\uE008',
+		harmonic: '\uE000',
+	};
 
 	function skipCorrect() {
 		if (correctTimeout) { clearTimeout(correctTimeout); correctTimeout = null; }
@@ -209,6 +259,55 @@
 	}
 </script>
 
+{#if showSummary}
+<div class="summary">
+	<h2 class="heading">DEBRIEF</h2>
+
+	<div class="score-block">
+		<span class="score-big">{sessionCorrect}/{results.length}</span>
+		<span class="score-label">CORRECT</span>
+	</div>
+
+	<TelemetryBar segments={[
+		{ label: 'ACC', value: summaryAccuracy + '%' },
+		{ label: 'STK', value: state?.stats.currentStreak ?? 0 },
+		{ label: 'SES', value: state?.stats.totalSessions ?? 0 },
+	]} />
+
+	{#if Object.keys(modeBreakdown()).length > 1}
+		<div class="section-label">PER MODE</div>
+		<div class="mode-rows">
+			{#each Object.entries(modeBreakdown()) as [mode, stats]}
+				<div class="mode-row">
+					<span class="mode-glyph">{modeGlyph[mode] ?? mode}</span>
+					<span class="mode-stat">{stats.correct}/{stats.total}</span>
+					<span class="mode-acc">{Math.round((stats.correct / stats.total) * 100)}%</span>
+				</div>
+			{/each}
+		</div>
+	{/if}
+
+	{#if wrongAnswers.length > 0}
+		<div class="section-label">MISSED</div>
+		<div class="missed-list">
+			{#each wrongAnswers as r}
+				<div class="missed-item">
+					<span class="missed-id">{r.interval.id}</span>
+					<span class="missed-name">{r.interval.name}</span>
+					<span class="missed-mode">{modeGlyph[r.mode]}</span>
+				</div>
+			{/each}
+		</div>
+	{:else}
+		<div class="perfect">PERFECT SESSION</div>
+	{/if}
+
+	<div class="summary-actions">
+		<button class="action-btn primary" onclick={restartQuiz}>AGAIN</button>
+		<button class="action-btn" onclick={() => goto('/')}>HOME</button>
+	</div>
+</div>
+{:else}
 <div class="quiz">
 	<h2 class="heading">PRACTICE</h2>
 	<div class="top">
@@ -249,6 +348,7 @@
 		</div>
 	{/if}
 </div>
+{/if}
 
 <style>
 	.quiz {
@@ -336,4 +436,91 @@
 	.answer-area.hidden {
 		visibility: hidden;
 	}
+
+	/* Summary screen */
+	.summary {
+		display: flex; flex-direction: column; align-items: center;
+		gap: 1.5rem; width: 100%; height: 100%;
+	}
+	.score-block {
+		display: flex; flex-direction: column; align-items: center;
+		gap: 0.25rem; margin: 1rem 0;
+	}
+	.score-big {
+		font-size: 4rem; font-weight: 900;
+		font-family: var(--mono); color: var(--accent);
+		letter-spacing: -0.02em; line-height: 1;
+	}
+	.score-label {
+		font-size: 0.5rem; font-weight: 900;
+		font-family: var(--mono); color: var(--text-secondary);
+		letter-spacing: 0.2em;
+	}
+	.section-label {
+		font-size: 0.45rem; font-weight: 900;
+		font-family: var(--mono); color: var(--marathon-blue);
+		letter-spacing: 0.15em; align-self: flex-start;
+		border-bottom: 1px solid var(--marathon-blue);
+		padding-bottom: 0.2rem; width: 100%;
+	}
+	.mode-rows {
+		display: flex; flex-direction: column; gap: 0.4rem; width: 100%;
+	}
+	.mode-row {
+		display: flex; align-items: center; gap: 0.75rem;
+		font-family: var(--mono); font-size: 0.5rem;
+		color: var(--text-primary);
+	}
+	.mode-glyph {
+		font-size: 0.65rem; color: var(--marathon-blue); width: 1.5rem; text-align: center;
+	}
+	.mode-stat {
+		font-weight: 900; letter-spacing: 0.05em;
+	}
+	.mode-acc {
+		color: var(--text-secondary); font-size: 0.4rem;
+		border: 1px solid var(--border-heavy); padding: 0 4px;
+	}
+	.missed-list {
+		display: flex; flex-direction: column; gap: 0.3rem; width: 100%;
+	}
+	.missed-item {
+		display: flex; align-items: center; gap: 0.75rem;
+		font-family: var(--mono); font-size: 0.5rem;
+		color: var(--hot); padding: 0.3rem 0;
+		border-bottom: 1px solid rgba(237, 23, 79, 0.15);
+	}
+	.missed-id {
+		font-size: 1.2rem; font-weight: 900;
+		font-family: 'BPdots', var(--mono); width: 2.5rem; text-align: center;
+	}
+	.missed-name {
+		font-family: var(--font-display); color: var(--text-secondary);
+		font-size: 0.55rem; letter-spacing: 0.05em; flex: 1;
+	}
+	.missed-mode {
+		font-size: 0.55rem; color: var(--hot); opacity: 0.6;
+	}
+	.perfect {
+		font-size: 0.6rem; font-weight: 900;
+		font-family: var(--mono); color: var(--accent);
+		letter-spacing: 0.2em; padding: 1rem 0;
+		text-align: center;
+	}
+	.summary-actions {
+		display: flex; gap: 1rem; margin-top: auto; padding-bottom: 1rem; width: 100%;
+	}
+	.action-btn {
+		flex: 1; padding: 0.75rem;
+		font-family: var(--mono); font-size: 0.5rem; font-weight: 900;
+		letter-spacing: 0.12em; border: 1px solid var(--border-heavy);
+		background: transparent; color: var(--text-primary);
+		cursor: pointer; transition: background 0.15s, border-color 0.15s;
+	}
+	.action-btn:active { background: var(--surface-raised); }
+	.action-btn.primary {
+		background: var(--accent); color: var(--base);
+		border-color: var(--accent);
+	}
+	.action-btn.primary:active { opacity: 0.85; }
 </style>
