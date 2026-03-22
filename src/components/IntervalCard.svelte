@@ -64,7 +64,7 @@
 			{#if istate.unlocked && filteredAttempts === 0}
 				<div class="stats new">NEW</div>
 			{:else if istate.unlocked}
-				<div class="stats"><span class="acc-tag">{accuracy}%</span><span class="attempts">{filteredAttempts} {filteredAttempts === 1 ? 'attempt' : 'attempts'}</span></div>
+				<div class="stats"><span class="stat-tag">ACC</span><span class="stat-value">{accuracy}%</span><span class="stat-tag">ATT</span><span class="stat-value">{filteredAttempts}</span></div>
 			{:else}
 				<div class="stats"><span class="tier-tag">T{def.tier}</span> LOCKED</div>
 			{/if}
@@ -127,20 +127,25 @@
 		margin-top: 2px;
 	}
 	.name { font-weight: 400; font-size: 0.85rem; letter-spacing: 0.02em; font-family: var(--font-display); }
-	.stats { font-size: 0.4rem; color: var(--text-secondary); font-weight: 600; font-family: var(--mono); letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px; }
-	.attempts { line-height: 1; }
+	.stats { font-size: 0.4rem; color: var(--text-secondary); font-weight: 600; font-family: var(--mono); letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px; }
+	.stat-tag {
+		display: inline-flex; align-items: center;
+		border: 1px solid var(--accent); padding: 0 4px;
+		font-size: 0.35rem; font-family: var(--mono);
+		color: var(--accent); font-weight: 900;
+		letter-spacing: 0.05em; line-height: 1.5;
+	}
+	.stat-value {
+		font-size: 0.4rem; font-family: var(--mono);
+		color: var(--text-primary); font-weight: 900;
+		letter-spacing: 0.02em;
+	}
 	.new { color: var(--accent); font-weight: 900; letter-spacing: 0.2em; }
 	.tier-tag {
 		display: inline-flex; align-items: center;
 		border: 1px solid var(--hot); padding: 0 4px;
 		font-size: 0.35rem; font-family: var(--mono);
 		color: var(--hot); margin-right: 4px;
-	}
-	.acc-tag {
-		display: inline-flex; align-items: center;
-		border: 1px solid var(--accent); padding: 0 4px;
-		font-size: 0.4rem; font-family: var(--mono);
-		color: var(--accent); vertical-align: middle;
 	}
 	.acc-value {
 		font-size: 0.7rem; font-weight: 900;
