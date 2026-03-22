@@ -210,7 +210,7 @@
 			<ProgressBar current={questionNum} total={totalQuestions} />
 		</div>
 		<div class="top-controls">
-			<button class="close" onclick={endEarly}>{'\uE010'}</button>
+			<button class="close exit" onclick={endEarly}>EXIT</button>
 			<span class="mode-icon">{question ? (question.playMode === 'ascending' ? '\uE007' : question.playMode === 'descending' ? '\uE008' : '\uE000') : ''}</span>
 			<span class="counter">{questionNum}/{totalQuestions}</span>
 		</div>
@@ -307,9 +307,14 @@
 		padding: 0 6px;
 		font-weight: 900;
 		font-family: var(--mono);
-		letter-spacing: -0.05em;
+		letter-spacing: 0.08em;
 		border: 1px solid var(--marathon-blue);
 		line-height: 1.6;
+		background: transparent;
+	}
+	.exit {
+		color: var(--hot);
+		border-color: var(--hot);
 	}
 	.play-area {
 		display: flex;
