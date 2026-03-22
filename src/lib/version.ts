@@ -1,4 +1,4 @@
-export const APP_VERSION = '3.0';
+export const APP_VERSION = '3.1';
 
 export interface ReleaseNote {
 	version: string;
@@ -9,6 +9,19 @@ export interface ReleaseNote {
 
 export const RELEASE_NOTES: ReleaseNote[] = [
 	{
+		version: '3.1',
+		date: '2026-03-22',
+		title: 'PROGRESS + POLISH',
+		changes: [
+			'Tabbed progress page — filter by mode (ALL / ASC / DESC / HARM)',
+			'Electric piano tone (FM synthesis) for clearer harmonic intervals',
+			'Skip arrow on correct answer card — tap to advance',
+			'Smooth button transitions between quiz states',
+			'EXIT button replaces back arrow on quiz bar',
+			'Zero-padded question counter (01/20)',
+		],
+	},
+	{
 		version: '3.0',
 		date: '2026-03-22',
 		title: 'PLAY MODES + MASTERY',
@@ -17,10 +30,8 @@ export const RELEASE_NOTES: ReleaseNote[] = [
 			'Harmonic mode — hear both notes simultaneously',
 			'Per-mode stats tracking with weakness-weighted selection',
 			'Mastery system: Bronze / Silver / Gold per interval',
-			'Electric piano tone (FM synthesis) for clearer harmonic intervals',
-			'Mode indicator on quiz bar',
-			'Skip arrow on correct answer card',
-			'Tabbed progress page with per-mode filtering',
+			'Mode indicator glyph on quiz bar',
+			'Restored RadarGrid cover page',
 		],
 	},
 	{
