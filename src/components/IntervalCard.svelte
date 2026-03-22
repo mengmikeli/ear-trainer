@@ -64,7 +64,7 @@
 			{#if istate.unlocked && filteredAttempts === 0}
 				<div class="stats new">NEW</div>
 			{:else if istate.unlocked}
-				<div class="stats"><span class="stat-tag">ACC</span><span class="stat-value">{accuracy}%</span><span class="stat-tag">ATT</span><span class="stat-value">{filteredAttempts}</span></div>
+				<div class="stats"><span class="stat-tag">ACC</span><span class="stat-value">{accuracy}%</span><span class="stat-tag">Q</span><span class="stat-value">{filteredAttempts}</span></div>
 			{:else}
 				<div class="stats"><span class="tier-tag">T{def.tier}</span> LOCKED</div>
 			{/if}
