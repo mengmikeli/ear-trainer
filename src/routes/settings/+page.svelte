@@ -3,6 +3,7 @@
 	import { loadState, saveState, createDefaultState } from '$lib/state';
 	import type { UserState, ToneType, SessionLength, ThemeMode } from '$lib/types';
 	import { applyTheme, watchSystemTheme } from '$lib/theme';
+	import { playInterval } from '$lib/audio';
 	import { APP_VERSION, RELEASE_NOTES } from '$lib/version';
 
 	let showReleaseNotes = $state(false);
@@ -48,6 +49,14 @@
 
 	function update() {
 		if (state) saveState(state);
+	}
+
+	function previewTone(tone: ToneType) {
+		if (!state) return;
+		state.settings.toneType = tone;
+		update();
+		// Play a P5 ascending as preview
+		playInterval(60, 7, 'ascending', tone);
 	}
 
 	function startHold() {
@@ -128,11 +137,11 @@
 			<label class="field-label">TONE TYPE</label>
 			<div class="toggle-group">
 				<button class:active={state.settings.toneType === 'epiano'}
-					onclick={() => { state!.settings.toneType = 'epiano'; update(); }}>WARM</button>
+					onclick={() => previewTone('epiano')}>WARM</button>
 				<button class:active={state.settings.toneType === 'sine'}
-					onclick={() => { state!.settings.toneType = 'sine'; update(); }}>CLEAN</button>
+					onclick={() => previewTone('sine')}>CLEAN</button>
 				<button class:active={state.settings.toneType === 'piano'}
-					onclick={() => { state!.settings.toneType = 'piano'; update(); }}>AMBIENT</button>
+					onclick={() => previewTone('piano')}>AMBIENT</button>
 			</div>
 		</div>
 
