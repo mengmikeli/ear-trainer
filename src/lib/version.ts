@@ -13,12 +13,13 @@ export const RELEASE_NOTES: ReleaseNote[] = [
 		date: '2026-03-22',
 		title: 'PROGRESS + POLISH',
 		changes: [
+			'End-of-quiz debrief screen with score breakdown',
+			'Tap missed intervals on debrief to replay',
 			'Tabbed progress page — filter by mode (ALL / ASC / DESC / HARM)',
+			'Tap interval cards on progress page to preview sound',
 			'Electric piano tone (FM synthesis) for clearer harmonic intervals',
 			'Skip arrow on correct answer card — tap to advance',
-			'Smooth button transitions between quiz states',
-			'EXIT button replaces back arrow on quiz bar',
-			'Zero-padded question counter (01/20)',
+			'Consistent stat labels and telemetry styling',
 		],
 	},
 	{
