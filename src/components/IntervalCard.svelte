@@ -127,7 +127,7 @@
 		margin-top: 2px;
 	}
 	.name { font-weight: 400; font-size: 0.85rem; letter-spacing: 0.02em; font-family: var(--font-display); }
-	.stats { font-size: 0.4rem; color: var(--text-secondary); font-weight: 600; font-family: var(--mono); display: flex; align-items: center; gap: 2px; }
+	.stats { font-size: 0.4rem; color: var(--text-secondary); font-weight: 600; font-family: var(--mono); display: flex; align-items: center; gap: 2px; opacity: 0.7; }
 	.stat-tag {
 		display: inline-flex; align-items: center;
 		border: 1px solid var(--accent); padding: 0 4px;
