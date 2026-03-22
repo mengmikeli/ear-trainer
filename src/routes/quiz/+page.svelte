@@ -44,15 +44,15 @@
 
 		// Start glitch BEFORE clearing state — covers the visual transition
 		isGlitching = true;
+		feedbackState = null; // clear feedback immediately so glitch style takes over
 		questionNum++;
 
-		// Clear state on next frame so glitch is already rendering
+		// Clear remaining state on next frame
 		requestAnimationFrame(() => {
 			inResultMode = false;
 			question = generateQuestion(state!);
 			hasPlayed = false;
 			selectedId = null;
-			feedbackState = null;
 			countdownPct = 1.0;
 		});
 
