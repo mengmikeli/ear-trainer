@@ -244,6 +244,22 @@
 		harmonic: '\uE000',
 	};
 
+	let replayingIndex: number | null = $state(null);
+
+	function replayMissed(r: QuestionResult) {
+		if (replayingIndex !== null) return;
+		const idx = wrongAnswers.indexOf(r);
+		replayingIndex = idx;
+		playInterval(
+			r.interval.semitones + 60, // rootNote (middle C area)
+			r.interval.semitones,
+			r.mode,
+			state?.settings.toneType ?? 'epiano'
+		);
+		const dur = r.mode === 'harmonic' ? 1500 : 1200;
+		setTimeout(() => { replayingIndex = null; }, dur);
+	}
+
 	function skipCorrect() {
 		if (correctTimeout) { clearTimeout(correctTimeout); correctTimeout = null; }
 		nextQuestion();
@@ -265,7 +281,6 @@
 
 	<div class="score-block">
 		<span class="score-big">{sessionCorrect}/{results.length}</span>
-		<span class="score-label">CORRECT</span>
 	</div>
 
 	<TelemetryBar segments={[
@@ -288,14 +303,20 @@
 	{/if}
 
 	{#if wrongAnswers.length > 0}
-		<div class="section-label">MISSED</div>
+		<div class="section-label missed-label">MISSED</div>
 		<div class="missed-list">
-			{#each wrongAnswers as r}
-				<div class="missed-item">
-					<span class="missed-id">{r.interval.id}</span>
-					<span class="missed-name">{r.interval.name}</span>
-					<span class="missed-mode">{modeGlyph[r.mode]}</span>
-				</div>
+			{#each wrongAnswers as r, i}
+				<button class="missed-card" class:replaying={replayingIndex === i} onclick={() => replayMissed(r)}>
+					<div class="missed-card-fill" style="width: 0%"></div>
+					<div class="missed-card-content">
+						<span class="missed-id">{r.interval.id}</span>
+						<div class="missed-info">
+							<span class="missed-name">{r.interval.name}</span>
+							<span class="missed-detail">answered {r.selectedId}</span>
+						</div>
+						<span class="missed-mode">{modeGlyph[r.mode]}</span>
+					</div>
+				</button>
 			{/each}
 		</div>
 	{:else}
@@ -440,21 +461,19 @@
 	/* Summary screen */
 	.summary {
 		display: flex; flex-direction: column; align-items: center;
-		gap: 1.5rem; width: 100%; height: 100%;
+		gap: 1.25rem; width: 100%; height: 100%;
+	}
+	.summary .heading {
+		border-bottom: 2px solid var(--border-heavy);
 	}
 	.score-block {
 		display: flex; flex-direction: column; align-items: center;
-		gap: 0.25rem; margin: 1rem 0;
+		margin: 0.25rem 0;
 	}
 	.score-big {
 		font-size: 4rem; font-weight: 900;
 		font-family: var(--mono); color: var(--accent);
 		letter-spacing: -0.02em; line-height: 1;
-	}
-	.score-label {
-		font-size: 0.5rem; font-weight: 900;
-		font-family: var(--mono); color: var(--text-secondary);
-		letter-spacing: 0.2em;
 	}
 	.section-label {
 		font-size: 0.45rem; font-weight: 900;
@@ -462,6 +481,10 @@
 		letter-spacing: 0.15em; align-self: flex-start;
 		border-bottom: 1px solid var(--marathon-blue);
 		padding-bottom: 0.2rem; width: 100%;
+	}
+	.section-label.missed-label {
+		color: var(--hot);
+		border-bottom-color: var(--hot);
 	}
 	.mode-rows {
 		display: flex; flex-direction: column; gap: 0.4rem; width: 100%;
@@ -482,25 +505,49 @@
 		border: 1px solid var(--border-heavy); padding: 0 4px;
 	}
 	.missed-list {
-		display: flex; flex-direction: column; gap: 0.3rem; width: 100%;
+		display: flex; flex-direction: column; gap: 0.5rem; width: 100%;
 	}
-	.missed-item {
-		display: flex; align-items: center; gap: 0.75rem;
-		font-family: var(--mono); font-size: 0.5rem;
-		color: var(--hot); padding: 0.3rem 0;
-		border-bottom: 1px solid rgba(237, 23, 79, 0.15);
+	.missed-card {
+		position: relative; overflow: hidden;
+		background: var(--surface);
+		border-left: 3px solid var(--hot);
+		border-top: none; border-right: none; border-bottom: none;
+		cursor: pointer; text-align: left; width: 100%;
+		transition: opacity 0.15s;
+	}
+	.missed-card:active { opacity: 0.8; }
+	.missed-card.replaying { border-left-color: var(--accent); }
+	.missed-card-fill {
+		position: absolute; top: 0; left: 0; bottom: 0;
+		background: var(--hot); opacity: 0.06;
+	}
+	.missed-card-content {
+		position: relative; z-index: 1;
+		display: grid; grid-template-columns: 3rem 1fr auto;
+		align-items: center; gap: 0.75rem; padding: 0.7rem 0.85rem;
 	}
 	.missed-id {
-		font-size: 1.2rem; font-weight: 900;
-		font-family: 'BPdots', var(--mono); width: 2.5rem; text-align: center;
+		font-size: 1.5rem; font-weight: 900;
+		font-family: 'BPdots', var(--mono); text-align: center;
+		color: var(--hot); line-height: 1;
+	}
+	.missed-card.replaying .missed-id { color: var(--accent); }
+	.missed-info {
+		display: flex; flex-direction: column; gap: 0.1rem;
 	}
 	.missed-name {
-		font-family: var(--font-display); color: var(--text-secondary);
-		font-size: 0.55rem; letter-spacing: 0.05em; flex: 1;
+		font-family: var(--font-display); color: var(--text-primary);
+		font-size: 0.75rem; letter-spacing: 0.02em;
+	}
+	.missed-detail {
+		font-family: var(--mono); font-size: 0.35rem;
+		color: var(--text-secondary); letter-spacing: 0.05em;
 	}
 	.missed-mode {
-		font-size: 0.55rem; color: var(--hot); opacity: 0.6;
+		font-size: 0.55rem; font-family: var(--mono);
+		color: var(--hot); opacity: 0.6;
 	}
+	.missed-card.replaying .missed-mode { color: var(--accent); }
 	.perfect {
 		font-size: 0.6rem; font-weight: 900;
 		font-family: var(--mono); color: var(--accent);
@@ -509,6 +556,7 @@
 	}
 	.summary-actions {
 		display: flex; gap: 1rem; margin-top: auto; padding-bottom: 1rem; width: 100%;
+		align-items: center; justify-content: center;
 	}
 	.action-btn {
 		flex: 1; padding: 0.75rem;
@@ -516,6 +564,7 @@
 		letter-spacing: 0.12em; border: 1px solid var(--border-heavy);
 		background: transparent; color: var(--text-primary);
 		cursor: pointer; transition: background 0.15s, border-color 0.15s;
+		text-align: center;
 	}
 	.action-btn:active { background: var(--surface-raised); }
 	.action-btn.primary {
