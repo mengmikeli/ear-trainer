@@ -118,3 +118,11 @@ export interface ChordState {
 		second: ModeStats;
 	};
 }
+
+export interface ChordQuestion {
+	rootNote: number;
+	chord: ChordDef;
+	voicing: ChordVoicing;
+	choices: ChordDef[];
+	replays: number;
+}
