@@ -197,7 +197,7 @@
 		<div class="section version-section">
 			<button class="version-btn" onclick={() => showReleaseNotes = !showReleaseNotes}>
 				<span class="version-label">v{APP_VERSION}</span>
-				<span class="version-toggle">{showReleaseNotes ? '▼' : '▶'}</span>
+				<span class="version-toggle" class:open={showReleaseNotes}>{showReleaseNotes ? '^' : '>'}</span>
 			</button>
 
 			{#if showReleaseNotes}
@@ -314,7 +314,8 @@
 		cursor: pointer;
 	}
 	.version-label { color: var(--marathon-blue); }
-	.version-toggle { font-size: 0.35rem; }
+	.version-toggle { font-size: 0.45rem; display: inline-block; transition: transform 0.15s; }
+	.version-toggle.open { transform: rotate(180deg); }
 	.release-notes {
 		display: flex; flex-direction: column; gap: 1rem;
 		margin-top: 0.75rem;
