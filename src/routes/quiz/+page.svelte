@@ -10,12 +10,6 @@
 	import AnswerGrid from '../../components/AnswerGrid.svelte';
 	import ProgressBar from '../../components/ProgressBar.svelte';
 
-	const modeLabelMap: Record<string, string> = {
-		ascending: '▲',
-		descending: '▼',
-		harmonic: '═',
-	};
-
 	let state: UserState | null = $state(null);
 	let question: Question | null = $state(null);
 	let questionNum = $state(0);
@@ -231,7 +225,6 @@
 				glitching={isGlitching}
 				feedback={feedbackState}
 				semitones={question.interval.semitones}
-				modeLabel={modeLabelMap[question.playMode] ?? ''}
 			/>
 		</div>
 

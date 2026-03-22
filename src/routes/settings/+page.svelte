@@ -144,7 +144,7 @@
 						if (m.ascending && activeCount <= 1) return;
 						m.ascending = !m.ascending;
 						update();
-					}}>▲ ASC</button>
+					}}>ASC</button>
 				<button class:active={state.settings.enabledModes.descending}
 					onclick={() => {
 						const m = state!.settings.enabledModes;
@@ -152,7 +152,7 @@
 						if (m.descending && activeCount <= 1) return;
 						m.descending = !m.descending;
 						update();
-					}}>▼ DESC</button>
+					}}>DESC</button>
 				<button class:active={state.settings.enabledModes.harmonic}
 					onclick={() => {
 						const m = state!.settings.enabledModes;
@@ -160,7 +160,7 @@
 						if (m.harmonic && activeCount <= 1) return;
 						m.harmonic = !m.harmonic;
 						update();
-					}}>═ HARM</button>
+					}}>HARM</button>
 			</div>
 		</div>
 

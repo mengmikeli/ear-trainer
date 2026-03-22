@@ -11,9 +11,8 @@
 		countdownPct?: number;
 		feedback?: 'correct' | 'wrong' | null;
 		semitones?: number;
-		modeLabel?: string;
 	}
-	let { onplay, replaying = false, playing = false, noBorder = false, questionNum = 1, glitching = false, countdownPct = -1, feedback = null, semitones = 0, modeLabel = '' }: Props = $props();
+	let { onplay, replaying = false, playing = false, noBorder = false, questionNum = 1, glitching = false, countdownPct = -1, feedback = null, semitones = 0 }: Props = $props();
 
 	// Map semitones (0-12) to angle: 0=top (P1), clockwise
 	const ringAngle = $derived((semitones / 12) * 360);
@@ -117,10 +116,7 @@
 		class:feedback-glitch={!!feedback}
 		onclick={handlePlay}
 	>
-		<span class="btn-main">{displayText}</span>
-		{#if modeLabel}
-			<span class="mode-label">{modeLabel}</span>
-		{/if}
+		{displayText}
 	</button>
 </div>
 
@@ -146,19 +142,7 @@
 		letter-spacing: 0.05em; transition: transform 0.3s ease-out, opacity 0.15s;
 		font-family: var(--mono);
 		display: flex; align-items: center; justify-content: center;
-		flex-direction: column;
 		text-align: center; line-height: 1;
-	}
-	.btn-main {
-		display: block;
-	}
-	.mode-label {
-		display: block;
-		font-size: 0.5rem;
-		color: var(--text-secondary);
-		font-family: var(--mono);
-		line-height: 1;
-		margin-top: 2px;
 	}
 	.play-btn:active { transform: scale(0.93); opacity: 0.9; }
 	.replay {
