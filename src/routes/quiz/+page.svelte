@@ -212,7 +212,7 @@
 		<div class="top-controls">
 			<button class="close exit" onclick={endEarly}>EXIT</button>
 			<span class="mode-icon">{question ? (question.playMode === 'ascending' ? '\uE007' : question.playMode === 'descending' ? '\uE008' : '\uE000') : ''}</span>
-			<span class="counter">{questionNum}/{totalQuestions}</span>
+			<span class="counter">{String(questionNum).padStart(2, '0')}/{String(totalQuestions).padStart(2, '0')}</span>
 		</div>
 	</div>
 
