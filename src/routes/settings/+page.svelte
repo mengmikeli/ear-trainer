@@ -128,9 +128,9 @@
 			<label class="field-label">TONE TYPE</label>
 			<div class="toggle-group">
 				<button class:active={state.settings.toneType === 'epiano'}
-					onclick={() => { state!.settings.toneType = 'epiano'; update(); }}>CLEAN</button>
+					onclick={() => { state!.settings.toneType = 'epiano'; update(); }}>WARM</button>
 				<button class:active={state.settings.toneType === 'sine'}
-					onclick={() => { state!.settings.toneType = 'sine'; update(); }}>WARM</button>
+					onclick={() => { state!.settings.toneType = 'sine'; update(); }}>CLEAN</button>
 				<button class:active={state.settings.toneType === 'piano'}
 					onclick={() => { state!.settings.toneType = 'piano'; update(); }}>AMBIENT</button>
 			</div>
