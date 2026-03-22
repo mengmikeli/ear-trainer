@@ -1,4 +1,4 @@
-export const APP_VERSION = '3.0.0';
+export const APP_VERSION = '3.0';
 
 export interface ReleaseNote {
 	version: string;
@@ -9,7 +9,7 @@ export interface ReleaseNote {
 
 export const RELEASE_NOTES: ReleaseNote[] = [
 	{
-		version: '3.0.0',
+		version: '3.0',
 		date: '2026-03-22',
 		title: 'PLAY MODES + MASTERY',
 		changes: [
@@ -23,7 +23,7 @@ export const RELEASE_NOTES: ReleaseNote[] = [
 		],
 	},
 	{
-		version: '2.0.0',
+		version: '2.0',
 		date: '2026-03-22',
 		title: 'HUD OVERHAUL',
 		changes: [
@@ -37,7 +37,7 @@ export const RELEASE_NOTES: ReleaseNote[] = [
 		],
 	},
 	{
-		version: '1.0.0',
+		version: '1.0',
 		date: '2026-03-21',
 		title: 'MVP',
 		changes: [
