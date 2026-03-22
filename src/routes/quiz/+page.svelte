@@ -531,7 +531,7 @@
 		font-size: 1.5rem; font-weight: 900;
 		font-family: 'BPdots', var(--mono); text-align: center;
 		color: var(--hot); line-height: 1;
-		transform: translateY(-5px);
+		transform: translateY(-4px);
 	}
 	.missed-card.replaying .missed-id { color: var(--accent); }
 	.missed-info {
