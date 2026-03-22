@@ -35,21 +35,27 @@
 	});
 
 	function nextQuestion() {
-		inResultMode = false;
 		if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
 		if (!state) return;
 		if (questionNum >= totalQuestions) {
 			finishSession();
 			return;
 		}
-		question = generateQuestion(state);
-		hasPlayed = false;
-		selectedId = null;
-		feedbackState = null;
-		countdownPct = 1.0;
+
+		// Start glitch BEFORE clearing state — covers the visual transition
+		isGlitching = true;
 		questionNum++;
 
-		isGlitching = true;
+		// Clear state on next frame so glitch is already rendering
+		requestAnimationFrame(() => {
+			inResultMode = false;
+			question = generateQuestion(state!);
+			hasPlayed = false;
+			selectedId = null;
+			feedbackState = null;
+			countdownPct = 1.0;
+		});
+
 		setTimeout(() => {
 			isGlitching = false;
 			// Auto-play the interval right after glitch settles
