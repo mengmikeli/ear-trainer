@@ -1,22 +1,33 @@
 <script lang="ts">
-	import type { IntervalDef, IntervalState } from '$lib/types';
-	import { getMasteryLevel } from '$lib/mastery';
+	import type { IntervalDef, IntervalState, PlayMode } from '$lib/types';
+	import { getMasteryLevel, isModeMastered } from '$lib/mastery';
 
 	interface Props {
 		def: IntervalDef;
 		state: IntervalState;
+		modeFilter?: PlayMode | null;
 		ontoggle?: (id: string) => void;
 	}
-	let { def, state: istate, ontoggle }: Props = $props();
+	let { def, state: istate, modeFilter = null, ontoggle }: Props = $props();
 
-	const accuracy = $derived(istate.attempts > 0 ? Math.round((istate.correct / istate.attempts) * 100) : 0);
+	// When filtering by mode, show that mode's stats; otherwise aggregate
+	const filteredAttempts = $derived(modeFilter ? istate.modes[modeFilter].attempts : istate.attempts);
+	const filteredCorrect = $derived(modeFilter ? istate.modes[modeFilter].correct : istate.correct);
+	const accuracy = $derived(filteredAttempts > 0 ? Math.round((filteredCorrect / filteredAttempts) * 100) : 0);
+
+	// Mastery: in mode view show single-mode mastery; in ALL view show overall level
 	const mastery = $derived(getMasteryLevel(istate));
-	const masteryDots = $derived(
-		mastery === 'gold' ? '●●●' : mastery === 'silver' ? '●●' : mastery === 'bronze' ? '●' : ''
-	);
-	const masteryColor = $derived(
-		mastery === 'gold' ? '#FFD700' : mastery === 'silver' ? '#C0C0C0' : '#CD7F32'
-	);
+	const modeMastered = $derived(modeFilter ? isModeMastered(istate.modes[modeFilter]) : false);
+
+	// In ALL view: show gold/silver/bronze dots. In mode view: show single dot if mastered
+	const masteryDots = $derived(() => {
+		if (modeFilter) return modeMastered ? '●' : '';
+		return mastery === 'gold' ? '●●●' : mastery === 'silver' ? '●●' : mastery === 'bronze' ? '●' : '';
+	});
+	const masteryColor = $derived(() => {
+		if (modeFilter) return modeMastered ? '#C2FE0C' : '';
+		return mastery === 'gold' ? '#FFD700' : mastery === 'silver' ? '#C0C0C0' : '#CD7F32';
+	});
 
 	let pendingFlip = $state(false);
 	let pressed = $state(false);
@@ -38,16 +49,16 @@
 	<div class="card-content">
 		<div class="id">
 			{istate.unlocked ? def.id : 'NA'}
-			{#if masteryDots}
-				<span class="mastery-dots" style="color: {masteryColor}">{masteryDots}</span>
+			{#if masteryDots()}
+				<span class="mastery-dots" style="color: {masteryColor()}">{masteryDots()}</span>
 			{/if}
 		</div>
 		<div class="info">
 			<div class="name">{def.name}</div>
-			{#if istate.unlocked && istate.attempts === 0}
+			{#if istate.unlocked && filteredAttempts === 0}
 				<div class="stats new">NEW</div>
 			{:else if istate.unlocked}
-				<div class="stats"><span class="acc-tag">{accuracy}%</span><span class="attempts">{istate.attempts} {istate.attempts === 1 ? 'attempt' : 'attempts'}</span></div>
+				<div class="stats"><span class="acc-tag">{accuracy}%</span><span class="attempts">{filteredAttempts} {filteredAttempts === 1 ? 'attempt' : 'attempts'}</span></div>
 			{:else}
 				<div class="stats"><span class="tier-tag">T{def.tier}</span> LOCKED</div>
 			{/if}
