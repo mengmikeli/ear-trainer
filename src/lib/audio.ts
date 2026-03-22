@@ -40,7 +40,83 @@ export function midiToFreq(midi: number): number {
 }
 
 /**
- * Sine tone — clean, pure, clinical
+ * Electric piano — FM synthesis Rhodes-style
+ * Clear attack, bell-like harmonics, great for harmonic intervals
+ */
+function playEpianoTone(freq: number, startTime: number, duration: number, audioCtx: AudioContext): void {
+	// Carrier: sine wave at fundamental
+	const carrier = audioCtx.createOscillator();
+	const carrierGain = audioCtx.createGain();
+	carrier.type = 'sine';
+	carrier.frequency.value = freq;
+
+	// Modulator: sine wave at 2x fundamental (FM ratio = 2:1 for Rhodes character)
+	const modulator = audioCtx.createOscillator();
+	const modGain = audioCtx.createGain();
+	modulator.type = 'sine';
+	modulator.frequency.value = freq * 2;
+	// Modulation depth — higher = more bell-like harmonics
+	modGain.gain.setValueAtTime(freq * 1.5, startTime);
+	modGain.gain.exponentialRampToValueAtTime(freq * 0.1, startTime + duration * 0.7);
+	modGain.gain.linearRampToValueAtTime(0, startTime + duration);
+
+	// FM: modulator → modGain → carrier.frequency
+	modulator.connect(modGain);
+	modGain.connect(carrier.frequency);
+
+	// Carrier envelope — sharp attack, smooth decay
+	carrierGain.gain.setValueAtTime(0, startTime);
+	carrierGain.gain.linearRampToValueAtTime(0.35, startTime + 0.005); // snappy attack
+	carrierGain.gain.exponentialRampToValueAtTime(0.15, startTime + 0.15);
+	carrierGain.gain.setValueAtTime(0.15, startTime + duration - 0.2);
+	carrierGain.gain.linearRampToValueAtTime(0, startTime + duration);
+
+	carrier.connect(carrierGain);
+	carrierGain.connect(audioCtx.destination);
+
+	carrier.start(startTime);
+	carrier.stop(startTime + duration);
+	modulator.start(startTime);
+	modulator.stop(startTime + duration);
+}
+
+/**
+ * Electric piano routed to a specific destination node (for harmonic stacking).
+ */
+function playEpianoToneToNode(freq: number, startTime: number, duration: number, audioCtx: AudioContext, dest: AudioNode): void {
+	const carrier = audioCtx.createOscillator();
+	const carrierGain = audioCtx.createGain();
+	carrier.type = 'sine';
+	carrier.frequency.value = freq;
+
+	const modulator = audioCtx.createOscillator();
+	const modGain = audioCtx.createGain();
+	modulator.type = 'sine';
+	modulator.frequency.value = freq * 2;
+	modGain.gain.setValueAtTime(freq * 1.5, startTime);
+	modGain.gain.exponentialRampToValueAtTime(freq * 0.1, startTime + duration * 0.7);
+	modGain.gain.linearRampToValueAtTime(0, startTime + duration);
+
+	modulator.connect(modGain);
+	modGain.connect(carrier.frequency);
+
+	carrierGain.gain.setValueAtTime(0, startTime);
+	carrierGain.gain.linearRampToValueAtTime(0.35, startTime + 0.005);
+	carrierGain.gain.exponentialRampToValueAtTime(0.15, startTime + 0.15);
+	carrierGain.gain.setValueAtTime(0.15, startTime + duration - 0.2);
+	carrierGain.gain.linearRampToValueAtTime(0, startTime + duration);
+
+	carrier.connect(carrierGain);
+	carrierGain.connect(dest);
+
+	carrier.start(startTime);
+	carrier.stop(startTime + duration);
+	modulator.start(startTime);
+	modulator.stop(startTime + duration);
+}
+
+/**
+ * Sine tone — warm triangle wave, pure
  */
 function playSineTone(freq: number, startTime: number, duration: number, audioCtx: AudioContext): void {
 	const osc = audioCtx.createOscillator();
@@ -178,6 +254,9 @@ function playHarmonicPair(
 	if (toneType === 'piano') {
 		playPianoToneToNode(freq1, startTime, duration, audioCtx, masterGain);
 		playPianoToneToNode(freq2, startTime, duration, audioCtx, masterGain);
+	} else if (toneType === 'epiano') {
+		playEpianoToneToNode(freq1, startTime, duration, audioCtx, masterGain);
+		playEpianoToneToNode(freq2, startTime, duration, audioCtx, masterGain);
 	} else {
 		playSineToneToNode(freq1, startTime, duration, audioCtx, masterGain);
 		playSineToneToNode(freq2, startTime, duration, audioCtx, masterGain);
@@ -327,13 +406,13 @@ export function playInterval(
 
 	const noteDuration = 0.6;
 	const harmonicDuration = 1.2; // longer for harmonic — need time to hear both notes
-	const playFn = toneType === 'piano' ? playPianoTone : playSineTone;
+	const playFn = toneType === 'piano' ? playPianoTone : toneType === 'epiano' ? playEpianoTone : playSineTone;
 
 	if (direction === 'harmonic') {
 		// Play both notes simultaneously with reduced gain to avoid clipping
 		playHarmonicPair(freq1, freq2, now, harmonicDuration, audioCtx, toneType);
 	} else {
-		const gap = toneType === 'piano' ? 0.3 : 0.15; // more space for ambient tail
+		const gap = toneType === 'piano' ? 0.3 : 0.15;
 		playFn(freq1, now, noteDuration, audioCtx);
 		playFn(freq2, now + noteDuration + gap, noteDuration, audioCtx);
 	}

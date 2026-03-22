@@ -37,7 +37,7 @@ export function createDefaultState(): UserState {
 	}
 
 	const settings: Settings = {
-		toneType: 'sine',
+		toneType: 'epiano',
 		direction: 'ascending',
 		sessionLength: 20,
 		theme: 'dark',
