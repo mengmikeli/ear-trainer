@@ -178,6 +178,9 @@
 	}
 	/* Transition glitch */
 	.glitch-text {
+		background: var(--surface) !important;
+		border: 2px solid var(--accent) !important;
+		color: var(--accent) !important;
 		text-shadow: -2px 0 var(--accent), 2px 0 var(--hot);
 		animation: glitch-shake 50ms infinite;
 	}
