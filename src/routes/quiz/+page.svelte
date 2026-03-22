@@ -461,8 +461,7 @@
 	/* Summary screen */
 	.summary {
 		display: flex; flex-direction: column; align-items: center;
-		gap: 1.25rem; width: 100%; height: 100%;
-		overflow-y: auto; overflow-x: hidden;
+		gap: 1.25rem; width: 100%; min-height: 100%;
 	}
 	.summary .heading {
 		border-bottom: 2px solid var(--border-heavy);
@@ -508,7 +507,6 @@
 	}
 	.missed-list {
 		display: flex; flex-direction: column; gap: 0.5rem; width: 100%;
-		flex: 1; overflow-y: auto; min-height: 0;
 	}
 	.missed-card {
 		position: relative; overflow: hidden;
@@ -561,7 +559,6 @@
 	.summary-actions {
 		display: flex; gap: 1rem; padding: 1rem 0;
 		width: 100%; align-items: center; justify-content: center;
-		flex-shrink: 0;
 	}
 	.action-btn {
 		flex: 1; padding: 0.75rem;
