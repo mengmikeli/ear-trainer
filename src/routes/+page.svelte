@@ -90,7 +90,6 @@
 					{ label: 'STK', value: state.stats.currentStreak },
 					{ label: 'ACC', value: overallAccuracy() + '%' },
 					{ label: 'Q', value: state.stats.totalQuestions },
-					{ label: 'TIER', value: currentTier() }
 				]} />
 			</div>
 		</div>
