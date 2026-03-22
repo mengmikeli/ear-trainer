@@ -1,4 +1,6 @@
 import type { ToneType } from './types';
+import type { ChordVoicing } from './types';
+import { applyInversion } from './chords';
 
 let ctx: AudioContext | null = null;
 
@@ -416,6 +418,50 @@ export function playInterval(
 		playFn(freq1, now, noteDuration, audioCtx);
 		playFn(freq2, now + noteDuration + gap, noteDuration, audioCtx);
 	}
+}
+
+/**
+ * Play a chord — multiple notes through a shared gain node.
+ *
+ * @param rootMidi - MIDI note number for the root
+ * @param intervals - semitones from root, e.g. [0, 4, 7] for major triad
+ * @param voicing - root position, 1st inversion, or 2nd inversion
+ * @param toneType - which synth engine to use
+ * @param arpeggiated - if true, play notes sequentially (~150ms apart); if false, block chord
+ */
+export function playChord(
+	rootMidi: number,
+	intervals: number[],
+	voicing: ChordVoicing,
+	toneType: ToneType = 'epiano',
+	arpeggiated: boolean = false
+): void {
+	const audioCtx = getContext();
+	const now = audioCtx.currentTime;
+
+	const voiced = applyInversion(intervals, voicing);
+	const noteCount = voiced.length;
+
+	// Master gain to avoid clipping — scale down per note count
+	const masterGain = audioCtx.createGain();
+	masterGain.gain.value = 0.7 / Math.sqrt(noteCount);
+	masterGain.connect(audioCtx.destination);
+
+	const noteDuration = arpeggiated ? 0.8 : 1.2;
+	const arpDelay = 0.15; // 150ms between arpeggiated notes
+
+	const playToNode =
+		toneType === 'piano'
+			? playPianoToneToNode
+			: toneType === 'epiano'
+				? playEpianoToneToNode
+				: playSineToneToNode;
+
+	voiced.forEach((semitones, i) => {
+		const freq = midiToFreq(rootMidi + semitones);
+		const offset = arpeggiated ? i * arpDelay : Math.random() * 0.015; // humanization for block
+		playToNode(freq, now + offset, noteDuration, audioCtx, masterGain);
+	});
 }
 
 /**

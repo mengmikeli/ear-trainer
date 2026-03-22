@@ -1,5 +1,6 @@
-import type { UserState, IntervalState, Settings, GlobalStats, ModeStats } from './types';
+import type { UserState, IntervalState, ChordState, Settings, GlobalStats, ModeStats } from './types';
 import { INTERVALS, getIntervalsByTier } from './intervals';
+import { CHORDS, getChordsByTier } from './chords';
 
 const STORAGE_KEY = 'ear-trainer-state';
 
@@ -11,6 +12,25 @@ function createDefaultModeStats(): ModeStats {
 		lastSeen: 0,
 		easeFactor: 2.5,
 		nextReview: 0,
+	};
+}
+
+function createDefaultChordState(id: string, tier: number): ChordState {
+	return {
+		chord: id,
+		unlocked: tier === 1, // Only tier 1 chords unlocked initially
+		enabled: true,
+		attempts: 0,
+		correct: 0,
+		easeFactor: 2.5,
+		nextReview: 0,
+		streak: 0,
+		lastSeen: 0,
+		voicings: {
+			root: createDefaultModeStats(),
+			first: createDefaultModeStats(),
+			second: createDefaultModeStats(),
+		},
 	};
 }
 
@@ -46,6 +66,12 @@ export function createDefaultState(): UserState {
 			descending: true,
 			harmonic: true,
 		},
+		enabledVoicings: {
+			root: true,
+			first: false,  // locked until mastery unlocks inversions
+			second: false,
+		},
+		activeContent: 'intervals',
 	};
 
 	const stats: GlobalStats = {
@@ -56,7 +82,13 @@ export function createDefaultState(): UserState {
 		lastPractice: 0,
 	};
 
-	return { intervals, settings, stats };
+	// Chord states — all locked initially (unlocked via interval mastery discovery)
+	const chords: Record<string, ChordState> = {};
+	for (const def of CHORDS) {
+		chords[def.id] = createDefaultChordState(def.id, def.tier);
+	}
+
+	return { intervals, chords, settings, stats };
 }
 
 export function loadState(storage: Storage = localStorage): UserState {
@@ -115,6 +147,20 @@ export function loadState(storage: Storage = localStorage): UserState {
 			}
 		}
 
+		// Migrate v3 → v3.3: add chord state + new settings fields
+		if (!parsed.chords) {
+			parsed.chords = {};
+			for (const def of CHORDS) {
+				parsed.chords[def.id] = createDefaultChordState(def.id, def.tier);
+			}
+		}
+		if (!parsed.settings.enabledVoicings) {
+			parsed.settings.enabledVoicings = { root: true, first: false, second: false };
+		}
+		if (!parsed.settings.activeContent) {
+			parsed.settings.activeContent = 'intervals';
+		}
+
 		const result = checkTierUnlock(parsed as UserState);
 		// Persist any newly unlocked tiers
 		if (JSON.stringify(result) !== JSON.stringify(parsed)) {
@@ -133,6 +179,13 @@ export function saveState(state: UserState, storage: Storage = localStorage): vo
 export function getAggregateStats(state: IntervalState): { attempts: number; correct: number; accuracy: number } {
 	const attempts = state.modes.ascending.attempts + state.modes.descending.attempts + state.modes.harmonic.attempts;
 	const correct = state.modes.ascending.correct + state.modes.descending.correct + state.modes.harmonic.correct;
+	const accuracy = attempts > 0 ? correct / attempts : 0;
+	return { attempts, correct, accuracy };
+}
+
+export function getChordAggregateStats(state: ChordState): { attempts: number; correct: number; accuracy: number } {
+	const attempts = state.voicings.root.attempts + state.voicings.first.attempts + state.voicings.second.attempts;
+	const correct = state.voicings.root.correct + state.voicings.first.correct + state.voicings.second.correct;
 	const accuracy = attempts > 0 ? correct / attempts : 0;
 	return { attempts, correct, accuracy };
 }
@@ -178,6 +231,45 @@ export function checkTierUnlock(state: UserState): UserState {
 				updated.intervals[def.id].unlocked = true;
 			}
 			// Recalculate totals to include newly unlocked intervals (they start at 0)
+		}
+	}
+
+	// --- Chord tier unlocks (same pattern, separate track) ---
+	if (updated.chords) {
+		const CHORD_TIER_THRESHOLDS: Record<number, { questions: number; accuracy: number }> = {
+			2: { questions: 10, accuracy: 0.7 },
+			3: { questions: 30, accuracy: 0.7 },
+			4: { questions: 60, accuracy: 0.7 },
+		};
+
+		let chordAttempts = 0;
+		let chordCorrect = 0;
+		for (const def of CHORDS) {
+			const s = updated.chords[def.id];
+			if (s?.unlocked) {
+				const agg = getChordAggregateStats(s);
+				chordAttempts += agg.attempts;
+				chordCorrect += agg.correct;
+			}
+		}
+		const chordAccuracy = chordAttempts > 0 ? chordCorrect / chordAttempts : 0;
+
+		for (let tier = 2; tier <= 4; tier++) {
+			const threshold = CHORD_TIER_THRESHOLDS[tier];
+			const tierChords = getChordsByTier(tier);
+			const alreadyUnlocked = tierChords.every(def => updated.chords[def.id]?.unlocked);
+			if (alreadyUnlocked) continue;
+
+			const prevTierUnlocked = getChordsByTier(tier - 1).every(
+				def => updated.chords[def.id]?.unlocked
+			);
+			if (!prevTierUnlocked) continue;
+
+			if (chordAttempts >= threshold.questions && chordAccuracy >= threshold.accuracy) {
+				for (const def of tierChords) {
+					updated.chords[def.id].unlocked = true;
+				}
+			}
 		}
 	}
 

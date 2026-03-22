@@ -52,6 +52,14 @@ export interface Settings {
 		descending: boolean;
 		harmonic: boolean;
 	};
+	// v3.3: chord voicings
+	enabledVoicings: {
+		root: boolean;
+		first: boolean;
+		second: boolean;
+	};
+	// v3.3: which content type the Practice button launches
+	activeContent: 'intervals' | 'chords';
 }
 
 export interface GlobalStats {
@@ -64,6 +72,7 @@ export interface GlobalStats {
 
 export interface UserState {
 	intervals: Record<string, IntervalState>;
+	chords: Record<string, ChordState>;
 	settings: Settings;
 	stats: GlobalStats;
 }
@@ -75,4 +84,37 @@ export interface Question {
 	playMode: PlayMode; // the actual mode for this question
 	choices: IntervalDef[];
 	replays: number;
+}
+
+// --- Chord types (v3.3) ---
+
+export type ChordCategory = 'triad' | 'seventh';
+
+export interface ChordDef {
+	id: string;            // e.g. "maj", "min", "dim", "aug", "dom7"
+	name: string;          // e.g. "Major", "Minor 7th"
+	intervals: number[];   // semitones from root, e.g. [0, 4, 7]
+	tier: number;          // 1-4 unlock tier (chord-specific)
+	category: ChordCategory;
+}
+
+export type ChordVoicing = 'root' | 'first' | 'second';
+
+export interface ChordState {
+	chord: string;         // chord id
+	unlocked: boolean;
+	enabled: boolean;
+	// Aggregate stats (backward compat pattern)
+	attempts: number;
+	correct: number;
+	easeFactor: number;
+	nextReview: number;
+	streak: number;
+	lastSeen: number;
+	// Per-voicing tracking
+	voicings: {
+		root: ModeStats;
+		first: ModeStats;
+		second: ModeStats;
+	};
 }
