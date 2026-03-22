@@ -3,6 +3,9 @@
 	import { loadState, saveState, createDefaultState } from '$lib/state';
 	import type { UserState, ToneType, SessionLength, ThemeMode } from '$lib/types';
 	import { applyTheme, watchSystemTheme } from '$lib/theme';
+	import { APP_VERSION, RELEASE_NOTES } from '$lib/version';
+
+	let showReleaseNotes = $state(false);
 
 	let state: UserState | null = $state(null);
 
@@ -188,6 +191,32 @@
 				<span class="reset-text" class:glitching={holdActive}>{glitchText}</span>
 			</button>
 		</div>
+
+		<div class="section version-section">
+			<button class="version-btn" onclick={() => showReleaseNotes = !showReleaseNotes}>
+				<span class="version-label">v{APP_VERSION}</span>
+				<span class="version-toggle">{showReleaseNotes ? '▼' : '▶'}</span>
+			</button>
+
+			{#if showReleaseNotes}
+				<div class="release-notes">
+					{#each RELEASE_NOTES as note}
+						<div class="release">
+							<div class="release-header">
+								<span class="release-version">v{note.version}</span>
+								<span class="release-date">{note.date}</span>
+							</div>
+							<div class="release-title">{note.title}</div>
+							<ul class="release-changes">
+								{#each note.changes as change}
+									<li>{change}</li>
+								{/each}
+							</ul>
+						</div>
+					{/each}
+				</div>
+			{/if}
+		</div>
 	{/if}
 </div>
 
@@ -270,5 +299,62 @@
 		50% { transform: translate(1px, -1px); }
 		75% { transform: translate(-1px, -1px); }
 		100% { transform: translate(0); }
+	}
+
+	/* Version + Release Notes */
+	.version-section { margin-top: 1rem; }
+	.version-btn {
+		display: flex; align-items: center; justify-content: space-between;
+		width: 100%; padding: 0.6rem 0.85rem;
+		background: var(--surface); border: 1px solid var(--border);
+		color: var(--text-secondary); font-size: 0.45rem;
+		font-family: var(--mono); letter-spacing: 0.08em;
+		cursor: pointer;
+	}
+	.version-label { color: var(--marathon-blue); }
+	.version-toggle { font-size: 0.35rem; }
+	.release-notes {
+		display: flex; flex-direction: column; gap: 1rem;
+		margin-top: 0.75rem;
+		padding: 0.75rem;
+		border: 1px solid var(--border);
+		background: var(--surface);
+	}
+	.release { }
+	.release-header {
+		display: flex; justify-content: space-between; align-items: center;
+		margin-bottom: 0.25rem;
+	}
+	.release-version {
+		font-family: var(--mono); font-size: 0.5rem;
+		color: var(--accent); font-weight: 700;
+	}
+	.release-date {
+		font-family: var(--mono); font-size: 0.4rem;
+		color: var(--text-secondary);
+	}
+	.release-title {
+		font-family: var(--font-display); font-size: 0.7rem;
+		color: var(--text-primary); letter-spacing: 0.1em;
+		margin-bottom: 0.35rem;
+	}
+	.release-changes {
+		list-style: none; padding: 0;
+		display: flex; flex-direction: column; gap: 0.2rem;
+	}
+	.release-changes li {
+		font-family: var(--mono); font-size: 0.35rem;
+		color: var(--text-secondary); line-height: 1.5;
+		padding-left: 0.75rem;
+		position: relative;
+	}
+	.release-changes li::before {
+		content: '›';
+		position: absolute; left: 0;
+		color: var(--border-heavy);
+	}
+	.release + .release {
+		border-top: 1px solid var(--border);
+		padding-top: 1rem;
 	}
 </style>

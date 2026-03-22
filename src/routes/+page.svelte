@@ -3,6 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { loadState, saveState } from '$lib/state';
 	import { INTERVALS } from '$lib/intervals';
+	import { APP_VERSION } from '$lib/version';
 	import { countMasteredSkills, isModeMastered } from '$lib/mastery';
 	import type { UserState, PlayMode } from '$lib/types';
 	import TelemetryBar from '../components/TelemetryBar.svelte';
@@ -87,7 +88,7 @@
 		</div>
 		<div class="version-tag">
 			<span class="hazard-bar"></span>
-			<span class="version">SYS v1.0</span>
+			<span class="version">SYS v{APP_VERSION}</span>
 			<span class="hazard-bar"></span>
 		</div>
 	</header>
