@@ -7,8 +7,10 @@
 		state: IntervalState;
 		modeFilter?: PlayMode | null;
 		ontoggle?: (id: string) => void;
+		onplay?: (id: string) => void;
+		playing?: boolean;
 	}
-	let { def, state: istate, modeFilter = null, ontoggle }: Props = $props();
+	let { def, state: istate, modeFilter = null, ontoggle, onplay, playing = false }: Props = $props();
 
 	// When filtering by mode, show that mode's stats; otherwise aggregate
 	const filteredAttempts = $derived(modeFilter ? istate.modes[modeFilter].attempts : istate.attempts);
@@ -44,7 +46,11 @@
 	}
 </script>
 
-<div class="card" class:locked={!istate.unlocked} class:disabled={istate.unlocked && !istate.enabled}>
+<div class="card" class:locked={!istate.unlocked} class:disabled={istate.unlocked && !istate.enabled} class:playing
+	onclick={() => { if (istate.unlocked && onplay) onplay(def.id); }}
+	role={istate.unlocked && onplay ? 'button' : undefined}
+	tabindex={istate.unlocked && onplay ? 0 : undefined}
+>
 	<div class="card-fill" style="width: {istate.unlocked && istate.enabled ? accuracy : 0}%"></div>
 	<div class="card-content">
 		<div class="id">
@@ -83,6 +89,11 @@
 		background: var(--surface);
 		border-left: 3px solid var(--accent);
 		border-radius: 0;
+		cursor: pointer;
+		transition: border-left-color 0.15s;
+	}
+	.card.playing {
+		border-left-color: var(--marathon-blue);
 	}
 	.card-fill {
 		position: absolute; top: 0; left: 0; bottom: 0;

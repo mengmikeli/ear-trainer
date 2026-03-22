@@ -2,13 +2,17 @@
 	import { onMount } from 'svelte';
 	import { loadState, saveState } from '$lib/state';
 	import { INTERVALS } from '$lib/intervals';
+	import { playInterval } from '$lib/audio';
 	import IntervalCard from '../../components/IntervalCard.svelte';
 	import TelemetryBar from '../../components/TelemetryBar.svelte';
 	import type { UserState, PlayMode } from '$lib/types';
 
 	let state: UserState | null = $state(null);
 	let minWarning = $state(false);
-	let activeTab: PlayMode | null = $state(null); // null = ALL
+	let activeTab: PlayMode | null = $state(null);
+	let playingId: string | null = $state(null);
+
+	const modes: PlayMode[] = ['ascending', 'descending', 'harmonic'];
 
 	const tabs: { label: string; value: PlayMode | null }[] = [
 		{ label: 'ALL', value: null },
@@ -39,6 +43,19 @@
 		state.intervals[id].enabled = !s.enabled;
 		state = { ...state };
 		saveState(state);
+	}
+
+	function playPreview(id: string) {
+		if (!state || playingId) return;
+		const def = INTERVALS.find(d => d.id === id);
+		if (!def) return;
+
+		const mode: PlayMode = activeTab ?? modes[Math.floor(Math.random() * modes.length)];
+		const rootMidi = 60;
+		playingId = id;
+		playInterval(rootMidi, def.semitones, mode, state.settings.toneType);
+		const dur = mode === 'harmonic' ? 1500 : 1200;
+		setTimeout(() => { playingId = null; }, dur);
 	}
 
 	// Telemetry adapts to active tab
@@ -92,7 +109,7 @@
 
 		<div class="interval-list">
 			{#each INTERVALS as def}
-				<IntervalCard {def} state={state.intervals[def.id]} modeFilter={activeTab} ontoggle={toggleInterval} />
+				<IntervalCard {def} state={state.intervals[def.id]} modeFilter={activeTab} ontoggle={toggleInterval} onplay={playPreview} playing={playingId === def.id} />
 			{/each}
 		</div>
 	{/if}
