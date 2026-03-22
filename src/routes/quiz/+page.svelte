@@ -209,6 +209,7 @@
 			{:else}
 				<button class="close" onclick={endEarly}>{'\uE010'}</button>
 			{/if}
+			<span class="mode-icon">{question ? (question.playMode === 'ascending' ? '\uE007' : question.playMode === 'descending' ? '\uE008' : '\uE000') : ''}</span>
 			<span class="counter">{questionNum}/{totalQuestions}</span>
 		</div>
 	</div>
@@ -287,6 +288,12 @@
 		border: 1px solid var(--marathon-blue);
 		padding: 0 6px;
 		line-height: 1.6;
+	}
+	.mode-icon {
+		font-size: 0.7rem;
+		font-family: var(--mono);
+		color: var(--text-secondary);
+		line-height: 1;
 	}
 	.close {
 		font-size: 0.4rem;

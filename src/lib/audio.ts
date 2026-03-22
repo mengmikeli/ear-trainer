@@ -326,11 +326,12 @@ export function playInterval(
 	const freq2 = midiToFreq(secondMidi);
 
 	const noteDuration = 0.6;
+	const harmonicDuration = 1.2; // longer for harmonic — need time to hear both notes
 	const playFn = toneType === 'piano' ? playPianoTone : playSineTone;
 
 	if (direction === 'harmonic') {
 		// Play both notes simultaneously with reduced gain to avoid clipping
-		playHarmonicPair(freq1, freq2, now, noteDuration, audioCtx, toneType);
+		playHarmonicPair(freq1, freq2, now, harmonicDuration, audioCtx, toneType);
 	} else {
 		const gap = toneType === 'piano' ? 0.3 : 0.15; // more space for ambient tail
 		playFn(freq1, now, noteDuration, audioCtx);
