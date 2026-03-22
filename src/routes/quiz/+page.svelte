@@ -275,6 +275,7 @@
 		height: 2px;
 	}
 	.top-controls {
+		position: relative;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
@@ -290,9 +291,12 @@
 		line-height: 1.6;
 	}
 	.mode-icon {
+		position: absolute;
+		left: 50%;
+		transform: translateX(-50%);
 		font-size: 0.7rem;
 		font-family: var(--mono);
-		color: var(--text-secondary);
+		color: var(--marathon-blue);
 		line-height: 1;
 	}
 	.close {
