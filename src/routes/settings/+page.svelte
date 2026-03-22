@@ -195,6 +195,7 @@
 		</div>
 
 		<div class="section version-section">
+			<label class="field-label">ABOUT</label>
 			<button class="version-btn" onclick={() => showReleaseNotes = !showReleaseNotes}>
 				<span class="version-label">v{APP_VERSION}</span>
 				<span class="version-toggle" class:open={showReleaseNotes}>{showReleaseNotes ? '^' : '>'}</span>
