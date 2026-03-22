@@ -160,7 +160,7 @@
 						if (m.harmonic && activeCount <= 1) return;
 						m.harmonic = !m.harmonic;
 						update();
-					}}>{'\uE012'} HARM</button>
+					}}>{'\uE000'} HARM</button>
 			</div>
 		</div>
 
