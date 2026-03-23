@@ -156,8 +156,8 @@
 				</a>
 			</div>
 
-			<span class="coord coord-tr">{contentLabel()}: {contentCount()}</span>
-			<span class="coord coord-bl">T{currentTier()}</span>
+			<span class="coord coord-tr"></span>
+			<span class="coord coord-bl"></span>
 
 			<div class="telemetry-row">
 				<TelemetryBar segments={[
@@ -280,11 +280,13 @@
 		transition: color 0.15s, border-color 0.15s, background 0.15s;
 	}
 	.switch-btn:first-child {
-		border-right: none;
+		margin-right: -1px;
 	}
 	.switch-btn.active {
 		color: var(--accent);
 		border-color: var(--accent);
 		background: rgba(194, 254, 12, 0.05);
+		z-index: 1;
+		position: relative;
 	}
 </style>
