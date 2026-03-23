@@ -226,16 +226,18 @@
 		color: var(--text-secondary);
 		background: transparent;
 		border: 1px solid var(--border-heavy);
-		border-right: none;
+		margin-right: -1px;
 		cursor: pointer;
 		transition: color 0.15s, background 0.15s, border-color 0.15s;
 	}
-	.tab:last-child { border-right: 1px solid var(--border-heavy); }
+	.tab:last-child { margin-right: 0; }
 	.tab.glyph { font-size: 0.6rem; letter-spacing: 0; }
 	.tab.active {
 		color: var(--marathon-blue);
 		border-color: var(--marathon-blue);
 		background: rgba(58, 44, 255, 0.08);
+		z-index: 1;
+		position: relative;
 	}
 	.tab.active + .tab { border-left-color: var(--marathon-blue); }
 	.interval-list { display: flex; flex-direction: column; gap: 0.5rem; }
@@ -259,10 +261,12 @@
 		cursor: pointer;
 		transition: color 0.15s, border-color 0.15s, background 0.15s;
 	}
-	.ct-btn:first-child { border-right: none; }
+	.ct-btn:first-child { margin-right: -1px; }
 	.ct-btn.active {
 		color: var(--accent);
 		border-color: var(--accent);
 		background: rgba(194, 254, 12, 0.05);
+		z-index: 1;
+		position: relative;
 	}
 </style>
