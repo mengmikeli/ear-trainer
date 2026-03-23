@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
+	import { base } from '$app/paths';
 	import { loadState, saveState, createDefaultState } from '$lib/state';
 	import type { UserState, ToneType, SessionLength, ThemeMode } from '$lib/types';
 	import { applyTheme, watchSystemTheme } from '$lib/theme';
@@ -174,7 +175,7 @@
 		labGlitchText = '\uE018 LAB \uE018';
 		labHoldProgress = 1;
 		setTimeout(() => {
-			window.location.href = '/lab';
+			window.location.href = `${base}/lab`;
 		}, 500);
 	}
 </script>
