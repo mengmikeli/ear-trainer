@@ -57,6 +57,15 @@ function createMockAudioContext() {
 				connect: vi.fn(),
 				start: vi.fn()
 			};
+		}),
+		createAnalyser: vi.fn(function () {
+			return {
+				fftSize: 256,
+				frequencyBinCount: 128,
+				smoothingTimeConstant: 0.8,
+				connect: vi.fn(),
+				getByteTimeDomainData: vi.fn()
+			};
 		})
 	};
 }

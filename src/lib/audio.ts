@@ -3,6 +3,8 @@ import type { ChordVoicing } from './types';
 import { applyInversion } from './chords';
 
 let ctx: AudioContext | null = null;
+let analyserNode: AnalyserNode | null = null;
+let masterOutput: GainNode | null = null;
 
 /**
  * Ensure AudioContext exists and is running.
@@ -35,6 +37,49 @@ function getContext(): AudioContext {
 		ctx.resume();
 	}
 	return ctx;
+}
+
+/**
+ * Get (or create) the master output chain: all audio → masterGain → analyser → destination.
+ * This allows the AnalyserNode to tap into all audio output.
+ */
+function getMasterOutput(): GainNode {
+	const audioCtx = getContext();
+	if (!masterOutput) {
+		masterOutput = audioCtx.createGain();
+		masterOutput.gain.value = 1;
+		analyserNode = audioCtx.createAnalyser();
+		analyserNode.fftSize = 256;
+		analyserNode.smoothingTimeConstant = 0.8;
+		masterOutput.connect(analyserNode);
+		analyserNode.connect(audioCtx.destination);
+	}
+	return masterOutput;
+}
+
+/**
+ * Get the AnalyserNode for audio-reactive visualizations.
+ * Returns the analyser + a Uint8Array for time-domain data.
+ */
+export function getAnalyser(): { analyser: AnalyserNode; dataArray: Uint8Array } {
+	getMasterOutput();
+	const analyser = analyserNode!;
+	const dataArray = new Uint8Array(analyser.frequencyBinCount);
+	return { analyser, dataArray };
+}
+
+/**
+ * Get the current audio amplitude (0–1) from the analyser.
+ * Useful for driving visual effects in sync with audio.
+ */
+export function getAmplitude(analyser: AnalyserNode, dataArray: Uint8Array): number {
+	analyser.getByteTimeDomainData(dataArray);
+	let sum = 0;
+	for (let i = 0; i < dataArray.length; i++) {
+		const v = (dataArray[i] - 128) / 128;
+		sum += v * v;
+	}
+	return Math.sqrt(sum / dataArray.length);  // RMS amplitude 0–1
 }
 
 export function midiToFreq(midi: number): number {
@@ -400,6 +445,7 @@ export function playInterval(
 	toneType: ToneType = 'sine'
 ): void {
 	const audioCtx = getContext();
+	const master = getMasterOutput();
 	const now = audioCtx.currentTime;
 
 	const freq1 = midiToFreq(rootMidi);
@@ -407,16 +453,36 @@ export function playInterval(
 	const freq2 = midiToFreq(secondMidi);
 
 	const noteDuration = 0.6;
-	const harmonicDuration = 1.2; // longer for harmonic — need time to hear both notes
-	const playFn = toneType === 'piano' ? playPianoTone : toneType === 'epiano' ? playEpianoTone : playSineTone;
+	const harmonicDuration = 1.2;
 
 	if (direction === 'harmonic') {
-		// Play both notes simultaneously with reduced gain to avoid clipping
-		playHarmonicPair(freq1, freq2, now, harmonicDuration, audioCtx, toneType);
+		const harmGain = audioCtx.createGain();
+		harmGain.gain.value = 0.7;
+		harmGain.connect(master);
+
+		if (toneType === 'piano') {
+			playPianoToneToNode(freq1, now, harmonicDuration, audioCtx, harmGain);
+			playPianoToneToNode(freq2, now, harmonicDuration, audioCtx, harmGain);
+		} else if (toneType === 'epiano') {
+			playEpianoToneToNode(freq1, now, harmonicDuration, audioCtx, harmGain);
+			playEpianoToneToNode(freq2, now, harmonicDuration, audioCtx, harmGain);
+		} else {
+			playSineToneToNode(freq1, now, harmonicDuration, audioCtx, harmGain);
+			playSineToneToNode(freq2, now, harmonicDuration, audioCtx, harmGain);
+		}
 	} else {
 		const gap = toneType === 'piano' ? 0.3 : 0.15;
-		playFn(freq1, now, noteDuration, audioCtx);
-		playFn(freq2, now + noteDuration + gap, noteDuration, audioCtx);
+		// Route through master for analyser
+		if (toneType === 'piano') {
+			playPianoToneToNode(freq1, now, noteDuration, audioCtx, master);
+			playPianoToneToNode(freq2, now + noteDuration + gap, noteDuration, audioCtx, master);
+		} else if (toneType === 'epiano') {
+			playEpianoToneToNode(freq1, now, noteDuration, audioCtx, master);
+			playEpianoToneToNode(freq2, now + noteDuration + gap, noteDuration, audioCtx, master);
+		} else {
+			playSineToneToNode(freq1, now, noteDuration, audioCtx, master);
+			playSineToneToNode(freq2, now + noteDuration + gap, noteDuration, audioCtx, master);
+		}
 	}
 }
 
