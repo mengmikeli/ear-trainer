@@ -359,6 +359,13 @@
 				<div class="credits-header">TEAM</div>
 				<div class="credits-grid">
 					<div class="credit-entry">
+						<span class="credit-emoji">🧑‍💻</span>
+						<div class="credit-info">
+							<span class="credit-name">MIKE</span>
+							<span class="credit-role">Creator & Human</span>
+						</div>
+					</div>
+					<div class="credit-entry">
 						<span class="credit-emoji">🗝️</span>
 						<div class="credit-info">
 							<span class="credit-name">MOTO</span>
