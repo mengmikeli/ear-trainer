@@ -362,7 +362,7 @@
 						<span class="credit-emoji">🧑‍💻</span>
 						<div class="credit-info">
 							<span class="credit-name">MIKE</span>
-							<span class="credit-role">Creator & Human</span>
+							<span class="credit-role">Creator · The Only Human</span>
 						</div>
 					</div>
 					<div class="credit-entry">
