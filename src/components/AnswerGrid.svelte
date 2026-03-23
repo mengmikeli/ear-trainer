@@ -1,9 +1,13 @@
 <script lang="ts">
-	import type { IntervalDef } from '$lib/types';
+	interface ChoiceItem {
+		id: string;
+		name: string;
+		[key: string]: unknown;
+	}
 
 	interface Props {
-		choices: IntervalDef[];
-		onselect: (choice: IntervalDef) => void;
+		choices: ChoiceItem[];
+		onselect: (choice: ChoiceItem) => void;
 		disabled?: boolean;
 		correctId?: string | null;
 		selectedId?: string | null;
