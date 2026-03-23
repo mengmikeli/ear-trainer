@@ -229,6 +229,10 @@
 		margin-right: -1px;
 		cursor: pointer;
 		transition: color 0.15s, background 0.15s, border-color 0.15s;
+		height: 2rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 	}
 	.tab:last-child { margin-right: 0; }
 	.tab.glyph { font-size: 0.6rem; letter-spacing: 0; }
