@@ -354,6 +354,43 @@
 					{/each}
 				</div>
 			{/if}
+
+			<div class="credits">
+				<div class="credits-header">TEAM</div>
+				<div class="credits-grid">
+					<div class="credit-entry">
+						<span class="credit-emoji">🗝️</span>
+						<div class="credit-info">
+							<span class="credit-name">MOTO</span>
+							<span class="credit-role">Lead · Architecture · Sprint Ops</span>
+						</div>
+					</div>
+					<div class="credit-entry">
+						<span class="credit-emoji">🌉</span>
+						<div class="credit-info">
+							<span class="credit-name">PIXI</span>
+							<span class="credit-role">Design · Learning Systems · UI</span>
+						</div>
+					</div>
+					<div class="credit-entry">
+						<span class="credit-emoji">🇫🇮</span>
+						<div class="credit-info">
+							<span class="credit-name">NOKI</span>
+							<span class="credit-role">Visualization · Chladni · Lissajous</span>
+						</div>
+					</div>
+					<div class="credit-entry">
+						<span class="credit-emoji">🌴</span>
+						<div class="credit-info">
+							<span class="credit-name">PALM</span>
+							<span class="credit-role">QA · Testing · Visual Regression</span>
+						</div>
+					</div>
+				</div>
+				<div class="credits-footer">
+					Built with <span class="credits-accent">OpenClaw</span> · Human-directed, agent-built
+				</div>
+			</div>
 		</div>
 	{/if}
 </div>
@@ -568,4 +605,46 @@
 		border-top: 1px solid var(--border);
 		padding-top: 1rem;
 	}
+
+	/* Credits */
+	.credits {
+		margin-top: 0.75rem;
+		padding: 0.75rem;
+		border: 1px solid var(--border);
+		background: var(--surface);
+		display: flex; flex-direction: column; gap: 0.75rem;
+	}
+	.credits-header {
+		font-family: var(--font-display); font-size: 0.6rem;
+		letter-spacing: 0.25em; color: var(--text-secondary);
+	}
+	.credits-grid {
+		display: flex; flex-direction: column; gap: 0.5rem;
+	}
+	.credit-entry {
+		display: flex; align-items: center; gap: 0.6rem;
+		padding: 0.4rem 0;
+		border-bottom: 1px solid var(--border);
+	}
+	.credit-entry:last-child { border-bottom: none; }
+	.credit-emoji { font-size: 0.8rem; width: 1.2rem; text-align: center; }
+	.credit-info {
+		display: flex; flex-direction: column; gap: 0.1rem;
+	}
+	.credit-name {
+		font-family: var(--font-display); font-size: 0.55rem;
+		letter-spacing: 0.15em; color: var(--text-primary);
+		font-weight: 700;
+	}
+	.credit-role {
+		font-family: var(--mono); font-size: 0.35rem;
+		letter-spacing: 0.06em; color: var(--text-secondary);
+	}
+	.credits-footer {
+		font-family: var(--mono); font-size: 0.3rem;
+		letter-spacing: 0.08em; color: var(--text-secondary);
+		text-align: center; padding-top: 0.25rem;
+		border-top: 1px solid var(--border);
+	}
+	.credits-accent { color: var(--marathon-blue); }
 </style>
