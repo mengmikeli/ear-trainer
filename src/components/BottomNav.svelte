@@ -20,7 +20,7 @@
 	<div class="tick-ruler"></div>
 	<div class="nav-tabs">
 		{#each tabs as tab}
-			{#if isQuiz && tab.href === '/'}
+			{#if isQuiz && tab.href === `${base}/`}
 				<span class="nav-item active disabled">
 					<span class="icon">{tab.icon}</span>
 					<span class="label">{tab.label}</span>
