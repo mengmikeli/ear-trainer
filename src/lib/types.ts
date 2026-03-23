@@ -60,6 +60,8 @@ export interface Settings {
 	};
 	// v3.3: which content type the Practice button launches
 	activeContent: 'intervals' | 'chords';
+	// Dev mode — bypasses mastery gates, shows lab link
+	devMode?: boolean;
 }
 
 export interface GlobalStats {

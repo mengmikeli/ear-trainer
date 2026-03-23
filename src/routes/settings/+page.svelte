@@ -219,6 +219,22 @@
 
 		<div class="section danger">
 			<label class="field-label">DANGER ZONE</label>
+
+			<div class="dev-toggle-row">
+				<span class="dev-label">DEV MODE</span>
+				<button class="dev-btn" class:active={state.settings.devMode}
+					onclick={() => {
+						state!.settings.devMode = !state!.settings.devMode;
+						update();
+					}}>
+					{state.settings.devMode ? 'ON' : 'OFF'}
+				</button>
+			</div>
+
+			{#if state.settings.devMode}
+				<a href="/lab" class="dev-link">→ LAB</a>
+			{/if}
+
 			<button
 				class="reset-btn"
 				class:holding={holdActive}
@@ -334,6 +350,42 @@
 	.reset-btn.done .reset-fill {
 		background: var(--correct);
 		opacity: 0.35;
+	}
+	.dev-toggle-row {
+		display: flex; align-items: center; justify-content: space-between;
+		padding: 0.6rem 0.85rem;
+		background: var(--surface);
+		border: 1px solid var(--border);
+		margin-bottom: 0.5rem;
+	}
+	.dev-label {
+		font-family: var(--mono); font-size: 0.45rem;
+		font-weight: 900; letter-spacing: 0.1em;
+		color: var(--hot);
+	}
+	.dev-btn {
+		font-family: var(--mono); font-size: 0.4rem;
+		font-weight: 900; letter-spacing: 0.08em;
+		padding: 0.25rem 0.6rem;
+		border: 1px solid var(--hot);
+		background: transparent;
+		color: var(--hot);
+		cursor: pointer;
+	}
+	.dev-btn.active {
+		background: var(--hot);
+		color: var(--base);
+	}
+	.dev-link {
+		display: block;
+		font-family: var(--mono); font-size: 0.4rem;
+		font-weight: 900; letter-spacing: 0.1em;
+		color: var(--marathon-blue);
+		text-decoration: none;
+		padding: 0.5rem 0.85rem;
+		border: 1px solid var(--marathon-blue);
+		margin-bottom: 0.5rem;
+		text-align: center;
 	}
 	@keyframes reset-shake {
 		0% { transform: translate(0); }

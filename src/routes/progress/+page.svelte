@@ -36,6 +36,7 @@
 	// Chord system unlock: Bronze mastery on 5+ intervals
 	const chordsUnlocked = $derived(() => {
 		if (!state) return false;
+		if (state.settings.devMode) return true;
 		let bronzeCount = 0;
 		for (const s of Object.values(state.intervals)) {
 			if (!s.unlocked) continue;
