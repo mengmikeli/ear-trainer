@@ -105,14 +105,17 @@
 		align-items: center; gap: 0.75rem; padding: 0.85rem;
 	}
 	.locked { opacity: 0.4; border-left-color: var(--hot); }
-	.disabled { opacity: 0.55; border-left-color: var(--hot); }
+	.disabled { opacity: 0.55; border-left-color: var(--hot); transition: opacity 0.3s ease 0.3s; }
 	.disabled .id { color: var(--hot); }
+	.disabled .name { color: var(--text-secondary); }
+	.disabled .toggle { opacity: calc(1 / 0.55); }
 	.id {
-		font-size: 1.4rem; font-weight: 900;
-		font-family: 'BPdots', var(--mono); text-align: center;
+		font-size: 2rem; font-weight: 900;
+		font-family: 'BPdots', 'JetBrains Mono', monospace; text-align: center;
 		color: var(--accent); line-height: 1;
+		transform: translateY(-5px);
 	}
-	.locked .id { color: var(--hot); }
+	.locked .id { color: var(--hot); font-size: 2rem; }
 	.mastery-dots {
 		display: block; font-size: 0.5rem; line-height: 1;
 		letter-spacing: 0.1em; margin-top: 2px;
@@ -142,14 +145,18 @@
 	.acc-value {
 		font-size: 0.7rem; font-weight: 900;
 		font-family: var(--mono); color: var(--text-primary);
+		letter-spacing: -0.02em;
 	}
 	.toggle {
 		font-family: var(--mono); font-size: 0.45rem; font-weight: 900;
 		letter-spacing: 0.05em; padding: 0.3rem 0.5rem;
 		border: 1px solid var(--marathon-blue); background: var(--surface);
 		color: var(--marathon-blue); cursor: pointer;
-		transition: color 0.15s, border-color 0.15s;
+		transition: color 0.15s, border-color 0.15s, background 0.15s;
+		display: inline-flex; align-items: center; justify-content: center;
+		line-height: 1;
 		width: 2.8rem; height: 1.4rem;
+		box-sizing: border-box;
 	}
 	.toggle-off { border-color: var(--hot); background: #ED174F10; color: var(--hot); }
 </style>
