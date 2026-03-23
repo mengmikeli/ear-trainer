@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { loadState } from '$lib/state';
+	import { loadState, saveState } from '$lib/state';
 	import { INTERVALS } from '$lib/intervals';
+	import { CHORDS } from '$lib/chords';
 	import { APP_VERSION } from '$lib/version';
+	import { isModeMastered } from '$lib/mastery';
 	import type { UserState } from '$lib/types';
 	import RadarGrid from '../components/RadarGrid.svelte';
 	import TelemetryBar from '../components/TelemetryBar.svelte';
@@ -18,23 +20,55 @@
 		state = loadState();
 	});
 
+	// Chord system unlock: Bronze mastery on 5+ intervals
+	const chordsUnlocked = $derived(() => {
+		if (!state) return false;
+		let bronzeCount = 0;
+		for (const s of Object.values(state.intervals)) {
+			if (!s.unlocked) continue;
+			const mastered = [s.modes.ascending, s.modes.descending, s.modes.harmonic]
+				.filter(m => isModeMastered(m)).length;
+			if (mastered >= 1) bronzeCount++;
+		}
+		return bronzeCount >= 5;
+	});
+
+	const activeContent = $derived(() => {
+		return state?.settings.activeContent ?? 'intervals';
+	});
+
+	function setActiveContent(mode: 'intervals' | 'chords') {
+		if (!state) return;
+		state.settings.activeContent = mode;
+		saveState(state);
+	}
+
 	function handleGo(e: Event) {
 		e.preventDefault();
 		if (goGlitching) return;
 		goGlitching = true;
+		const target = activeContent() === 'chords' ? '/quiz/chords' : '/quiz';
 		let tick = 0;
 		const iv = setInterval(() => {
 			goText = glitchChars[Math.floor(Math.random() * glitchChars.length)];
 			tick++;
 			if (tick >= 6) {
 				clearInterval(iv);
-				goto('/quiz');
+				goto(target);
 			}
 		}, 50);
 	}
 
 	const overallAccuracy = $derived(() => {
 		if (!state) return 0;
+		if (activeContent() === 'chords') {
+			let attempts = 0, correct = 0;
+			for (const s of Object.values(state.chords)) {
+				attempts += s.attempts;
+				correct += s.correct;
+			}
+			return attempts > 0 ? Math.round((correct / attempts) * 100) : 0;
+		}
 		let attempts = 0, correct = 0;
 		for (const s of Object.values(state.intervals)) {
 			attempts += s.attempts;
@@ -45,19 +79,42 @@
 
 	const currentTier = $derived(() => {
 		if (!state) return 1;
+		if (activeContent() === 'chords') {
+			let highest = 1;
+			for (const def of CHORDS) {
+				const s = state.chords[def.id];
+				if (s?.unlocked && def.tier > highest) highest = def.tier;
+			}
+			return highest;
+		}
 		let highest = 1;
 		for (const def of INTERVALS) {
 			const s = state.intervals[def.id];
-			if (s?.unlocked && def.tier > highest) {
-				highest = def.tier;
-			}
+			if (s?.unlocked && def.tier > highest) highest = def.tier;
 		}
 		return highest;
 	});
 
-	const intervalsSeen = $derived(() => {
+	const contentCount = $derived(() => {
+		if (!state) return '0/13';
+		if (activeContent() === 'chords') {
+			const unlocked = Object.values(state.chords).filter(s => s.unlocked).length;
+			return `${unlocked}/${CHORDS.length}`;
+		}
+		const unlocked = Object.values(state.intervals).filter(s => s.unlocked).length;
+		return `${unlocked}/${INTERVALS.length}`;
+	});
+
+	const contentLabel = $derived(() => {
+		return activeContent() === 'chords' ? 'CRD' : 'INT';
+	});
+
+	const totalQuestions = $derived(() => {
 		if (!state) return 0;
-		return Object.values(state.intervals).filter(s => s.unlocked).length;
+		if (activeContent() === 'chords') {
+			return Object.values(state.chords).reduce((sum, s) => sum + s.attempts, 0);
+		}
+		return state.stats.totalQuestions;
 	});
 </script>
 
@@ -75,21 +132,36 @@
 
 	{#if state}
 		<div class="center-area">
+			{#if chordsUnlocked()}
+				<div class="content-switcher">
+					<button
+						class="switch-btn"
+						class:active={activeContent() === 'intervals'}
+						onclick={() => setActiveContent('intervals')}
+					>INTERVALS</button>
+					<button
+						class="switch-btn"
+						class:active={activeContent() === 'chords'}
+						onclick={() => setActiveContent('chords')}
+					>CHORDS</button>
+				</div>
+			{/if}
+
 			<div class="radar-zone">
 				<RadarGrid size="280px" />
-				<a href="/quiz" class="start-btn" class:glitching={goGlitching} onclick={handleGo}>
+				<a href={activeContent() === 'chords' ? '/quiz/chords' : '/quiz'} class="start-btn" class:glitching={goGlitching} onclick={handleGo}>
 					<span class="btn-text">{goText}</span>
 				</a>
 			</div>
 
-			<span class="coord coord-tr">INT: {intervalsSeen()}/13</span>
+			<span class="coord coord-tr">{contentLabel()}: {contentCount()}</span>
 			<span class="coord coord-bl">T{currentTier()}</span>
 
 			<div class="telemetry-row">
 				<TelemetryBar segments={[
 					{ label: 'STK', value: state.stats.currentStreak },
 					{ label: 'ACC', value: overallAccuracy() + '%' },
-					{ label: 'Q', value: state.stats.totalQuestions },
+					{ label: 'Q', value: totalQuestions() },
 				]} />
 			</div>
 		</div>
@@ -187,5 +259,30 @@
 		position: relative;
 		z-index: 1;
 		margin-top: 1.5rem;
+	}
+	.content-switcher {
+		display: flex;
+		gap: 0;
+		margin-bottom: 1rem;
+	}
+	.switch-btn {
+		font-size: 0.4rem;
+		font-weight: 900;
+		font-family: var(--mono);
+		letter-spacing: 0.12em;
+		padding: 0.35rem 0.75rem;
+		background: transparent;
+		color: var(--text-secondary);
+		border: 1px solid var(--border-heavy);
+		cursor: pointer;
+		transition: color 0.15s, border-color 0.15s, background 0.15s;
+	}
+	.switch-btn:first-child {
+		border-right: none;
+	}
+	.switch-btn.active {
+		color: var(--accent);
+		border-color: var(--accent);
+		background: rgba(194, 254, 12, 0.05);
 	}
 </style>
