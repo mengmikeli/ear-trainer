@@ -1,4 +1,4 @@
-export const APP_VERSION = '3.1';
+export const APP_VERSION = '3.2';
 
 export interface ReleaseNote {
 	version: string;
@@ -8,6 +8,21 @@ export interface ReleaseNote {
 }
 
 export const RELEASE_NOTES: ReleaseNote[] = [
+	{
+		version: '3.2',
+		date: '2026-03-24',
+		title: 'CHORDS + LAB',
+		changes: [
+			'Chord identification quiz — Major, Minor, Dim, Aug + 7th chords across 4 tiers',
+			'Block and arpeggiated chord playback toggle',
+			'Per-voicing mastery tracking (Root / 1st Inv / 2nd Inv)',
+			'Chord progress tab with voicing sub-filters',
+			'INTERVALS / CHORDS switcher on home and progress pages',
+			'Lissajous + Chladni visualization lab — 4-way mirror, 13 interval patterns',
+			'Dev mode toggle in settings — bypasses mastery gates, shows lab link',
+			'Chord voicing toggles in settings',
+		],
+	},
 	{
 		version: '3.1',
 		date: '2026-03-22',
