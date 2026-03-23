@@ -20,6 +20,15 @@
 	let glitchInterval: ReturnType<typeof setInterval> | null = null;
 	let systemThemeCleanup: (() => void) | undefined;
 
+	// Long-press lab
+	let labHoldProgress = $state(0);
+	let labHoldActive = $state(false);
+	let labHoldStart = 0;
+	let labHoldRaf: number | null = null;
+	let labDone = $state(false);
+	let labGlitchText = $state('ENTER LAB');
+	let labGlitchInterval: ReturnType<typeof setInterval> | null = null;
+
 	const holdDuration = 3500; // 3.5s hold to confirm
 	const baseText = 'RESET PROGRESS';
 	const glyphs = ['\uE000', '\uE001', '\uE002', '\uE003', '\uE004', '\uE005', '\uE006', '\uE007', '\uE008', '\uE010', '\uE011', '\uE012', '\uE013', '\uE014', '\uE015', '\uE016', '\uE017', '\uE018', '\uE019'];
@@ -44,6 +53,7 @@
 
 	onDestroy(() => {
 		cancelHold();
+		cancelLabHold();
 		systemThemeCleanup?.();
 	});
 
@@ -108,6 +118,64 @@
 			holdProgress = 0;
 			glitchText = 'RESET PROGRESS';
 		}, 2000);
+	}
+
+	// Lab long-press functions
+	const labHoldDuration = 2000;
+
+	function labRandomGlitchText(): string {
+		const base = 'ENTER LAB';
+		const chars = [...base];
+		const maxGlitch = Math.max(1, Math.ceil(labHoldProgress * chars.length * 0.6));
+		const count = 1 + Math.floor(Math.random() * Math.min(maxGlitch, chars.length));
+		for (let i = 0; i < count; i++) {
+			const idx = Math.floor(Math.random() * chars.length);
+			chars[idx] = glyphs[Math.floor(Math.random() * glyphs.length)];
+		}
+		return chars.join('');
+	}
+
+	function startLabHold() {
+		if (labDone) return;
+		labHoldActive = true;
+		labHoldStart = performance.now();
+		labHoldProgress = 0;
+		labGlitchInterval = setInterval(() => {
+			labGlitchText = labRandomGlitchText();
+		}, 60);
+		labHoldRaf = requestAnimationFrame(tickLabHold);
+	}
+
+	function tickLabHold(now: number) {
+		const elapsed = now - labHoldStart;
+		const linear = Math.min(1, elapsed / labHoldDuration);
+		labHoldProgress = 1 - Math.pow(1 - linear, 3);
+		if (linear >= 1) {
+			executeLabEnter();
+			return;
+		}
+		labHoldRaf = requestAnimationFrame(tickLabHold);
+	}
+
+	function cancelLabHold() {
+		labHoldActive = false;
+		labHoldProgress = 0;
+		labGlitchText = 'ENTER LAB';
+		if (labHoldRaf) { cancelAnimationFrame(labHoldRaf); labHoldRaf = null; }
+		if (labGlitchInterval) { clearInterval(labGlitchInterval); labGlitchInterval = null; }
+	}
+
+	function executeLabEnter() {
+		labHoldActive = false;
+		if (labHoldRaf) { cancelAnimationFrame(labHoldRaf); labHoldRaf = null; }
+		if (labGlitchInterval) { clearInterval(labGlitchInterval); labGlitchInterval = null; }
+
+		labDone = true;
+		labGlitchText = '\uE018 LAB \uE018';
+		labHoldProgress = 1;
+		setTimeout(() => {
+			window.location.href = '/lab';
+		}, 500);
 	}
 </script>
 
@@ -232,7 +300,18 @@
 			</div>
 
 			{#if state.settings.devMode}
-				<a href="/lab" class="dev-link">→ LAB</a>
+				<button
+					class="lab-btn"
+					class:holding={labHoldActive}
+					class:done={labDone}
+					onpointerdown={startLabHold}
+					onpointerup={cancelLabHold}
+					onpointerleave={cancelLabHold}
+					oncontextmenu={(e) => e.preventDefault()}
+				>
+					<div class="lab-fill" style="transform: scaleX({labHoldProgress})"></div>
+					<span class="lab-text" class:glitching={labHoldActive}>{labGlitchText}</span>
+				</button>
 			{/if}
 
 			<button
@@ -386,6 +465,42 @@
 		border: 1px solid var(--marathon-blue);
 		margin-bottom: 0.5rem;
 		text-align: center;
+	}
+	.lab-btn {
+		position: relative;
+		overflow: hidden;
+		padding: 0.85rem; background: var(--surface);
+		border: 1px solid var(--correct); border-radius: 0;
+		color: var(--correct); font-size: 0.45rem;
+		font-weight: 400; letter-spacing: 0.08em;
+		font-family: var(--mono);
+		width: 100%;
+		touch-action: none;
+		user-select: none;
+		-webkit-user-select: none;
+		margin-bottom: 0.5rem;
+	}
+	.lab-fill {
+		position: absolute;
+		inset: 0;
+		background: var(--correct);
+		transform-origin: left;
+		transform: scaleX(0);
+		transition: none;
+		pointer-events: none;
+		opacity: 0.35;
+	}
+	.lab-text {
+		position: relative;
+		z-index: 1;
+	}
+	.lab-btn.done {
+		border-color: var(--correct);
+		color: var(--correct);
+	}
+	.lab-btn.done .lab-fill {
+		background: var(--correct);
+		opacity: 0.35;
 	}
 	@keyframes reset-shake {
 		0% { transform: translate(0); }
