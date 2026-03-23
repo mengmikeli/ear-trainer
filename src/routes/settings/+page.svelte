@@ -176,6 +176,36 @@
 		</div>
 
 		<div class="section">
+			<label class="field-label">CHORD VOICINGS</label>
+			<div class="toggle-group">
+				<button class:active={state.settings.enabledVoicings.root}
+					onclick={() => {
+						const v = state!.settings.enabledVoicings;
+						const activeCount = +v.root + +v.first + +v.second;
+						if (v.root && activeCount <= 1) return;
+						v.root = !v.root;
+						update();
+					}}>ROOT</button>
+				<button class:active={state.settings.enabledVoicings.first}
+					onclick={() => {
+						const v = state!.settings.enabledVoicings;
+						const activeCount = +v.root + +v.first + +v.second;
+						if (v.first && activeCount <= 1) return;
+						v.first = !v.first;
+						update();
+					}}>INV1</button>
+				<button class:active={state.settings.enabledVoicings.second}
+					onclick={() => {
+						const v = state!.settings.enabledVoicings;
+						const activeCount = +v.root + +v.first + +v.second;
+						if (v.second && activeCount <= 1) return;
+						v.second = !v.second;
+						update();
+					}}>INV2</button>
+			</div>
+		</div>
+
+		<div class="section">
 			<label class="field-label">SESSION LENGTH</label>
 			<div class="toggle-group">
 				{#each [10, 20, 30] as len}
