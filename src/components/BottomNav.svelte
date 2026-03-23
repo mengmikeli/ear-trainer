@@ -1,16 +1,17 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { base } from '$app/paths';
 
 	const tabs = [
-		{ href: '/', label: 'PRACTICE', icon: '\uE014' },
-		{ href: '/progress', label: 'PROGRESS', icon: '\uE002' },
-		{ href: '/settings', label: 'SETTINGS', icon: '\uE015' },
+		{ href: `${base}/`, label: 'PRACTICE', icon: '\uE014' },
+		{ href: `${base}/progress`, label: 'PROGRESS', icon: '\uE002' },
+		{ href: `${base}/settings`, label: 'SETTINGS', icon: '\uE015' },
 	];
 
-	const isQuiz = $derived(page.url.pathname === '/quiz');
+	const isQuiz = $derived(page.url.pathname === `${base}/quiz`);
 
 	function isActive(href: string): boolean {
-		if (href === '/') return page.url.pathname === '/' || page.url.pathname === '/quiz';
+		if (href === `${base}/`) return page.url.pathname === `${base}/` || page.url.pathname === `${base}/quiz`;
 		return page.url.pathname === href;
 	}
 </script>

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { base } from '$app/paths';
 	import { loadState, saveState, checkTierUnlock } from '$lib/state';
 	import { generateQuestion } from '$lib/engine';
 	import { playInterval, playFeedbackChime } from '$lib/audio';
@@ -271,7 +272,7 @@
 			state.stats.lastPractice = Date.now();
 			saveState(state);
 		}
-		goto('/');
+		goto(`${base}/`);
 	}
 </script>
 
@@ -325,7 +326,7 @@
 
 	<div class="summary-actions">
 		<button class="action-btn primary" onclick={restartQuiz}>AGAIN</button>
-		<button class="action-btn" onclick={() => goto('/')}>HOME</button>
+		<button class="action-btn" onclick={() => goto(`${base}/`)}>HOME</button>
 	</div>
 </div>
 {:else}

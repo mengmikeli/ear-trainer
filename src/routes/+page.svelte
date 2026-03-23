@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { base } from '$app/paths';
 	import { loadState, saveState } from '$lib/state';
 	import { INTERVALS } from '$lib/intervals';
 	import { CHORDS } from '$lib/chords';
@@ -47,7 +48,7 @@
 		e.preventDefault();
 		if (goGlitching) return;
 		goGlitching = true;
-		const target = activeContent() === 'chords' ? '/quiz/chords' : '/quiz';
+		const target = activeContent() === 'chords' ? `${base}/quiz/chords` : `${base}/quiz`;
 		let tick = 0;
 		const iv = setInterval(() => {
 			goText = glitchChars[Math.floor(Math.random() * glitchChars.length)];
@@ -149,7 +150,7 @@
 
 			<div class="radar-zone">
 				<RadarGrid size="280px" />
-				<a href={activeContent() === 'chords' ? '/quiz/chords' : '/quiz'} class="start-btn" class:glitching={goGlitching} onclick={handleGo}>
+				<a href={activeContent() === 'chords' ? `${base}/quiz/chords` : `${base}/quiz`} class="start-btn" class:glitching={goGlitching} onclick={handleGo}>
 					<span class="btn-text">{goText}</span>
 				</a>
 			</div>
