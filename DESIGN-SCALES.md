@@ -1,208 +1,206 @@
-# Scale System — v3.4 Design Doc
+# DESIGN-SCALES.md — Scale Identification System
 
-**Author:** Pixi  
-**Date:** 2026-03-23  
-**Status:** Draft — for review
+**Date:** 2026-03-24
+**Status:** ✅ Approved (2026-03-24)
+**Author:** Pixi
 
 ---
 
-## Goal
+## TL;DR — Recommendation
 
-Add scale identification as a third content type alongside intervals and chords. Scales get their own progression track, mastery system, and quiz flow. The adaptive engine architecture (SM-2, weakness weighting, tier unlocks) carries over.
+**The current quiz template (play sound → pick from 4 choices) does NOT work well for scales in its current form.** Intervals and chords are point-in-time sounds — you hear it, you classify it. A scale is a *sequence*. The skill being trained is fundamentally different: recognizing the *pattern of intervals* that gives each scale its character, not a single sonic event.
 
-### How scales differ from intervals/chords
+**Proposed interaction model: "Hear the scale → identify the quality."** Same 4-choice grid, but the *stimulus* changes significantly — we play the full ascending scale over a fixed root, and the user identifies which scale type it is. This reuses the existing quiz infrastructure (~80% shared) but with a different audio engine and a curated question space.
 
-- **More notes** — scales are 5-8 notes vs 2 (interval) or 3-4 (chord)
-- **Sequential by nature** — scales are always played ascending/descending, never "harmonic"
-- **Identity is in the pattern** — a scale's character comes from its sequence of whole/half steps, not a single sonority
-- **Confusability clusters** — major vs mixolydian (one note different) is much harder than major vs pentatonic (different note count)
+I'm also recommending we **start narrow**: major vs natural minor vs harmonic minor. NOT modes. Here's why.
+
+---
+
+## What Skill Are We Actually Training?
+
+### Intervals: "What's the distance between two notes?"
+- Stimulus: 2 notes → instant classification
+- Pool: 13 items, all can be compared directly
+
+### Chords: "What's the quality of this stack of notes?"
+- Stimulus: 3-4 simultaneous notes → instant classification
+- Pool: 10 items, grouped by category
+
+### Scales: "What's the pattern/flavor of this sequence?"
+- Stimulus: 5-8 notes played in sequence → temporal pattern recognition
+- Pool: Potentially huge (major, 3 minors, 7 modes, pentatonics, blues, whole tone, diminished…)
+- The distinguishing features between scales can be extremely subtle (Dorian vs Aeolian = one note difference)
+
+**Key insight:** The user needs to hear *enough of the scale* to recognize its character. For intervals, 2 notes suffice. For scales, you need the full ascending run (or at least the characteristic degrees) to form a mental image.
+
+---
+
+## Why "Just Add Modes" Is a Trap
+
+Modes are the obvious first thought, but they're pedagogically dangerous for a multiple-choice quiz:
+
+1. **Too similar to distinguish.** Dorian vs Aeolian differs by one note (♮6 vs ♭6). In a 4-choice format, the user is guessing, not training. Interval training works because P5 vs TT *sound* fundamentally different. Dorian vs Mixolydian? Even trained musicians need context.
+
+2. **Modes need harmonic context.** In real music, you identify modes by how they relate to a chord progression or tonal center — not from an isolated ascending run. Playing C-D-E-F-G-A-B-C and asking "is this Ionian or just major?" is a trick question, not training.
+
+3. **The answer pool is too uniform.** Seven modes, all using the same 7 white keys in different rotations. The 4-choice grid becomes a guessing game because the sounds are too close.
+
+**Bottom line:** Modes are a Phase 2 feature that requires a fundamentally different interaction (playing scales *over a drone/chord*, or "which degree is different?"). For MVP, we should train something that actually works in a 4-choice format.
+
+---
+
+## What Works: Scale Quality Recognition
+
+Focus on scales that sound **categorically different** from each other:
+
+| Scale | Formula (semitones from root) | Character |
+|-------|-------------------------------|-----------|
+| Major (Ionian) | 0-2-4-5-7-9-11-12 | Bright, happy |
+| Natural Minor (Aeolian) | 0-2-3-5-7-8-10-12 | Dark, sad |
+| Harmonic Minor | 0-2-3-5-7-8-11-12 | Exotic, Middle Eastern |
+| Melodic Minor (ascending) | 0-2-3-5-7-9-11-12 | Jazz, sophisticated |
+| Major Pentatonic | 0-2-4-7-9-12 | Open, folk |
+| Minor Pentatonic | 0-3-5-7-10-12 | Bluesy, rock |
+| Blues | 0-3-5-6-7-10-12 | Blues (duh) |
+| Whole Tone | 0-2-4-6-8-10-12 | Dreamy, floating |
+| Chromatic | 0-1-2-3-4-5-6-7-8-9-10-11-12 | Tense, atonal |
+
+These scales sound *genuinely distinct* — a user can learn to tell them apart because they have different emotional/tonal fingerprints, not just one shifted note.
+
+---
+
+## Proposed Tier System
+
+### Tier 1 (start): The Big Three
+- Major
+- Natural Minor
+- Major Pentatonic
+
+These are the most common scales in Western music and sound clearly different from each other.
+
+### Tier 2: Extended Palette
+- Harmonic Minor
+- Minor Pentatonic
+
+Harmonic minor has a very distinctive augmented 2nd (exotic sound). Minor pentatonic is ubiquitous and sounds different from natural minor due to missing degrees.
+
+### Tier 3: Color Scales
+- Blues
+- Whole Tone
+- Melodic Minor (ascending)
+
+Blues is minor pentatonic + blue note. Whole tone is unmistakable. Melodic minor is the subtlest here but differs enough from natural minor.
+
+### Tier 4 (advanced): Modes — but only the distinctive ones
+- Dorian (minor with ♮6 — jazzy minor)
+- Mixolydian (major with ♭7 — dominant/rock)
+- Phrygian (minor with ♭2 — Spanish/dark)
+
+These three modes have the most distinctive characters. We'd play them over a **drone note** to give harmonic context (different from tiers 1-3 which use isolated runs).
+
+**Tier 4 is deliberately deferred for Phase 2.** It requires the drone mechanism and is a different pedagogical challenge.
+
+---
+
+## Interaction Model
+
+### Quiz Flow (same bones as intervals/chords)
+
+1. Press Play → hear the scale ascending from a random root
+2. Replay unlimited (no penalty, but tracked for SM-2 quality)
+3. Pick from 4 choices
+4. Immediate feedback → correct answer highlighted
+5. Wrong answer → replay both the heard scale AND the correct scale for comparison (key learning moment)
+
+### Audio: Scale Playback
+
+```
+Root note: random from C3–C5
+Tempo: ~150ms per note (ascending run takes ~1-1.5s for 7-8 notes)
+Tone: uses existing tone engines (epiano/sine/pad)
+Direction: ascending only for MVP (descending adds confusion without learning value at this stage)
+```
+
+Notes are played sequentially (like an arpeggiated chord but with scale degrees). Each note sustains briefly with slight overlap for smoothness.
+
+### What's Different From Intervals/Chords
+
+| Aspect | Intervals | Chords | Scales |
+|--------|-----------|--------|--------|
+| Stimulus | 2 notes | 3-4 simultaneous | 5-8 sequential |
+| Duration | ~1.2s | ~1.2s | ~1.5-2s |
+| What you identify | Distance | Quality | Pattern/flavor |
+| Play modes | Asc/Desc/Harmonic | Root/Inv1/Inv2 | Ascending only (MVP) |
+| Learning on wrong | Hear correct interval | Hear correct chord | **Hear both scales back-to-back** |
+
+### Wrong Answer UX — The Key Differentiator
+
+When the user gets a scale wrong, the feedback mode should:
+1. Show the correct answer (as now)
+2. Auto-play: "You heard: [correct scale]. You picked: [wrong scale]."
+3. Play the correct scale first, brief pause, then the user's wrong answer
+4. This A/B comparison is the most powerful learning tool for scales
+
+This is different from intervals (where you just hear the correct one) because scales need *comparison* to build the mental model.
 
 ---
 
 ## Data Model
 
-### ScaleDef — static definition
-
+### ScaleDef
 ```typescript
 interface ScaleDef {
-  id: string;           // e.g. "major", "nat-min", "pent-maj", "blues"
-  name: string;         // e.g. "Major", "Natural Minor", "Blues"
-  intervals: number[];  // semitones from root, e.g. [0, 2, 4, 5, 7, 9, 11] for major
-  tier: number;         // 1-4 unlock tier
-  category: 'diatonic' | 'pentatonic' | 'modal' | 'other';
-  noteCount: number;    // 5 for pentatonic, 7 for diatonic, 6 for blues
+  id: string;              // e.g. "major", "nat_minor", "harm_minor"
+  name: string;            // e.g. "Major", "Natural Minor"
+  intervals: number[];     // semitones from root: [0, 2, 4, 5, 7, 9, 11, 12]
+  tier: number;            // 1-4
+  category: ScaleCategory;
+  noteCount: number;       // 6 for pentatonics, 7 for heptatonic, etc.
 }
+
+type ScaleCategory = 'diatonic' | 'pentatonic' | 'symmetric' | 'modal';
 ```
 
-### ScaleState — per-scale progress
-
+### ScaleState (same pattern as IntervalState/ChordState)
 ```typescript
-type ScaleDirection = 'ascending' | 'descending';
-
 interface ScaleState {
-  scale: string;        // scale id
+  scale: string;           // scale id
   unlocked: boolean;
   enabled: boolean;
-  // Aggregate stats
   attempts: number;
   correct: number;
-  easeFactor: number;
+  easeFactor: number;      // SM-2
   nextReview: number;
   streak: number;
   lastSeen: number;
-  // Per-direction tracking (scales are sequential — ascending/descending are the sub-skills)
-  directions: {
-    ascending: ModeStats;
-    descending: ModeStats;
-  };
+  // No per-mode subdivision for MVP (ascending only)
 }
 ```
 
-**Why directions instead of voicings:** Scales don't have inversions. The sub-skill axis is direction — ascending and descending sound quite different for scales like harmonic minor (the augmented 2nd jumps out descending). Two sub-skills instead of three means mastery is: Bronze (1 direction) / Gold (both). No Silver — keeping it binary.
-
-### Integration with UserState
-
+### UserState Extension
 ```typescript
 interface UserState {
-  intervals: Record<string, IntervalState>;  // unchanged
-  chords: Record<string, ChordState>;        // unchanged
-  scales: Record<string, ScaleState>;        // NEW
+  intervals: Record<string, IntervalState>;
+  chords: Record<string, ChordState>;
+  scales: Record<string, ScaleState>;  // NEW
   settings: Settings;
   stats: GlobalStats;
 }
 ```
 
-### Settings additions
-
+### Settings Addition
 ```typescript
 interface Settings {
   // ... existing fields ...
-  // v3.4: scale directions
-  enabledScaleDirections: {
-    ascending: boolean;
-    descending: boolean;
-  };
-  // activeContent extends to include scales
-  activeContent: 'intervals' | 'chords' | 'scales';
+  activeContent: 'intervals' | 'chords' | 'scales';  // extended
 }
 ```
 
----
-
-## Scale Content — Tier Progression
-
-**Prerequisite:** Scale system is LOCKED until chord mastery threshold is reached (e.g. Bronze mastery on 3+ chords). Same "hidden mystery" pattern as chords.
-
-| Tier | Scales | Unlock Condition |
-|------|--------|------------------|
-| 1 (start) | Major, Natural Minor | Scale system unlock (from chord mastery) |
-| 2 | Pentatonic Major, Pentatonic Minor | Tier 1: 10q + 70% acc |
-| 3 | Harmonic Minor, Melodic Minor, Blues | Tier 2: 30q + 70% |
-| 4 | Dorian, Mixolydian, Lydian | Tier 3: 60q + 70% |
-
-### SCALES constant
-
-```typescript
-const SCALES: ScaleDef[] = [
-  // Tier 1 — Foundation
-  { id: 'major',     name: 'Major',            intervals: [0, 2, 4, 5, 7, 9, 11],  tier: 1, category: 'diatonic',   noteCount: 7 },
-  { id: 'nat-min',   name: 'Natural Minor',    intervals: [0, 2, 3, 5, 7, 8, 10],  tier: 1, category: 'diatonic',   noteCount: 7 },
-
-  // Tier 2 — Pentatonic
-  { id: 'pent-maj',  name: 'Pentatonic Major', intervals: [0, 2, 4, 7, 9],         tier: 2, category: 'pentatonic', noteCount: 5 },
-  { id: 'pent-min',  name: 'Pentatonic Minor', intervals: [0, 3, 5, 7, 10],        tier: 2, category: 'pentatonic', noteCount: 5 },
-
-  // Tier 3 — Extended
-  { id: 'harm-min',  name: 'Harmonic Minor',   intervals: [0, 2, 3, 5, 7, 8, 11],  tier: 3, category: 'diatonic',   noteCount: 7 },
-  { id: 'mel-min',   name: 'Melodic Minor',    intervals: [0, 2, 3, 5, 7, 9, 11],  tier: 3, category: 'diatonic',   noteCount: 7 },
-  { id: 'blues',     name: 'Blues',             intervals: [0, 3, 5, 6, 7, 10],     tier: 3, category: 'other',      noteCount: 6 },
-
-  // Tier 4 — Modes
-  { id: 'dorian',    name: 'Dorian',           intervals: [0, 2, 3, 5, 7, 9, 10],  tier: 4, category: 'modal',      noteCount: 7 },
-  { id: 'mixolyd',   name: 'Mixolydian',       intervals: [0, 2, 4, 5, 7, 9, 10],  tier: 4, category: 'modal',      noteCount: 7 },
-  { id: 'lydian',    name: 'Lydian',           intervals: [0, 2, 4, 6, 7, 9, 11],  tier: 4, category: 'modal',      noteCount: 7 },
-];
-```
-
-### Tier rationale
-
-- **Tier 1:** Major and natural minor — the two most fundamental scales. If you can't hear these, nothing else makes sense.
-- **Tier 2:** Pentatonic — fewer notes (5), very distinct sound. Good stepping stone before the harder diatonic variants.
-- **Tier 3:** Harmonic/melodic minor + blues — each has a distinctive "fingerprint note" (raised 7th, raised 6th+7th, blue note). Learnable once major/minor are solid.
-- **Tier 4:** Modes — these are the hard ones. Dorian/Mixolydian/Lydian differ from major by ONE note. You need a trained ear to catch the difference.
-
----
-
-## Mastery System
-
-Scales have 2 sub-skills (ascending/descending) instead of 3:
-- **Bronze:** 1 direction mastered (20 attempts, 85% accuracy)
-- **Gold:** Both directions mastered
-- No Silver — two-state is cleaner
-
-`isModeMastered()` works as-is (same `ModeStats` shape). Mastery level computation:
-
-```typescript
-function getScaleMasteryLevel(state: ScaleState): 'none' | 'bronze' | 'gold' {
-  const asc = isModeMastered(state.directions.ascending);
-  const desc = isModeMastered(state.directions.descending);
-  if (asc && desc) return 'gold';
-  if (asc || desc) return 'bronze';
-  return 'none';
-}
-```
-
----
-
-## Audio — Scale Playback
-
-Scales are played as ascending or descending runs — each note sequentially.
-
-```typescript
-function playScale(
-  rootMidi: number,
-  intervals: number[],    // [0, 2, 4, 5, 7, 9, 11] for major
-  direction: 'ascending' | 'descending',
-  toneType: ToneType
-): void
-```
-
-**Playback behavior:**
-- **Ascending:** play each note bottom-to-top, ~200ms per note, slight overlap for legato feel
-- **Descending:** reverse the interval array, play top-to-bottom
-- **End on octave:** always append the octave (root + 12) at the end for ascending, start on octave for descending. This gives the ear the "resolution" it expects.
-- **Note duration:** 250ms per note, 50ms overlap → ~200ms gap. Faster than chord arpeggio (150ms) since scales are longer.
-
-**Root range:** C4–C5 (MIDI 60–72). Narrower than intervals — scales span a full octave so the top notes need headroom.
-
----
-
-## Engine — Question Generation
-
-### pickScale() — weighted selection
-Same algorithm as `pickChord()` / `pickInterval()`. Weakness + SM-2 review + new boost.
-
-### pickScaleDirection() — ascending/descending selection
-Same as `pickVoicing()` / `pickMode()`. Weakness-weighted from `state.directions`.
-
-### generateScaleDistractors()
-Confusability for scales = number of different notes between two scales. 
-
-**Confusability matrix (examples):**
-- Major vs Mixolydian: 1 note different (7th) → very confusable
-- Major vs Dorian: 2 notes different (3rd, 7th) → moderate
-- Major vs Pentatonic Major: different note counts → low confusability
-- Natural Minor vs Dorian: 1 note different (6th) → very confusable
-
-For distractor ranking, compute shared notes and prefer scales with more overlap.
-
-### generateScaleQuestion()
-
+### ScaleQuestion
 ```typescript
 interface ScaleQuestion {
-  rootNote: number;
+  rootNote: number;        // MIDI root
   scale: ScaleDef;
-  direction: 'ascending' | 'descending';
   choices: ScaleDef[];
   replays: number;
 }
@@ -210,74 +208,81 @@ interface ScaleQuestion {
 
 ---
 
-## Quiz Flow
+## Audio Implementation
 
-Separate route: `/quiz/scales` (same pattern as `/quiz/chords`).
+New function in `audio.ts`:
 
-**Key differences from chord quiz:**
-- No voicing indicator — replaced with direction indicator (ASC / DESC)
-- No BLK/ARP toggle — scales are always sequential
-- Longer playback time (7+ notes vs 3-4) → play button animation needs to account for ~1.5s total
+```typescript
+function playScale(
+  rootMidi: number,
+  intervals: number[],    // semitones from root
+  toneType: ToneType,
+  tempo: number = 150     // ms per note
+): void
+```
 
-**Quiz bar:** `EXIT` | `ASC/DESC` indicator | question counter — mirrors chord/interval quiz structure.
+Each note plays for `tempo` ms with a slight overlap (~30ms) for legato feel. Total duration = `intervals.length * tempo`.
 
----
-
-## UI
-
-### Home screen
-- Mode switcher extends: **INTERVALS** | **CHORDS** | **SCALES** (only after scales unlock)
-- Stats context-aware per content type
-
-### Progress screen
-- Third content type in toggle: INTERVALS | CHORDS | SCALES
-- Sub-tabs: ALL / ASC / DESC (two directions)
-- ScaleCard component (same pattern as IntervalCard/ChordCard)
-
-### Settings
-- "Scale Directions" section: ASC / DESC toggles (at least 1 required)
+The existing `playEpianoToneToNode` / `playSineToneToNode` / `playPianoToneToNode` functions work as-is for individual notes. We just schedule them sequentially.
 
 ---
 
-## State Migration
+## Unlock Condition
 
-On load, if `state.scales` is undefined:
-1. Initialize `scales: Record<string, ScaleState>` from `SCALES` array
-2. All scales start **locked** (unlocked via chord mastery discovery)
-3. Direction stats at defaults
-4. `enabledScaleDirections` defaults to `{ ascending: true, descending: true }`
-5. `activeContent` type extends to include `'scales'`
+Scales unlock after the user has **Bronze mastery on 3+ intervals** (lower bar than chords' 5-interval requirement). Scale recognition is arguably easier to start than chord recognition, so we can introduce it earlier.
 
-Purely additive — no breaking changes.
+Home screen gets a 3-way content switcher: `INTERVALS | CHORDS | SCALES`
 
 ---
 
-## Discovery UX — Marathon Mystery (same pattern as chords)
+## Reuse Assessment
 
-- Scale system hidden until chord mastery threshold (Bronze on 3+ chords)
-- Unlock moment: same glitch/decrypt reveal
-- Progress page: scale section redacted until unlock
-- The progression: Intervals → Chords → Scales creates a natural learning ladder
+| Component | Reusable? | Changes Needed |
+|-----------|-----------|----------------|
+| `AnswerGrid.svelte` | ✅ Yes | Already generic ({id, name} interface) |
+| `PlayButton.svelte` | ✅ Yes | No changes |
+| `ProgressBar.svelte` | ✅ Yes | No changes |
+| `TelemetryBar.svelte` | ✅ Yes | No changes |
+| `Feedback.svelte` | ✅ Yes | No changes |
+| `sm2.ts` | ✅ Yes | No changes |
+| `engine.ts` | ➕ Add | `generateScaleQuestion()`, `pickScale()`, `generateScaleDistractors()` |
+| `audio.ts` | ➕ Add | `playScale()` function |
+| `state.ts` | 🔧 Extend | Add `scales` to `UserState`, migration, tier unlock |
+| `types.ts` | ➕ Add | `ScaleDef`, `ScaleState`, `ScaleQuestion`, `ScaleCategory` |
+| Quiz page | 🆕 New | `/quiz/scales/+page.svelte` (fork of chords quiz, simpler) |
+| Home page | 🔧 Extend | Add "SCALES" to content switcher |
+| Progress page | 🔧 Extend | Add scales section |
+| Settings page | 🔧 Extend | Scale-specific settings (if any) |
+
+**Estimated work: ~70% reuse, ~30% new code.** Most new code is the scale definitions + `playScale()` audio function.
 
 ---
 
-## Open Questions
+## Open Questions for Mike
 
-1. **Melodic minor ascending vs descending?** Traditional melodic minor uses raised 6th+7th ascending but natural minor descending. Should we treat these as different scales or one scale with direction-dependent intervals?
-2. **Octave resolution?** Always play the octave at the end, or stop on the 7th degree? The octave gives closure but adds time.
-3. **Scale fragment exercises?** Instead of full scale, play 3-4 consecutive notes and ask "which scale?" — harder, more practical. Could be a phase 2 within scales.
-4. **Which modes?** Current: Dorian, Mixolydian, Lydian. Should we include Phrygian (very distinctive flamenco sound) or is 3 modes enough for v3.4?
-5. **Discovery threshold?** Bronze on 3+ chords to unlock scales — too easy? Too hard?
+1. **Starting scope: Tiers 1-3 only (9 scales) or include Tier 4 modes?**
+   My recommendation: ship Tiers 1-3, defer modes to a dedicated sprint. Modes need a drone/pedal mechanism that doesn't exist yet.
+
+2. **Scale playback speed?** 150ms/note feels natural but might be too fast for beginners. Should we offer a "slow replay" option (250ms/note)?
+
+3. **Wrong-answer comparison playback** — do we auto-play the A/B comparison, or let the user tap to hear each? Auto-play is more instructive but adds ~3s to the wrong-answer flow.
+
+4. **Unlock threshold** — should scales be gated behind interval mastery (like chords are), or available from the start as a parallel track? I've proposed Bronze mastery on 3 intervals, but Mike might want it available immediately.
+
+5. **Content switcher UX** — with 3 content types (intervals/chords/scales), does the switcher still work as inline buttons, or should we move to a tab bar or cards on the home screen?
 
 ---
 
-## Implementation Order
+## What This Design Does NOT Cover (Future)
 
-1. **Data layer:** `ScaleDef`, `ScaleState`, `SCALES` constant, state migration
-2. **Audio:** `playScale()` with ascending/descending
-3. **Engine:** `pickScale()`, `pickScaleDirection()`, `generateScaleQuestion()`, distractor gen
-4. **Quiz route:** `/quiz/scales`
-5. **Home screen:** extend mode switcher to 3 options
-6. **Progress:** scale tab + ScaleCard component
-7. **Settings:** direction toggles
-8. **Tests:** mirror chord/interval test suites
+- **Descending scales** — useful but adds complexity without proportional learning value in MVP
+- **Modes with drone** — Phase 2, requires new audio infrastructure
+- **Scale degree identification** ("which note is the 3rd?") — different exercise entirely
+- **Scale singing/input** — freeform mode equivalent for scales
+- **Relative scale comparison** ("is this scale major or minor relative to [chord]?") — contextual training
+
+---
+
+## Summary
+
+Ship a scale quiz that reuses the existing 4-choice infrastructure, with 9 scales across 3 tiers, sequential note playback, and A/B comparison on wrong answers. Defer modes until we have a drone mechanism. The system slots cleanly into the existing architecture as a third content type alongside intervals and chords.

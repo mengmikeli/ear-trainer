@@ -1,6 +1,7 @@
-import type { UserState, Question, IntervalDef, PlayMode, ChordDef, ChordVoicing, ChordQuestion } from './types';
+import type { UserState, Question, IntervalDef, PlayMode, ChordDef, ChordVoicing, ChordQuestion, ScaleDef, ScaleQuestion } from './types';
 import { INTERVALS, getUnlockedIntervals, getEnabledIntervals } from './intervals';
 import { CHORDS, getEnabledChords } from './chords';
+import { SCALES, getEnabledScales } from './scales';
 
 export function pickInterval(state: UserState): IntervalDef {
 	const unlocked = getEnabledIntervals(state.intervals);
@@ -239,6 +240,94 @@ export function generateChordQuestion(state: UserState): ChordQuestion {
 		rootNote,
 		chord,
 		voicing,
+		choices,
+		replays: 0
+	};
+}
+
+// --- Scale engine ---
+
+export function pickScale(state: UserState): ScaleDef {
+	const enabled = getEnabledScales(state.scales);
+	if (enabled.length === 0) throw new Error('No enabled scales');
+
+	const now = Date.now();
+
+	const weights = enabled.map((def) => {
+		const s = state.scales[def.id];
+		const accuracy = s.attempts > 0 ? s.correct / s.attempts : 0.5;
+		const weaknessWeight = 1 - accuracy;
+
+		const overdue = s.nextReview > 0 ? Math.max(0, now - s.nextReview) : 0;
+		const reviewWeight = Math.min(1, overdue / (24 * 60 * 60 * 1000));
+
+		const newBoost = s.attempts === 0 ? 0.5 : 0;
+
+		return {
+			def,
+			weight: 0.1 + weaknessWeight * 0.5 + reviewWeight * 0.3 + newBoost
+		};
+	});
+
+	const totalWeight = weights.reduce((sum, w) => sum + w.weight, 0);
+	let roll = Math.random() * totalWeight;
+	for (const w of weights) {
+		roll -= w.weight;
+		if (roll <= 0) return w.def;
+	}
+	return weights[weights.length - 1].def;
+}
+
+export function generateScaleDistractors(correctId: string, state: UserState): ScaleDef[] {
+	const correctDef = SCALES.find((s) => s.id === correctId);
+	const correctIntervals = new Set(correctDef?.intervals ?? []);
+
+	const enabled = getEnabledScales(state.scales).filter((s) => s.id !== correctId);
+	const shuffled = [...enabled].sort(() => Math.random() - 0.5);
+
+	if (shuffled.length >= 3) {
+		return shuffled.slice(0, 3);
+	}
+
+	// Not enough enabled distractors — fill from locked scales sorted by shared interval count
+	const usedIds = new Set([correctId, ...shuffled.map(s => s.id)]);
+	const locked = SCALES.filter(
+		(s) => !usedIds.has(s.id)
+	).sort((a, b) => {
+		const sharedA = a.intervals.filter(i => correctIntervals.has(i)).length;
+		const sharedB = b.intervals.filter(i => correctIntervals.has(i)).length;
+		return sharedB - sharedA;
+	});
+
+	const result = [...shuffled];
+	for (const def of locked) {
+		if (result.length >= 3) break;
+		result.push(def);
+	}
+
+	return result;
+}
+
+export function generateScaleQuestion(state: UserState): ScaleQuestion {
+	const scale = pickScale(state);
+
+	const highestInterval = Math.max(...scale.intervals);
+	const maxRoot = 72 - highestInterval; // C5 (72) minus highest interval
+	const minRoot = 48; // C3
+	const rootNote = minRoot + Math.floor(Math.random() * (Math.max(1, maxRoot - minRoot + 1)));
+
+	const distractors = generateScaleDistractors(scale.id, state);
+	const seen = new Set<string>();
+	const uniqueChoices = [scale, ...distractors].filter(c => {
+		if (seen.has(c.id)) return false;
+		seen.add(c.id);
+		return true;
+	});
+	const choices = uniqueChoices.sort(() => Math.random() - 0.5);
+
+	return {
+		rootNote,
+		scale,
 		choices,
 		replays: 0
 	};

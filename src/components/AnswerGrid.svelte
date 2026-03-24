@@ -38,7 +38,7 @@
 			}}
 			disabled={isCorrectBtn && onCorrectClick ? false : disabled}
 		>
-			<span class="id">{choice.id}</span>
+			<span class="id">{choice.label ?? choice.id}</span>
 			<span class="name">{choice.name}</span>
 			{#if isCorrectBtn && onCorrectClick}
 				<span class="skip-arrow">{'\uE011'}</span>

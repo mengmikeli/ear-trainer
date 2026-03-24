@@ -5,6 +5,7 @@
 	import { loadState, saveState } from '$lib/state';
 	import { INTERVALS } from '$lib/intervals';
 	import { CHORDS } from '$lib/chords';
+	import { SCALES } from '$lib/scales';
 	import { APP_VERSION } from '$lib/version';
 	import { isModeMastered } from '$lib/mastery';
 	import type { UserState } from '$lib/types';
@@ -35,11 +36,25 @@
 		return bronzeCount >= 5;
 	});
 
+	// Scale system unlock: Bronze mastery on 3+ intervals
+	const scalesUnlocked = $derived(() => {
+		if (!state) return false;
+		if (state.settings.devMode) return true;
+		let bronzeCount = 0;
+		for (const s of Object.values(state.intervals)) {
+			if (!s.unlocked) continue;
+			const mastered = [s.modes.ascending, s.modes.descending, s.modes.harmonic]
+				.filter(m => isModeMastered(m)).length;
+			if (mastered >= 1) bronzeCount++;
+		}
+		return bronzeCount >= 3;
+	});
+
 	const activeContent = $derived(() => {
 		return state?.settings.activeContent ?? 'intervals';
 	});
 
-	function setActiveContent(mode: 'intervals' | 'chords') {
+	function setActiveContent(mode: 'intervals' | 'chords' | 'scales') {
 		if (!state) return;
 		state.settings.activeContent = mode;
 		saveState(state);
@@ -49,7 +64,12 @@
 		e.preventDefault();
 		if (goGlitching) return;
 		goGlitching = true;
-		const target = activeContent() === 'chords' ? `${base}/quiz/chords` : `${base}/quiz`;
+		const content = activeContent();
+		const target = content === 'chords'
+			? `${base}/quiz/chords`
+			: content === 'scales'
+				? `${base}/quiz/scales`
+				: `${base}/quiz`;
 		let tick = 0;
 		const iv = setInterval(() => {
 			goText = glitchChars[Math.floor(Math.random() * glitchChars.length)];
@@ -66,6 +86,14 @@
 		if (activeContent() === 'chords') {
 			let attempts = 0, correct = 0;
 			for (const s of Object.values(state.chords)) {
+				attempts += s.attempts;
+				correct += s.correct;
+			}
+			return attempts > 0 ? Math.round((correct / attempts) * 100) : 0;
+		}
+		if (activeContent() === 'scales') {
+			let attempts = 0, correct = 0;
+			for (const s of Object.values(state.scales)) {
 				attempts += s.attempts;
 				correct += s.correct;
 			}
@@ -89,6 +117,14 @@
 			}
 			return highest;
 		}
+		if (activeContent() === 'scales') {
+			let highest = 1;
+			for (const def of SCALES) {
+				const s = state.scales[def.id];
+				if (s?.unlocked && def.tier > highest) highest = def.tier;
+			}
+			return highest;
+		}
 		let highest = 1;
 		for (const def of INTERVALS) {
 			const s = state.intervals[def.id];
@@ -103,18 +139,27 @@
 			const unlocked = Object.values(state.chords).filter(s => s.unlocked).length;
 			return `${unlocked}/${CHORDS.length}`;
 		}
+		if (activeContent() === 'scales') {
+			const unlocked = Object.values(state.scales).filter(s => s.unlocked).length;
+			return `${unlocked}/${SCALES.length}`;
+		}
 		const unlocked = Object.values(state.intervals).filter(s => s.unlocked).length;
 		return `${unlocked}/${INTERVALS.length}`;
 	});
 
 	const contentLabel = $derived(() => {
-		return activeContent() === 'chords' ? 'CRD' : 'INT';
+		if (activeContent() === 'chords') return 'CRD';
+		if (activeContent() === 'scales') return 'SCL';
+		return 'INT';
 	});
 
 	const totalQuestions = $derived(() => {
 		if (!state) return 0;
 		if (activeContent() === 'chords') {
 			return Object.values(state.chords).reduce((sum, s) => sum + s.attempts, 0);
+		}
+		if (activeContent() === 'scales') {
+			return Object.values(state.scales).reduce((sum, s) => sum + s.attempts, 0);
 		}
 		return state.stats.totalQuestions;
 	});
@@ -134,24 +179,33 @@
 
 	{#if state}
 		<div class="center-area">
-			{#if chordsUnlocked()}
+			{#if chordsUnlocked() || scalesUnlocked()}
 				<div class="content-switcher">
 					<button
 						class="switch-btn"
 						class:active={activeContent() === 'intervals'}
 						onclick={() => setActiveContent('intervals')}
 					>INTERVALS</button>
+					{#if chordsUnlocked()}
 					<button
 						class="switch-btn"
 						class:active={activeContent() === 'chords'}
 						onclick={() => setActiveContent('chords')}
 					>CHORDS</button>
+					{/if}
+					{#if scalesUnlocked()}
+					<button
+						class="switch-btn"
+						class:active={activeContent() === 'scales'}
+						onclick={() => setActiveContent('scales')}
+					>SCALES</button>
+					{/if}
 				</div>
 			{/if}
 
 			<div class="radar-zone">
 				<RadarGrid size="280px" />
-				<a href={activeContent() === 'chords' ? `${base}/quiz/chords` : `${base}/quiz`} class="start-btn" class:glitching={goGlitching} onclick={handleGo}>
+				<a href={activeContent() === 'chords' ? `${base}/quiz/chords` : activeContent() === 'scales' ? `${base}/quiz/scales` : `${base}/quiz`} class="start-btn" class:glitching={goGlitching} onclick={handleGo}>
 					<span class="btn-text">{goText}</span>
 				</a>
 			</div>

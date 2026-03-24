@@ -531,6 +531,40 @@ export function playChord(
 }
 
 /**
+ * Play a scale — sequential notes from root ascending.
+ *
+ * @param rootMidi - MIDI note number for the root
+ * @param intervals - semitones from root for each note, e.g. [0,2,4,5,7,9,11,12]
+ * @param toneType - which synth engine to use
+ * @param tempo - milliseconds between note onsets (default 150ms)
+ */
+export function playScale(
+	rootMidi: number,
+	intervals: number[],
+	toneType: ToneType = 'epiano',
+	tempo: number = 150
+): void {
+	const audioCtx = getContext();
+	const master = getMasterOutput();
+	const now = audioCtx.currentTime;
+
+	const noteDuration = (tempo * 1.5) / 1000; // slight legato overlap
+
+	const playToNode =
+		toneType === 'piano'
+			? playPianoToneToNode
+			: toneType === 'epiano'
+				? playEpianoToneToNode
+				: playSineToneToNode;
+
+	intervals.forEach((semitones, i) => {
+		const freq = midiToFreq(rootMidi + semitones);
+		const startTime = now + i * (tempo / 1000);
+		playToNode(freq, startTime, noteDuration, audioCtx, master);
+	});
+}
+
+/**
  * Feedback chime — short, distinctive
  * Correct: rising arpeggio chirp
  * Wrong: descending buzz

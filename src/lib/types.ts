@@ -59,7 +59,7 @@ export interface Settings {
 		second: boolean;
 	};
 	// v3.3: which content type the Practice button launches
-	activeContent: 'intervals' | 'chords';
+	activeContent: 'intervals' | 'chords' | 'scales';
 	// Dev mode — bypasses mastery gates, shows lab link
 	devMode?: boolean;
 }
@@ -75,6 +75,7 @@ export interface GlobalStats {
 export interface UserState {
 	intervals: Record<string, IntervalState>;
 	chords: Record<string, ChordState>;
+	scales: Record<string, ScaleState>;
 	settings: Settings;
 	stats: GlobalStats;
 }
@@ -126,5 +127,38 @@ export interface ChordQuestion {
 	chord: ChordDef;
 	voicing: ChordVoicing;
 	choices: ChordDef[];
+	replays: number;
+}
+
+// --- Scale types ---
+
+export type ScaleCategory = 'diatonic' | 'pentatonic' | 'symmetric';
+
+export interface ScaleDef {
+	id: string;            // e.g. "major", "nat_min", "blues"
+	name: string;          // e.g. "Major", "Natural Minor"
+	label: string;         // short display label for quiz grid (e.g. "MAJ", "NTm")
+	intervals: number[];   // semitones from root, e.g. [0,2,4,5,7,9,11,12]
+	tier: number;          // 1-3 unlock tier
+	category: ScaleCategory;
+}
+
+export interface ScaleState {
+	scale: string;         // scale id
+	unlocked: boolean;
+	enabled: boolean;
+	// Flat stats (no per-mode subdivision — ascending only for MVP)
+	attempts: number;
+	correct: number;
+	easeFactor: number;
+	nextReview: number;
+	streak: number;
+	lastSeen: number;
+}
+
+export interface ScaleQuestion {
+	rootNote: number;
+	scale: ScaleDef;
+	choices: ScaleDef[];
 	replays: number;
 }

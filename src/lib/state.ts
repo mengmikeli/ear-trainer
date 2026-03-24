@@ -1,6 +1,7 @@
-import type { UserState, IntervalState, ChordState, Settings, GlobalStats, ModeStats } from './types';
+import type { UserState, IntervalState, ChordState, ScaleState, Settings, GlobalStats, ModeStats } from './types';
 import { INTERVALS, getIntervalsByTier } from './intervals';
 import { CHORDS, getChordsByTier } from './chords';
+import { SCALES, getScalesByTier } from './scales';
 
 const STORAGE_KEY = 'ear-trainer-state';
 
@@ -31,6 +32,20 @@ function createDefaultChordState(id: string, tier: number): ChordState {
 			first: createDefaultModeStats(),
 			second: createDefaultModeStats(),
 		},
+	};
+}
+
+function createDefaultScaleState(id: string, tier: number): ScaleState {
+	return {
+		scale: id,
+		unlocked: tier === 1, // Only tier 1 scales unlocked initially
+		enabled: true,
+		attempts: 0,
+		correct: 0,
+		easeFactor: 2.5,
+		nextReview: 0,
+		streak: 0,
+		lastSeen: 0,
 	};
 }
 
@@ -88,7 +103,13 @@ export function createDefaultState(): UserState {
 		chords[def.id] = createDefaultChordState(def.id, def.tier);
 	}
 
-	return { intervals, chords, settings, stats };
+	// Scale states — tier 1 unlocked initially
+	const scales: Record<string, ScaleState> = {};
+	for (const def of SCALES) {
+		scales[def.id] = createDefaultScaleState(def.id, def.tier);
+	}
+
+	return { intervals, chords, scales, settings, stats };
 }
 
 export function loadState(storage: Storage = localStorage): UserState {
@@ -160,6 +181,18 @@ export function loadState(storage: Storage = localStorage): UserState {
 		if (!parsed.settings.activeContent) {
 			parsed.settings.activeContent = 'intervals';
 		}
+		// Ensure activeContent is a valid value (add 'scales' support)
+		if (!['intervals', 'chords', 'scales'].includes(parsed.settings.activeContent)) {
+			parsed.settings.activeContent = 'intervals';
+		}
+
+		// Migrate: add scale state if missing
+		if (!parsed.scales) {
+			parsed.scales = {};
+			for (const def of SCALES) {
+				parsed.scales[def.id] = createDefaultScaleState(def.id, def.tier);
+			}
+		}
 
 		const result = checkTierUnlock(parsed as UserState);
 		// Persist any newly unlocked tiers
@@ -188,6 +221,11 @@ export function getChordAggregateStats(state: ChordState): { attempts: number; c
 	const correct = state.voicings.root.correct + state.voicings.first.correct + state.voicings.second.correct;
 	const accuracy = attempts > 0 ? correct / attempts : 0;
 	return { attempts, correct, accuracy };
+}
+
+export function getScaleAggregateStats(state: ScaleState): { attempts: number; correct: number; accuracy: number } {
+	const accuracy = state.attempts > 0 ? state.correct / state.attempts : 0;
+	return { attempts: state.attempts, correct: state.correct, accuracy };
 }
 
 const TIER_THRESHOLDS: Record<number, { questions: number; accuracy: number }> = {
@@ -268,6 +306,43 @@ export function checkTierUnlock(state: UserState): UserState {
 			if (chordAttempts >= threshold.questions && chordAccuracy >= threshold.accuracy) {
 				for (const def of tierChords) {
 					updated.chords[def.id].unlocked = true;
+				}
+			}
+		}
+	}
+
+	// --- Scale tier unlocks (same pattern, separate track) ---
+	if (updated.scales) {
+		const SCALE_TIER_THRESHOLDS: Record<number, { questions: number; accuracy: number }> = {
+			2: { questions: 10, accuracy: 0.7 },
+			3: { questions: 30, accuracy: 0.7 },
+		};
+
+		let scaleAttempts = 0;
+		let scaleCorrect = 0;
+		for (const def of SCALES) {
+			const s = updated.scales[def.id];
+			if (s?.unlocked) {
+				scaleAttempts += s.attempts;
+				scaleCorrect += s.correct;
+			}
+		}
+		const scaleAccuracy = scaleAttempts > 0 ? scaleCorrect / scaleAttempts : 0;
+
+		for (let tier = 2; tier <= 3; tier++) {
+			const threshold = SCALE_TIER_THRESHOLDS[tier];
+			const tierScales = getScalesByTier(tier);
+			const alreadyUnlocked = tierScales.every(def => updated.scales[def.id]?.unlocked);
+			if (alreadyUnlocked) continue;
+
+			const prevTierUnlocked = getScalesByTier(tier - 1).every(
+				def => updated.scales[def.id]?.unlocked
+			);
+			if (!prevTierUnlocked) continue;
+
+			if (scaleAttempts >= threshold.questions && scaleAccuracy >= threshold.accuracy) {
+				for (const def of tierScales) {
+					updated.scales[def.id].unlocked = true;
 				}
 			}
 		}
