@@ -209,6 +209,13 @@ describe('playChord — with mocked Web Audio API', () => {
 					},
 					connect: vi.fn()
 				})),
+				createAnalyser: vi.fn(() => ({
+					fftSize: 256,
+					frequencyBinCount: 128,
+					smoothingTimeConstant: 0.8,
+					connect: vi.fn(),
+					getByteTimeDomainData: vi.fn()
+				})),
 				createBiquadFilter: vi.fn(() => ({
 					type: 'lowpass' as string,
 					frequency: { value: 1000 },
