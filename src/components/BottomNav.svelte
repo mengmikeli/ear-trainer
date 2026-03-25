@@ -38,15 +38,6 @@
 <style>
 	.bottom-nav {
 		background: var(--surface);
-		padding-bottom: env(safe-area-inset-bottom);
-	}
-	/* In standalone PWA mode, skip the dynamic env value which starts
-	   oversized on iOS and snaps down after a gesture. Use a small
-	   fixed padding that clears the home indicator from the start. */
-	@media all and (display-mode: standalone) {
-		.bottom-nav {
-			padding-bottom: 0.35rem;
-		}
 	}
 	.nav-tabs {
 		display: flex; justify-content: center; gap: 2px;
