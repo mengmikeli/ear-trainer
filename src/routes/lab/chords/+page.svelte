@@ -13,6 +13,9 @@
 	let showHarmonograph = $state(true);
 	let isPlaying = $state(false);
 
+	// Playback generation counter (for aborting overlapping plays)
+	let playGeneration = 0;
+
 	const ROOT_MIDI = 60; // C4
 
 	let chord = $derived(CHORDS.find(c => c.id === selected)!);
@@ -67,11 +70,13 @@
 			analyserRef = analyser;
 			dataArrayRef = dataArray;
 		}
+		playGeneration++;
+		const thisGen = playGeneration;
 		isPlaying = true;
 		playChord(ROOT_MIDI, chord.intervals, 'root', 'epiano', false);
 		settleSpeed = SETTLE_SPEED_BOOST;
 		migrateTimer = 120;
-		setTimeout(() => { isPlaying = false; }, 2000);
+		setTimeout(() => { if (thisGen === playGeneration) isPlaying = false; }, 2000);
 	}
 
 	// React to chord changes
