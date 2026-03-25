@@ -16,7 +16,7 @@ export const CHORDS: ChordDef[] = [
 
 	// Tier 4 — Extended seventh chords
 	{ id: 'dim7', name: 'Diminished 7th', intervals: [0, 3, 6, 9], tier: 4, category: 'seventh' },
-	{ id: 'hdim7', name: 'Half-dim 7th', intervals: [0, 3, 6, 10], tier: 4, category: 'seventh' },
+	{ id: 'hdim7', name: 'Half-dim 7th', label: 'HD7', intervals: [0, 3, 6, 10], tier: 4, category: 'seventh' },
 	{ id: 'aug7', name: 'Augmented 7th', intervals: [0, 4, 8, 10], tier: 4, category: 'seventh' },
 ];
 
