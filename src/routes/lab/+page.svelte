@@ -614,11 +614,11 @@
 
 	.interval-btn {
 		font-family: 'BPdots', var(--mono);
-		font-size: 1.5rem;
+		font-size: 1.3rem;
 		font-weight: 900;
 		letter-spacing: 0.03em;
 		text-transform: none;
-		padding: 0.1rem 0.35rem 0.4rem 0.55rem;
+		padding: 0.15rem 0.4rem 0.35rem 0.5rem;
 		border: 1px solid var(--border-heavy);
 		color: var(--text-secondary);
 		background: var(--surface);

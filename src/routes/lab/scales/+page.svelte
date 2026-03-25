@@ -51,6 +51,9 @@
 	let ghostCanvas: HTMLCanvasElement | null = null;
 	let ghostCtx: CanvasRenderingContext2D | null = null;
 
+	// ── Playback generation (for aborting mid-play) ──
+	let playGeneration = 0;
+
 	// ── Audio ──
 	let analyserRef: AnalyserNode | null = null;
 	let dataArrayRef: Uint8Array | null = null;
@@ -81,9 +84,12 @@
 		ghostCtx.globalAlpha = 1;
 	}
 
-	/** Play the scale sequentially — one mode per step */
+	/** Play the scale sequentially — one mode per step. Interruptible. */
 	function playScale() {
-		if (isPlaying) return;
+		// Abort any in-progress playback
+		playGeneration++;
+		const thisGen = playGeneration;
+
 		isPlaying = true;
 		currentStep = 0;
 
@@ -97,10 +103,15 @@
 		let step = 0;
 
 		function nextStep() {
+			// Abort if a newer playScale() was called
+			if (thisGen !== playGeneration) return;
+
 			if (step >= intervals.length) {
-				// Hold final composite for a moment
 				currentStep = -1;
-				setTimeout(() => { isPlaying = false; }, 2000);
+				// Short tail pause — same as inter-note gap (500ms)
+				setTimeout(() => {
+					if (thisGen === playGeneration) isPlaying = false;
+				}, 500);
 				return;
 			}
 
@@ -114,9 +125,9 @@
 				const dpr = Math.min(window.devicePixelRatio || 1, 2);
 				const w = mainCanvas.width / dpr;
 				const h = mainCanvas.height / dpr;
-				// Color cycles through scale degrees — warm tones (red → orange → gold)
-				const hue = (step / intervals.length) * 60; // 0=red → 60=gold
-				stampGhost(w, h, `hsl(${hue}, 85%, 50%)`, 0.15);
+				// Color cycles through scale degrees — blue tones throughout
+				const lightness = 40 + (step / intervals.length) * 20; // 40%→60% lightness
+				stampGhost(w, h, `hsl(240, 80%, ${lightness}%)`, 0.15);
 			}
 
 			// Boost settle for migration
@@ -283,7 +294,7 @@
 				const alpha = Math.min(0.7, Math.max(0.05, 0.4 - dist * 1.5) + migrateGlow);
 
 				ctx.globalAlpha = alpha;
-				ctx.fillStyle = migrating ? '#FF6B35' : '#3A2CFF';
+				ctx.fillStyle = migrating ? '#5A4CFF' : '#3A2CFF';
 				const pSize = migrating ? 1.6 : 1.2;
 				ctx.fillRect(sx, sy, pSize, pSize);
 			}
@@ -352,13 +363,6 @@
 			<span class="scale-formula">{scale.intervals.join(' ')}</span>
 		</div>
 		<canvas bind:this={mainCanvas}></canvas>
-		<button class="play-btn" class:playing={isPlaying} onclick={playScale} disabled={isPlaying} aria-label="Play scale">
-			{#if isPlaying}
-				<span class="play-icon pulse">◉</span>
-			{:else}
-				<span class="play-icon">▶</span>
-			{/if}
-		</button>
 		<div class="frame-corner tl"></div>
 		<div class="frame-corner tr"></div>
 		<div class="frame-corner bl"></div>
@@ -561,50 +565,4 @@
 		box-shadow: 0 0 4px currentColor;
 	}
 
-	.play-btn {
-		position: absolute;
-		bottom: 0.75rem;
-		right: 0.75rem;
-		z-index: 2;
-		width: 2.5rem;
-		height: 2.5rem;
-		border-radius: 50%;
-		border: 1px solid var(--accent);
-		background: rgba(0, 0, 0, 0.6);
-		color: var(--accent);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		transition: all 0.15s ease;
-		backdrop-filter: blur(4px);
-	}
-
-	.play-btn:hover:not(:disabled) {
-		background: rgba(194, 254, 12, 0.15);
-		box-shadow: 0 0 12px rgba(194, 254, 12, 0.3);
-	}
-
-	.play-btn:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
-
-	.play-btn.playing {
-		border-color: var(--accent);
-		box-shadow: 0 0 16px rgba(194, 254, 12, 0.4);
-	}
-
-	.play-icon {
-		font-size: 0.9rem;
-		line-height: 1;
-	}
-
-	.play-icon.pulse {
-		animation: pulse-glow 0.6s ease-in-out infinite alternate;
-	}
-
-	@keyframes pulse-glow {
-		from { text-shadow: 0 0 4px var(--accent); }
-		to { text-shadow: 0 0 16px var(--accent), 0 0 24px var(--accent); }
-	}
 </style>
