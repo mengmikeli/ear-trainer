@@ -324,6 +324,11 @@
 		return () => {
 			cancelAnimationFrame(animId);
 			window.removeEventListener('resize', resize);
+			// Kill any in-progress scale playback
+			playGeneration++;
+			isPlaying = false;
+			analyserRef = null;
+			dataArrayRef = null;
 			stopAudio();
 		};
 	});
