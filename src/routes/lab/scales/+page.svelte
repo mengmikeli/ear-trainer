@@ -114,9 +114,9 @@
 				const dpr = Math.min(window.devicePixelRatio || 1, 2);
 				const w = mainCanvas.width / dpr;
 				const h = mainCanvas.height / dpr;
-				// Color cycles through scale degrees — warm to cool
-				const hue = (step / intervals.length) * 240; // 0=red → 240=blue
-				stampGhost(w, h, `hsl(${hue}, 80%, 50%)`, 0.15);
+				// Color cycles through scale degrees — warm tones (red → orange → gold)
+				const hue = (step / intervals.length) * 60; // 0=red → 60=gold
+				stampGhost(w, h, `hsl(${hue}, 85%, 50%)`, 0.15);
 			}
 
 			// Boost settle for migration
@@ -160,6 +160,11 @@
 		settleSpeed = SETTLE_SPEED_BOOST;
 		migrateTimer = 90;
 		if (particles.length === 0) initParticles();
+		// Auto-play on scale switch (skip first load)
+		if (!firstRun) {
+			// Small delay to let particles resettle before playing
+			setTimeout(() => playScale(), 100);
+		}
 		firstRun = false;
 	});
 
@@ -278,7 +283,7 @@
 				const alpha = Math.min(0.7, Math.max(0.05, 0.4 - dist * 1.5) + migrateGlow);
 
 				ctx.globalAlpha = alpha;
-				ctx.fillStyle = migrating ? '#C2FE0C' : '#3A2CFF';
+				ctx.fillStyle = migrating ? '#FF6B35' : '#3A2CFF';
 				const pSize = migrating ? 1.6 : 1.2;
 				ctx.fillRect(sx, sy, pSize, pSize);
 			}
@@ -332,7 +337,7 @@
 	<header class="lab-header">
 		<div class="lab-title">
 			<span class="hud-tag">LAB</span>
-			<h1>SCALE VIZ</h1>
+			<h1>VISUALIZATION</h1>
 		</div>
 		<nav class="lab-nav">
 			<a href="{base}/lab" class="lab-nav-link" aria-label="Intervals">INT</a>
@@ -341,12 +346,11 @@
 		</nav>
 	</header>
 
-	<div class="scale-info">
-		<span class="scale-name">{scale.name}</span>
-		<span class="scale-formula">{scale.intervals.join(' ')}</span>
-	</div>
-
 	<div class="canvas-frame">
+		<div class="scale-info">
+			<span class="scale-name">{scale.name}</span>
+			<span class="scale-formula">{scale.intervals.join(' ')}</span>
+		</div>
 		<canvas bind:this={mainCanvas}></canvas>
 		<button class="play-btn" class:playing={isPlaying} onclick={playScale} disabled={isPlaying} aria-label="Play scale">
 			{#if isPlaying}
@@ -375,10 +379,14 @@
 	</div>
 
 	<footer class="lab-footer">
-		<span class="hud-tag hud-tag--blue">PROGRESSIVE CHLADNI</span>
-		{#if isPlaying}
-			<span class="hud-tag" style="color: #C2FE0C;">PLAYING</span>
-		{/if}
+		<div class="footer-tags">
+			<span class="hud-tag hud-tag--blue">
+				<span class="toggle-dot on"></span>PROGRESSIVE CHLADNI
+			</span>
+			{#if isPlaying}
+				<span class="hud-tag" style="color: #C2FE0C;">PLAYING</span>
+			{/if}
+		</div>
 	</footer>
 </div>
 
@@ -437,9 +445,13 @@
 	}
 
 	.scale-info {
+		position: absolute;
+		top: 0.5rem;
+		left: 0.5rem;
+		z-index: 2;
 		display: flex;
-		justify-content: space-between;
-		align-items: baseline;
+		flex-direction: column;
+		gap: 0.1rem;
 	}
 
 	.scale-name {
@@ -454,6 +466,7 @@
 		font-size: 0.6rem;
 		color: var(--text-secondary);
 		letter-spacing: 0.06em;
+		opacity: 0.7;
 	}
 
 	.canvas-frame {
@@ -491,18 +504,22 @@
 	}
 
 	.scale-btn {
-		font-family: var(--mono);
-		font-size: 0.7rem;
-		font-weight: 600;
+		font-family: 'BPdots', var(--mono);
+		font-size: 1.3rem;
+		font-weight: 900;
 		letter-spacing: 0.03em;
 		text-transform: none;
-		padding: 0.25rem 0.45rem;
+		padding: 0.15rem 0.4rem 0.35rem 0.5rem;
 		border: 1px solid var(--border-heavy);
 		color: var(--text-secondary);
 		background: var(--surface);
 		transition: all 0.15s ease;
+		min-width: 3rem;
 		text-align: center;
-		line-height: 1.2;
+		line-height: 1;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
 	}
 
 	.scale-btn:hover {
@@ -521,6 +538,27 @@
 		align-items: center;
 		justify-content: center;
 		gap: 0.75rem;
+	}
+
+	.footer-tags {
+		display: flex;
+		gap: 0.35rem;
+	}
+
+	.toggle-dot {
+		display: inline-block;
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		border: 1px solid currentColor;
+		margin-right: 0.3rem;
+		vertical-align: middle;
+		transition: all 0.15s ease;
+	}
+
+	.toggle-dot.on {
+		background: currentColor;
+		box-shadow: 0 0 4px currentColor;
 	}
 
 	.play-btn {
