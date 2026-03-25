@@ -332,7 +332,7 @@
 		cursor: pointer;
 		transition: color 0.15s, border-color 0.15s, background 0.15s;
 	}
-	.ct-btn:first-child { margin-right: -1px; }
+	.ct-btn + .ct-btn { margin-left: -1px; }
 	.ct-btn.active {
 		color: var(--accent);
 		border-color: var(--accent);

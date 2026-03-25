@@ -333,8 +333,8 @@
 		cursor: pointer;
 		transition: color 0.15s, border-color 0.15s, background 0.15s;
 	}
-	.switch-btn:first-child {
-		margin-right: -1px;
+	.switch-btn + .switch-btn {
+		margin-left: -1px;
 	}
 	.switch-btn.active {
 		color: var(--accent);

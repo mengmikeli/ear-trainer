@@ -96,6 +96,7 @@ export type ChordCategory = 'triad' | 'seventh';
 export interface ChordDef {
 	id: string;            // e.g. "maj", "min", "dim", "aug", "dom7"
 	name: string;          // e.g. "Major", "Minor 7th"
+	label?: string;        // short display label (defaults to id.toUpperCase())
 	intervals: number[];   // semitones from root, e.g. [0, 4, 7]
 	tier: number;          // 1-4 unlock tier (chord-specific)
 	category: ChordCategory;

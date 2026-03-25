@@ -56,7 +56,7 @@
 	<div class="card-fill" style="width: {cstate.unlocked && cstate.enabled ? accuracy : 0}%"></div>
 	<div class="card-content">
 		<div class="id">
-			{cstate.unlocked ? def.id.toUpperCase() : 'NA'}
+			{cstate.unlocked ? (def.label ?? def.id.toUpperCase()) : 'NA'}
 			{#if masteryDots()}
 				<span class="mastery-dots" style="color: {masteryColor()}">{masteryDots()}</span>
 			{/if}
