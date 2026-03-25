@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { base } from '$app/paths';
 	import { INTERVALS } from '$lib/intervals';
 	import { playInterval, getAnalyser, getAmplitude } from '$lib/audio';
 	import { loadState } from '$lib/state';
@@ -448,6 +449,11 @@
 			<span class="hud-tag">LAB</span>
 			<h1>VISUALIZATION</h1>
 		</div>
+		<nav class="lab-nav">
+			<a href="{base}/lab" class="lab-nav-link active" aria-label="Intervals">INT</a>
+			<a href="{base}/lab/chords" class="lab-nav-link" aria-label="Chords">CHRD</a>
+			<a href="{base}/lab/scales" class="lab-nav-link" aria-label="Scales">SCALE</a>
+		</nav>
 	</header>
 
 	<div class="canvas-frame">
@@ -498,6 +504,33 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
+	}
+
+	.lab-nav {
+		display: flex;
+		gap: 0.25rem;
+	}
+
+	.lab-nav-link {
+		font-family: var(--mono);
+		font-size: 0.6rem;
+		letter-spacing: 0.08em;
+		padding: 0.2rem 0.4rem;
+		border: 1px solid var(--border-heavy);
+		color: var(--text-secondary);
+		text-decoration: none;
+		transition: all 0.15s ease;
+	}
+
+	.lab-nav-link:hover {
+		border-color: var(--accent);
+		color: var(--text-primary);
+	}
+
+	.lab-nav-link.active {
+		border-color: var(--accent);
+		color: var(--accent);
+		background: var(--accent-dim);
 	}
 
 	.lab-title {
