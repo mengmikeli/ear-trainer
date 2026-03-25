@@ -517,15 +517,16 @@ export function playChord(
 	arpeggiated: boolean = false
 ): void {
 	const audioCtx = getContext();
+	const master = getMasterOutput();
 	const now = audioCtx.currentTime;
 
 	const voiced = applyInversion(intervals, voicing);
 	const noteCount = voiced.length;
 
-	// Master gain to avoid clipping — scale down per note count
-	const masterGain = audioCtx.createGain();
-	masterGain.gain.value = 0.7 / Math.sqrt(noteCount);
-	masterGain.connect(audioCtx.destination);
+	// Gain node to avoid clipping — scale down per note count
+	const chordGain = audioCtx.createGain();
+	chordGain.gain.value = 0.7 / Math.sqrt(noteCount);
+	chordGain.connect(master);
 
 	const noteDuration = arpeggiated ? 0.8 : 1.2;
 	const arpDelay = 0.15; // 150ms between arpeggiated notes
@@ -540,7 +541,7 @@ export function playChord(
 	voiced.forEach((semitones, i) => {
 		const freq = midiToFreq(rootMidi + semitones);
 		const offset = arpeggiated ? i * arpDelay : Math.random() * 0.015; // humanization for block
-		playToNode(freq, now + offset, noteDuration, audioCtx, masterGain);
+		playToNode(freq, now + offset, noteDuration, audioCtx, chordGain);
 	});
 }
 
