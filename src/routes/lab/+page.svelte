@@ -499,11 +499,11 @@
 
 	<footer class="lab-footer">
 		<div class="footer-tags">
-			<button class="hud-tag" class:dimmed={!showLissajous} onclick={() => showLissajous = !showLissajous}>
-				<span class="toggle-dot" class:on={showLissajous}></span>LISSAJOUS
-			</button>
 			<button class="hud-tag hud-tag--blue" class:dimmed={!showChladni} onclick={() => showChladni = !showChladni}>
 				<span class="toggle-dot" class:on={showChladni}></span>CHLADNI
+			</button>
+			<button class="hud-tag" class:dimmed={!showLissajous} onclick={() => showLissajous = !showLissajous}>
+				<span class="toggle-dot" class:on={showLissajous}></span>LISSAJOUS
 			</button>
 		</div>
 	</footer>
