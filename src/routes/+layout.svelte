@@ -36,7 +36,6 @@
 		display: flex; flex-direction: column; height: 100dvh;
 		max-width: 480px; margin: 0 auto;
 		padding-top: env(safe-area-inset-top);
-		padding-bottom: env(safe-area-inset-bottom);
 	}
 	.content {
 		flex: 1; overflow-y: auto; padding: 1.5rem 1.25rem;
