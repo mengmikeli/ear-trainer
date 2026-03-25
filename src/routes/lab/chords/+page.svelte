@@ -36,11 +36,14 @@
 	let settleSpeed = SETTLE_SPEED_BASE;
 	let migrateTimer = 0;
 
-	// ── Harmonograph state ──
-	let hPhase = Math.PI * 4;  // start with some history so trail is visible immediately
-	const H_TRAIL = 500;
-	const H_SPEED_BASE = 0.004;
-	let rotAngle = 0;
+	// ── Harmonograph "breathing snake" trail ──
+	let hPhase = 0;
+	const H_TRAIL = 3000;           // trail length (points visible at once)
+	const H_SPEED_BASE = 0.128;      // base phase speed per frame (was 0.15, -15%)
+	const H_SPEED_BURST = 1.2;      // burst speed on chord switch
+	const H_TRAIL_STEP = 0.012;     // constant trail point spacing (decoupled from speed)
+	let hSpeedCurrent = H_SPEED_BASE;
+	let hNeedsReset = false;
 
 	// ── Audio reactive ──
 	let analyserRef: AnalyserNode | null = null;
@@ -75,6 +78,8 @@
 		playChord(ROOT_MIDI, chord.intervals, 'root', 'epiano', false);
 		settleSpeed = SETTLE_SPEED_BOOST;
 		migrateTimer = 120;
+		// Speed burst on any play (switch or replay)
+		hSpeedCurrent = H_SPEED_BURST;
 		setTimeout(() => { if (thisGen === playGeneration) isPlaying = false; }, 2000);
 	}
 
@@ -86,6 +91,8 @@
 		settleSpeed = SETTLE_SPEED_BOOST;
 		migrateTimer = 120;
 		if (particles.length === 0) initParticles();
+		// Speed burst for chase effect — don't reset phase (continuous trail morphs to new shape)
+		hSpeedCurrent = H_SPEED_BURST;
 		if (!firstRun) {
 			handlePlay();
 		}
@@ -209,73 +216,58 @@
 				ctx.globalAlpha = 1;
 			}
 
-			// ── HARMONOGRAPH (foreground) ──
+			// ── HARMONOGRAPH TRAIL (with brightness/width pulse) ──
 			if (harmonographOpacity > 0.01) {
-				const radius = Math.min(cx, cy) * 0.65;
-				const radiusPulse = 1 + amp * 0.12;
-				const glowBoost = amp * 8;
-				const lwBoost = amp * 1.5;
+				const radius = Math.min(cx, cy) * 0.6;
+				const radiusPulse = 1 + amp * 0.2; // breathe outward on audio
+				const useIntervals2 = currentIntervals;
 
-				// Slow rotation
-				rotAngle += 0.0008;
+				// Audio-reactive: brightness + width only (no positional distortion)
+				const glowPulse = amp * 12;
+				const widthPulse = amp * 2.5;
+				const alphaPulse = amp * 0.4;
 
-				// Compute trail points
-				const speed = H_SPEED_BASE / Math.max(...useIntervals.map(s => Math.abs(s) || 1), 1);
+				// Speed: burst decays toward base
+				const baseSpeed = H_SPEED_BASE;
+				hSpeedCurrent += (baseSpeed - hSpeedCurrent) * 0.03;
+				const speed = hSpeedCurrent;
 
-				// Double-pass rendering: dim wide stroke for bloom, bright thin stroke on top
+				ctx.strokeStyle = '#C2FE0C';
 				ctx.shadowColor = '#C2FE0C';
 
-				// Pass 1: bloom/glow underlay — wide, dim
-				ctx.shadowBlur = 8 + glowBoost;
-				ctx.strokeStyle = 'rgba(194, 254, 12, 0.25)';
-				ctx.lineWidth = 4.0 + lwBoost;
+				const segLen = 50;
+				const numSegs = Math.ceil(H_TRAIL / segLen);
 
-				const mirrors: [number, number, number][] = [
-					[1, 1, 0.9],
-					[-1, 1, 0.55],
-					[1, -1, 0.55],
-					[-1, -1, 0.35],
-				];
+				for (let seg = 0; seg < numSegs; seg++) {
+					const startIdx = seg * segLen;
+					const endIdx = Math.min(startIdx + segLen + 1, H_TRAIL);
 
-				for (const [mx, my, baseAlpha] of mirrors) {
+					const segFrac = startIdx / H_TRAIL;
+					const segAlpha = (1 - segFrac) * (1 - segFrac);
+					if (segAlpha < 0.02) break;
+
+					ctx.lineWidth = 1.5 + widthPulse * (1 - segFrac); // thicker at head on pulse
+					ctx.shadowBlur = 2 + glowPulse * (1 - segFrac);   // more glow at head
+
 					ctx.beginPath();
-					for (let i = 0; i < H_TRAIL; i++) {
-						const t = hPhase - i * speed * 0.5;
-						const [px, py] = harmonograph3D(t, useIntervals, radius * radiusPulse, Math.PI / 4, rotAngle);
-						const x = cx + mx * px;
-						const y = cy + my * py;
-						if (i === 0) ctx.moveTo(x, y);
+					for (let i = startIdx; i < endIdx; i++) {
+						const t = hPhase - i * H_TRAIL_STEP;
+						const [px, py] = harmonograph3D(t, useIntervals2, radius * radiusPulse, Math.PI / 4, 0);
+						const x = cx + px;
+						const y = cy + py;
+						if (i === startIdx) ctx.moveTo(x, y);
 						else ctx.lineTo(x, y);
 					}
-					ctx.globalAlpha = Math.min(1, baseAlpha * 0.4) * harmonographOpacity;
+					ctx.globalAlpha = Math.min(1, segAlpha * (1 + alphaPulse)) * harmonographOpacity;
 					ctx.stroke();
 				}
 
-				// Pass 2: crisp bright line on top
-				ctx.shadowBlur = 3 + glowBoost * 0.4;
-				ctx.strokeStyle = '#C2FE0C';
-				ctx.lineWidth = 1.5 + lwBoost * 0.5;
-
-				for (const [mx, my, baseAlpha] of mirrors) {
-					ctx.beginPath();
-					for (let i = 0; i < H_TRAIL; i++) {
-						const t = hPhase - i * speed * 0.5;
-						const [px, py] = harmonograph3D(t, useIntervals, radius * radiusPulse, Math.PI / 4, rotAngle);
-						const x = cx + mx * px;
-						const y = cy + my * py;
-						if (i === 0) ctx.moveTo(x, y);
-						else ctx.lineTo(x, y);
-					}
-					ctx.globalAlpha = Math.min(1, baseAlpha) * harmonographOpacity;
-					ctx.stroke();
-				}
-
-				// Head dot
-				const [hx, hy] = harmonograph3D(hPhase, useIntervals, radius * radiusPulse, Math.PI / 4, rotAngle);
+				// Head dot — pulses with audio
+				const [hx, hy] = harmonograph3D(hPhase, useIntervals2, radius * radiusPulse, Math.PI / 4, 0);
 				ctx.beginPath();
-				ctx.arc(cx + hx, cy + hy, 3, 0, Math.PI * 2);
+				ctx.arc(cx + hx, cy + hy, 3 + amp * 2, 0, Math.PI * 2);
 				ctx.fillStyle = '#C2FE0C';
-				ctx.shadowBlur = 8 + glowBoost;
+				ctx.shadowBlur = 6 + glowPulse;
 				ctx.globalAlpha = harmonographOpacity;
 				ctx.fill();
 
