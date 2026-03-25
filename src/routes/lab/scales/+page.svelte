@@ -3,7 +3,7 @@
 	import { base } from '$app/paths';
 	import { chladniSuper, chladniGradSuper, midiToChladniMode } from '$lib/viz';
 	import type { ChladniMode } from '$lib/viz';
-	import { getAnalyser, getAmplitude } from '$lib/audio';
+	import { getAnalyser, getAmplitude, playInterval } from '$lib/audio';
 
 	// ── Scale definitions ──
 	interface ScaleDef {
@@ -13,22 +13,22 @@
 	}
 
 	const SCALES: ScaleDef[] = [
-		{ id: 'major', name: 'Major', intervals: [0, 2, 4, 5, 7, 9, 11, 12] },
-		{ id: 'minor', name: 'Natural Minor', intervals: [0, 2, 3, 5, 7, 8, 10, 12] },
-		{ id: 'harm-minor', name: 'Harmonic Minor', intervals: [0, 2, 3, 5, 7, 8, 11, 12] },
-		{ id: 'mel-minor', name: 'Melodic Minor', intervals: [0, 2, 3, 5, 7, 9, 11, 12] },
-		{ id: 'dorian', name: 'Dorian', intervals: [0, 2, 3, 5, 7, 9, 10, 12] },
-		{ id: 'mixolydian', name: 'Mixolydian', intervals: [0, 2, 4, 5, 7, 9, 10, 12] },
-		{ id: 'penta-maj', name: 'Major Pentatonic', intervals: [0, 2, 4, 7, 9, 12] },
-		{ id: 'penta-min', name: 'Minor Pentatonic', intervals: [0, 3, 5, 7, 10, 12] },
-		{ id: 'blues', name: 'Blues', intervals: [0, 3, 5, 6, 7, 10, 12] },
-		{ id: 'chromatic', name: 'Chromatic', intervals: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] },
+		{ id: 'Maj', name: 'Major', intervals: [0, 2, 4, 5, 7, 9, 11, 12] },
+		{ id: 'Min', name: 'Natural Minor', intervals: [0, 2, 3, 5, 7, 8, 10, 12] },
+		{ id: 'hMin', name: 'Harmonic Minor', intervals: [0, 2, 3, 5, 7, 8, 11, 12] },
+		{ id: 'mMin', name: 'Melodic Minor', intervals: [0, 2, 3, 5, 7, 9, 11, 12] },
+		{ id: 'Dor', name: 'Dorian', intervals: [0, 2, 3, 5, 7, 9, 10, 12] },
+		{ id: 'Mix', name: 'Mixolydian', intervals: [0, 2, 4, 5, 7, 9, 10, 12] },
+		{ id: 'MajP', name: 'Major Pentatonic', intervals: [0, 2, 4, 7, 9, 12] },
+		{ id: 'MinP', name: 'Minor Pentatonic', intervals: [0, 3, 5, 7, 10, 12] },
+		{ id: 'Blu', name: 'Blues', intervals: [0, 3, 5, 6, 7, 10, 12] },
+		{ id: 'Chr', name: 'Chromatic', intervals: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] },
 	];
 
 	const ROOT_MIDI = 60;
 
 	// ── State ──
-	let selected = $state('major');
+	let selected = $state('Maj');
 	let isPlaying = $state(false);
 	let currentStep = $state(-1); // -1 = idle, 0..n = playing step
 	let mainCanvas: HTMLCanvasElement;
@@ -43,6 +43,7 @@
 	const SETTLE_SPEED_BOOST = 0.025;
 	const JITTER = 0.001;
 	const SHAKE_BASE = 0.012;
+	const SHAKE_AUDIO = 0.05;
 	let particles: { x: number; y: number }[] = [];
 	let settleSpeed = SETTLE_SPEED_BASE;
 	let migrateTimer = 0;
@@ -90,6 +91,13 @@
 		playGeneration++;
 		const thisGen = playGeneration;
 
+		// Init audio analyser for reactive particles
+		if (!analyserRef) {
+			const { analyser, dataArray } = getAnalyser();
+			analyserRef = analyser;
+			dataArrayRef = dataArray;
+		}
+
 		isPlaying = true;
 		currentStep = 0;
 
@@ -134,31 +142,14 @@
 			settleSpeed = SETTLE_SPEED_BOOST;
 			migrateTimer = 60;
 
-			// Play the note (simple sine via AudioContext)
-			playNote(midi);
+			// Play the note through shared audio (analyser-connected)
+			playInterval(midi, 0, 'ascending', 'sine');
 
 			step++;
 			setTimeout(nextStep, 500); // 500ms per note
 		}
 
 		nextStep();
-	}
-
-	/** Simple note playback for scale demo */
-	function playNote(midi: number) {
-		const freq = 440 * Math.pow(2, (midi - 69) / 12);
-		const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-		const osc = audioCtx.createOscillator();
-		const gain = audioCtx.createGain();
-		osc.type = 'triangle';
-		osc.frequency.value = freq;
-		gain.gain.setValueAtTime(0, audioCtx.currentTime);
-		gain.gain.linearRampToValueAtTime(0.25, audioCtx.currentTime + 0.02);
-		gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.45);
-		osc.connect(gain);
-		gain.connect(audioCtx.destination);
-		osc.start();
-		osc.stop(audioCtx.currentTime + 0.5);
 	}
 
 	// React to scale selection change
@@ -266,6 +257,8 @@
 			const TAU = Math.PI * 2;
 			const useModes = currentModes;
 			const migrating = migrateTimer > 0;
+			const amp = Math.min(1, amplitude * 3);
+			const currentShake = SHAKE_BASE + amp * SHAKE_AUDIO;
 
 			for (const p of particles) {
 				const val = chladniSuper(p.x, p.y, useModes);
@@ -275,7 +268,7 @@
 				p.y -= gy * val * settleSpeed;
 
 				const nearLine = Math.max(0.3, 1 - Math.abs(val) * 2);
-				const shakeAmp = SHAKE_BASE * nearLine;
+				const shakeAmp = currentShake * nearLine;
 				p.x += (Math.random() - 0.5) * shakeAmp;
 				p.y += (Math.random() - 0.5) * shakeAmp;
 
@@ -299,17 +292,6 @@
 				ctx.fillRect(sx, sy, pSize, pSize);
 			}
 			ctx.globalAlpha = 1;
-
-			// ── Step indicator ──
-			if (currentStep >= 0 && isPlaying) {
-				const stepFrac = currentStep / (scale.intervals.length - 1);
-				ctx.fillStyle = `hsl(${stepFrac * 240}, 80%, 60%)`;
-				ctx.font = '11px var(--mono)';
-				ctx.globalAlpha = 0.8;
-				const label = `♪ ${currentStep + 1}/${scale.intervals.length}`;
-				ctx.fillText(label, 8, h - 8);
-				ctx.globalAlpha = 1;
-			}
 
 			// ── Noise grain ──
 			if (noiseCanvas && frameCount % 3 === 0) {
