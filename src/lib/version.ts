@@ -1,4 +1,4 @@
-export const APP_VERSION = '3.2';
+export const APP_VERSION = '3.3';
 
 export interface ReleaseNote {
 	version: string;
@@ -8,6 +8,17 @@ export interface ReleaseNote {
 }
 
 export const RELEASE_NOTES: ReleaseNote[] = [
+	{
+		version: '3.3',
+		date: '2026-03-26',
+		title: 'SCALES + VISUALIZATION',
+		changes: [
+			'Scale identification quiz — 8 scales across 3 tiers with mastery tracking',
+			'Visualization lab — chord, scale, and interval visualizations with audio-reactive Chladni + harmonograph',
+			'Interruptible playback — switch selections mid-play, audio stops on page exit',
+			'Shorthand labels for all content types',
+		],
+	},
 	{
 		version: '3.2',
 		date: '2026-03-24',
