@@ -86,11 +86,12 @@
 	.disabled .name { color: var(--text-secondary); }
 	.disabled .toggle { opacity: calc(1 / 0.55); }
 	.id {
-		font-size: 1.1rem; font-weight: 900;
+		font-size: 2rem; font-weight: 900;
 		font-family: 'BPdots', 'JetBrains Mono', monospace; text-align: center;
 		color: var(--accent); line-height: 1;
+		transform: translateY(-5px);
 	}
-	.locked .id { color: var(--hot); font-size: 1.1rem; }
+	.locked .id { color: var(--hot); font-size: 2rem; }
 	.name { font-weight: 400; font-size: 0.85rem; letter-spacing: 0.02em; font-family: var(--font-display); }
 	.stats { font-size: 0.4rem; color: var(--text-secondary); font-weight: 600; font-family: var(--mono); display: flex; align-items: center; gap: 2px; opacity: 0.7; }
 	.stat-tag {

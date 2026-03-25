@@ -548,19 +548,30 @@ export function playScale(
 	const master = getMasterOutput();
 	const now = audioCtx.currentTime;
 
-	const noteDuration = (tempo * 1.5) / 1000; // slight legato overlap
-
-	const playToNode =
-		toneType === 'piano'
-			? playPianoToneToNode
-			: toneType === 'epiano'
-				? playEpianoToneToNode
-				: playSineToneToNode;
+	const noteSpacing = tempo / 1000; // seconds between note onsets
+	// Note duration slightly shorter than spacing to avoid overlap clicks
+	const noteDuration = noteSpacing * 0.85;
+	// Fade-out ramp time at end of each note
+	const fadeOut = 0.03; // 30ms ramp to zero — eliminates clicks
 
 	intervals.forEach((semitones, i) => {
 		const freq = midiToFreq(rootMidi + semitones);
-		const startTime = now + i * (tempo / 1000);
-		playToNode(freq, startTime, noteDuration, audioCtx, master);
+		const startTime = now + i * noteSpacing;
+
+		// Use a per-note gain wrapper with guaranteed clean fade-out
+		const noteGain = audioCtx.createGain();
+		noteGain.gain.setValueAtTime(1, startTime);
+		noteGain.gain.setValueAtTime(1, startTime + noteDuration - fadeOut);
+		noteGain.gain.linearRampToValueAtTime(0, startTime + noteDuration);
+		noteGain.connect(master);
+
+		if (toneType === 'piano') {
+			playPianoToneToNode(freq, startTime, noteDuration, audioCtx, noteGain);
+		} else if (toneType === 'epiano') {
+			playEpianoToneToNode(freq, startTime, noteDuration, audioCtx, noteGain);
+		} else {
+			playSineToneToNode(freq, startTime, noteDuration, audioCtx, noteGain);
+		}
 	});
 }
 
