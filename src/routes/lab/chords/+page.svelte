@@ -4,8 +4,7 @@
 	import { CHORDS } from '$lib/chords';
 	import { chladniSuper, chladniGradSuper, chordToModes, harmonograph3D } from '$lib/viz';
 	import type { ChladniMode } from '$lib/viz';
-	import { playChord } from '$lib/audio';
-	import { getAnalyser, getAmplitude } from '$lib/audio';
+	import { playChord, getAnalyser, getAmplitude, stopAudio } from '$lib/audio';
 
 	// ── State ──
 	let selected = $state('maj');
@@ -314,6 +313,7 @@
 		return () => {
 			cancelAnimationFrame(animId);
 			window.removeEventListener('resize', resize);
+			stopAudio();
 		};
 	});
 </script>

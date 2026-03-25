@@ -430,6 +430,17 @@ function playPianoToneToNode(
 }
 
 /**
+ * Stop all active audio by suspending the AudioContext.
+ * Call from page cleanup to silence playback on navigation.
+ * The context resumes automatically on next play via getContext().
+ */
+export function stopAudio(): void {
+	if (ctx && ctx.state === 'running') {
+		ctx.suspend();
+	}
+}
+
+/**
  * Warm up the AudioContext on first user interaction.
  * Call this once from a top-level touch/click handler to ensure
  * iOS Safari has unlocked audio before the user reaches the quiz.
@@ -528,6 +539,35 @@ export function playChord(
 		const offset = arpeggiated ? i * arpDelay : Math.random() * 0.015; // humanization for block
 		playToNode(freq, now + offset, noteDuration, audioCtx, masterGain);
 	});
+}
+
+/**
+ * Play a single note through the master output (analyser-connected).
+ * Use for scale visualization where each note needs individual timing control.
+ */
+export function playNote(
+	midi: number,
+	toneType: ToneType = 'epiano',
+	duration: number = 0.5
+): void {
+	const audioCtx = getContext();
+	const master = getMasterOutput();
+	const now = audioCtx.currentTime;
+	const freq = midiToFreq(midi);
+
+	const noteGain = audioCtx.createGain();
+	noteGain.gain.setValueAtTime(1, now);
+	noteGain.gain.setValueAtTime(1, now + duration - 0.03);
+	noteGain.gain.linearRampToValueAtTime(0, now + duration);
+	noteGain.connect(master);
+
+	if (toneType === 'piano') {
+		playPianoToneToNode(freq, now, duration, audioCtx, noteGain);
+	} else if (toneType === 'epiano') {
+		playEpianoToneToNode(freq, now, duration, audioCtx, noteGain);
+	} else {
+		playSineToneToNode(freq, now, duration, audioCtx, noteGain);
+	}
 }
 
 /**

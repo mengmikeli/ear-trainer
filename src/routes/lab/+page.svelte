@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { base } from '$app/paths';
 	import { INTERVALS } from '$lib/intervals';
-	import { playInterval, getAnalyser, getAmplitude } from '$lib/audio';
+	import { playInterval, getAnalyser, getAmplitude, stopAudio } from '$lib/audio';
 	import { loadState } from '$lib/state';
 
 	// Just intonation ratios — [numerator, denominator]
@@ -445,6 +445,7 @@
 		return () => {
 			cancelAnimationFrame(animId);
 			window.removeEventListener('resize', resize);
+			stopAudio();
 		};
 	});
 </script>
@@ -463,6 +464,10 @@
 	</header>
 
 	<div class="canvas-frame">
+		<div class="interval-info">
+			<span class="interval-name">{intervalName}</span>
+			<span class="interval-ratio">{ratioLabel}</span>
+		</div>
 		<canvas bind:this={mainCanvas}></canvas>
 		<button class="play-btn" class:playing={isPlaying} onclick={handlePlay} aria-label="Play interval">
 			{#if isPlaying}
@@ -582,6 +587,31 @@
 		font-size: 0.75rem;
 		color: var(--text-secondary);
 		letter-spacing: 0.1em;
+	}
+
+	.interval-info {
+		position: absolute;
+		top: 0.5rem;
+		left: 0.5rem;
+		z-index: 2;
+		display: flex;
+		flex-direction: column;
+		gap: 0.1rem;
+	}
+
+	.interval-name {
+		font-family: var(--mono);
+		font-size: 0.8rem;
+		color: var(--accent);
+		letter-spacing: 0.05em;
+	}
+
+	.interval-ratio {
+		font-family: var(--mono);
+		font-size: 0.6rem;
+		color: var(--text-secondary);
+		letter-spacing: 0.08em;
+		opacity: 0.7;
 	}
 
 	.canvas-frame {
