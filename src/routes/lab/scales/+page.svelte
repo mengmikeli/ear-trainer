@@ -374,7 +374,7 @@
 			<button
 				class="scale-btn"
 				class:active={selected === s.id}
-				onclick={() => selected = s.id}
+				onclick={() => { if (selected === s.id) playScale(); else selected = s.id; }}
 				aria-label="{s.name}"
 			>
 				{s.id}
@@ -387,9 +387,6 @@
 			<span class="hud-tag hud-tag--blue">
 				<span class="toggle-dot on"></span>PROGRESSIVE CHLADNI
 			</span>
-			{#if isPlaying}
-				<span class="hud-tag" style="color: #C2FE0C;">PLAYING</span>
-			{/if}
 		</div>
 	</footer>
 </div>

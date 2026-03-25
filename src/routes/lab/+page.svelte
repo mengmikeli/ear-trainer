@@ -62,6 +62,9 @@
 	for (let i = 0; i < 600; i++) dissolveOffsets.push({ x: 0, y: 0 });
 	let isPlaying = $state(false);
 
+	// Playback generation counter (for aborting overlapping plays)
+	let playGeneration = 0;
+
 	// Lissajous morphing — rest state is 1:1 circle, playing morphs to interval ratio
 	let morphT = $state(0);  // 0 = rest (circle), 1 = full interval shape
 	let morphTarget = 0;
@@ -73,6 +76,9 @@
 			analyserRef = analyser;
 			dataArrayRef = dataArray;
 		}
+
+		playGeneration++;
+		const thisGen = playGeneration;
 
 		const state = loadState();
 		const rootMidi = 60;
@@ -107,7 +113,7 @@
 		}, 700);
 
 		playInterval(rootMidi, intervalSemitones, 'ascending', state.settings.toneType);
-		setTimeout(() => { isPlaying = false; }, 2000);
+		setTimeout(() => { if (thisGen === playGeneration) isPlaying = false; }, 2000);
 	}
 
 	// Chladni — reduce particles on mobile for perf
