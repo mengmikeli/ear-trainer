@@ -430,13 +430,16 @@ function playPianoToneToNode(
 }
 
 /**
- * Stop all active audio by suspending the AudioContext.
- * Call from page cleanup to silence playback on navigation.
- * The context resumes automatically on next play via getContext().
+ * Stop all active audio by closing the AudioContext.
+ * Creates a fresh context on next play. This fully stops all
+ * scheduled oscillators (suspend() alone doesn't cancel them).
  */
 export function stopAudio(): void {
-	if (ctx && ctx.state === 'running') {
-		ctx.suspend();
+	if (ctx) {
+		ctx.close();
+		ctx = null;
+		analyserNode = null;
+		masterOutput = null;
 	}
 }
 

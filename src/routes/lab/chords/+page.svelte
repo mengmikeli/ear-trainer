@@ -313,6 +313,8 @@
 		return () => {
 			cancelAnimationFrame(animId);
 			window.removeEventListener('resize', resize);
+			analyserRef = null;
+			dataArrayRef = null;
 			stopAudio();
 		};
 	});
