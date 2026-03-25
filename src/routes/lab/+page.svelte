@@ -486,8 +486,12 @@
 
 	<footer class="lab-footer">
 		<div class="footer-tags">
-			<button class="hud-tag" class:dimmed={!showLissajous} onclick={() => showLissajous = !showLissajous}>LISSAJOUS</button>
-			<button class="hud-tag hud-tag--blue" class:dimmed={!showChladni} onclick={() => showChladni = !showChladni}>CHLADNI</button>
+			<button class="hud-tag" class:dimmed={!showLissajous} onclick={() => showLissajous = !showLissajous}>
+				<span class="toggle-dot" class:on={showLissajous}></span>LISSAJOUS
+			</button>
+			<button class="hud-tag hud-tag--blue" class:dimmed={!showChladni} onclick={() => showChladni = !showChladni}>
+				<span class="toggle-dot" class:on={showChladni}></span>CHLADNI
+			</button>
 		</div>
 	</footer>
 </div>
@@ -657,6 +661,22 @@
 
 	.footer-tags .hud-tag.dimmed {
 		opacity: 0.3;
+	}
+
+	.toggle-dot {
+		display: inline-block;
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		border: 1px solid currentColor;
+		margin-right: 0.3rem;
+		vertical-align: middle;
+		transition: all 0.15s ease;
+	}
+
+	.toggle-dot.on {
+		background: currentColor;
+		box-shadow: 0 0 4px currentColor;
 	}
 
 	.freq-label {

@@ -317,7 +317,7 @@
 	<header class="lab-header">
 		<div class="lab-title">
 			<span class="hud-tag">LAB</span>
-			<h1>CHORD VIZ</h1>
+			<h1>VISUALIZATION</h1>
 		</div>
 		<nav class="lab-nav">
 			<a href="{base}/lab" class="lab-nav-link" aria-label="Intervals">INT</a>
