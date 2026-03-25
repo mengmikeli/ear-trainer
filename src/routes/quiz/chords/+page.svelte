@@ -550,7 +550,7 @@
 	}
 	.missed-card-content {
 		position: relative; z-index: 1;
-		display: grid; grid-template-columns: 4rem 1fr auto;
+		display: grid; grid-template-columns: 5.5rem 1fr auto;
 		align-items: center; gap: 0.75rem; padding: 0.7rem 0.85rem;
 	}
 	.missed-id {
