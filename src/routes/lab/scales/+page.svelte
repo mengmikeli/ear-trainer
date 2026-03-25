@@ -3,7 +3,8 @@
 	import { base } from '$app/paths';
 	import { chladniSuper, chladniGradSuper, midiToChladniMode } from '$lib/viz';
 	import type { ChladniMode } from '$lib/viz';
-	import { getAnalyser, getAmplitude, playInterval } from '$lib/audio';
+	import { getAnalyser, getAmplitude, playNote, stopAudio } from '$lib/audio';
+	import { loadState } from '$lib/state';
 
 	// ── Scale definitions ──
 	interface ScaleDef {
@@ -142,8 +143,9 @@
 			settleSpeed = SETTLE_SPEED_BOOST;
 			migrateTimer = 60;
 
-			// Play the note through shared audio (analyser-connected)
-			playInterval(midi, 0, 'ascending', 'sine');
+			// Play the note through shared audio (analyser-connected, respects tone setting)
+			const state = loadState();
+			playNote(midi, state.settings.toneType, 0.45);
 
 			step++;
 			setTimeout(nextStep, 500); // 500ms per note
@@ -322,6 +324,7 @@
 		return () => {
 			cancelAnimationFrame(animId);
 			window.removeEventListener('resize', resize);
+			stopAudio();
 		};
 	});
 </script>
