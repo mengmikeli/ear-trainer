@@ -306,7 +306,7 @@
 				<button class="missed-card" class:replaying={replayingIndex === i} onclick={() => replayMissed(r)}>
 					<div class="missed-card-fill" style="width: 0%"></div>
 					<div class="missed-card-content">
-						<span class="missed-id">{r.chord.id.toUpperCase()}</span>
+						<span class="missed-id">{r.chord.label ?? r.chord.id.toUpperCase()}</span>
 						<div class="missed-info">
 							<span class="missed-name">{r.chord.name}</span>
 							<span class="missed-detail">answered {r.selectedId}</span>
@@ -550,7 +550,7 @@
 	}
 	.missed-card-content {
 		position: relative; z-index: 1;
-		display: grid; grid-template-columns: 3rem 1fr auto;
+		display: grid; grid-template-columns: 4rem 1fr auto;
 		align-items: center; gap: 0.75rem; padding: 0.7rem 0.85rem;
 	}
 	.missed-id {
