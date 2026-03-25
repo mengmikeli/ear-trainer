@@ -1,6 +1,6 @@
 # SHORTHANDS.md — Content ID Reference
 
-Max 4 characters. Used in progress cards, quiz UI, and telemetry.
+Max 5 characters. Mixed case for readability. Used in progress cards, quiz UI, and telemetry.
 
 ## Intervals (2 chars)
 | ID | Name | Semitones |
@@ -19,47 +19,45 @@ Max 4 characters. Used in progress cards, quiz UI, and telemetry.
 | M7 | Major 7th | 11 |
 | P8 | Octave | 12 |
 
-## Chords (3-4 chars)
+## Chords (3-5 chars)
 | ID | Name | Intervals |
 |----|------|-----------|
-| maj | Major | 0,4,7 |
-| min | Minor | 0,3,7 |
-| dim | Diminished | 0,3,6 |
-| aug | Augmented | 0,4,8 |
-| dom7 | Dominant 7th | 0,4,7,10 |
-| maj7 | Major 7th | 0,4,7,11 |
-| min7 | Minor 7th | 0,3,7,10 |
-| dim7 | Diminished 7th | 0,3,6,9 |
-| hd7 | Half-dim 7th | 0,3,6,10 |
-| aug7 | Augmented 7th | 0,4,8,10 |
+| Maj | Major | 0,4,7 |
+| Min | Minor | 0,3,7 |
+| Dim | Diminished | 0,3,6 |
+| Aug | Augmented | 0,4,8 |
+| Dom7 | Dominant 7th | 0,4,7,10 |
+| Maj7 | Major 7th | 0,4,7,11 |
+| Min7 | Minor 7th | 0,3,7,10 |
+| Dim7 | Diminished 7th | 0,3,6,9 |
+| hDim7 | Half-dim 7th | 0,3,6,10 |
+| Aug7 | Augmented 7th | 0,4,8,10 |
 
 ### Future chords
 | ID | Name |
 |----|------|
-| sus2 | Suspended 2nd |
-| sus4 | Suspended 4th |
-| add9 | Added 9th |
-| 6 | Major 6th |
-| m6 | Minor 6th |
+| Sus2 | Suspended 2nd |
+| Sus4 | Suspended 4th |
+| Add9 | Added 9th |
 
 ## Scales (3-4 chars)
 | ID | Name | Tier |
 |----|------|------|
-| MAJ | Major | 1 |
-| MIN | Natural Minor | 1 |
-| MAJP | Major Pentatonic | 1 |
-| HMIN | Harmonic Minor | 2 |
-| MINP | Minor Pentatonic | 2 |
-| BLU | Blues | 3 |
-| WHL | Whole Tone | 3 |
-| MMIN | Melodic Minor | 3 |
+| Maj | Major | 1 |
+| Min | Natural Minor | 1 |
+| MajP | Major Pentatonic | 1 |
+| hMin | Harmonic Minor | 2 |
+| MinP | Minor Pentatonic | 2 |
+| Blu | Blues | 3 |
+| Whol | Whole Tone | 3 |
+| mMin | Melodic Minor | 3 |
 
 ### Future scales (modes — Tier 4, needs drone)
 | ID | Name |
 |----|------|
-| DOR | Dorian |
-| MIX | Mixolydian |
-| PHR | Phrygian |
-| LYD | Lydian |
-| LOC | Locrian |
-| AEO | Aeolian |
+| Dor | Dorian |
+| Mix | Mixolydian |
+| Phr | Phrygian |
+| Lyd | Lydian |
+| Loc | Locrian |
+| Aeo | Aeolian |

@@ -103,7 +103,7 @@
 	}
 	.card-content {
 		position: relative; z-index: 1;
-		display: grid; grid-template-columns: 3.5rem 1fr auto;
+		display: grid; grid-template-columns: 5.5rem 1fr auto;
 		align-items: center; gap: 0.75rem; padding: 0.85rem;
 	}
 	.locked { opacity: 0.4; border-left-color: var(--hot); }

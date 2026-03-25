@@ -2,22 +2,22 @@ import type { ChordDef, ChordState } from './types';
 
 export const CHORDS: ChordDef[] = [
 	// Tier 1 — Triads (unlocked when chord system is discovered)
-	{ id: 'maj', name: 'Major', intervals: [0, 4, 7], tier: 1, category: 'triad' },
-	{ id: 'min', name: 'Minor', intervals: [0, 3, 7], tier: 1, category: 'triad' },
+	{ id: 'maj', name: 'Major', label: 'Maj', intervals: [0, 4, 7], tier: 1, category: 'triad' },
+	{ id: 'min', name: 'Minor', label: 'Min', intervals: [0, 3, 7], tier: 1, category: 'triad' },
 
 	// Tier 2 — Altered triads
-	{ id: 'dim', name: 'Diminished', intervals: [0, 3, 6], tier: 2, category: 'triad' },
-	{ id: 'aug', name: 'Augmented', intervals: [0, 4, 8], tier: 2, category: 'triad' },
+	{ id: 'dim', name: 'Diminished', label: 'Dim', intervals: [0, 3, 6], tier: 2, category: 'triad' },
+	{ id: 'aug', name: 'Augmented', label: 'Aug', intervals: [0, 4, 8], tier: 2, category: 'triad' },
 
 	// Tier 3 — Seventh chords
-	{ id: 'dom7', name: 'Dominant 7th', intervals: [0, 4, 7, 10], tier: 3, category: 'seventh' },
-	{ id: 'maj7', name: 'Major 7th', intervals: [0, 4, 7, 11], tier: 3, category: 'seventh' },
-	{ id: 'min7', name: 'Minor 7th', intervals: [0, 3, 7, 10], tier: 3, category: 'seventh' },
+	{ id: 'dom7', name: 'Dominant 7th', label: 'Dom7', intervals: [0, 4, 7, 10], tier: 3, category: 'seventh' },
+	{ id: 'maj7', name: 'Major 7th', label: 'Maj7', intervals: [0, 4, 7, 11], tier: 3, category: 'seventh' },
+	{ id: 'min7', name: 'Minor 7th', label: 'Min7', intervals: [0, 3, 7, 10], tier: 3, category: 'seventh' },
 
 	// Tier 4 — Extended seventh chords
-	{ id: 'dim7', name: 'Diminished 7th', intervals: [0, 3, 6, 9], tier: 4, category: 'seventh' },
-	{ id: 'hdim7', name: 'Half-dim 7th', label: 'HD7', intervals: [0, 3, 6, 10], tier: 4, category: 'seventh' },
-	{ id: 'aug7', name: 'Augmented 7th', intervals: [0, 4, 8, 10], tier: 4, category: 'seventh' },
+	{ id: 'dim7', name: 'Diminished 7th', label: 'Dim7', intervals: [0, 3, 6, 9], tier: 4, category: 'seventh' },
+	{ id: 'hdim7', name: 'Half-dim 7th', label: 'hDim7', intervals: [0, 3, 6, 10], tier: 4, category: 'seventh' },
+	{ id: 'aug7', name: 'Augmented 7th', label: 'Aug7', intervals: [0, 4, 8, 10], tier: 4, category: 'seventh' },
 ];
 
 export function getChordsByTier(tier: number): ChordDef[] {
