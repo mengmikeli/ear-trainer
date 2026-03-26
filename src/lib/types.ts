@@ -59,7 +59,7 @@ export interface Settings {
 		second: boolean;
 	};
 	// v3.3: which content type the Practice button launches
-	activeContent: 'intervals' | 'chords' | 'scales';
+	activeContent: 'intervals' | 'chords' | 'scales' | 'modes' | 'adaptive';
 	// Dev mode — bypasses mastery gates, shows lab link
 	devMode?: boolean;
 }
@@ -72,12 +72,32 @@ export interface GlobalStats {
 	lastPractice: number;
 }
 
+export interface AdaptiveStats {
+	stats: Record<string, import('./adaptive').ContentStats>;
+	sessionHistory: import('./adaptive').SessionRecord[];
+	lastSessionDate: number;
+}
+
+export interface ModeState {
+	mode: string;          // mode id
+	unlocked: boolean;
+	enabled: boolean;
+	attempts: number;
+	correct: number;
+	easeFactor: number;
+	nextReview: number;
+	streak: number;
+	lastSeen: number;
+}
+
 export interface UserState {
 	intervals: Record<string, IntervalState>;
 	chords: Record<string, ChordState>;
 	scales: Record<string, ScaleState>;
+	modes?: Record<string, ModeState>;
 	settings: Settings;
 	stats: GlobalStats;
+	adaptive?: AdaptiveStats;
 }
 
 export interface Question {
@@ -162,4 +182,14 @@ export interface ScaleQuestion {
 	scale: ScaleDef;
 	choices: ScaleDef[];
 	replays: number;
+}
+
+// --- Mode types (v3.5) ---
+
+export interface ModeQuestion {
+	rootNote: number;
+	mode: import('./modes').ModeDef;
+	choices: import('./modes').ModeDef[];
+	replays: number;
+	droneNote: number;   // MIDI note for the drone (same as rootNote)
 }

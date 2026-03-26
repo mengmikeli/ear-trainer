@@ -1,7 +1,9 @@
-import type { UserState, IntervalState, ChordState, ScaleState, Settings, GlobalStats, ModeStats } from './types';
+import type { UserState, IntervalState, ChordState, ScaleState, ModeState, Settings, GlobalStats, ModeStats } from './types';
 import { INTERVALS, getIntervalsByTier } from './intervals';
 import { CHORDS, getChordsByTier } from './chords';
 import { SCALES, getScalesByTier } from './scales';
+import { MODES } from './modes';
+import { migrateToAdaptive } from './adaptive';
 
 const STORAGE_KEY = 'ear-trainer-state';
 
@@ -39,6 +41,20 @@ function createDefaultScaleState(id: string, tier: number): ScaleState {
 	return {
 		scale: id,
 		unlocked: tier === 1, // Only tier 1 scales unlocked initially
+		enabled: true,
+		attempts: 0,
+		correct: 0,
+		easeFactor: 2.5,
+		nextReview: 0,
+		streak: 0,
+		lastSeen: 0,
+	};
+}
+
+function createDefaultModeState(id: string): ModeState {
+	return {
+		mode: id,
+		unlocked: false,  // Modes always start locked (Tier 4)
 		enabled: true,
 		attempts: 0,
 		correct: 0,
@@ -109,7 +125,13 @@ export function createDefaultState(): UserState {
 		scales[def.id] = createDefaultScaleState(def.id, def.tier);
 	}
 
-	return { intervals, chords, scales, settings, stats };
+	// Mode states — all locked initially (unlocked via scale mastery)
+	const modes: Record<string, ModeState> = {};
+	for (const def of MODES) {
+		modes[def.id] = createDefaultModeState(def.id);
+	}
+
+	return { intervals, chords, scales, modes, settings, stats };
 }
 
 export function loadState(storage: Storage = localStorage): UserState {
@@ -181,8 +203,8 @@ export function loadState(storage: Storage = localStorage): UserState {
 		if (!parsed.settings.activeContent) {
 			parsed.settings.activeContent = 'intervals';
 		}
-		// Ensure activeContent is a valid value (add 'scales' support)
-		if (!['intervals', 'chords', 'scales'].includes(parsed.settings.activeContent)) {
+		// Ensure activeContent is a valid value (add 'scales', 'modes', 'adaptive' support)
+		if (!['intervals', 'chords', 'scales', 'modes', 'adaptive'].includes(parsed.settings.activeContent)) {
 			parsed.settings.activeContent = 'intervals';
 		}
 
@@ -194,12 +216,27 @@ export function loadState(storage: Storage = localStorage): UserState {
 			}
 		}
 
+		// Migrate v3.4 → v3.5: add mode state if missing
+		if (!parsed.modes) {
+			parsed.modes = {};
+			for (const def of MODES) {
+				parsed.modes[def.id] = createDefaultModeState(def.id);
+			}
+		}
+
 		const result = checkTierUnlock(parsed as UserState);
 		// Persist any newly unlocked tiers
 		if (JSON.stringify(result) !== JSON.stringify(parsed)) {
 			try { storage.setItem(STORAGE_KEY, JSON.stringify(result)); } catch {}
 		}
-		return result;
+
+		// Migrate to adaptive stats if not present
+		const withAdaptive = migrateToAdaptive(result);
+		if (withAdaptive !== result) {
+			try { storage.setItem(STORAGE_KEY, JSON.stringify(withAdaptive)); } catch {}
+		}
+
+		return withAdaptive;
 	} catch {
 		return createDefaultState();
 	}
@@ -343,6 +380,37 @@ export function checkTierUnlock(state: UserState): UserState {
 			if (scaleAttempts >= threshold.questions && scaleAccuracy >= threshold.accuracy) {
 				for (const def of tierScales) {
 					updated.scales[def.id].unlocked = true;
+				}
+			}
+		}
+	}
+
+	// --- Mode tier unlocks (require all tier 3 scales + threshold) ---
+	if (updated.modes) {
+		const MODE_THRESHOLD = { questions: 60, accuracy: 0.7 };
+
+		// Check if all tier 3 scales are unlocked
+		const allTier3Unlocked = getScalesByTier(3).every(
+			def => updated.scales[def.id]?.unlocked
+		);
+
+		if (allTier3Unlocked) {
+			let scaleAttempts = 0;
+			let scaleCorrect = 0;
+			for (const def of SCALES) {
+				const s = updated.scales[def.id];
+				if (s?.unlocked) {
+					scaleAttempts += s.attempts;
+					scaleCorrect += s.correct;
+				}
+			}
+			const scaleAccuracy = scaleAttempts > 0 ? scaleCorrect / scaleAttempts : 0;
+
+			if (scaleAttempts >= MODE_THRESHOLD.questions && scaleAccuracy >= MODE_THRESHOLD.accuracy) {
+				for (const def of MODES) {
+					if (updated.modes[def.id]) {
+						updated.modes[def.id].unlocked = true;
+					}
 				}
 			}
 		}
