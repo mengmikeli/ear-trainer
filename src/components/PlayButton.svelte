@@ -16,9 +16,6 @@
 	}
 	let { onplay, replaying = false, playing = false, questionNum = 1, glitching = false, countdownPct = -1, feedback = null, semitones = 0, chordIntervals, scaleIntervals }: Props = $props();
 
-	// Size: 160px desktop, scales down on small screens
-	const SIZE = 160;
-
 	function handlePlay() {
 		onplay();
 	}
@@ -86,7 +83,6 @@
 	const feedbackCorrect = $derived(feedback === 'correct');
 	const feedbackWrong = $derived(feedback === 'wrong');
 
-	// Map state → LissajousRing phase
 	const vizPhase = $derived.by((): 'rest' | 'playing' | 'correct' | 'wrong' | 'glitch' => {
 		if (glitching) return 'glitch';
 		if (feedback === 'correct') return 'correct';
@@ -96,20 +92,35 @@
 	});
 </script>
 
-<!-- One circle. One element. Tap anywhere inside to play. -->
-<!-- svelte-ignore a11y_click_events_have_key_events -->
-<!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="play-circle" onclick={handlePlay}>
-	<!-- Lissajous canvas — fills the entire circle, IS the visual -->
+<!--
+  Two layers, one visual circle:
+  1. Play button — tap target + solid fill for feedback colors
+  2. Lissajous ring — animated border overlay (same center, same size)
+-->
+<div class="play-wrapper">
+	<!-- Layer 1: Play button circle — provides fill + tap target -->
+	<button
+		class="play-btn"
+		class:replay={replaying}
+		class:glitch-fill={glitching}
+		class:feedback-correct={feedbackCorrect}
+		class:feedback-wrong={feedbackWrong}
+		class:feedback-glitch={!!feedback}
+		onclick={handlePlay}
+	>
+		<span class="q-text">{displayText}</span>
+	</button>
+
+	<!-- Layer 2: Lissajous ring — animated border, no CSS border needed -->
 	<LissajousRing
-		size={SIZE}
+		size={160}
 		{semitones}
 		{chordIntervals}
 		{scaleIntervals}
 		phase={vizPhase}
 	/>
 
-	<!-- Countdown ring (SVG, outer edge) -->
+	<!-- Countdown ring (SVG, outermost) -->
 	<svg class="countdown-ring" class:ring-visible={countdownPct >= 0} class:ring-fading={glitching} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
 		<circle cx="50" cy="50" r="49"
 			stroke="var(--border-heavy)" stroke-width="1.5" fill="none"
@@ -122,73 +133,66 @@
 			transform="rotate(-90 50 50)"
 		/>
 	</svg>
-
-	<!-- Q# text centered inside -->
-	<span
-		class="q-text"
-		class:glitch-text={glitching}
-		class:feedback-correct={feedbackCorrect}
-		class:feedback-wrong={feedbackWrong}
-		class:feedback-glitch={!!feedback}
-	>
-		{displayText}
-	</span>
 </div>
 
 <style>
-	.play-circle {
+	.play-wrapper {
 		position: relative;
-		width: min(40vw, 160px);
-		height: min(40vw, 160px);
-		cursor: pointer;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		/* Tap target = entire circle */
-		border-radius: 50%;
-		-webkit-tap-highlight-color: transparent;
+		display: flex; align-items: center; justify-content: center;
+		width: min(40vw, 160px); height: min(40vw, 160px);
+		overflow: visible;
 	}
-	.play-circle:active {
-		transform: scale(0.95);
-	}
-	.countdown-ring {
+	/* Play button: solid fill circle, sits underneath Lissajous */
+	.play-btn {
 		position: absolute;
 		inset: 0;
-		width: 100%;
-		height: 100%;
-		pointer-events: none;
-		z-index: 2;
-		opacity: 0;
-		transition: opacity 0.3s ease-out;
+		z-index: 1;
+		width: 100%; height: 100%;
+		border-radius: 50%;
+		background: transparent;
+		border: none;  /* Lissajous IS the border */
+		display: flex; align-items: center; justify-content: center;
+		cursor: pointer;
+		-webkit-tap-highlight-color: transparent;
+		transition: background 0.3s ease-out;
 	}
-	.countdown-ring.ring-visible {
-		opacity: 1;
+	.play-btn:active { transform: scale(0.95); }
+	/* Feedback fills */
+	.feedback-correct {
+		background: var(--correct) !important;
 	}
-	.countdown-ring.ring-fading {
-		opacity: 0;
-		transition: opacity 0.3s ease-out;
+	.feedback-wrong {
+		background: transparent !important;
 	}
+	.glitch-fill {
+		background: var(--surface) !important;
+	}
+	/* Q# text */
 	.q-text {
 		position: relative;
-		z-index: 1;
+		z-index: 3;
 		color: var(--accent);
 		font-size: 1.1rem;
 		font-weight: 700;
 		letter-spacing: 0.05em;
 		font-family: var(--mono);
 		line-height: 1;
-		pointer-events: none;
 		transition: color 0.3s ease-out;
 	}
-	.feedback-correct {
-		color: var(--correct) !important;
+	.feedback-correct .q-text {
+		color: var(--base) !important;
 	}
-	.feedback-wrong {
+	.feedback-wrong .q-text {
 		color: var(--wrong) !important;
 	}
-	.feedback-glitch {
+	.feedback-glitch .q-text {
 		text-shadow: -2px 0 var(--accent), 2px 0 var(--hot);
 		animation: feedback-shake 80ms infinite;
+	}
+	.glitch-fill .q-text {
+		color: var(--accent) !important;
+		text-shadow: -2px 0 var(--accent), 2px 0 var(--hot);
+		animation: glitch-shake 50ms infinite;
 	}
 	@keyframes feedback-shake {
 		0% { transform: translate(0) rotate(0); }
@@ -198,16 +202,33 @@
 		80% { transform: translate(1px, 1px) rotate(0.3deg); }
 		100% { transform: translate(0) rotate(0); }
 	}
-	.glitch-text {
-		color: var(--accent) !important;
-		text-shadow: -2px 0 var(--accent), 2px 0 var(--hot);
-		animation: glitch-shake 50ms infinite;
-	}
 	@keyframes glitch-shake {
 		0% { transform: translate(0); }
 		25% { transform: translate(-1px, 1px); }
 		50% { transform: translate(1px, -1px); }
 		75% { transform: translate(-1px, -1px); }
 		100% { transform: translate(0); }
+	}
+	/* Lissajous canvas overlays button at same position */
+	.play-wrapper :global(.lissajous-ring) {
+		z-index: 2;
+		pointer-events: none;
+	}
+	/* Countdown ring */
+	.countdown-ring {
+		position: absolute;
+		inset: -4px;
+		width: calc(100% + 8px); height: calc(100% + 8px);
+		pointer-events: none;
+		z-index: 4;
+		opacity: 0;
+		transition: opacity 0.3s ease-out;
+	}
+	.countdown-ring.ring-visible {
+		opacity: 1;
+	}
+	.countdown-ring.ring-fading {
+		opacity: 0;
+		transition: opacity 0.3s ease-out;
 	}
 </style>
