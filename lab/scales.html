@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+		<link rel="manifest" href="../manifest.json" />
+		<meta name="theme-color" content="#000000" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+		<meta name="apple-mobile-web-app-title" content="Ear Trainer" />
+		<link rel="apple-touch-icon" href="../icon-180.png" />
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+		<link href="../_app/immutable/entry/start.D1UNb7Dh.js" rel="modulepreload">
+		<link href="../_app/immutable/chunks/BnDEOOMa.js" rel="modulepreload">
+		<link href="../_app/immutable/chunks/BxxCjc9f.js" rel="modulepreload">
+		<link href="../_app/immutable/chunks/wSRu5MLy.js" rel="modulepreload">
+		<link href="../_app/immutable/entry/app.LRfLJib3.js" rel="modulepreload">
+		<link href="../_app/immutable/chunks/CueeD-Lg.js" rel="modulepreload">
+		<link href="../_app/immutable/chunks/CCT65cw5.js" rel="modulepreload">
+		<link href="../_app/immutable/chunks/NgmpLclM.js" rel="modulepreload">
+		<link href="../_app/immutable/chunks/9Ay9a7gc.js" rel="modulepreload">
+		
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents">
+			<script>
+				{
+					__sveltekit_rnmyc7 = {
+						base: new URL("..", location).pathname.slice(0, -1),
+						assets: "/ear-trainer"
+					};
+
+					const element = document.currentScript.parentElement;
+
+					Promise.all([
+						import("../_app/immutable/entry/start.D1UNb7Dh.js"),
+						import("../_app/immutable/entry/app.LRfLJib3.js")
+					]).then(([kit, app]) => {
+						kit.start(app, element);
+					});
+
+					if ('serviceWorker' in navigator) {
+						addEventListener('load', function () {
+							navigator.serviceWorker.register('../service-worker.js');
+						});
+					}
+				}
+			</script>
+		</div>
+	</body>
+</html>
