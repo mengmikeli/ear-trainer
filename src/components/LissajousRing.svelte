@@ -23,6 +23,8 @@
 		chordIntervals?: number[];
 		scaleIntervals?: number[];
 		phase?: Phase;
+		/** Countdown percentage (1.0 → 0.0) — caps visible trail points during wrong state */
+		countdownPct?: number;
 	}
 
 	let {
@@ -31,6 +33,7 @@
 		chordIntervals,
 		scaleIntervals,
 		phase: vizPhase = 'rest',
+		countdownPct = -1,
 	}: Props = $props();
 
 	let canvas: HTMLCanvasElement;
@@ -234,8 +237,12 @@
 			}
 
 			// ── Compute Lissajous trail points (same per-point morph as lab) ──
+			// During wrong-answer countdown, trail erases from tail end
+			const visiblePoints = countdownPct >= 0
+				? Math.max(1, Math.floor(TRAIL_POINTS * Math.max(0, countdownPct)))
+				: TRAIL_POINTS;
 			const lissPoints: [number, number][] = [];
-			for (let i = 0; i < TRAIL_POINTS; i++) {
+			for (let i = 0; i < visiblePoints; i++) {
 				const tt = t - i * currentStep;
 				let px: number, py: number;
 

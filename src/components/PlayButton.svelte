@@ -111,28 +111,15 @@
 		<span class="q-text">{displayText}</span>
 	</button>
 
-	<!-- Layer 2: Lissajous ring — animated border, no CSS border needed -->
+	<!-- Layer 2: Lissajous ring — animated border, trail IS the countdown -->
 	<LissajousRing
 		size={160}
 		{semitones}
 		{chordIntervals}
 		{scaleIntervals}
 		phase={vizPhase}
+		countdownPct={vizPhase === 'wrong' ? countdownPct : -1}
 	/>
-
-	<!-- Countdown ring (SVG, outermost) -->
-	<svg class="countdown-ring" class:ring-visible={countdownPct >= 0} class:ring-fading={glitching} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-		<circle cx="50" cy="50" r="49"
-			stroke="var(--border-heavy)" stroke-width="1.5" fill="none"
-		/>
-		<circle cx="50" cy="50" r="49"
-			stroke="var(--hot)"
-			stroke-width="1.5" fill="none"
-			stroke-dasharray={2 * Math.PI * 49}
-			stroke-dashoffset={2 * Math.PI * 49 * (1 - Math.max(0, countdownPct))}
-			transform="rotate(-90 50 50)"
-		/>
-	</svg>
 </div>
 
 <style>
