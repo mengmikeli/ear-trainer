@@ -1,0 +1,1 @@
+import{p as r}from"./C-md_Q4g.js";import{s as t}from"./DxqBoBs2.js";const e={get error(){return r.error},get status(){return r.status},get url(){return r.url}};t.updated.check;const a=e;export{a as p};
