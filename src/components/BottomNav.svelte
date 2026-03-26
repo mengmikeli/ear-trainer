@@ -38,6 +38,7 @@
 <style>
 	.bottom-nav {
 		background: var(--surface);
+		padding-bottom: env(safe-area-inset-bottom);
 	}
 	.nav-tabs {
 		display: flex; justify-content: center; gap: 2px;
