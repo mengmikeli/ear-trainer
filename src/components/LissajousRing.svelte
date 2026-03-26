@@ -26,7 +26,7 @@
 	}
 
 	let {
-		size = 120,
+		size = 160,
 		semitones = 0,
 		chordIntervals,
 		scaleIntervals,

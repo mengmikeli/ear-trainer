@@ -363,7 +363,6 @@
 				onplay={hasPlayed && inResultMode ? replayInResult : play}
 				replaying={hasPlayed}
 				playing={isPlaying}
-				noBorder={hasPlayed && inResultMode}
 				questionNum={questionNum}
 				countdownPct={hasPlayed && inResultMode ? countdownPct : -1}
 				glitching={isGlitching}
