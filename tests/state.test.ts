@@ -8,7 +8,7 @@ const mockLocalStorage = {
 	setItem: (key: string, value: string) => storage.set(key, value),
 	removeItem: (key: string) => storage.delete(key),
 	clear: () => storage.clear(),
-} as Storage;
+} as unknown as Storage;
 
 /** Helper: set attempts/correct on an interval's ascending mode (and sync aggregate fields) */
 function setModeStats(interval: IntervalState, mode: keyof IntervalState['modes'], attempts: number, correct: number) {

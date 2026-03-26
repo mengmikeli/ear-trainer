@@ -9,7 +9,7 @@ const mockLocalStorage = {
 	setItem: (key: string, value: string) => storage.set(key, value),
 	removeItem: (key: string) => storage.delete(key),
 	clear: () => storage.clear(),
-} as Storage;
+} as unknown as Storage;
 
 function setChordVoicingStats(chord: ChordState, voicing: keyof ChordState['voicings'], attempts: number, correct: number) {
 	chord.voicings[voicing].attempts = attempts;
