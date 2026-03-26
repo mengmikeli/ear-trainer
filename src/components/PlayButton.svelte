@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte';
+	import LissajousRing from './LissajousRing.svelte';
 
 	interface Props {
 		onplay: () => void;
@@ -11,12 +12,12 @@
 		countdownPct?: number;
 		feedback?: 'correct' | 'wrong' | null;
 		semitones?: number;
+		/** Chord intervals — passed to Lissajous for shape */
+		chordIntervals?: number[];
+		/** Scale intervals — passed to Lissajous for shape */
+		scaleIntervals?: number[];
 	}
-	let { onplay, replaying = false, playing = false, noBorder = false, questionNum = 1, glitching = false, countdownPct = -1, feedback = null, semitones = 0 }: Props = $props();
-
-	// Map semitones (0-12) to angle: 0=top (P1), clockwise
-	const ringAngle = $derived((semitones / 12) * 360);
-	const maxBias = $derived((semitones / 12) * 15);
+	let { onplay, replaying = false, playing = false, noBorder = false, questionNum = 1, glitching = false, countdownPct = -1, feedback = null, semitones = 0, chordIntervals, scaleIntervals }: Props = $props();
 
 	function handlePlay() {
 		onplay();
@@ -28,9 +29,9 @@
 	let feedbackInterval: ReturnType<typeof setInterval> | null = null;
 
 	// Matrix Mono PUA glyphs
-	const correctGlyphs = ['\uE018', '\uE013', '\uE014', '\uE012', '\uE011']; // FaceHappy, Crosshair, Target, Frame, ArrowRight
-	const wrongGlyphs = ['\uE019', '\uE015', '\uE016']; // FaceSad, Star, QR
-	const glitchChars = ['\uE000', '\uE001', '\uE002', '\uE003', '\uE004', '\uE005', '\uE006', '\uE007', '\uE008', '\uE010', '\uE017']; // Checker, Grid, Arrows, Swoosh
+	const correctGlyphs = ['\uE018', '\uE013', '\uE014', '\uE012', '\uE011'];
+	const wrongGlyphs = ['\uE019', '\uE015', '\uE016'];
+	const glitchChars = ['\uE000', '\uE001', '\uE002', '\uE003', '\uE004', '\uE005', '\uE006', '\uE007', '\uE008', '\uE010', '\uE017'];
 
 	$effect(() => {
 		if (glitching) {
@@ -49,21 +50,17 @@
 	$effect(() => {
 		if (feedback) {
 			const pool = feedback === 'correct' ? correctGlyphs : wrongGlyphs;
-			// Initial fast glitch through random glyphs, then settle
 			let tick = 0;
 			feedbackGlyph = glitchChars[Math.floor(Math.random() * glitchChars.length)];
 			feedbackInterval = setInterval(() => {
 				tick++;
 				if (tick < 6) {
-					// Fast glitch: random from all glyphs
 					feedbackGlyph = glitchChars[Math.floor(Math.random() * glitchChars.length)];
 				} else if (tick < 10) {
-					// Settling: mix of target pool and glitch
 					feedbackGlyph = Math.random() > 0.4
 						? pool[Math.floor(Math.random() * pool.length)]
 						: glitchChars[Math.floor(Math.random() * glitchChars.length)];
 				} else {
-					// Settled: cycle through target pool
 					feedbackGlyph = pool[Math.floor(Math.random() * pool.length)];
 				}
 			}, 60);
@@ -92,6 +89,18 @@
 </script>
 
 <div class="play-wrapper">
+	<!-- Lissajous ring replaces the old CSS border -->
+	<LissajousRing
+		size={120}
+		{semitones}
+		{chordIntervals}
+		{scaleIntervals}
+		{playing}
+		{glitching}
+		{feedback}
+	/>
+
+	<!-- Countdown ring (SVG overlay) -->
 	<svg class="countdown-ring" class:ring-visible={countdownPct >= 0} class:ring-fading={glitching} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
 		<circle cx="50" cy="50" r="49"
 			stroke="var(--border-heavy)" stroke-width="2" fill="none"
@@ -104,6 +113,8 @@
 			transform="rotate(-90 50 50)"
 		/>
 	</svg>
+
+	<!-- The button itself — no border, transparent bg, just the text -->
 	<button
 		class="play-btn"
 		class:replay={replaying}
@@ -122,13 +133,13 @@
 	.play-wrapper {
 		position: relative;
 		display: flex; align-items: center; justify-content: center;
-		width: 100px; height: 100px;
+		width: 120px; height: 120px;
 		overflow: visible;
 	}
 	.countdown-ring {
 		position: absolute;
 		inset: 0;
-		width: 100px; height: 100px;
+		width: 120px; height: 120px;
 		pointer-events: none;
 		z-index: 2;
 		opacity: 0;
@@ -144,32 +155,27 @@
 	.play-btn {
 		position: relative; z-index: 1;
 		width: 100px; height: 100px; border-radius: 50%;
-		background: var(--accent); border: none;
-		color: var(--base); font-size: 1rem; font-weight: 700;
-		letter-spacing: 0.05em; transition: transform 0.3s ease-out, opacity 0.15s, background 0.3s ease-out, border-color 0.3s ease-out, color 0.3s ease-out;
+		/* Transparent bg — the Lissajous ring IS the visual */
+		background: transparent;
+		border: none;
+		color: var(--accent); font-size: 1rem; font-weight: 700;
+		letter-spacing: 0.05em;
+		transition: transform 0.3s ease-out, opacity 0.15s, color 0.3s ease-out;
 		font-family: var(--mono);
 		display: flex; align-items: center; justify-content: center;
 		text-align: center; line-height: 1;
+		cursor: pointer;
 	}
 	.play-btn:active { transform: scale(0.93); opacity: 0.9; }
 	.replay {
-		background: transparent; border: 2px solid var(--accent);
 		color: var(--accent);
-	}
-	.replay:active { background: var(--accent-dim); }
-	.no-border {
-		border: none !important;
 	}
 	/* Feedback states */
 	.feedback-correct {
-		background: var(--correct) !important;
-		color: var(--base) !important;
-		border-color: var(--correct) !important;
+		color: var(--correct) !important;
 	}
 	.feedback-wrong {
-		background: transparent !important;
 		color: var(--wrong) !important;
-		border: 2px solid var(--wrong) !important;
 	}
 	.feedback-glitch {
 		text-shadow: -2px 0 var(--accent), 2px 0 var(--hot);
@@ -185,8 +191,6 @@
 	}
 	/* Transition glitch */
 	.glitch-text {
-		background: var(--surface) !important;
-		border: 2px solid var(--accent) !important;
 		color: var(--accent) !important;
 		text-shadow: -2px 0 var(--accent), 2px 0 var(--hot);
 		animation: glitch-shake 50ms infinite;

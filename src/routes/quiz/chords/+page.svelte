@@ -11,6 +11,7 @@
 	import AnswerGrid from '../../../components/AnswerGrid.svelte';
 	import ProgressBar from '../../../components/ProgressBar.svelte';
 	import TelemetryBar from '../../../components/TelemetryBar.svelte';
+	import ChladniBackground from '../../../components/ChladniBackground.svelte';
 
 	interface QuestionResult {
 		chord: ChordDef;
@@ -332,6 +333,11 @@
 	</div>
 </div>
 {:else}
+<ChladniBackground
+	chordIntervals={question?.chord.intervals}
+	playing={isPlaying}
+	glitching={isGlitching}
+/>
 <div class="quiz">
 	<h2 class="heading">CHORDS</h2>
 	<div class="top">
@@ -362,6 +368,7 @@
 				glitching={isGlitching}
 				feedback={feedbackState}
 				semitones={Math.max(...(question?.chord.intervals ?? [0]))}
+				chordIntervals={question?.chord.intervals}
 			/>
 		</div>
 
@@ -381,6 +388,8 @@
 
 <style>
 	.quiz {
+		position: relative;
+		z-index: 1;
 		display: flex;
 		flex-direction: column;
 		align-items: center;

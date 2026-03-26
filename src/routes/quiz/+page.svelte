@@ -11,6 +11,7 @@
 	import AnswerGrid from '../../components/AnswerGrid.svelte';
 	import ProgressBar from '../../components/ProgressBar.svelte';
 	import TelemetryBar from '../../components/TelemetryBar.svelte';
+	import ChladniBackground from '../../components/ChladniBackground.svelte';
 
 	interface QuestionResult {
 		interval: IntervalDef;
@@ -336,6 +337,11 @@
 	</div>
 </div>
 {:else}
+<ChladniBackground
+	semitones={question?.interval.semitones ?? 0}
+	playing={isPlaying}
+	glitching={isGlitching}
+/>
 <div class="quiz">
 	<h2 class="heading">PRACTICE</h2>
 	<div class="top">
@@ -380,6 +386,8 @@
 
 <style>
 	.quiz {
+		position: relative;
+		z-index: 1;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
