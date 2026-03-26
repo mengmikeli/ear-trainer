@@ -12,9 +12,7 @@
 		countdownPct?: number;
 		feedback?: 'correct' | 'wrong' | null;
 		semitones?: number;
-		/** Chord intervals — passed to Lissajous for shape */
 		chordIntervals?: number[];
-		/** Scale intervals — passed to Lissajous for shape */
 		scaleIntervals?: number[];
 	}
 	let { onplay, replaying = false, playing = false, noBorder = false, questionNum = 1, glitching = false, countdownPct = -1, feedback = null, semitones = 0, chordIntervals, scaleIntervals }: Props = $props();
@@ -86,18 +84,25 @@
 
 	const feedbackCorrect = $derived(feedback === 'correct');
 	const feedbackWrong = $derived(feedback === 'wrong');
+
+	// Map PlayButton state → LissajousRing phase
+	const vizPhase = $derived.by((): 'rest' | 'playing' | 'correct' | 'wrong' | 'glitch' => {
+		if (glitching) return 'glitch';
+		if (feedback === 'correct') return 'correct';
+		if (feedback === 'wrong') return 'wrong';
+		if (playing) return 'playing';
+		return 'rest';
+	});
 </script>
 
 <div class="play-wrapper">
-	<!-- Lissajous ring replaces the old CSS border -->
+	<!-- Lissajous ring — owns the full visual lifecycle -->
 	<LissajousRing
 		size={120}
 		{semitones}
 		{chordIntervals}
 		{scaleIntervals}
-		{playing}
-		{glitching}
-		{feedback}
+		phase={vizPhase}
 	/>
 
 	<!-- Countdown ring (SVG overlay) -->
@@ -114,11 +119,10 @@
 		/>
 	</svg>
 
-	<!-- The button itself — no border, transparent bg, just the text -->
+	<!-- Button — transparent, text only -->
 	<button
 		class="play-btn"
 		class:replay={replaying}
-		class:no-border={noBorder}
 		class:glitch-text={glitching}
 		class:feedback-correct={feedbackCorrect}
 		class:feedback-wrong={feedbackWrong}
@@ -155,7 +159,6 @@
 	.play-btn {
 		position: relative; z-index: 1;
 		width: 100px; height: 100px; border-radius: 50%;
-		/* Transparent bg — the Lissajous ring IS the visual */
 		background: transparent;
 		border: none;
 		color: var(--accent); font-size: 1rem; font-weight: 700;
@@ -170,7 +173,6 @@
 	.replay {
 		color: var(--accent);
 	}
-	/* Feedback states */
 	.feedback-correct {
 		color: var(--correct) !important;
 	}
@@ -189,7 +191,6 @@
 		80% { transform: translate(1px, 1px) rotate(0.3deg); }
 		100% { transform: translate(0) rotate(0); }
 	}
-	/* Transition glitch */
 	.glitch-text {
 		color: var(--accent) !important;
 		text-shadow: -2px 0 var(--accent), 2px 0 var(--hot);

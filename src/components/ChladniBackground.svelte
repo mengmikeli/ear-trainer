@@ -19,6 +19,8 @@
 		scaleIntervals?: number[];
 		playing?: boolean;
 		glitching?: boolean;
+		/** Feedback state — 'correct' boosts settle, 'wrong' scatters particles */
+		feedback?: 'correct' | 'wrong' | null;
 	}
 
 	let {
@@ -27,6 +29,7 @@
 		scaleIntervals,
 		playing = false,
 		glitching = false,
+		feedback = null,
 	}: Props = $props();
 
 	let canvas: HTMLCanvasElement;
@@ -48,6 +51,7 @@
 	let particles: { x: number; y: number }[] = [];
 	let settleSpeed = SETTLE_SPEED_BASE;
 	let migrateTimer = 0;
+	let scatterTimer = 0; // frames of scatter (wrong answer)
 
 	// Current mode(s) for the draw loop
 	let currentModes: ChladniMode[] = [{ n: 1, m: 1, amp: 1 }];
@@ -100,6 +104,27 @@
 				analyserRef = analyser;
 				dataArrayRef = dataArray;
 			} catch { /* not ready */ }
+		}
+	});
+
+	// React to feedback — correct boosts settle, wrong scatters
+	$effect(() => {
+		if (feedback === 'correct') {
+			// Boost migration toward clean nodal lines
+			settleSpeed = SETTLE_SPEED_BOOST;
+			migrateTimer = 120;
+		} else if (feedback === 'wrong') {
+			// Scatter particles randomly
+			scatterTimer = 30;
+			const TAU = Math.PI * 2;
+			for (const p of particles) {
+				p.x += (Math.random() - 0.5) * 0.5;
+				p.y += (Math.random() - 0.5) * 0.5;
+				if (p.x < 0) p.x += TAU;
+				if (p.x > TAU) p.x -= TAU;
+				if (p.y < 0) p.y += TAU;
+				if (p.y > TAU) p.y -= TAU;
+			}
 		}
 	});
 
@@ -177,7 +202,10 @@
 
 			// Glitch: extra jitter
 			const glitchBoost = glitching ? 0.015 : 0;
-			const currentShake = SHAKE_BASE + amp * SHAKE_AUDIO + glitchBoost;
+			// Scatter: extra randomness on wrong answer
+			const scatterBoost = scatterTimer > 0 ? 0.03 : 0;
+			if (scatterTimer > 0) scatterTimer--;
+			const currentShake = SHAKE_BASE + amp * SHAKE_AUDIO + glitchBoost + scatterBoost;
 			const migrating = migrateTimer > 0;
 
 			const TAU = Math.PI * 2;

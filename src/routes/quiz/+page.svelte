@@ -341,6 +341,7 @@
 	semitones={question?.interval.semitones ?? 0}
 	playing={isPlaying}
 	glitching={isGlitching}
+	feedback={feedbackState}
 />
 <div class="quiz">
 	<h2 class="heading">PRACTICE</h2>

@@ -328,6 +328,7 @@
 	scaleIntervals={question?.scale.intervals}
 	playing={isPlaying}
 	glitching={isGlitching}
+	feedback={feedbackState}
 />
 <div class="quiz">
 	<h2 class="heading">SCALES</h2>
