@@ -15,6 +15,7 @@ export const RELEASE_NOTES: ReleaseNote[] = [
 		changes: [
 			'Scale identification quiz — 8 scales across 3 tiers with mastery tracking',
 			'Visualization lab — chord, scale, and interval visualizations with audio-reactive Chladni + harmonograph',
+			'Chromatic circle scale visualization with polygon trail',
 			'Interruptible playback — switch selections mid-play, audio stops on page exit',
 			'Shorthand labels for all content types',
 		],
