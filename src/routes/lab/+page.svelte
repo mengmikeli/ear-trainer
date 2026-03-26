@@ -118,12 +118,12 @@
 
 	// Chladni — reduce particles on mobile for perf
 	const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-	const PARTICLE_COUNT = isMobile ? 1200 : 3000;
-	const SETTLE_SPEED_BASE = 0.004;
+	const PARTICLE_COUNT = isMobile ? 1500 : 3500;
+	const SETTLE_SPEED_BASE = 0.003;
 	const SETTLE_SPEED_BOOST = 0.025;
 	const JITTER = 0.001;
 	const SHAKE_BASE = 0.02;
-	const SHAKE_AUDIO = 0.06;
+	const SHAKE_AUDIO = 0.05;
 	let particles: { x: number; y: number }[] = [];
 	let settleSpeed = SETTLE_SPEED_BASE;
 	let migrateTimer = 0;
@@ -180,10 +180,10 @@
 			const [n, m] = midiToChladniMode(60);
 			chladniN = n;
 			chladniM = m;
+			// Boost settle speed for visible migration
+			settleSpeed = SETTLE_SPEED_BOOST;
+			migrateTimer = 120;
 		}
-		// Boost settle speed for visible migration
-		settleSpeed = SETTLE_SPEED_BOOST;
-		migrateTimer = 120;
 		// Only init if empty
 		if (particles.length === 0) initParticles();
 		// Auto-play + morph on interval switch (skip first load)
@@ -193,10 +193,14 @@
 			morphT = 0.3;     // partial reset so you see the transition
 			handlePlay();
 		} else {
-			// First load — go straight to interval shape
+			// First load — start settling immediately
 			morphT = 1;
 			morphTarget = 1;
-		}
+			const [n, m] = midiToChladniMode(60);
+			chladniN = n;
+			chladniM = m;
+			settleSpeed = SETTLE_SPEED_BOOST;
+			migrateTimer = 120;		}
 		firstRun = false;
 	});
 
@@ -250,6 +254,8 @@
 
 		resize();
 		window.addEventListener('resize', resize);
+		const ro = new ResizeObserver(() => resize());
+		ro.observe(mainCanvas);
 		initParticles();
 
 		let frameCount = 0;
@@ -445,6 +451,7 @@
 		return () => {
 			cancelAnimationFrame(animId);
 			window.removeEventListener('resize', resize);
+			ro.disconnect();
 			analyserRef = null;
 			dataArrayRef = null;
 			stopAudio();
@@ -460,8 +467,8 @@
 		</div>
 		<nav class="lab-nav">
 			<a href="{base}/lab" class="lab-nav-link active" aria-label="Intervals">INT</a>
-			<a href="{base}/lab/chords" class="lab-nav-link" aria-label="Chords">CHRD</a>
-			<a href="{base}/lab/scales" class="lab-nav-link" aria-label="Scales">SCALE</a>
+			<a href="{base}/lab/chords" class="lab-nav-link" aria-label="Chords">CHD</a>
+			<a href="{base}/lab/scales" class="lab-nav-link" aria-label="Scales">SCL</a>
 		</nav>
 	</header>
 
@@ -553,7 +560,7 @@
 	.lab-title {
 		display: flex;
 		align-items: center;
-		gap: 0.5rem;
+		gap: 0.75rem;
 	}
 
 	.lab-title h1 {
@@ -566,7 +573,7 @@
 	.lab-meta {
 		display: flex;
 		align-items: center;
-		gap: 0.5rem;
+		gap: 0.75rem;
 	}
 
 	.interval-tag {
@@ -620,6 +627,7 @@
 		position: relative;
 		flex: 1;
 		min-height: 0;
+		
 		border: 1px solid var(--border-heavy);
 		background: #000;
 	}
@@ -648,9 +656,8 @@
 		flex-wrap: wrap;
 		gap: 4px;
 		justify-content: center;
-	}
-
-	.interval-btn {
+		margin-top: auto;
+	}	.interval-btn {
 		font-family: 'BPdots', var(--mono);
 		font-size: 1.3rem;
 		font-weight: 900;
@@ -661,7 +668,7 @@
 		color: var(--text-secondary);
 		background: var(--surface);
 		transition: all 0.15s ease;
-		min-width: 2.6rem;
+		width: calc((100% - 16px) / 5);
 		text-align: center;
 		line-height: 1;
 		display: inline-flex;
@@ -685,6 +692,7 @@
 		align-items: center;
 		justify-content: center;
 		gap: 0.75rem;
+		margin-bottom: -0.75rem;
 	}
 
 	.footer-tags {

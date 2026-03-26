@@ -28,9 +28,9 @@
 	const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 	const PARTICLE_COUNT = isMobile ? 1500 : 3500;
 	const SETTLE_SPEED_BASE = 0.003;
-	const SETTLE_SPEED_BOOST = 0.02;
+	const SETTLE_SPEED_BOOST = 0.025;
 	const JITTER = 0.001;
-	const SHAKE_BASE = 0.015;
+	const SHAKE_BASE = 0.02;
 	const SHAKE_AUDIO = 0.05;
 	let particles: { x: number; y: number }[] = [];
 	let settleSpeed = SETTLE_SPEED_BASE;
@@ -55,7 +55,7 @@
 	let harmonographOpacity = 1;
 
 	// ── Current modes for draw loop (avoid reactivity overhead in hot path) ──
-	let currentModes: ChladniMode[] = chordToModes(ROOT_MIDI, CHORDS[0].intervals);
+	let currentModes: ChladniMode[] = [{ n: 1, m: 1, amp: 1 }]; // rest = random scatter
 	let currentIntervals: number[] = CHORDS[0].intervals;
 
 	function initParticles() {
@@ -86,16 +86,19 @@
 	// React to chord changes
 	let firstRun = true;
 	$effect(() => {
-		currentModes = chordToModes(ROOT_MIDI, chord.intervals);
 		currentIntervals = chord.intervals;
-		settleSpeed = SETTLE_SPEED_BOOST;
-		migrateTimer = 120;
 		if (particles.length === 0) initParticles();
-		// Speed burst for chase effect — don't reset phase (continuous trail morphs to new shape)
-		hSpeedCurrent = H_SPEED_BURST;
 		if (!firstRun) {
+			currentModes = chordToModes(ROOT_MIDI, chord.intervals);
+			settleSpeed = SETTLE_SPEED_BOOST;
+			migrateTimer = 120;
+			hSpeedCurrent = H_SPEED_BURST;
 			handlePlay();
-		}
+		} else {
+			// First load — start settling immediately
+			currentModes = chordToModes(ROOT_MIDI, chord.intervals);
+			settleSpeed = SETTLE_SPEED_BOOST;
+			migrateTimer = 120;		}
 		firstRun = false;
 	});
 
@@ -138,6 +141,8 @@
 
 		resize();
 		window.addEventListener('resize', resize);
+		const ro = new ResizeObserver(() => resize());
+		ro.observe(mainCanvas);
 		initParticles();
 
 		let frameCount = 0;
@@ -294,6 +299,13 @@
 			ctx.fillStyle = vigGrad;
 			ctx.fillRect(0, 0, w, h);
 
+			// ── Scanline flicker ──
+			if (frameCount % 120 < 2) {
+				const glitchY = Math.random() * h;
+				ctx.fillStyle = 'rgba(194, 254, 12, 0.03)';
+				ctx.fillRect(0, glitchY, w, 1);
+			}
+
 			frameCount++;
 			animId = requestAnimationFrame(draw);
 		}
@@ -305,6 +317,7 @@
 		return () => {
 			cancelAnimationFrame(animId);
 			window.removeEventListener('resize', resize);
+			ro.disconnect();
 			analyserRef = null;
 			dataArrayRef = null;
 			stopAudio();
@@ -320,8 +333,8 @@
 		</div>
 		<nav class="lab-nav">
 			<a href="{base}/lab" class="lab-nav-link" aria-label="Intervals">INT</a>
-			<a href="{base}/lab/chords" class="lab-nav-link active" aria-label="Chords">CHRD</a>
-			<a href="{base}/lab/scales" class="lab-nav-link" aria-label="Scales">SCALE</a>
+			<a href="{base}/lab/chords" class="lab-nav-link active" aria-label="Chords">CHD</a>
+			<a href="{base}/lab/scales" class="lab-nav-link" aria-label="Scales">SCL</a>
 		</nav>
 	</header>
 
@@ -386,7 +399,7 @@
 	.lab-title {
 		display: flex;
 		align-items: center;
-		gap: 0.5rem;
+		gap: 0.75rem;
 	}
 
 	.lab-title h1 {
@@ -452,6 +465,7 @@
 		position: relative;
 		flex: 1;
 		min-height: 0;
+		
 		border: 1px solid var(--border-heavy);
 		background: #000;
 	}
@@ -480,9 +494,8 @@
 		flex-wrap: wrap;
 		gap: 4px;
 		justify-content: center;
-	}
-
-	.chord-btn {
+		margin-top: auto;
+	}	.chord-btn {
 		font-family: 'BPdots', var(--mono);
 		font-size: 1.3rem;
 		font-weight: 900;
@@ -493,7 +506,7 @@
 		color: var(--text-secondary);
 		background: var(--surface);
 		transition: all 0.15s ease;
-		min-width: 3rem;
+		width: calc((100% - 12px) / 4);
 		text-align: center;
 		line-height: 1;
 		display: inline-flex;
@@ -517,6 +530,7 @@
 		align-items: center;
 		justify-content: center;
 		gap: 0.75rem;
+		margin-bottom: -0.75rem;
 	}
 
 	.footer-tags {

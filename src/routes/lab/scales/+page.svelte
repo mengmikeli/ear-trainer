@@ -31,19 +31,40 @@
 	// ── State ──
 	let selected = $state('Maj');
 	let isPlaying = $state(false);
+	let showChladni = $state(true);
+	let showCircle = $state(true);
+	let chladniOpacity = 1;
+	let circleOpacity = 1;
 	let currentStep = $state(-1); // -1 = idle, 0..n = playing step
+	let dotProgress = $state(0); // smooth interpolation toward currentStep
+	let dotTarget = $state(0);   // where the dot is heading
 	let mainCanvas: HTMLCanvasElement;
 	let animId: number;
 
 	let scale = $derived(SCALES.find(s => s.id === selected)!);
 
-	// ── Particles ──
+	// ── Chromatic circle state machine ──
+	type CirclePhase = 'rest-empty' | 'playing' | 'fade-in' | 'hold' | 'fade-out' | 'rest-visited';
+	let circlePhase: CirclePhase = 'rest-empty';
+	let circleTimer = 0;          // frames in current phase
+	let circleFadeAlpha = 0;      // 0→1 for shade fade-in/out
+	let completionTimer = 0;      // total frames since completion started (for perimeter dot)
+	let visitedPitchClasses: number[] = []; // which PCs were played (persists after fade)
+	// ── Random electron pulse system (2 simultaneous, can overlap) ──
+	let pulseDots: { pc: number; phase: number }[] = []; // active pulses
+	const PULSE_DURATION = 90;    // frames per pulse (~1.5s)
+	const PULSE_SPAWN_RATE = 45;  // frames between spawns (~0.75s)
+	let pulseSpawnTimer = 0;
+	let pulsePool: number[] = Array.from({ length: 12 }, (_, i) => i); // which dots can pulse
+	const FADE_IN_FRAMES = 30;    // ~0.5s
+	const HOLD_FRAMES = 45;       // ~0.75s
+	const FADE_OUT_FRAMES = 120;   // ~2s
 	const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 	const PARTICLE_COUNT = isMobile ? 1500 : 3500;
 	const SETTLE_SPEED_BASE = 0.003;
 	const SETTLE_SPEED_BOOST = 0.025;
 	const JITTER = 0.001;
-	const SHAKE_BASE = 0.012;
+	const SHAKE_BASE = 0.02;
 	const SHAKE_AUDIO = 0.05;
 	let particles: { x: number; y: number }[] = [];
 	let settleSpeed = SETTLE_SPEED_BASE;
@@ -62,7 +83,7 @@
 	let amplitude = 0;
 
 	// ── Current mode for draw loop ──
-	let currentModes: ChladniMode[] = [{ n: 1, m: 1, amp: 1 }]; // rest state
+	let currentModes: ChladniMode[] = [{ n: 1, m: 1, amp: 1 }]; // rest = random scatter
 
 	function initParticles() {
 		particles = [];
@@ -101,6 +122,11 @@
 
 		isPlaying = true;
 		currentStep = 0;
+		dotProgress = 0;
+		dotTarget = 0;
+		circlePhase = 'playing';
+		circleFadeAlpha = 0;
+		visitedPitchClasses = [];
 
 		// Clear ghost trail
 		if (ghostCtx && ghostCanvas) {
@@ -117,7 +143,13 @@
 
 			if (step >= intervals.length) {
 				currentStep = -1;
-				// Short tail pause — same as inter-note gap (500ms)
+				// Store visited pitch classes for rest state
+				visitedPitchClasses = [...new Set(intervals.map(s => s % 12))];
+				// Trigger fade-in sequence
+				circlePhase = 'fade-in';
+				circleTimer = 0;
+				circleFadeAlpha = 0;
+				completionTimer = 0;
 				setTimeout(() => {
 					if (thisGen === playGeneration) isPlaying = false;
 				}, 500);
@@ -128,6 +160,7 @@
 			const [n, m] = midiToChladniMode(midi);
 			currentModes = [{ n, m, amp: 1 }];
 			currentStep = step;
+			dotTarget = step;
 
 			// Stamp ghost of current position before migration
 			if (mainCanvas) {
@@ -158,17 +191,26 @@
 	let firstRun = true;
 	$effect(() => {
 		const s = scale;
-		// Reset to root mode
-		const [n, m] = midiToChladniMode(ROOT_MIDI + s.intervals[0]);
-		currentModes = [{ n, m, amp: 1 }];
-		settleSpeed = SETTLE_SPEED_BOOST;
-		migrateTimer = 90;
+		// Reset chromatic circle state
+		currentStep = -1;
+		dotProgress = 0;
+		dotTarget = 0;
+		circlePhase = 'rest-empty';
+		circleFadeAlpha = 0;
+		visitedPitchClasses = [];
 		if (particles.length === 0) initParticles();
-		// Auto-play on scale switch (skip first load)
 		if (!firstRun) {
-			// Small delay to let particles resettle before playing
+			const [n, m] = midiToChladniMode(ROOT_MIDI + s.intervals[0]);
+			currentModes = [{ n, m, amp: 1 }];
+			settleSpeed = SETTLE_SPEED_BOOST;
+			migrateTimer = 90;
 			setTimeout(() => playScale(), 100);
-		}
+		} else {
+			// First load — start settling immediately
+			const [n, m] = midiToChladniMode(ROOT_MIDI + s.intervals[0]);
+			currentModes = [{ n, m, amp: 1 }];
+			settleSpeed = SETTLE_SPEED_BOOST;
+			migrateTimer = 90;		}
 		firstRun = false;
 	});
 
@@ -220,6 +262,8 @@
 
 		resize();
 		window.addEventListener('resize', resize);
+		const ro = new ResizeObserver(() => resize());
+		ro.observe(mainCanvas);
 		initParticles();
 
 		let frameCount = 0;
@@ -255,11 +299,17 @@
 				ctx.globalAlpha = 1;
 			}
 
+			const amp = Math.min(1, amplitude * 3);
+
+			// Smooth layer transitions
+			chladniOpacity += ((showChladni ? 1 : 0) - chladniOpacity) * 0.06;
+			circleOpacity += ((showCircle ? 1 : 0) - circleOpacity) * 0.06;
+
 			// ── Chladni particles ──
+			if (chladniOpacity > 0.01) {
 			const TAU = Math.PI * 2;
 			const useModes = currentModes;
 			const migrating = migrateTimer > 0;
-			const amp = Math.min(1, amplitude * 3);
 			const currentShake = SHAKE_BASE + amp * SHAKE_AUDIO;
 
 			for (const p of particles) {
@@ -288,12 +338,357 @@
 				const migrateGlow = migrating ? 0.3 * (dist * 2) : 0;
 				const alpha = Math.min(0.7, Math.max(0.05, 0.4 - dist * 1.5) + migrateGlow);
 
-				ctx.globalAlpha = alpha;
+				ctx.globalAlpha = alpha * chladniOpacity;
 				ctx.fillStyle = migrating ? '#5A4CFF' : '#3A2CFF';
 				const pSize = migrating ? 1.6 : 1.2;
 				ctx.fillRect(sx, sy, pSize, pSize);
 			}
 			ctx.globalAlpha = 1;
+			} // end chladniOpacity
+
+			const cx = w / 2, cy = h / 2;
+
+			// ── CHROMATIC CIRCLE (state machine) ──
+			if (circleOpacity > 0.01) {
+			const circleRadius = Math.min(cx, cy) * 0.78;
+			const radiusPulse = 1 + amp * 0.12;
+			const activeRadius = circleRadius * radiusPulse;
+			const scaleIntervals = scale.intervals;
+
+			// State machine transitions
+			if (circlePhase === 'fade-in') {
+				circleTimer++;
+				completionTimer++;
+				circleFadeAlpha = Math.min(1, circleTimer / FADE_IN_FRAMES);
+				if (circleTimer >= FADE_IN_FRAMES) {
+					circlePhase = 'hold';
+					circleTimer = 0;
+				}
+			} else if (circlePhase === 'hold') {
+				circleTimer++;
+				completionTimer++;
+				if (circleTimer >= HOLD_FRAMES) {
+					circlePhase = 'fade-out';
+					circleTimer = 0;
+				}
+			} else if (circlePhase === 'fade-out') {
+				circleTimer++;
+				completionTimer++;
+				circleFadeAlpha = Math.max(0, 1 - circleTimer / FADE_OUT_FRAMES);
+				if (circleTimer >= FADE_OUT_FRAMES) {
+					circlePhase = 'rest-visited';
+					circleTimer = 0;
+					completionTimer = 0;
+				}
+			}
+
+			// Smooth dot traversal
+			dotProgress += (dotTarget - dotProgress) * 0.12;
+
+			// Random electron pulse system
+			const showPulses = circlePhase === 'rest-empty' || circlePhase === 'rest-visited';
+			if (showPulses) {
+				// Spawn new pulse
+				pulseSpawnTimer++;
+				if (pulseSpawnTimer >= PULSE_SPAWN_RATE && pulseDots.length < 2) {
+					pulseSpawnTimer = 0;
+					const pool = (circlePhase === 'rest-visited' && visitedPitchClasses.length > 0)
+						? visitedPitchClasses
+						: pulsePool;
+					const pc = pool[Math.floor(Math.random() * pool.length)];
+					pulseDots.push({ pc, phase: 0 });
+				}
+				// Update + remove expired
+				pulseDots = pulseDots.filter(p => {
+					p.phase++;
+					return p.phase < PULSE_DURATION;
+				});
+			} else if (circlePhase === 'fade-out') {
+				// Smooth transition: let existing pulses finish but don't spawn new
+				pulseDots = pulseDots.filter(p => {
+					p.phase++;
+					return p.phase < PULSE_DURATION;
+				});
+			} else {
+				pulseDots = [];
+			}
+
+			function pcAngle(pc: number): number {
+				return (pc / 12) * Math.PI * 2 - Math.PI / 2;
+			}
+			function chromaticPos(pc: number): [number, number] {
+				const a = pcAngle(pc);
+				return [cx + Math.cos(a) * activeRadius, cy + Math.sin(a) * activeRadius];
+			}
+
+			// Outer ring — multi-layer glow (matching interval Lissajous depth)
+			ctx.strokeStyle = '#C2FE0C';
+			ctx.shadowColor = '#C2FE0C';
+			// Pass 3: outer glow (widest, dimmest)
+			ctx.lineWidth = 3;
+			ctx.shadowBlur = 8;
+			ctx.globalAlpha = 0.08;
+			ctx.beginPath();
+			ctx.arc(cx, cy, activeRadius, 0, Math.PI * 2);
+			ctx.stroke();
+			// Pass 2: bloom
+			ctx.lineWidth = 1.8;
+			ctx.shadowBlur = 4;
+			ctx.globalAlpha = 0.25;
+			ctx.beginPath();
+			ctx.arc(cx, cy, activeRadius, 0, Math.PI * 2);
+			ctx.stroke();
+			// Pass 1: primary stroke
+			ctx.lineWidth = 1.2;
+			ctx.shadowBlur = 2;
+			ctx.globalAlpha = 0.8;
+			ctx.beginPath();
+			ctx.arc(cx, cy, activeRadius, 0, Math.PI * 2);
+			ctx.stroke();
+			ctx.globalAlpha = 1;
+			ctx.shadowBlur = 0;
+
+			// 12 chromatic dots (dim, with random pulse glow)
+			for (let pc = 0; pc < 12; pc++) {
+				const [dx, dy] = chromaticPos(pc);
+				const isVisited = visitedPitchClasses.includes(pc);
+				const isCompletionPulse = isVisited && (circlePhase === 'fade-in' || circlePhase === 'hold' || circlePhase === 'fade-out');
+
+				// Check if this dot has an active pulse
+				const activePulse = pulseDots.find(p => p.pc === pc);
+				const pulseAlpha = activePulse
+					? Math.sin((activePulse.phase / PULSE_DURATION) * Math.PI) // smooth 0→1→0
+					: 0;
+
+				let dotAlpha = 0.12;
+				let dotSize = 1.5;
+
+				if (isVisited && (circlePhase === 'rest-visited')) {
+					dotAlpha = 0.4;
+					dotSize = 2.5;
+				}
+				if (isCompletionPulse) {
+					dotAlpha = 0.5 + circleFadeAlpha * 0.5;
+					dotSize = 3 + circleFadeAlpha * 1.5;
+				}
+				if (pulseAlpha > 0) {
+					dotAlpha = Math.max(dotAlpha, 0.15 + pulseAlpha * 0.7);
+					dotSize = Math.max(dotSize, 2 + pulseAlpha * 2.5);
+				}
+
+				ctx.beginPath();
+				ctx.arc(dx, dy, dotSize, 0, Math.PI * 2);
+				ctx.fillStyle = '#C2FE0C';
+				ctx.globalAlpha = dotAlpha;
+				if (pulseAlpha > 0.3) {
+					ctx.shadowColor = '#C2FE0C';
+					ctx.shadowBlur = pulseAlpha * 12;
+				}
+				if (isCompletionPulse) {
+					ctx.shadowColor = '#C2FE0C';
+					ctx.shadowBlur = circleFadeAlpha * 8;
+				}
+				ctx.fill();
+				ctx.shadowBlur = 0;
+				ctx.globalAlpha = 1;
+			}
+
+			// Edge count for progressive drawing
+			const edgesDrawn = (circlePhase === 'playing' && currentStep >= 0)
+				? currentStep
+				: (circlePhase !== 'rest-empty' ? scaleIntervals.length - 1 : 0);
+
+			// Progressive arc edges + fade
+			const edgeAlpha = (circlePhase === 'fade-out') ? circleFadeAlpha
+				: (circlePhase === 'rest-empty') ? 0 : 1;
+
+			if (edgesDrawn > 0 && edgeAlpha > 0.01) {
+				ctx.strokeStyle = '#C2FE0C';
+				ctx.lineWidth = 1.5 + amp * 1;
+				ctx.shadowColor = '#C2FE0C';
+				ctx.shadowBlur = 3 + amp * 6;
+				ctx.globalAlpha = (0.5 + amp * 0.3) * edgeAlpha;
+
+				for (let i = 0; i < edgesDrawn; i++) {
+					const fromPC = scaleIntervals[i] % 12;
+					const toPC = scaleIntervals[i + 1] % 12;
+					let startAngle = pcAngle(fromPC);
+					let endAngle = pcAngle(toPC);
+					if (endAngle <= startAngle) endAngle += Math.PI * 2;
+					ctx.beginPath();
+					ctx.arc(cx, cy, activeRadius, startAngle, endAngle);
+					ctx.stroke();
+				}
+				ctx.globalAlpha = 1;
+				ctx.shadowBlur = 0;
+			}
+
+			// Gradient shade (radial: brighter center → dim edges)
+			const shadeAlpha = (circlePhase === 'fade-in' || circlePhase === 'hold') ? circleFadeAlpha
+				: (circlePhase === 'fade-out') ? circleFadeAlpha
+				: 0;
+
+			if (shadeAlpha > 0.01 && visitedPitchClasses.length >= 3) {
+				const uniquePCs = [...new Set(scaleIntervals.map(s => s % 12))];
+
+				// Build polygon path
+				ctx.beginPath();
+				for (let i = 0; i < uniquePCs.length; i++) {
+					const [px, py] = chromaticPos(uniquePCs[i]);
+					if (i === 0) ctx.moveTo(px, py);
+					else ctx.lineTo(px, py);
+				}
+				ctx.closePath();
+
+				// Pass 1: Outer glow (bloom behind the shape)
+				ctx.save();
+				ctx.shadowColor = '#C2FE0C';
+				ctx.shadowBlur = 20 * shadeAlpha;
+				ctx.fillStyle = `rgba(194, 254, 12, ${0.15 * shadeAlpha})`;
+				ctx.fill();
+				ctx.restore();
+
+				// Pass 2: Radial gradient fill (bright center → dim edges)
+				ctx.save();
+				ctx.beginPath();
+				for (let i = 0; i < uniquePCs.length; i++) {
+					const [px, py] = chromaticPos(uniquePCs[i]);
+					if (i === 0) ctx.moveTo(px, py);
+					else ctx.lineTo(px, py);
+				}
+				ctx.closePath();
+				ctx.clip();
+				const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, activeRadius);
+				grad.addColorStop(0, `rgba(194, 254, 12, ${0.5 * shadeAlpha})`);
+				grad.addColorStop(0.4, `rgba(194, 254, 12, ${0.25 * shadeAlpha})`);
+				grad.addColorStop(0.8, `rgba(194, 254, 12, ${0.10 * shadeAlpha})`);
+				grad.addColorStop(1, `rgba(194, 254, 12, ${0.03 * shadeAlpha})`);
+				ctx.fillStyle = grad;
+				ctx.fillRect(0, 0, w, h);
+				ctx.restore();
+
+				// Trail-based polygon border (dot traces perimeter with fading tail)
+				const totalCycleFrames = FADE_IN_FRAMES + HOLD_FRAMES + FADE_OUT_FRAMES;
+				if (completionTimer > 0 && completionTimer <= totalCycleFrames) {
+					const rawProgress = Math.min(completionTimer / totalCycleFrames, 1);
+					const easedProgress = 1 - Math.pow(1 - rawProgress, 2.5); // ease-out
+
+					const totalEdges = uniquePCs.length;
+					const headPos = easedProgress * totalEdges; // how far the head has traveled
+
+					// Trail length: covers ~40% of the perimeter
+					const trailLength = totalEdges * 0.4;
+
+					// Draw trail as segmented path with alpha decay
+					const TRAIL_SEGMENTS = 30;
+					ctx.strokeStyle = '#C2FE0C';
+					ctx.shadowColor = '#C2FE0C';
+
+					for (let seg = 0; seg < TRAIL_SEGMENTS; seg++) {
+						const segStart = headPos - (seg / TRAIL_SEGMENTS) * trailLength;
+						const segEnd = headPos - ((seg + 1) / TRAIL_SEGMENTS) * trailLength;
+						if (segStart < 0) break; // trail hasn't extended this far yet
+
+						const segAlpha = (1 - seg / TRAIL_SEGMENTS);
+						const quadAlpha = segAlpha * segAlpha; // quadratic decay
+
+						// Get positions along polygon
+						function polyPos(edgePos: number): [number, number] {
+							const clamped = Math.max(0, edgePos);
+							const idx = Math.min(Math.floor(clamped), totalEdges - 1);
+							const frac = clamped - idx;
+							const from = uniquePCs[idx];
+							const to = uniquePCs[(idx + 1) % totalEdges];
+							const [fx2, fy2] = chromaticPos(from);
+							const [tx2, ty2] = chromaticPos(to);
+							return [fx2 + (tx2 - fx2) * frac, fy2 + (ty2 - fy2) * frac];
+						}
+
+						const [sx, sy] = polyPos(Math.max(segEnd, 0));
+						const [ex, ey] = polyPos(segStart);
+
+						ctx.beginPath();
+						ctx.moveTo(sx, sy);
+						ctx.lineTo(ex, ey);
+						ctx.lineWidth = 1.2 + quadAlpha * 0.8;
+						ctx.shadowBlur = 2 + quadAlpha * 6;
+						ctx.globalAlpha = quadAlpha * 0.8 * shadeAlpha;
+						ctx.stroke();
+					}
+
+					// Head dot
+					const headEdgePos = Math.min(headPos, totalEdges);
+					const hIdx = Math.min(Math.floor(headEdgePos), totalEdges - 1);
+					const hFrac = headEdgePos - hIdx;
+					const hFrom = uniquePCs[hIdx];
+					const hTo = uniquePCs[(hIdx + 1) % totalEdges];
+					const [hfx, hfy] = chromaticPos(hFrom);
+					const [htx, hty] = chromaticPos(hTo);
+					const hdx = hfx + (htx - hfx) * hFrac;
+					const hdy = hfy + (hty - hfy) * hFrac;
+
+					ctx.beginPath();
+					ctx.arc(hdx, hdy, 3.5, 0, Math.PI * 2);
+					ctx.fillStyle = '#C2FE0C';
+					ctx.shadowBlur = 10 * shadeAlpha;
+					ctx.globalAlpha = 0.9 * shadeAlpha;
+					ctx.fill();
+
+					ctx.globalAlpha = 1;
+					ctx.shadowBlur = 0;
+				}
+			}
+
+			// Lit dots for currently playing notes
+			if (circlePhase === 'playing' && currentStep >= 0) {
+				const playedPCs = [...new Set(scaleIntervals.slice(0, currentStep + 1).map(s => s % 12))];
+				for (let i = 0; i < playedPCs.length; i++) {
+					const pc = playedPCs[i];
+					const [dx, dy] = chromaticPos(pc);
+					const isRoot = pc === 0;
+					ctx.beginPath();
+					ctx.arc(dx, dy, isRoot ? 4 : 3, 0, Math.PI * 2);
+					ctx.fillStyle = '#C2FE0C';
+					ctx.globalAlpha = isRoot ? 1 : 0.7;
+					if (isRoot) {
+						ctx.shadowColor = '#C2FE0C';
+						ctx.shadowBlur = 6 + amp * 4;
+					}
+					ctx.fill();
+					ctx.shadowBlur = 0;
+					ctx.globalAlpha = 1;
+				}
+			}
+
+			// Animated traversal dot
+			if (circlePhase === 'playing' && currentStep >= 0) {
+				const fromIdx = Math.floor(dotProgress);
+				const toIdx = Math.min(fromIdx + 1, scaleIntervals.length - 1);
+				const frac = dotProgress - fromIdx;
+				const eased = frac < 0.5
+					? 4 * frac * frac * frac
+					: 1 - Math.pow(-2 * frac + 2, 3) / 2;
+
+				const fromPC = scaleIntervals[fromIdx] % 12;
+				const toPC = scaleIntervals[toIdx] % 12;
+				let fromAngle = pcAngle(fromPC);
+				let toAngle = pcAngle(toPC);
+				if (toAngle <= fromAngle) toAngle += Math.PI * 2;
+				const angle = fromAngle + (toAngle - fromAngle) * eased;
+				const tx = cx + Math.cos(angle) * activeRadius;
+				const ty = cy + Math.sin(angle) * activeRadius;
+
+				ctx.beginPath();
+				ctx.arc(tx, ty, 5 + amp * 3, 0, Math.PI * 2);
+				ctx.fillStyle = '#C2FE0C';
+				ctx.shadowColor = '#C2FE0C';
+				ctx.shadowBlur = 10 + amp * 12;
+				ctx.globalAlpha = 0.9;
+				ctx.fill();
+				ctx.globalAlpha = 1;
+				ctx.shadowBlur = 0;
+			}
+			} // end circleOpacity
 
 			// ── Noise grain ──
 			if (noiseCanvas && frameCount % 3 === 0) {
@@ -304,7 +699,6 @@
 			}
 
 			// ── Vignette ──
-			const cx = w / 2, cy = h / 2;
 			const vigR = Math.min(cx, cy) * 0.5;
 			const vigGrad = ctx.createRadialGradient(cx, cy, vigR, cx, cy, Math.max(w, h) * 0.72);
 			vigGrad.addColorStop(0, 'rgba(0,0,0,0)');
@@ -312,6 +706,13 @@
 			vigGrad.addColorStop(1, 'rgba(0,0,0,0.55)');
 			ctx.fillStyle = vigGrad;
 			ctx.fillRect(0, 0, w, h);
+
+			// ── Scanline flicker ──
+			if (frameCount % 120 < 2) {
+				const glitchY = Math.random() * h;
+				ctx.fillStyle = 'rgba(194, 254, 12, 0.03)';
+				ctx.fillRect(0, glitchY, w, 1);
+			}
 
 			frameCount++;
 			animId = requestAnimationFrame(draw);
@@ -324,6 +725,7 @@
 		return () => {
 			cancelAnimationFrame(animId);
 			window.removeEventListener('resize', resize);
+			ro.disconnect();
 			// Kill any in-progress scale playback
 			playGeneration++;
 			isPlaying = false;
@@ -342,8 +744,8 @@
 		</div>
 		<nav class="lab-nav">
 			<a href="{base}/lab" class="lab-nav-link" aria-label="Intervals">INT</a>
-			<a href="{base}/lab/chords" class="lab-nav-link" aria-label="Chords">CHRD</a>
-			<a href="{base}/lab/scales" class="lab-nav-link active" aria-label="Scales">SCALE</a>
+			<a href="{base}/lab/chords" class="lab-nav-link" aria-label="Chords">CHD</a>
+			<a href="{base}/lab/scales" class="lab-nav-link active" aria-label="Scales">SCL</a>
 		</nav>
 	</header>
 
@@ -374,9 +776,12 @@
 
 	<footer class="lab-footer">
 		<div class="footer-tags">
-			<span class="hud-tag hud-tag--blue">
-				<span class="toggle-dot on"></span>PROGRESSIVE CHLADNI
-			</span>
+			<button class="hud-tag hud-tag--blue" class:dimmed={!showChladni} onclick={() => showChladni = !showChladni}>
+				<span class="toggle-dot" class:on={showChladni}></span>CHLADNI
+			</button>
+			<button class="hud-tag" class:dimmed={!showCircle} onclick={() => showCircle = !showCircle}>
+				<span class="toggle-dot" class:on={showCircle}></span>CHROMATIC
+			</button>
 		</div>
 	</footer>
 </div>
@@ -398,7 +803,7 @@
 	.lab-title {
 		display: flex;
 		align-items: center;
-		gap: 0.5rem;
+		gap: 0.75rem;
 	}
 
 	.lab-title h1 {
@@ -464,6 +869,7 @@
 		position: relative;
 		flex: 1;
 		min-height: 0;
+		
 		border: 1px solid var(--border-heavy);
 		background: #000;
 	}
@@ -492,9 +898,8 @@
 		flex-wrap: wrap;
 		gap: 4px;
 		justify-content: center;
-	}
-
-	.scale-btn {
+		margin-top: auto;
+	}	.scale-btn {
 		font-family: 'BPdots', var(--mono);
 		font-size: 1.3rem;
 		font-weight: 900;
@@ -505,7 +910,7 @@
 		color: var(--text-secondary);
 		background: var(--surface);
 		transition: all 0.15s ease;
-		min-width: 3rem;
+		width: calc((100% - 12px) / 4);
 		text-align: center;
 		line-height: 1;
 		display: inline-flex;
@@ -529,6 +934,7 @@
 		align-items: center;
 		justify-content: center;
 		gap: 0.75rem;
+		margin-bottom: -0.75rem;
 	}
 
 	.footer-tags {
@@ -536,6 +942,14 @@
 		gap: 0.35rem;
 	}
 
+	.footer-tags .hud-tag {
+		cursor: pointer;
+		transition: opacity 0.15s ease;
+	}
+
+	.footer-tags .hud-tag.dimmed {
+		opacity: 0.3;
+	}
 	.toggle-dot {
 		display: inline-block;
 		width: 6px;
