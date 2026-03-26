@@ -149,7 +149,7 @@
 		background: var(--correct) !important;
 	}
 	.feedback-wrong {
-		background: transparent !important;
+		background: rgba(237, 23, 79, 0.15) !important; /* subtle --hot red fill */
 	}
 	.glitch-fill {
 		background: var(--surface) !important;

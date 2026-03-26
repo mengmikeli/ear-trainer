@@ -143,9 +143,9 @@
 				break;
 
 			case 'wrong':
-				// Hold interval shape, dissolve/fragment
+				// Hold interval shape, fragment + dim (NOT red — red comes from button fill)
 				dissolveTarget = 1;
-				targetR = 255; targetG = 51; targetB = 51; // --hot red
+				targetR = 194; targetG = 254; targetB = 12; // stay accent — dims via opacity
 				// Randomize dissolve directions
 				for (const d of dissolveOffsets) {
 					d.angle = Math.random() * Math.PI * 2;
@@ -282,53 +282,61 @@
 				[-1, -1, 0.35],
 			];
 
-			// Dissolve reduces alpha on outer mirrors first
-			const dissolveAlphaScale = 1 - dissolveT * 0.6;
+			// Dissolve: dims + fragments (broken line with gaps)
+			const dissolveAlphaScale = 1 - dissolveT * 0.7; // stronger dim
+			const fragmenting = dissolveT > 0.05;
+			// Gap pattern: every Nth point is a gap, N decreases as dissolve progresses
+			const gapFreq = fragmenting ? Math.max(3, Math.floor(20 * (1 - dissolveT))) : 0;
 
 			for (const [mx, my, baseAlpha] of mirrors) {
 				const mirrorAlpha = baseAlpha * dissolveAlphaScale;
 				if (mirrorAlpha < 0.02) continue;
 
-				// Pass 1: outer glow
-				ctx.beginPath();
-				for (let i = 0; i < lissPoints.length; i++) {
-					const x = cx + mx * lissPoints[i][0];
-					const y = cy + my * lissPoints[i][1];
-					if (i === 0) ctx.moveTo(x, y);
-					else ctx.lineTo(x, y);
-				}
-				ctx.strokeStyle = strokeColor;
-				ctx.lineWidth = 3;
-				ctx.globalAlpha = 0.1 * mirrorAlpha;
-				ctx.shadowColor = strokeColor;
-				ctx.shadowBlur = 8 + glowBoost + bloomT * 12;
-				ctx.stroke();
+				// Build path segments (with gaps when fragmenting)
+				function drawSegmentedTrail(lineWidth: number, alpha: number, blur: number) {
+					ctx.strokeStyle = strokeColor;
+					ctx.lineWidth = lineWidth;
+					ctx.shadowColor = strokeColor;
+					ctx.shadowBlur = blur;
 
-				// Pass 2: bloom
-				ctx.beginPath();
-				for (let i = 0; i < lissPoints.length; i++) {
-					const x = cx + mx * lissPoints[i][0];
-					const y = cy + my * lissPoints[i][1];
-					if (i === 0) ctx.moveTo(x, y);
-					else ctx.lineTo(x, y);
-				}
-				ctx.lineWidth = 1.8 + lwBoost * 0.5;
-				ctx.globalAlpha = 0.3 * mirrorAlpha;
-				ctx.shadowBlur = 4 + glowBoost * 0.5 + bloomT * 6;
-				ctx.stroke();
+					if (!fragmenting) {
+						// Solid trail
+						ctx.beginPath();
+						for (let i = 0; i < lissPoints.length; i++) {
+							const x = cx + mx * lissPoints[i][0];
+							const y = cy + my * lissPoints[i][1];
+							if (i === 0) ctx.moveTo(x, y);
+							else ctx.lineTo(x, y);
+						}
+						ctx.globalAlpha = alpha;
+						ctx.stroke();
+					} else {
+						// Fragmented: draw segments with gaps
+						ctx.globalAlpha = alpha;
+						ctx.beginPath();
+						let inGap = false;
+						for (let i = 0; i < lissPoints.length; i++) {
+							// Deterministic gap pattern based on point index
+							const isGap = gapFreq > 0 && (i % gapFreq === 0);
+							const x = cx + mx * lissPoints[i][0];
+							const y = cy + my * lissPoints[i][1];
 
-				// Pass 3: primary stroke
-				ctx.beginPath();
-				for (let i = 0; i < lissPoints.length; i++) {
-					const x = cx + mx * lissPoints[i][0];
-					const y = cy + my * lissPoints[i][1];
-					if (i === 0) ctx.moveTo(x, y);
-					else ctx.lineTo(x, y);
+							if (isGap || inGap) {
+								inGap = isGap;
+								ctx.moveTo(x, y);
+							} else {
+								if (i === 0) ctx.moveTo(x, y);
+								else ctx.lineTo(x, y);
+							}
+						}
+						ctx.stroke();
+					}
 				}
-				ctx.lineWidth = 1.2 + lwBoost;
-				ctx.globalAlpha = Math.min(1, mirrorAlpha + alphaBoost);
-				ctx.shadowBlur = 2 + glowBoost * 0.5;
-				ctx.stroke();
+
+				// 3-pass glow (same as normal, but through segmented draw)
+				drawSegmentedTrail(3, 0.1 * mirrorAlpha, 8 + glowBoost + bloomT * 12);
+				drawSegmentedTrail(1.8 + lwBoost * 0.5, 0.3 * mirrorAlpha, 4 + glowBoost * 0.5 + bloomT * 6);
+				drawSegmentedTrail(1.2 + lwBoost, Math.min(1, mirrorAlpha + alphaBoost), 2 + glowBoost * 0.5);
 			}
 
 			ctx.globalAlpha = 1;
