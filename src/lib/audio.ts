@@ -53,6 +53,20 @@ function getContext(): AudioContext {
 }
 
 /**
+ * Ensure the AudioContext is fully running before scheduling audio.
+ * Must be called from a user gesture handler (tap/click) for iOS compatibility.
+ * Unlike getContext(), this awaits the resume() promise so oscillators
+ * scheduled immediately after won't hit a still-suspended context.
+ */
+async function ensureResumed(): Promise<AudioContext> {
+	const audioCtx = getContext();
+	if (audioCtx.state === 'suspended' || (audioCtx.state as string) === 'interrupted') {
+		await audioCtx.resume();
+	}
+	return audioCtx;
+}
+
+/**
  * Get (or create) the master output chain: all audio → masterGain → analyser → destination.
  * This allows the AnalyserNode to tap into all audio output.
  */
@@ -534,13 +548,13 @@ function schedulePostPlaybackSuspend(durationMs: number): void {
 	scheduleSuspend(durationMs + 500);
 }
 
-export function playInterval(
+export async function playInterval(
 	rootMidi: number,
 	semitones: number,
 	direction: 'ascending' | 'descending' | 'harmonic',
 	toneType: ToneType = 'sine'
-): void {
-	const audioCtx = getContext();
+): Promise<void> {
+	const audioCtx = await ensureResumed();
 	const master = getMasterOutput();
 	const now = audioCtx.currentTime;
 
@@ -597,14 +611,14 @@ export function playInterval(
  * @param toneType - which synth engine to use
  * @param arpeggiated - if true, play notes sequentially (~150ms apart); if false, block chord
  */
-export function playChord(
+export async function playChord(
 	rootMidi: number,
 	intervals: number[],
 	voicing: ChordVoicing,
 	toneType: ToneType = 'epiano',
 	arpeggiated: boolean = false
-): void {
-	const audioCtx = getContext();
+): Promise<void> {
+	const audioCtx = await ensureResumed();
 	const master = getMasterOutput();
 	const now = audioCtx.currentTime;
 
@@ -643,12 +657,12 @@ export function playChord(
  * Play a single note through the master output (analyser-connected).
  * Use for scale visualization where each note needs individual timing control.
  */
-export function playNote(
+export async function playNote(
 	midi: number,
 	toneType: ToneType = 'epiano',
 	duration: number = 0.5
-): void {
-	const audioCtx = getContext();
+): Promise<void> {
+	const audioCtx = await ensureResumed();
 	const master = getMasterOutput();
 	const now = audioCtx.currentTime;
 	const freq = midiToFreq(midi);
@@ -676,13 +690,13 @@ export function playNote(
  * @param toneType - which synth engine to use
  * @param tempo - milliseconds between note onsets (default 150ms)
  */
-export function playScale(
+export async function playScale(
 	rootMidi: number,
 	intervals: number[],
 	toneType: ToneType = 'epiano',
 	tempo: number = 150
-): void {
-	const audioCtx = getContext();
+): Promise<void> {
+	const audioCtx = await ensureResumed();
 	const master = getMasterOutput();
 	const now = audioCtx.currentTime;
 
@@ -722,8 +736,8 @@ export function playScale(
  * Correct: rising arpeggio chirp
  * Wrong: descending buzz
  */
-export function playFeedbackChime(correct: boolean): void {
-	const audioCtx = getContext();
+export async function playFeedbackChime(correct: boolean): Promise<void> {
+	const audioCtx = await ensureResumed();
 	const now = audioCtx.currentTime;
 
 	if (correct) {
