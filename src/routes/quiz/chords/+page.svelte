@@ -490,12 +490,15 @@
 		border-color: var(--accent);
 	}
 	.play-area {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		z-index: 2;
 		display: flex;
-		flex-direction: column;
 		align-items: center;
-		gap: 1rem;
-		flex: 1;
 		justify-content: center;
+		pointer-events: none;
 	}
 	.play-tap {
 		width: min(40vw, 160px);
@@ -508,6 +511,7 @@
 		justify-content: center;
 		cursor: pointer;
 		-webkit-tap-highlight-color: transparent;
+		pointer-events: auto;
 	}
 	.play-tap:active { transform: scale(0.95); }
 	.q-text {
@@ -522,6 +526,7 @@
 	.q-text.feedback-wrong { color: var(--wrong); }
 	.answer-area {
 		width: 100%;
+		margin-top: auto;
 	}
 	.answer-area.hidden {
 		visibility: hidden;

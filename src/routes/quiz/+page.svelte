@@ -371,7 +371,7 @@
 
 	{#if question}
 		<div class="play-area">
-			<!-- Tap target — the Lissajous visual is in the VizQuizLayout canvas -->
+			<!-- Absolutely centered to match Lissajous canvas center -->
 			<button class="play-tap" onclick={hasPlayed && inResultMode ? replayInResult : play}>
 				<span class="q-text" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'}>
 					Q{questionNum}
@@ -469,12 +469,15 @@
 		border-color: var(--hot);
 	}
 	.play-area {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		z-index: 2;
 		display: flex;
-		flex-direction: column;
 		align-items: center;
-		gap: 1rem;
-		flex: 1;
 		justify-content: center;
+		pointer-events: none;
 	}
 	.play-tap {
 		width: min(40vw, 160px);
@@ -487,6 +490,7 @@
 		justify-content: center;
 		cursor: pointer;
 		-webkit-tap-highlight-color: transparent;
+		pointer-events: auto;
 	}
 	.play-tap:active {
 		transform: scale(0.95);
@@ -507,6 +511,7 @@
 	}
 	.answer-area {
 		width: 100%;
+		margin-top: auto; /* push to bottom */
 	}
 	.answer-area.hidden {
 		visibility: hidden;
