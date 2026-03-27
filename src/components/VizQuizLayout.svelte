@@ -26,6 +26,7 @@
 		scaleIntervals?: number[];
 		countdownPct?: number;
 		ontransitionend?: () => void;
+		/** Content overlaid inside the canvas viewport (e.g. Q# tap target) */
 		children?: import('svelte').Snippet;
 	}
 
@@ -304,7 +305,7 @@
 
 			const drawFx = 1 + (fx - 1) * morphT;
 			const drawFy = 1 + (fy - 1) * morphT;
-			const radius = Math.min(cx, cy) * 0.35 * radiusPulse; // Lissajous in center area
+			const radius = Math.min(cx, cy) * 0.78 * radiusPulse; // Same as lab
 
 			// Speed
 			const maxRatio = Math.max(fx, fy);
@@ -557,45 +558,57 @@
 	});
 </script>
 
-<div class="viz-layout">
-	<!-- Full-viewport canvas — pointer-events: none so UI is tappable -->
+<!-- Contained canvas viewport — lab style with frame corners -->
+<div class="canvas-frame">
 	<canvas bind:this={canvas} class="viz-canvas"></canvas>
-
-	<!-- Quiz UI overlay — pointer-events: auto on children -->
-	<div class="viz-overlay">
+	<!-- Overlay inside viewport (e.g. Q# tap target) -->
+	<div class="viz-inner-overlay">
 		{#if children}
 			{@render children()}
 		{/if}
 	</div>
+	<div class="frame-corner tl"></div>
+	<div class="frame-corner tr"></div>
+	<div class="frame-corner bl"></div>
+	<div class="frame-corner br"></div>
 </div>
 
 <style>
-	.viz-layout {
+	.canvas-frame {
 		position: relative;
-		width: 100%;
-		height: 100%;
-		overflow: hidden;
+		flex: 1;
+		min-height: 0;
+		border: 1px solid var(--border-heavy);
 		background: #000;
 	}
 	.viz-canvas {
+		display: block;
+		width: 100%;
+		height: 100%;
+		pointer-events: none;
+	}
+	.viz-inner-overlay {
 		position: absolute;
 		inset: 0;
-		width: 100%;
-		height: 100%;
-		pointer-events: none;
-		z-index: 0;
-	}
-	.viz-overlay {
-		position: relative;
-		z-index: 1;
-		width: 100%;
-		height: 100%;
 		display: flex;
-		flex-direction: column;
+		align-items: center;
+		justify-content: center;
 		pointer-events: none;
+		z-index: 1;
 	}
-	/* Children get pointer-events back */
-	.viz-overlay :global(*) {
+	.viz-inner-overlay :global(*) {
 		pointer-events: auto;
 	}
+	.frame-corner {
+		position: absolute;
+		width: 12px;
+		height: 12px;
+		border-color: var(--accent);
+		border-style: solid;
+		opacity: 0.4;
+	}
+	.frame-corner.tl { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+	.frame-corner.tr { top: -1px; right: -1px; border-width: 2px 2px 0 0; }
+	.frame-corner.bl { bottom: -1px; left: -1px; border-width: 0 0 2px 2px; }
+	.frame-corner.br { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
 </style>

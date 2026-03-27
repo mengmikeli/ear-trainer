@@ -333,13 +333,6 @@
 	</div>
 </div>
 {:else}
-<VizQuizLayout
-	mode="scale"
-	phase={vizPhase}
-	scaleIntervals={question?.scale.intervals}
-	countdownPct={hasPlayed && inResultMode ? countdownPct : -1}
-	ontransitionend={handleTransitionEnd}
->
 <div class="quiz">
 	<h2 class="heading">SCALES</h2>
 	<div class="top">
@@ -356,13 +349,19 @@
 	</div>
 
 	{#if question}
-		<div class="play-area">
+		<VizQuizLayout
+			mode="scale"
+			phase={vizPhase}
+			scaleIntervals={question.scale.intervals}
+			countdownPct={hasPlayed && inResultMode ? countdownPct : -1}
+			ontransitionend={handleTransitionEnd}
+		>
 			<button class="play-tap" onclick={hasPlayed && inResultMode ? replayInResult : play}>
 				<span class="q-text" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'}>
 					Q{questionNum}
 				</span>
 			</button>
-		</div>
+		</VizQuizLayout>
 
 		<div class="answer-area" class:hidden={!hasPlayed}>
 			<AnswerGrid
@@ -376,7 +375,6 @@
 		</div>
 	{/if}
 </div>
-</VizQuizLayout>
 {/if}
 
 <style>
@@ -460,17 +458,6 @@
 		color: var(--hot);
 		border-color: var(--hot);
 	}
-	.play-area {
-		position: absolute;
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%, -50%);
-		z-index: 2;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		pointer-events: none;
-	}
 	.play-tap {
 		width: min(40vw, 160px);
 		height: min(40vw, 160px);
@@ -482,7 +469,6 @@
 		justify-content: center;
 		cursor: pointer;
 		-webkit-tap-highlight-color: transparent;
-		pointer-events: auto;
 	}
 	.play-tap:active { transform: scale(0.95); }
 	.q-text {
