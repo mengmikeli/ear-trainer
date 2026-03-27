@@ -43,6 +43,10 @@ function getContext(): AudioContext {
 		source.start();
 	}
 	if (ctx.state === 'suspended' || (ctx.state as string) === 'interrupted') {
+		// Restore iOS audio session type (cleared by suspendAudio)
+		if ('audioSession' in navigator && 'type' in (navigator as any).audioSession) {
+			(navigator as any).audioSession.type = 'playback';
+		}
 		ctx.resume();
 	}
 	return ctx;
