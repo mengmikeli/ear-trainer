@@ -680,3 +680,145 @@ export function playFeedbackChime(correct: boolean): void {
 		});
 	}
 }
+
+// --- Drone (v3.5 — modes) ---
+
+export interface DroneHandle {
+	stop: () => void;
+	setMuted: (muted: boolean) => void;
+	isMuted: () => boolean;
+}
+
+let activeDrone: DroneHandle | null = null;
+
+/**
+ * Start a continuous drone on a given MIDI note.
+ * Uses layered sine + fifth with slow LFO for organic warmth.
+ * Returns a handle to stop/mute it.
+ *
+ * Only one drone at a time — calling startDrone while one is active
+ * stops the previous drone first.
+ */
+export function startDrone(midi: number): DroneHandle {
+	// Stop any existing drone
+	if (activeDrone) {
+		activeDrone.stop();
+		activeDrone = null;
+	}
+
+	const audioCtx = getContext();
+	const master = getMasterOutput();
+
+	// Fundamental — sine wave
+	const osc1 = audioCtx.createOscillator();
+	osc1.type = 'sine';
+	osc1.frequency.value = midiToFreq(midi);
+
+	// Fifth above — very quiet, adds richness
+	const osc2 = audioCtx.createOscillator();
+	osc2.type = 'sine';
+	osc2.frequency.value = midiToFreq(midi + 7);
+
+	// Slow LFO on gain for organic breathing feel
+	const lfo = audioCtx.createOscillator();
+	lfo.type = 'sine';
+	lfo.frequency.value = 0.15; // very slow
+
+	const lfoGain = audioCtx.createGain();
+	lfoGain.gain.value = 0.03; // subtle modulation
+
+	lfo.connect(lfoGain);
+
+	// Per-oscillator gains
+	const osc1Gain = audioCtx.createGain();
+	osc1Gain.gain.value = 0.15;
+	const osc2Gain = audioCtx.createGain();
+	osc2Gain.gain.value = 0.04;
+
+	// Low-pass filter for warmth
+	const filter = audioCtx.createBiquadFilter();
+	filter.type = 'lowpass';
+	filter.frequency.value = 800;
+	filter.Q.value = 0.7;
+
+	// Master drone gain (for fade in/out + mute)
+	const droneGain = audioCtx.createGain();
+	droneGain.gain.value = 0;
+
+	// Wire it up
+	osc1.connect(osc1Gain);
+	osc2.connect(osc2Gain);
+	osc1Gain.connect(filter);
+	osc2Gain.connect(filter);
+	lfoGain.connect(droneGain.gain); // LFO modulates master gain
+	filter.connect(droneGain);
+	droneGain.connect(master);
+
+	// Fade in over 1 second
+	const now = audioCtx.currentTime;
+	droneGain.gain.setValueAtTime(0, now);
+	droneGain.gain.linearRampToValueAtTime(1, now + 1.0);
+
+	osc1.start(now);
+	osc2.start(now);
+	lfo.start(now);
+
+	let muted = false;
+	let stopped = false;
+
+	const handle: DroneHandle = {
+		stop() {
+			if (stopped) return;
+			stopped = true;
+			const t = audioCtx.currentTime;
+			droneGain.gain.cancelScheduledValues(t);
+			droneGain.gain.setValueAtTime(droneGain.gain.value, t);
+			droneGain.gain.linearRampToValueAtTime(0, t + 0.5);
+			setTimeout(() => {
+				try {
+					osc1.stop();
+					osc2.stop();
+					lfo.stop();
+					osc1.disconnect();
+					osc2.disconnect();
+					lfo.disconnect();
+					droneGain.disconnect();
+				} catch {
+					// already stopped
+				}
+			}, 600);
+			if (activeDrone === handle) activeDrone = null;
+		},
+		setMuted(m: boolean) {
+			if (stopped) return;
+			muted = m;
+			const t = audioCtx.currentTime;
+			droneGain.gain.cancelScheduledValues(t);
+			droneGain.gain.setValueAtTime(droneGain.gain.value, t);
+			droneGain.gain.linearRampToValueAtTime(m ? 0 : 1, t + 0.15);
+		},
+		isMuted() {
+			return muted;
+		},
+	};
+
+	activeDrone = handle;
+	return handle;
+}
+
+/**
+ * Stop any active drone.
+ */
+export function stopDrone(): void {
+	if (activeDrone) {
+		activeDrone.stop();
+		activeDrone = null;
+	}
+}
+
+/**
+ * Get the current active drone handle (if any).
+ */
+export function getActiveDrone(): DroneHandle | null {
+	return activeDrone;
+}

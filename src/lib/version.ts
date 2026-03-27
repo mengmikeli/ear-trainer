@@ -1,4 +1,4 @@
-export const APP_VERSION = '3.3';
+export const APP_VERSION = '3.5';
 
 export interface ReleaseNote {
 	version: string;
@@ -8,6 +8,22 @@ export interface ReleaseNote {
 }
 
 export const RELEASE_NOTES: ReleaseNote[] = [
+	{
+		version: '3.5',
+		date: '2026-03-27',
+		title: 'ADAPTIVE LEARNING',
+		changes: [
+			'Unified adaptive engine — cross-content SM-2 tracking across intervals, chords, scales, and modes',
+			'Smart session planner — TRAIN button generates mixed-content sessions with warmup → focus → review phases',
+			'Cross-content connection map — failing related items boosts connected content',
+			'Musical modes — Dorian, Mixolydian, Phrygian, Lydian with drone playback',
+			'Drone audio — sustained root note with LFO breathing for modal context',
+			'A/B comparison on wrong mode answers — hear the correct vs selected mode',
+			'Drone mute toggle during mode quiz',
+			'Per-type debrief breakdown in adaptive sessions',
+			'Session history tracking (last 20 sessions)',
+		],
+	},
 	{
 		version: '3.3',
 		date: '2026-03-26',

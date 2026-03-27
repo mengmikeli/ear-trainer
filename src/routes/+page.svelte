@@ -69,11 +69,19 @@
 		return bronzeCount >= 3;
 	});
 
+	// Modes unlock: all tier 3 scales unlocked + 60 scale questions at 70%
+	const modesUnlocked = $derived(() => {
+		if (!state) return false;
+		if (state.settings.devMode) return true;
+		if (!state.modes) return false;
+		return Object.values(state.modes).some(m => m.unlocked);
+	});
+
 	const activeContent = $derived(() => {
 		return state?.settings.activeContent ?? 'intervals';
 	});
 
-	function setActiveContent(mode: 'intervals' | 'chords' | 'scales') {
+	function setActiveContent(mode: 'intervals' | 'chords' | 'scales' | 'modes') {
 		if (!state) return;
 		state.settings.activeContent = mode;
 		saveState(state);
@@ -103,7 +111,11 @@
 			? `${base}/quiz/chords`
 			: content === 'scales'
 				? `${base}/quiz/scales`
-				: `${base}/quiz`;
+				: content === 'modes'
+					? `${base}/quiz/modes`
+					: content === 'adaptive'
+						? `${base}/quiz/adaptive`
+						: `${base}/quiz`;
 		let tick = 0;
 		const iv = setInterval(() => {
 			goText = glitchChars[Math.floor(Math.random() * glitchChars.length)];
@@ -241,12 +253,19 @@
 						onclick={() => setActiveContent('scales')}
 					>SCALES</button>
 					{/if}
+					{#if modesUnlocked()}
+					<button
+						class="switch-btn"
+						class:active={activeContent() === 'modes'}
+						onclick={() => setActiveContent('modes')}
+					>MODES</button>
+					{/if}
 				</div>
 			{/if}
 
 			<div class="radar-zone">
 				<RadarGrid size="280px" />
-				<a href={activeContent() === 'chords' ? `${base}/quiz/chords` : activeContent() === 'scales' ? `${base}/quiz/scales` : `${base}/quiz`} class="start-btn" class:glitching={goGlitching} onclick={handleGo}>
+				<a href={activeContent() === 'chords' ? `${base}/quiz/chords` : activeContent() === 'scales' ? `${base}/quiz/scales` : activeContent() === 'modes' ? `${base}/quiz/modes` : `${base}/quiz`} class="start-btn" class:glitching={goGlitching} onclick={handleGo}>
 					<span class="btn-text">{goText}</span>
 				</a>
 			</div>
