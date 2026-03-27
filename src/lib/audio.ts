@@ -26,6 +26,15 @@ function getContext(): AudioContext {
 			(navigator as any).audioSession.type = 'playback';
 		}
 
+		// Set media session metadata immediately to prevent "localhost" on lock screen
+		if ('mediaSession' in navigator) {
+			navigator.mediaSession.metadata = new MediaMetadata({
+				title: 'Ear Trainer',
+				artist: 'Ear Trainer',
+				album: 'Practice',
+			});
+		}
+
 		// Play a silent buffer to fully unlock iOS audio pipeline
 		const silent = ctx.createBuffer(1, 1, ctx.sampleRate);
 		const source = ctx.createBufferSource();
@@ -34,9 +43,27 @@ function getContext(): AudioContext {
 		source.start();
 	}
 	if (ctx.state === 'suspended' || (ctx.state as string) === 'interrupted') {
+		// Restore iOS audio session type (cleared by suspendAudio)
+		if ('audioSession' in navigator && 'type' in (navigator as any).audioSession) {
+			(navigator as any).audioSession.type = 'playback';
+		}
 		ctx.resume();
 	}
 	return ctx;
+}
+
+/**
+ * Ensure the AudioContext is fully running before scheduling audio.
+ * Must be called from a user gesture handler (tap/click) for iOS compatibility.
+ * Unlike getContext(), this awaits the resume() promise so oscillators
+ * scheduled immediately after won't hit a still-suspended context.
+ */
+async function ensureResumed(): Promise<AudioContext> {
+	const audioCtx = getContext();
+	if (audioCtx.state === 'suspended' || (audioCtx.state as string) === 'interrupted') {
+		await audioCtx.resume();
+	}
+	return audioCtx;
 }
 
 /**
@@ -172,18 +199,6 @@ function playSineTone(freq: number, startTime: number, duration: number, audioCt
 	// Use triangle wave for warmer sine-like tone
 	osc.type = 'triangle';
 	osc.frequency.value = freq;
-
-	// Sub-oscillator for body (one octave down, quiet)
-	const subOsc = audioCtx.createOscillator();
-	const subGain = audioCtx.createGain();
-	subOsc.type = 'sine';
-	subOsc.frequency.value = freq / 2;
-	subGain.gain.setValueAtTime(0.08, startTime);
-	subGain.gain.linearRampToValueAtTime(0, startTime + duration);
-	subOsc.connect(subGain);
-	subGain.connect(audioCtx.destination);
-	subOsc.start(startTime);
-	subOsc.stop(startTime + duration);
 
 	// Main envelope — snappy attack, smooth decay
 	gain.gain.setValueAtTime(0, startTime);
@@ -326,17 +341,6 @@ function playSineToneToNode(
 	osc.type = 'triangle';
 	osc.frequency.value = freq;
 
-	const subOsc = audioCtx.createOscillator();
-	const subGain = audioCtx.createGain();
-	subOsc.type = 'sine';
-	subOsc.frequency.value = freq / 2;
-	subGain.gain.setValueAtTime(0.08, startTime);
-	subGain.gain.linearRampToValueAtTime(0, startTime + duration);
-	subOsc.connect(subGain);
-	subGain.connect(destNode);
-	subOsc.start(startTime);
-	subOsc.stop(startTime + duration);
-
 	gain.gain.setValueAtTime(0, startTime);
 	gain.gain.linearRampToValueAtTime(0.4, startTime + 0.01);
 	gain.gain.exponentialRampToValueAtTime(0.25, startTime + 0.08);
@@ -441,6 +445,55 @@ export function stopAudio(): void {
 		analyserNode = null;
 		masterOutput = null;
 	}
+	// Clear iOS audio session type
+	if ('audioSession' in navigator && 'type' in (navigator as any).audioSession) {
+		(navigator as any).audioSession.type = 'auto';
+	}
+	// Clear media session so lock screen / Dynamic Island don't show stale info
+	if ('mediaSession' in navigator) {
+		navigator.mediaSession.metadata = null;
+		navigator.mediaSession.playbackState = 'none';
+	}
+}
+
+/**
+ * Suspend the AudioContext after playback ends.
+ * Lighter than stopAudio() — keeps the context alive for quick resume
+ * but releases the audio session (Dynamic Island, lock screen).
+ */
+export function suspendAudio(): void {
+	if (ctx && ctx.state === 'running') {
+		ctx.suspend();
+	}
+	// Clear iOS audio session type
+	if ('audioSession' in navigator && 'type' in (navigator as any).audioSession) {
+		(navigator as any).audioSession.type = 'auto';
+	}
+	if ('mediaSession' in navigator) {
+		navigator.mediaSession.metadata = null;
+		navigator.mediaSession.playbackState = 'none';
+	}
+}
+
+/**
+ * Schedule audio suspension after a delay (for post-playback cleanup).
+ * Cancels any pending suspension if new audio starts.
+ */
+let suspendTimer: ReturnType<typeof setTimeout> | null = null;
+
+export function scheduleSuspend(delayMs: number = 2000): void {
+	if (suspendTimer) clearTimeout(suspendTimer);
+	suspendTimer = setTimeout(() => {
+		suspendAudio();
+		suspendTimer = null;
+	}, delayMs);
+}
+
+export function cancelScheduledSuspend(): void {
+	if (suspendTimer) {
+		clearTimeout(suspendTimer);
+		suspendTimer = null;
+	}
 }
 
 /**
@@ -452,13 +505,56 @@ export function warmUpAudio(): void {
 	getContext();
 }
 
-export function playInterval(
+/**
+ * Try to resume the AudioContext after returning from background.
+ * Returns true if the context was successfully resumed (or was already running).
+ * Returns false if no context exists or resume requires a user gesture.
+ *
+ * On iOS, resume() may silently fail outside a user gesture — the next
+ * user tap will trigger getContext() which handles the resume+audioSession restore.
+ */
+export function resumeAudio(): boolean {
+	if (!ctx) return false;
+	if (ctx.state === 'running') return true;
+	if (ctx.state === 'suspended' || (ctx.state as string) === 'interrupted') {
+		// Restore iOS audio session type (cleared by suspendAudio)
+		if ('audioSession' in navigator && 'type' in (navigator as any).audioSession) {
+			(navigator as any).audioSession.type = 'playback';
+		}
+		ctx.resume();
+		// resume() is async but we can't await here — if it fails,
+		// getContext() will retry on next user-gesture-triggered play
+		return ctx.state === 'running';
+	}
+	return false;
+}
+
+/** Set media session metadata so lock screen shows app name, not "localhost" */
+function setMediaSessionMetadata(title: string = 'Ear Trainer'): void {
+	if ('mediaSession' in navigator) {
+		navigator.mediaSession.metadata = new MediaMetadata({
+			title,
+			artist: 'Ear Trainer',
+			album: 'Practice',
+		});
+		navigator.mediaSession.playbackState = 'playing';
+	}
+}
+
+/** Calculate total playback duration in ms, then schedule suspend */
+function schedulePostPlaybackSuspend(durationMs: number): void {
+	cancelScheduledSuspend();
+	// Suspend 500ms after last note ends
+	scheduleSuspend(durationMs + 500);
+}
+
+export async function playInterval(
 	rootMidi: number,
 	semitones: number,
 	direction: 'ascending' | 'descending' | 'harmonic',
 	toneType: ToneType = 'sine'
-): void {
-	const audioCtx = getContext();
+): Promise<void> {
+	const audioCtx = await ensureResumed();
 	const master = getMasterOutput();
 	const now = audioCtx.currentTime;
 
@@ -498,6 +594,12 @@ export function playInterval(
 			playSineToneToNode(freq2, now + noteDuration + gap, noteDuration, audioCtx, master);
 		}
 	}
+
+	setMediaSessionMetadata('Interval Practice');
+	const totalDurationMs = direction === 'harmonic'
+		? harmonicDuration * 1000
+		: (noteDuration * 2 + (toneType === 'piano' ? 0.3 : 0.15)) * 1000;
+	schedulePostPlaybackSuspend(totalDurationMs);
 }
 
 /**
@@ -509,14 +611,14 @@ export function playInterval(
  * @param toneType - which synth engine to use
  * @param arpeggiated - if true, play notes sequentially (~150ms apart); if false, block chord
  */
-export function playChord(
+export async function playChord(
 	rootMidi: number,
 	intervals: number[],
 	voicing: ChordVoicing,
 	toneType: ToneType = 'epiano',
 	arpeggiated: boolean = false
-): void {
-	const audioCtx = getContext();
+): Promise<void> {
+	const audioCtx = await ensureResumed();
 	const master = getMasterOutput();
 	const now = audioCtx.currentTime;
 
@@ -543,18 +645,24 @@ export function playChord(
 		const offset = arpeggiated ? i * arpDelay : Math.random() * 0.015; // humanization for block
 		playToNode(freq, now + offset, noteDuration, audioCtx, chordGain);
 	});
+
+	setMediaSessionMetadata('Chord Practice');
+	const totalDurationMs = arpeggiated
+		? ((noteCount - 1) * arpDelay + noteDuration) * 1000
+		: noteDuration * 1000;
+	schedulePostPlaybackSuspend(totalDurationMs);
 }
 
 /**
  * Play a single note through the master output (analyser-connected).
  * Use for scale visualization where each note needs individual timing control.
  */
-export function playNote(
+export async function playNote(
 	midi: number,
 	toneType: ToneType = 'epiano',
 	duration: number = 0.5
-): void {
-	const audioCtx = getContext();
+): Promise<void> {
+	const audioCtx = await ensureResumed();
 	const master = getMasterOutput();
 	const now = audioCtx.currentTime;
 	const freq = midiToFreq(midi);
@@ -582,13 +690,13 @@ export function playNote(
  * @param toneType - which synth engine to use
  * @param tempo - milliseconds between note onsets (default 150ms)
  */
-export function playScale(
+export async function playScale(
 	rootMidi: number,
 	intervals: number[],
 	toneType: ToneType = 'epiano',
 	tempo: number = 150
-): void {
-	const audioCtx = getContext();
+): Promise<void> {
+	const audioCtx = await ensureResumed();
 	const master = getMasterOutput();
 	const now = audioCtx.currentTime;
 
@@ -617,6 +725,10 @@ export function playScale(
 			playSineToneToNode(freq, startTime, noteDuration, audioCtx, noteGain);
 		}
 	});
+
+	setMediaSessionMetadata('Scale Practice');
+	const totalDurationMs = intervals.length * tempo;
+	schedulePostPlaybackSuspend(totalDurationMs);
 }
 
 /**
@@ -624,8 +736,8 @@ export function playScale(
  * Correct: rising arpeggio chirp
  * Wrong: descending buzz
  */
-export function playFeedbackChime(correct: boolean): void {
-	const audioCtx = getContext();
+export async function playFeedbackChime(correct: boolean): Promise<void> {
+	const audioCtx = await ensureResumed();
 	const now = audioCtx.currentTime;
 
 	if (correct) {
@@ -679,4 +791,7 @@ export function playFeedbackChime(correct: boolean): void {
 			osc.stop(t + 0.4);
 		});
 	}
+
+	// Suspend audio after chime finishes (~500ms)
+	schedulePostPlaybackSuspend(500);
 }

@@ -19,7 +19,8 @@ function createMockAudioContext() {
 		sampleRate: 44100,
 		state: 'running',
 		destination: {},
-		resume: vi.fn(),
+		resume: vi.fn().mockResolvedValue(undefined),
+		suspend: vi.fn().mockResolvedValue(undefined),
 		createOscillator: vi.fn(function () {
 			return {
 				type: 'sine' as string,
@@ -35,7 +36,8 @@ function createMockAudioContext() {
 					value: 1,
 					setValueAtTime: vi.fn(),
 					linearRampToValueAtTime: vi.fn(),
-					exponentialRampToValueAtTime: vi.fn()
+					exponentialRampToValueAtTime: vi.fn(),
+					cancelScheduledValues: vi.fn()
 				},
 				connect: vi.fn()
 			};
@@ -75,7 +77,6 @@ describe('playInterval — with mocked Web Audio API', () => {
 
 	beforeEach(() => {
 		vi.resetModules();
-		// audio.ts uses `window.AudioContext` with `new`, so we need a proper constructor
 		(globalThis as any).window = globalThis;
 		(globalThis as any).AudioContext = vi.fn(function (this: any) {
 			lastMockCtx = createMockAudioContext();
@@ -83,31 +84,30 @@ describe('playInterval — with mocked Web Audio API', () => {
 		});
 	});
 
-	it('plays harmonic interval with sine tone without throwing', async () => {
+	it('plays harmonic interval with sine tone', async () => {
 		const { playInterval } = await import('$lib/audio');
-		expect(() => playInterval(60, 7, 'harmonic', 'sine')).not.toThrow();
+		await playInterval(60, 7, 'harmonic', 'sine');
 	});
 
-	it('plays harmonic interval with piano tone without throwing', async () => {
+	it('plays harmonic interval with piano tone', async () => {
 		const { playInterval } = await import('$lib/audio');
-		expect(() => playInterval(60, 7, 'harmonic', 'piano')).not.toThrow();
+		await playInterval(60, 7, 'harmonic', 'piano');
 	});
 
-	it('plays ascending interval without throwing (regression)', async () => {
+	it('plays ascending interval', async () => {
 		const { playInterval } = await import('$lib/audio');
-		expect(() => playInterval(60, 7, 'ascending', 'sine')).not.toThrow();
+		await playInterval(60, 7, 'ascending', 'sine');
 	});
 
-	it('plays descending interval without throwing (regression)', async () => {
+	it('plays descending interval', async () => {
 		const { playInterval } = await import('$lib/audio');
-		expect(() => playInterval(60, 7, 'descending', 'sine')).not.toThrow();
+		await playInterval(60, 7, 'descending', 'sine');
 	});
 
 	it('harmonic mode starts all oscillators at the same time', async () => {
 		const { playInterval } = await import('$lib/audio');
-		playInterval(60, 7, 'harmonic', 'sine');
+		await playInterval(60, 7, 'harmonic', 'sine');
 
-		// All oscillators should start at time 0 (currentTime)
 		const oscResults = lastMockCtx!.createOscillator.mock.results;
 		for (const result of oscResults) {
 			const startCalls = result.value.start.mock.calls;
@@ -129,64 +129,60 @@ describe('playScale — with mocked Web Audio API', () => {
 		});
 	});
 
-	it('plays a major scale without throwing', async () => {
+	it('plays a major scale', async () => {
 		const { playScale } = await import('$lib/audio');
-		expect(() => playScale(60, [0, 2, 4, 5, 7, 9, 11, 12], 'epiano', 150)).not.toThrow();
+		await playScale(60, [0, 2, 4, 5, 7, 9, 11, 12], 'epiano', 150);
 	});
 
 	it('plays with all tone types', async () => {
 		const { playScale } = await import('$lib/audio');
 		const intervals = [0, 2, 4, 5, 7, 9, 11, 12];
-		expect(() => playScale(60, intervals, 'sine', 150)).not.toThrow();
-		expect(() => playScale(60, intervals, 'piano', 150)).not.toThrow();
-		expect(() => playScale(60, intervals, 'epiano', 150)).not.toThrow();
+		await playScale(60, intervals, 'sine', 150);
+		await playScale(60, intervals, 'piano', 150);
+		await playScale(60, intervals, 'epiano', 150);
 	});
 
 	it('plays pentatonic scale (6 notes)', async () => {
 		const { playScale } = await import('$lib/audio');
-		expect(() => playScale(60, [0, 2, 4, 7, 9, 12], 'sine', 150)).not.toThrow();
+		await playScale(60, [0, 2, 4, 7, 9, 12], 'sine', 150);
 		const oscCount = lastMockCtx!.createOscillator.mock.calls.length;
 		expect(oscCount).toBeGreaterThanOrEqual(6);
 	});
 
 	it('plays chromatic scale (13 notes)', async () => {
 		const { playScale } = await import('$lib/audio');
-		expect(() => playScale(60, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], 'sine', 150)).not.toThrow();
+		await playScale(60, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], 'sine', 150);
 		const oscCount = lastMockCtx!.createOscillator.mock.calls.length;
 		expect(oscCount).toBeGreaterThanOrEqual(13);
 	});
 
 	it('plays blues scale (7 notes)', async () => {
 		const { playScale } = await import('$lib/audio');
-		expect(() => playScale(60, [0, 3, 5, 6, 7, 10, 12], 'sine', 150)).not.toThrow();
+		await playScale(60, [0, 3, 5, 6, 7, 10, 12], 'sine', 150);
 		const oscCount = lastMockCtx!.createOscillator.mock.calls.length;
 		expect(oscCount).toBeGreaterThanOrEqual(7);
 	});
 
-	it('plays with slow tempo (250ms)', async () => {
+	it('plays with slow tempo', async () => {
 		const { playScale } = await import('$lib/audio');
-		expect(() => playScale(60, [0, 2, 4, 5, 7, 9, 11, 12], 'epiano', 250)).not.toThrow();
+		await playScale(60, [0, 2, 4, 5, 7, 9, 11, 12], 'epiano', 250);
 	});
 
 	it('plays at boundary MIDI values', async () => {
 		const { playScale } = await import('$lib/audio');
-		// C3 (lowest per design)
-		expect(() => playScale(48, [0, 2, 4, 5, 7, 9, 11, 12], 'sine', 150)).not.toThrow();
-		// C5 (highest per design) — pentatonic to stay in range
-		expect(() => playScale(72, [0, 2, 4, 7, 9, 12], 'sine', 150)).not.toThrow();
+		await playScale(48, [0, 2, 4, 5, 7, 9, 11, 12], 'sine', 150);
+		await playScale(72, [0, 2, 4, 7, 9, 12], 'sine', 150);
 	});
 
 	it('uses default tempo when not specified', async () => {
 		const { playScale } = await import('$lib/audio');
-		// Should default to 150ms — no throw
-		expect(() => playScale(60, [0, 2, 4, 5, 7, 9, 11, 12], 'epiano')).not.toThrow();
+		await playScale(60, [0, 2, 4, 5, 7, 9, 11, 12], 'epiano');
 	});
 
 	it('schedules notes sequentially (not all at time 0)', async () => {
 		const { playScale } = await import('$lib/audio');
-		playScale(60, [0, 2, 4, 5, 7, 9, 11, 12], 'sine', 150);
+		await playScale(60, [0, 2, 4, 5, 7, 9, 11, 12], 'sine', 150);
 
-		// Gather all oscillator start times
 		const oscResults = lastMockCtx!.createOscillator.mock.results;
 		const startTimes: number[] = [];
 		for (const result of oscResults) {
@@ -195,8 +191,6 @@ describe('playScale — with mocked Web Audio API', () => {
 				startTimes.push(calls[0][0]);
 			}
 		}
-
-		// Should have different start times (sequential scheduling)
 		const unique = new Set(startTimes);
 		expect(unique.size).toBeGreaterThan(1);
 	});

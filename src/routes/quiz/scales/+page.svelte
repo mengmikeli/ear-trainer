@@ -4,7 +4,7 @@
 	import { base } from '$app/paths';
 	import { loadState, saveState, checkTierUnlock } from '$lib/state';
 	import { generateScaleQuestion } from '$lib/engine';
-	import { playScale, playFeedbackChime } from '$lib/audio';
+	import { playScale, playFeedbackChime, suspendAudio } from '$lib/audio';
 	import { responseQuality, calculateSm2 } from '$lib/sm2';
 	import type { UserState, ScaleQuestion, ScaleDef } from '$lib/types';
 	import PlayButton from '../../../components/PlayButton.svelte';
@@ -48,6 +48,12 @@
 		state = loadState();
 		totalQuestions = state.settings.sessionLength;
 		nextQuestion();
+
+		return () => {
+			if (rafId) cancelAnimationFrame(rafId);
+			if (correctTimeout) clearTimeout(correctTimeout);
+			suspendAudio();
+		};
 	});
 
 	function nextQuestion() {

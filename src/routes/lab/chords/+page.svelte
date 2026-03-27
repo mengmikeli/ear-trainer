@@ -312,10 +312,25 @@
 
 		ctx.fillStyle = '#000';
 		ctx.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
+
+		// Pause animation when page is hidden (saves CPU/battery)
+		let animPaused = false;
+		function handleVisibility() {
+			if (document.hidden) {
+				animPaused = true;
+				cancelAnimationFrame(animId);
+			} else if (animPaused) {
+				animPaused = false;
+				animId = requestAnimationFrame(draw);
+			}
+		}
+		document.addEventListener('visibilitychange', handleVisibility);
+
 		draw();
 
 		return () => {
 			cancelAnimationFrame(animId);
+			document.removeEventListener('visibilitychange', handleVisibility);
 			window.removeEventListener('resize', resize);
 			ro.disconnect();
 			analyserRef = null;
