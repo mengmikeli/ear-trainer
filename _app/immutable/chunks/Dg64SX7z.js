@@ -1,0 +1,1 @@
+import{p as r}from"./D_s-_Km2.js";import{s as t}from"./Cs-o_kzs.js";const e={get error(){return r.error},get status(){return r.status},get url(){return r.url}};t.updated.check;const a=e;export{a as p};
