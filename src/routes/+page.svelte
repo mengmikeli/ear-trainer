@@ -31,7 +31,7 @@
 			try {
 				const config: SessionConfig = {
 					length: state.settings.sessionLength,
-					allowedKinds: ['interval', 'chord', 'scale'],
+					allowedKinds: ['interval', 'chord', 'scale', 'mode'],
 					mixStrategy: 'adaptive',
 				};
 				const plan = planSession(state, config);
