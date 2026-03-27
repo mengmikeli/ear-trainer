@@ -130,19 +130,8 @@ export function buildAllItems(state: UserState): ContentItem[] {
 
 	// Modes: one item per mode (unlocked via tier config)
 	for (const def of MODES) {
-		// Modes share unlock state with scales tier 4
-		// Check if mode is unlocked via the adaptive tier system
-		const modeState = state.scales[def.id];
-		if (modeState && (!modeState.unlocked || !modeState.enabled)) continue;
-		// If no state exists yet, check if modes are unlocked globally
-		if (!modeState && !state.adaptive) continue;
-		if (!modeState && state.adaptive) {
-			// Mode is available if tier 4 scales are unlocked
-			const hasModeTier = Object.keys(state.scales).some(
-				id => state.scales[id].unlocked && SCALES.find(s => s.id === id)?.tier === 3
-			);
-			if (!hasModeTier) continue;
-		}
+		const modeState = state.modes?.[def.id];
+		if (!modeState || !modeState.unlocked || !modeState.enabled) continue;
 		items.push({
 			kind: 'mode',
 			id: `mode:${def.id}`,
