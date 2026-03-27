@@ -1,4 +1,4 @@
-export const APP_VERSION = '3.5.0';
+export const APP_VERSION = '3.6.0';
 
 /**
  * Git commit hash injected at build time via vite.config.ts define.
@@ -8,7 +8,7 @@ declare const __BUILD_HASH__: string;
 const BUILD_HASH = typeof __BUILD_HASH__ !== 'undefined' ? __BUILD_HASH__ : 'dev';
 
 /**
- * Full version string for display: v3.5.0+abc1234
+ * Full version string for display: v3.6.0+abc1234
  */
 export const VERSION_STRING = `v${APP_VERSION}+${BUILD_HASH}`;
 
@@ -20,6 +20,22 @@ export interface ReleaseNote {
 }
 
 export const RELEASE_NOTES: ReleaseNote[] = [
+	{
+		version: '3.6.0',
+		date: '2026-03-30',
+		title: 'ADAPTIVE LEARNING',
+		changes: [
+			'Unified adaptive engine — cross-content SM-2 tracking across intervals, chords, scales, and modes',
+			'Smart session planner — TRAIN button generates mixed-content sessions with warmup → focus → review phases',
+			'Cross-content connection map — failing related items boosts connected content',
+			'Musical modes — Dorian, Mixolydian, Phrygian, Lydian with drone playback',
+			'Drone audio — sustained root note with LFO breathing for modal context',
+			'A/B comparison on wrong mode answers — hear the correct vs selected mode',
+			'Drone mute toggle during mode quiz',
+			'Per-type debrief breakdown in adaptive sessions',
+			'Session history tracking (last 20 sessions)',
+		],
+	},
 	{
 		version: '3.5.0',
 		date: '2026-03-30',

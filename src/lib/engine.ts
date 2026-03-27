@@ -1,7 +1,8 @@
-import type { UserState, Question, IntervalDef, PlayMode, ChordDef, ChordVoicing, ChordQuestion, ScaleDef, ScaleQuestion } from './types';
+import type { UserState, Question, IntervalDef, PlayMode, ChordDef, ChordVoicing, ChordQuestion, ScaleDef, ScaleQuestion, ModeQuestion } from './types';
 import { INTERVALS, getUnlockedIntervals, getEnabledIntervals } from './intervals';
 import { CHORDS, getEnabledChords } from './chords';
 import { SCALES, getEnabledScales } from './scales';
+import { MODES, type ModeDef } from './modes';
 
 export function pickInterval(state: UserState): IntervalDef {
 	const unlocked = getEnabledIntervals(state.intervals);
@@ -330,5 +331,94 @@ export function generateScaleQuestion(state: UserState): ScaleQuestion {
 		scale,
 		choices,
 		replays: 0
+	};
+}
+
+// --- Mode engine (v3.5) ---
+
+export function getEnabledModes(modeStates: Record<string, import('./types').ModeState> | undefined): ModeDef[] {
+	if (!modeStates) return [];
+	return MODES.filter(m => modeStates[m.id]?.unlocked && modeStates[m.id]?.enabled);
+}
+
+export function generateModeDistractors(correctId: string, modeStates?: Record<string, import('./types').ModeState>): ModeDef[] {
+	const correctDef = MODES.find(m => m.id === correctId);
+	const correctIntervals = new Set(correctDef?.intervals ?? []);
+
+	// Use enabled modes first, then fall back to all modes
+	const enabled = modeStates
+		? getEnabledModes(modeStates).filter(m => m.id !== correctId)
+		: MODES.filter(m => m.id !== correctId);
+	const shuffled = [...enabled].sort(() => Math.random() - 0.5);
+
+	if (shuffled.length >= 3) {
+		return shuffled.slice(0, 3);
+	}
+
+	// Fill from remaining modes sorted by shared interval count (better confusables)
+	const usedIds = new Set([correctId, ...shuffled.map(m => m.id)]);
+	const remaining = MODES.filter(m => !usedIds.has(m.id)).sort((a, b) => {
+		const sharedA = a.intervals.filter(i => correctIntervals.has(i)).length;
+		const sharedB = b.intervals.filter(i => correctIntervals.has(i)).length;
+		return sharedB - sharedA;
+	});
+
+	const result = [...shuffled];
+	for (const def of remaining) {
+		if (result.length >= 3) break;
+		result.push(def);
+	}
+
+	return result;
+}
+
+export function generateModeQuestion(state: UserState): ModeQuestion {
+	const enabled = getEnabledModes(state.modes);
+	if (enabled.length === 0) throw new Error('No enabled modes');
+
+	// Simple weighted pick (same pattern as scales — flat, no per-variant)
+	const now = Date.now();
+	const weights = enabled.map(def => {
+		const s = state.modes?.[def.id];
+		const attempts = s?.attempts ?? 0;
+		const correct = s?.correct ?? 0;
+		const accuracy = attempts > 0 ? correct / attempts : 0.5;
+		const weaknessWeight = 1 - accuracy;
+		const overdue = s?.nextReview && s.nextReview > 0 ? Math.max(0, now - s.nextReview) : 0;
+		const reviewWeight = Math.min(1, overdue / (24 * 60 * 60 * 1000));
+		const newBoost = attempts === 0 ? 0.5 : 0;
+
+		return {
+			def,
+			weight: 0.1 + weaknessWeight * 0.5 + reviewWeight * 0.3 + newBoost,
+		};
+	});
+
+	const totalWeight = weights.reduce((sum, w) => sum + w.weight, 0);
+	let roll = Math.random() * totalWeight;
+	let mode = weights[weights.length - 1].def;
+	for (const w of weights) {
+		roll -= w.weight;
+		if (roll <= 0) { mode = w.def; break; }
+	}
+
+	// Root note: C3-C4 range (48-60) — keep it in a comfortable range for drone
+	const rootNote = 48 + Math.floor(Math.random() * 13);
+
+	const distractors = generateModeDistractors(mode.id, state.modes);
+	const seen = new Set<string>();
+	const uniqueChoices = [mode, ...distractors].filter(c => {
+		if (seen.has(c.id)) return false;
+		seen.add(c.id);
+		return true;
+	});
+	const choices = uniqueChoices.sort(() => Math.random() - 0.5);
+
+	return {
+		rootNote,
+		mode,
+		choices,
+		replays: 0,
+		droneNote: rootNote, // drone sits on root
 	};
 }
