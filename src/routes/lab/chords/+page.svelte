@@ -346,9 +346,9 @@
 		<canvas bind:this={mainCanvas}></canvas>
 		<button class="play-btn" class:playing={isPlaying} onclick={handlePlay} aria-label="Play chord">
 			{#if isPlaying}
-				<span class="play-icon pulse">◉</span>
+				<span class="play-icon pulse"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="5"/></svg></span>
 			{:else}
-				<span class="play-icon">▶</span>
+				<span class="play-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><polygon points="6,3 20,12 6,21"/></svg></span>
 			{/if}
 		</button>
 		<div class="frame-corner tl"></div>
