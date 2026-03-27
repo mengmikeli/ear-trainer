@@ -286,7 +286,7 @@ describe('playChord — with mocked Web Audio API', () => {
 	it('creates AudioContext and calls oscillator methods', async () => {
 		const { playChord } = await import('$lib/audio');
 		await playChord(60, [0, 4, 7], 'root', 'epiano', false);
-		const oscCount = lastMockCtx.createOscillator.mock.calls.length;
+		const oscCount = lastMockCtx!.createOscillator.mock.calls.length;
 		expect(oscCount).toBeGreaterThanOrEqual(3);
 	});
 });
