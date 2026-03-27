@@ -1,14 +1,15 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { base } from '$app/paths';
 	import { loadState, saveState, checkTierUnlock } from '$lib/state';
-	import { playInterval, playChord, playScale, playFeedbackChime } from '$lib/audio';
-	import { generateDistractors, generateChordDistractors, generateScaleDistractors } from '$lib/engine';
+	import { playInterval, playChord, playScale, playFeedbackChime, startDrone, stopDrone, type DroneHandle } from '$lib/audio';
+	import { generateDistractors, generateChordDistractors, generateScaleDistractors, generateModeDistractors } from '$lib/engine';
 	import { planSession, recordAdaptiveAnswer, type ContentItem, type PlannedQuestion, type SessionPlan, type SessionConfig } from '$lib/adaptive';
 	import { INTERVALS } from '$lib/intervals';
 	import { CHORDS, applyInversion } from '$lib/chords';
 	import { SCALES } from '$lib/scales';
+	import { MODES } from '$lib/modes';
 	import type { UserState, IntervalDef, ChordDef, ScaleDef, PlayMode, ChordVoicing } from '$lib/types';
 	import PlayButton from '../../../components/PlayButton.svelte';
 	import AnswerGrid from '../../../components/AnswerGrid.svelte';
@@ -16,6 +17,7 @@
 	import TelemetryBar from '../../../components/TelemetryBar.svelte';
 
 	const SCALE_TEMPO = 150;
+	const MODE_TEMPO = 180;
 
 	interface AdaptiveResult {
 		item: ContentItem;
@@ -56,6 +58,9 @@
 	let currentPlayMode: PlayMode = $state('ascending');
 	let currentVoicing: ChordVoicing = $state('root');
 
+	// Drone for mode questions
+	let drone: DroneHandle | null = $state(null);
+
 	// Summary
 	let showSummary = $state(false);
 	let results: AdaptiveResult[] = $state([]);
@@ -66,12 +71,16 @@
 
 		const config: SessionConfig = {
 			length: totalQuestions,
-			allowedKinds: ['interval', 'chord', 'scale'],
+			allowedKinds: ['interval', 'chord', 'scale', 'mode'],
 			mixStrategy: 'adaptive',
 		};
 
 		plan = planSession(state, config);
 		nextQuestion();
+	});
+
+	onDestroy(() => {
+		stopDrone();
 	});
 
 	function nextQuestion() {
@@ -81,6 +90,9 @@
 			finishSession();
 			return;
 		}
+
+		// Stop drone from previous mode question (if any)
+		if (drone) { stopDrone(); drone = null; }
 
 		isGlitching = true;
 		feedbackState = null;
@@ -163,6 +175,26 @@
 				return true;
 			});
 			choices = raw.sort(() => Math.random() - 0.5).map(c => ({ id: c.id, name: c.name, label: c.label ?? c.id.toUpperCase() }));
+
+		} else if (kind === 'mode') {
+			const def = MODES.find(m => m.id === defId)!;
+			correctDefId = def.id;
+
+			// Root note C3-C4 for comfortable drone register
+			rootNote = 48 + Math.floor(Math.random() * 13);
+
+			const distractors = generateModeDistractors(def.id, state.modes);
+			const seen = new Set<string>();
+			const raw = [def, ...distractors].filter(c => {
+				if (seen.has(c.id)) return false;
+				seen.add(c.id);
+				return true;
+			});
+			choices = raw.sort(() => Math.random() - 0.5).map(c => ({ id: c.id, name: c.name, label: c.label }));
+
+			// Start drone for mode questions
+			stopDrone();
+			drone = startDrone(rootNote);
 		}
 
 		hasPlayed = false;
@@ -193,6 +225,13 @@
 			playScale(rootNote, def.intervals, state.settings.toneType, SCALE_TEMPO);
 			isPlaying = true;
 			const dur = def.intervals.length * SCALE_TEMPO + 400;
+			setTimeout(() => { isPlaying = false; }, dur);
+
+		} else if (kind === 'mode') {
+			const def = MODES.find(m => m.id === defId)!;
+			playScale(rootNote, def.intervals, state.settings.toneType, MODE_TEMPO);
+			isPlaying = true;
+			const dur = def.intervals.length * MODE_TEMPO + 400;
 			setTimeout(() => { isPlaying = false; }, dur);
 		}
 
@@ -269,6 +308,7 @@
 	}
 
 	function finishSession() {
+		stopDrone(); drone = null;
 		if (!state) return;
 		state.stats.totalSessions++;
 
@@ -321,7 +361,7 @@
 
 		const config: SessionConfig = {
 			length: totalQuestions,
-			allowedKinds: ['interval', 'chord', 'scale'],
+			allowedKinds: ['interval', 'chord', 'scale', 'mode'],
 			mixStrategy: 'adaptive',
 		};
 		plan = planSession(state, config);
@@ -334,6 +374,7 @@
 	}
 
 	function endEarly() {
+		stopDrone(); drone = null;
 		if (questionIdx > 1 && state) {
 			state.stats.totalSessions++;
 			state.stats.lastPractice = Date.now();
