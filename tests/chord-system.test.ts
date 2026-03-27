@@ -192,7 +192,8 @@ describe('playChord — with mocked Web Audio API', () => {
 				sampleRate: 44100,
 				state: 'running',
 				destination: {},
-				resume: vi.fn(),
+				resume: vi.fn().mockResolvedValue(undefined),
+				suspend: vi.fn().mockResolvedValue(undefined),
 				createOscillator: vi.fn(() => ({
 					type: 'sine' as string,
 					frequency: { value: 440 },
@@ -235,35 +236,35 @@ describe('playChord — with mocked Web Audio API', () => {
 
 	it('plays block chord without throwing', async () => {
 		const { playChord } = await import('$lib/audio');
-		expect(() => playChord(60, [0, 4, 7], 'root', 'epiano', false)).not.toThrow();
+		await playChord(60, [0, 4, 7], 'root', 'epiano', false);
 	});
 
 	it('plays arpeggiated chord without throwing', async () => {
 		const { playChord } = await import('$lib/audio');
-		expect(() => playChord(60, [0, 4, 7], 'root', 'epiano', true)).not.toThrow();
+		await playChord(60, [0, 4, 7], 'root', 'epiano', true);
 	});
 
 	it('plays with all tone types', async () => {
 		const { playChord } = await import('$lib/audio');
-		expect(() => playChord(60, [0, 4, 7], 'root', 'sine', false)).not.toThrow();
-		expect(() => playChord(60, [0, 4, 7], 'root', 'piano', false)).not.toThrow();
-		expect(() => playChord(60, [0, 4, 7], 'root', 'epiano', false)).not.toThrow();
+		await playChord(60, [0, 4, 7], 'root', 'sine', false);
+		await playChord(60, [0, 4, 7], 'root', 'piano', false);
+		await playChord(60, [0, 4, 7], 'root', 'epiano', false);
 	});
 
 	it('plays 7th chord (4 notes) without throwing', async () => {
 		const { playChord } = await import('$lib/audio');
-		expect(() => playChord(60, [0, 4, 7, 10], 'root', 'epiano', false)).not.toThrow();
+		await playChord(60, [0, 4, 7, 10], 'root', 'epiano', false);
 	});
 
 	it('plays with inversions without throwing', async () => {
 		const { playChord } = await import('$lib/audio');
-		expect(() => playChord(60, [0, 4, 7], 'first', 'epiano', false)).not.toThrow();
-		expect(() => playChord(60, [0, 4, 7], 'second', 'epiano', false)).not.toThrow();
+		await playChord(60, [0, 4, 7], 'first', 'epiano', false);
+		await playChord(60, [0, 4, 7], 'second', 'epiano', false);
 	});
 
 	it('creates oscillators for each note in the chord', async () => {
 		const { playChord } = await import('$lib/audio');
-		playChord(60, [0, 4, 7], 'root', 'sine', false);
+		await playChord(60, [0, 4, 7], 'root', 'sine', false);
 		// Sine creates 2 oscillators per note (main + sub), plus 1 for initial silent buffer
 		// 3 notes × 2 oscillators = 6, plus 1 buffer source
 		const oscCount = lastMockCtx.createOscillator.mock.calls.length;
