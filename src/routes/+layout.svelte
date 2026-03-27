@@ -4,7 +4,7 @@
 	import BottomNav from '../components/BottomNav.svelte';
 	import { initTheme } from '$lib/theme';
 	import { loadState } from '$lib/state';
-	import { warmUpAudio } from '$lib/audio';
+	import { warmUpAudio, suspendAudio, cancelScheduledSuspend } from '$lib/audio';
 
 	let { children } = $props();
 
@@ -20,6 +20,19 @@
 		};
 		document.addEventListener('touchend', unlock, { once: true });
 		document.addEventListener('click', unlock, { once: true });
+
+		// Suspend audio when page goes to background (saves battery, clears Dynamic Island)
+		function handleVisibility() {
+			if (document.hidden) {
+				cancelScheduledSuspend();
+				suspendAudio();
+			}
+		}
+		document.addEventListener('visibilitychange', handleVisibility);
+
+		return () => {
+			document.removeEventListener('visibilitychange', handleVisibility);
+		};
 	});
 </script>
 

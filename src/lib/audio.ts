@@ -26,6 +26,15 @@ function getContext(): AudioContext {
 			(navigator as any).audioSession.type = 'playback';
 		}
 
+		// Set media session metadata immediately to prevent "localhost" on lock screen
+		if ('mediaSession' in navigator) {
+			navigator.mediaSession.metadata = new MediaMetadata({
+				title: 'Ear Trainer',
+				artist: 'Ear Trainer',
+				album: 'Practice',
+			});
+		}
+
 		// Play a silent buffer to fully unlock iOS audio pipeline
 		const silent = ctx.createBuffer(1, 1, ctx.sampleRate);
 		const source = ctx.createBufferSource();
@@ -441,6 +450,10 @@ export function stopAudio(): void {
 		analyserNode = null;
 		masterOutput = null;
 	}
+	// Clear iOS audio session type
+	if ('audioSession' in navigator && 'type' in (navigator as any).audioSession) {
+		(navigator as any).audioSession.type = 'auto';
+	}
 	// Clear media session so lock screen / Dynamic Island don't show stale info
 	if ('mediaSession' in navigator) {
 		navigator.mediaSession.metadata = null;
@@ -457,7 +470,12 @@ export function suspendAudio(): void {
 	if (ctx && ctx.state === 'running') {
 		ctx.suspend();
 	}
+	// Clear iOS audio session type
+	if ('audioSession' in navigator && 'type' in (navigator as any).audioSession) {
+		(navigator as any).audioSession.type = 'auto';
+	}
 	if ('mediaSession' in navigator) {
+		navigator.mediaSession.metadata = null;
 		navigator.mediaSession.playbackState = 'none';
 	}
 }
@@ -754,4 +772,7 @@ export function playFeedbackChime(correct: boolean): void {
 			osc.stop(t + 0.4);
 		});
 	}
+
+	// Suspend audio after chime finishes (~500ms)
+	schedulePostPlaybackSuspend(500);
 }
