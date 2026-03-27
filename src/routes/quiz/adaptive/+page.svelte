@@ -60,6 +60,13 @@
 
 	// Drone for mode questions
 	let drone: DroneHandle | null = $state(null);
+	let droneMuted = $state(false);
+
+	function toggleDroneMute() {
+		if (!drone) return;
+		droneMuted = !droneMuted;
+		drone.setMuted(droneMuted);
+	}
 
 	// Summary
 	let showSummary = $state(false);
@@ -92,7 +99,7 @@
 		}
 
 		// Stop drone from previous mode question (if any)
-		if (drone) { stopDrone(); drone = null; }
+		if (drone) { stopDrone(); drone = null; droneMuted = false; }
 
 		isGlitching = true;
 		feedbackState = null;
@@ -308,7 +315,7 @@
 	}
 
 	function finishSession() {
-		stopDrone(); drone = null;
+		stopDrone(); drone = null; droneMuted = false;
 		if (!state) return;
 		state.stats.totalSessions++;
 
@@ -374,7 +381,7 @@
 	}
 
 	function endEarly() {
-		stopDrone(); drone = null;
+		stopDrone(); drone = null; droneMuted = false;
 		if (questionIdx > 1 && state) {
 			state.stats.totalSessions++;
 			state.stats.lastPractice = Date.now();
@@ -488,7 +495,13 @@
 		</div>
 		<div class="top-controls">
 			<button class="close exit" onclick={endEarly}>EXIT</button>
-			<span class="content-badge">{contentIndicator()}</span>
+			{#if currentItem?.kind === 'mode' && drone}
+				<button class="drone-btn" class:muted={droneMuted} onclick={toggleDroneMute}>
+					{droneMuted ? 'DRONE OFF' : 'DRONE ON'}
+				</button>
+			{:else}
+				<span class="content-badge">{contentIndicator()}</span>
+			{/if}
 			<span class="counter">{String(questionIdx).padStart(2, '0')}/{String(plan?.questions.length ?? totalQuestions).padStart(2, '0')}</span>
 		</div>
 	</div>
@@ -583,6 +596,27 @@
 		padding: 0 6px;
 		line-height: 1.6;
 		opacity: 0.7;
+	}
+	.drone-btn {
+		position: absolute;
+		left: 50%;
+		transform: translateX(-50%);
+		font-size: 0.35rem;
+		font-family: var(--mono);
+		font-weight: 900;
+		letter-spacing: 0.1em;
+		color: var(--accent);
+		background: transparent;
+		border: 1px solid var(--accent);
+		padding: 0 8px;
+		line-height: 1.6;
+		cursor: pointer;
+		transition: color 0.15s, border-color 0.15s, opacity 0.15s;
+	}
+	.drone-btn.muted {
+		color: var(--text-secondary);
+		border-color: var(--border-heavy);
+		opacity: 0.5;
 	}
 	.close {
 		font-size: 0.4rem;

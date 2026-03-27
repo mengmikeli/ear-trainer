@@ -324,7 +324,7 @@
 						<span class="missed-id">{r.mode.label}</span>
 						<div class="missed-info">
 							<span class="missed-name">{r.mode.name}</span>
-							<span class="missed-detail">answered {r.selectedId}</span>
+							<span class="missed-detail">answered {MODES.find(m => m.id === r.selectedId)?.name ?? r.selectedId}</span>
 						</div>
 					</div>
 				</div>
