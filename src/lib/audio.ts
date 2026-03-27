@@ -186,18 +186,6 @@ function playSineTone(freq: number, startTime: number, duration: number, audioCt
 	osc.type = 'triangle';
 	osc.frequency.value = freq;
 
-	// Sub-oscillator for body (one octave down, quiet)
-	const subOsc = audioCtx.createOscillator();
-	const subGain = audioCtx.createGain();
-	subOsc.type = 'sine';
-	subOsc.frequency.value = freq / 2;
-	subGain.gain.setValueAtTime(0.08, startTime);
-	subGain.gain.linearRampToValueAtTime(0, startTime + duration);
-	subOsc.connect(subGain);
-	subGain.connect(audioCtx.destination);
-	subOsc.start(startTime);
-	subOsc.stop(startTime + duration);
-
 	// Main envelope — snappy attack, smooth decay
 	gain.gain.setValueAtTime(0, startTime);
 	gain.gain.linearRampToValueAtTime(0.4, startTime + 0.01);
@@ -338,17 +326,6 @@ function playSineToneToNode(
 
 	osc.type = 'triangle';
 	osc.frequency.value = freq;
-
-	const subOsc = audioCtx.createOscillator();
-	const subGain = audioCtx.createGain();
-	subOsc.type = 'sine';
-	subOsc.frequency.value = freq / 2;
-	subGain.gain.setValueAtTime(0.08, startTime);
-	subGain.gain.linearRampToValueAtTime(0, startTime + duration);
-	subOsc.connect(subGain);
-	subGain.connect(destNode);
-	subOsc.start(startTime);
-	subOsc.stop(startTime + duration);
 
 	gain.gain.setValueAtTime(0, startTime);
 	gain.gain.linearRampToValueAtTime(0.4, startTime + 0.01);
