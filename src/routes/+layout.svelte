@@ -4,7 +4,7 @@
 	import BottomNav from '../components/BottomNav.svelte';
 	import { initTheme } from '$lib/theme';
 	import { loadState } from '$lib/state';
-	import { warmUpAudio } from '$lib/audio';
+	import { warmUpAudio, suspendAudio, resumeAudio, cancelScheduledSuspend } from '$lib/audio';
 
 	let { children } = $props();
 
@@ -20,6 +20,24 @@
 		};
 		document.addEventListener('touchend', unlock, { once: true });
 		document.addEventListener('click', unlock, { once: true });
+
+		// Suspend audio when page goes to background (saves battery, clears Dynamic Island)
+		// Resume audio context when returning — iOS kills suspended contexts
+		function handleVisibility() {
+			if (document.hidden) {
+				cancelScheduledSuspend();
+				suspendAudio();
+			} else {
+				// Try to resume the AudioContext; if iOS blocks it (no gesture),
+				// the next user tap → play → getContext() will handle it
+				resumeAudio();
+			}
+		}
+		document.addEventListener('visibilitychange', handleVisibility);
+
+		return () => {
+			document.removeEventListener('visibilitychange', handleVisibility);
+		};
 	});
 </script>
 

@@ -26,6 +26,15 @@ function getContext(): AudioContext {
 			(navigator as any).audioSession.type = 'playback';
 		}
 
+		// Set media session metadata immediately to prevent "localhost" on lock screen
+		if ('mediaSession' in navigator) {
+			navigator.mediaSession.metadata = new MediaMetadata({
+				title: 'Ear Trainer',
+				artist: 'Ear Trainer',
+				album: 'Practice',
+			});
+		}
+
 		// Play a silent buffer to fully unlock iOS audio pipeline
 		const silent = ctx.createBuffer(1, 1, ctx.sampleRate);
 		const source = ctx.createBufferSource();
@@ -34,6 +43,10 @@ function getContext(): AudioContext {
 		source.start();
 	}
 	if (ctx.state === 'suspended' || (ctx.state as string) === 'interrupted') {
+		// Restore iOS audio session type (cleared by suspendAudio)
+		if ('audioSession' in navigator && 'type' in (navigator as any).audioSession) {
+			(navigator as any).audioSession.type = 'playback';
+		}
 		ctx.resume();
 	}
 	return ctx;
@@ -441,6 +454,10 @@ export function stopAudio(): void {
 		analyserNode = null;
 		masterOutput = null;
 	}
+	// Clear iOS audio session type
+	if ('audioSession' in navigator && 'type' in (navigator as any).audioSession) {
+		(navigator as any).audioSession.type = 'auto';
+	}
 	// Clear media session so lock screen / Dynamic Island don't show stale info
 	if ('mediaSession' in navigator) {
 		navigator.mediaSession.metadata = null;
@@ -457,7 +474,12 @@ export function suspendAudio(): void {
 	if (ctx && ctx.state === 'running') {
 		ctx.suspend();
 	}
+	// Clear iOS audio session type
+	if ('audioSession' in navigator && 'type' in (navigator as any).audioSession) {
+		(navigator as any).audioSession.type = 'auto';
+	}
 	if ('mediaSession' in navigator) {
+		navigator.mediaSession.metadata = null;
 		navigator.mediaSession.playbackState = 'none';
 	}
 }
@@ -490,6 +512,30 @@ export function cancelScheduledSuspend(): void {
  */
 export function warmUpAudio(): void {
 	getContext();
+}
+
+/**
+ * Try to resume the AudioContext after returning from background.
+ * Returns true if the context was successfully resumed (or was already running).
+ * Returns false if no context exists or resume requires a user gesture.
+ *
+ * On iOS, resume() may silently fail outside a user gesture — the next
+ * user tap will trigger getContext() which handles the resume+audioSession restore.
+ */
+export function resumeAudio(): boolean {
+	if (!ctx) return false;
+	if (ctx.state === 'running') return true;
+	if (ctx.state === 'suspended' || (ctx.state as string) === 'interrupted') {
+		// Restore iOS audio session type (cleared by suspendAudio)
+		if ('audioSession' in navigator && 'type' in (navigator as any).audioSession) {
+			(navigator as any).audioSession.type = 'playback';
+		}
+		ctx.resume();
+		// resume() is async but we can't await here — if it fails,
+		// getContext() will retry on next user-gesture-triggered play
+		return ctx.state === 'running';
+	}
+	return false;
 }
 
 /** Set media session metadata so lock screen shows app name, not "localhost" */
@@ -754,4 +800,7 @@ export function playFeedbackChime(correct: boolean): void {
 			osc.stop(t + 0.4);
 		});
 	}
+
+	// Suspend audio after chime finishes (~500ms)
+	schedulePostPlaybackSuspend(500);
 }

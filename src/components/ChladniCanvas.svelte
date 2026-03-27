@@ -7,7 +7,8 @@
 	let canvas: HTMLCanvasElement;
 	let animId: number;
 
-	const PARTICLE_COUNT = 3000;
+	const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+	const PARTICLE_COUNT = isMobile ? 1500 : 3000;
 	const SETTLE_SPEED = 0.004;    // how fast particles drift to nodal lines
 	const JITTER = 0.001;          // random noise to keep things alive
 
@@ -125,10 +126,25 @@
 
 		ctx.fillStyle = '#000000';
 		ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+		// Pause animation when page is hidden (saves CPU/battery)
+		let animPaused = false;
+		function handleVisibility() {
+			if (document.hidden) {
+				animPaused = true;
+				cancelAnimationFrame(animId);
+			} else if (animPaused) {
+				animPaused = false;
+				animId = requestAnimationFrame(draw);
+			}
+		}
+		document.addEventListener('visibilitychange', handleVisibility);
+
 		draw();
 
 		return () => {
 			cancelAnimationFrame(animId);
+			document.removeEventListener('visibilitychange', handleVisibility);
 			window.removeEventListener('resize', resize);
 		};
 	});
