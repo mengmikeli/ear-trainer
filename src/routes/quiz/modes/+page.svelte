@@ -86,7 +86,7 @@
 			// Start drone on root note
 			if (question) {
 				stopDrone();
-				drone = startDrone(question.droneNote);
+				startDrone(question.droneNote).then(h => { drone = h; });
 				droneMuted = false;
 			}
 		});

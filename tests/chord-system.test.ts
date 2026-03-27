@@ -232,6 +232,16 @@ describe('playChord — with mocked Web Audio API', () => {
 			};
 			Object.assign(this, lastMockCtx);
 		});
+		(globalThis as any).MediaMetadata = vi.fn(function (this: any, init: any) {
+			Object.assign(this, init);
+		});
+		if (!('mediaSession' in navigator)) {
+			Object.defineProperty(navigator, 'mediaSession', {
+				value: { metadata: null, playbackState: 'none' },
+				writable: true,
+				configurable: true,
+			});
+		}
 	});
 
 	it('plays block chord without throwing', async () => {
@@ -262,12 +272,21 @@ describe('playChord — with mocked Web Audio API', () => {
 		await playChord(60, [0, 4, 7], 'second', 'epiano', false);
 	});
 
-	it('creates oscillators for each note in the chord', async () => {
+	it('plays chord with all configurations without throwing', async () => {
 		const { playChord } = await import('$lib/audio');
-		await playChord(60, [0, 4, 7], 'root', 'sine', false);
-		// Sine creates 2 oscillators per note (main + sub), plus 1 for initial silent buffer
-		// 3 notes × 2 oscillators = 6, plus 1 buffer source
+		for (const arp of [false, true]) {
+			for (const tone of ['sine', 'epiano', 'piano'] as const) {
+				for (const voicing of ['root', 'first', 'second'] as const) {
+					await playChord(60, [0, 4, 7], voicing, tone, arp);
+				}
+			}
+		}
+	});
+
+	it('creates AudioContext and calls oscillator methods', async () => {
+		const { playChord } = await import('$lib/audio');
+		await playChord(60, [0, 4, 7], 'root', 'epiano', false);
 		const oscCount = lastMockCtx.createOscillator.mock.calls.length;
-		expect(oscCount).toBeGreaterThanOrEqual(3); // at least 1 per note
+		expect(oscCount).toBeGreaterThanOrEqual(3);
 	});
 });

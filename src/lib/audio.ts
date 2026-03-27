@@ -851,14 +851,17 @@ let activeDrone: DroneHandle | null = null;
  * Only one drone at a time — calling startDrone while one is active
  * stops the previous drone first.
  */
-export function startDrone(midi: number): DroneHandle {
+export async function startDrone(midi: number): Promise<DroneHandle> {
 	// Stop any existing drone
 	if (activeDrone) {
 		activeDrone.stop();
 		activeDrone = null;
 	}
 
-	const audioCtx = getContext();
+	// Cancel any pending audio suspend — drone is continuous playback
+	cancelScheduledSuspend();
+
+	const audioCtx = await ensureResumed();
 	const master = getMasterOutput();
 
 	// Fundamental — sine wave
@@ -940,6 +943,8 @@ export function startDrone(midi: number): DroneHandle {
 				}
 			}, 600);
 			if (activeDrone === handle) activeDrone = null;
+			// Schedule audio suspend now that drone is done
+			scheduleSuspend(1000);
 		},
 		setMuted(m: boolean) {
 			if (stopped) return;

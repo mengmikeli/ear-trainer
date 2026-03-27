@@ -201,7 +201,7 @@
 
 			// Start drone for mode questions
 			stopDrone();
-			drone = startDrone(rootNote);
+			startDrone(rootNote).then(h => { drone = h; });
 		}
 
 		hasPlayed = false;
