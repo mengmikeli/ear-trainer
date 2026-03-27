@@ -441,6 +441,46 @@ export function stopAudio(): void {
 		analyserNode = null;
 		masterOutput = null;
 	}
+	// Clear media session so lock screen / Dynamic Island don't show stale info
+	if ('mediaSession' in navigator) {
+		navigator.mediaSession.metadata = null;
+		navigator.mediaSession.playbackState = 'none';
+	}
+}
+
+/**
+ * Suspend the AudioContext after playback ends.
+ * Lighter than stopAudio() — keeps the context alive for quick resume
+ * but releases the audio session (Dynamic Island, lock screen).
+ */
+export function suspendAudio(): void {
+	if (ctx && ctx.state === 'running') {
+		ctx.suspend();
+	}
+	if ('mediaSession' in navigator) {
+		navigator.mediaSession.playbackState = 'none';
+	}
+}
+
+/**
+ * Schedule audio suspension after a delay (for post-playback cleanup).
+ * Cancels any pending suspension if new audio starts.
+ */
+let suspendTimer: ReturnType<typeof setTimeout> | null = null;
+
+export function scheduleSuspend(delayMs: number = 2000): void {
+	if (suspendTimer) clearTimeout(suspendTimer);
+	suspendTimer = setTimeout(() => {
+		suspendAudio();
+		suspendTimer = null;
+	}, delayMs);
+}
+
+export function cancelScheduledSuspend(): void {
+	if (suspendTimer) {
+		clearTimeout(suspendTimer);
+		suspendTimer = null;
+	}
 }
 
 /**
@@ -450,6 +490,25 @@ export function stopAudio(): void {
  */
 export function warmUpAudio(): void {
 	getContext();
+}
+
+/** Set media session metadata so lock screen shows app name, not "localhost" */
+function setMediaSessionMetadata(title: string = 'Ear Trainer'): void {
+	if ('mediaSession' in navigator) {
+		navigator.mediaSession.metadata = new MediaMetadata({
+			title,
+			artist: 'Ear Trainer',
+			album: 'Practice',
+		});
+		navigator.mediaSession.playbackState = 'playing';
+	}
+}
+
+/** Calculate total playback duration in ms, then schedule suspend */
+function schedulePostPlaybackSuspend(durationMs: number): void {
+	cancelScheduledSuspend();
+	// Suspend 500ms after last note ends
+	scheduleSuspend(durationMs + 500);
 }
 
 export function playInterval(
@@ -498,6 +557,12 @@ export function playInterval(
 			playSineToneToNode(freq2, now + noteDuration + gap, noteDuration, audioCtx, master);
 		}
 	}
+
+	setMediaSessionMetadata('Interval Practice');
+	const totalDurationMs = direction === 'harmonic'
+		? harmonicDuration * 1000
+		: (noteDuration * 2 + (toneType === 'piano' ? 0.3 : 0.15)) * 1000;
+	schedulePostPlaybackSuspend(totalDurationMs);
 }
 
 /**
@@ -543,6 +608,12 @@ export function playChord(
 		const offset = arpeggiated ? i * arpDelay : Math.random() * 0.015; // humanization for block
 		playToNode(freq, now + offset, noteDuration, audioCtx, chordGain);
 	});
+
+	setMediaSessionMetadata('Chord Practice');
+	const totalDurationMs = arpeggiated
+		? ((noteCount - 1) * arpDelay + noteDuration) * 1000
+		: noteDuration * 1000;
+	schedulePostPlaybackSuspend(totalDurationMs);
 }
 
 /**
@@ -617,6 +688,10 @@ export function playScale(
 			playSineToneToNode(freq, startTime, noteDuration, audioCtx, noteGain);
 		}
 	});
+
+	setMediaSessionMetadata('Scale Practice');
+	const totalDurationMs = intervals.length * tempo;
+	schedulePostPlaybackSuspend(totalDurationMs);
 }
 
 /**
