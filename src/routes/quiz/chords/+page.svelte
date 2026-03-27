@@ -7,11 +7,10 @@
 	import { playChord, playFeedbackChime, suspendAudio } from '$lib/audio';
 	import { responseQuality, calculateSm2 } from '$lib/sm2';
 	import type { UserState, ChordQuestion, ChordDef, ChordVoicing } from '$lib/types';
-	import PlayButton from '../../../components/PlayButton.svelte';
 	import AnswerGrid from '../../../components/AnswerGrid.svelte';
 	import ProgressBar from '../../../components/ProgressBar.svelte';
 	import TelemetryBar from '../../../components/TelemetryBar.svelte';
-	import ChladniBackground from '../../../components/ChladniBackground.svelte';
+	import VizQuizLayout from '../../../components/VizQuizLayout.svelte';
 
 	interface QuestionResult {
 		chord: ChordDef;
@@ -39,6 +38,16 @@
 	let isGlitching = $state(false);
 	let correctTimeout: ReturnType<typeof setTimeout> | null = null;
 	let isArpeggiated = $state(false);
+
+	const vizPhase = $derived.by((): 'rest' | 'playing' | 'correct' | 'wrong' | 'transition' => {
+		if (isGlitching) return 'transition';
+		if (feedbackState === 'correct') return 'correct';
+		if (feedbackState === 'wrong') return 'wrong';
+		if (isPlaying) return 'playing';
+		return 'rest';
+	});
+
+	function handleTransitionEnd() {}
 
 	let showSummary = $state(false);
 	let results: QuestionResult[] = $state([]);
@@ -333,12 +342,13 @@
 	</div>
 </div>
 {:else}
-<ChladniBackground
+<VizQuizLayout
+	mode="chord"
+	phase={vizPhase}
 	chordIntervals={question?.chord.intervals}
-	playing={isPlaying}
-	glitching={isGlitching}
-	feedback={feedbackState}
-/>
+	countdownPct={hasPlayed && inResultMode ? countdownPct : -1}
+	ontransitionend={handleTransitionEnd}
+>
 <div class="quiz">
 	<h2 class="heading">CHORDS</h2>
 	<div class="top">
@@ -359,17 +369,11 @@
 
 	{#if question}
 		<div class="play-area">
-			<PlayButton
-				onplay={hasPlayed && inResultMode ? replayInResult : play}
-				replaying={hasPlayed}
-				playing={isPlaying}
-				questionNum={questionNum}
-				countdownPct={hasPlayed && inResultMode ? countdownPct : -1}
-				glitching={isGlitching}
-				feedback={feedbackState}
-				semitones={Math.max(...(question?.chord.intervals ?? [0]))}
-				chordIntervals={question?.chord.intervals}
-			/>
+			<button class="play-tap" onclick={hasPlayed && inResultMode ? replayInResult : play}>
+				<span class="q-text" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'}>
+					Q{questionNum}
+				</span>
+			</button>
 		</div>
 
 		<div class="answer-area" class:hidden={!hasPlayed}>
@@ -384,6 +388,7 @@
 		</div>
 	{/if}
 </div>
+</VizQuizLayout>
 {/if}
 
 <style>
@@ -492,6 +497,29 @@
 		flex: 1;
 		justify-content: center;
 	}
+	.play-tap {
+		width: min(40vw, 160px);
+		height: min(40vw, 160px);
+		border-radius: 50%;
+		background: transparent;
+		border: none;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+		-webkit-tap-highlight-color: transparent;
+	}
+	.play-tap:active { transform: scale(0.95); }
+	.q-text {
+		font-family: var(--mono);
+		font-size: 1.1rem;
+		font-weight: 700;
+		letter-spacing: 0.05em;
+		color: var(--accent);
+		transition: color 0.3s ease-out;
+	}
+	.q-text.feedback-correct { color: var(--correct); }
+	.q-text.feedback-wrong { color: var(--wrong); }
 	.answer-area {
 		width: 100%;
 	}
