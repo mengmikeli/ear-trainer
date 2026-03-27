@@ -762,8 +762,14 @@
 	}
 
 	.play-icon {
-		font-size: 0.9rem;
-		line-height: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		line-height: 0;
+	}
+
+	.play-icon svg {
+		display: block;
 	}
 
 	.play-icon.pulse {
@@ -771,7 +777,7 @@
 	}
 
 	@keyframes pulse-glow {
-		from { text-shadow: 0 0 4px var(--accent); }
-		to { text-shadow: 0 0 16px var(--accent), 0 0 24px var(--accent); }
+		from { filter: drop-shadow(0 0 4px var(--accent)); }
+		to { filter: drop-shadow(0 0 16px var(--accent)) drop-shadow(0 0 24px var(--accent)); }
 	}
 </style>
