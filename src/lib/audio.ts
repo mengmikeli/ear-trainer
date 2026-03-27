@@ -510,6 +510,30 @@ export function warmUpAudio(): void {
 	getContext();
 }
 
+/**
+ * Try to resume the AudioContext after returning from background.
+ * Returns true if the context was successfully resumed (or was already running).
+ * Returns false if no context exists or resume requires a user gesture.
+ *
+ * On iOS, resume() may silently fail outside a user gesture — the next
+ * user tap will trigger getContext() which handles the resume+audioSession restore.
+ */
+export function resumeAudio(): boolean {
+	if (!ctx) return false;
+	if (ctx.state === 'running') return true;
+	if (ctx.state === 'suspended' || (ctx.state as string) === 'interrupted') {
+		// Restore iOS audio session type (cleared by suspendAudio)
+		if ('audioSession' in navigator && 'type' in (navigator as any).audioSession) {
+			(navigator as any).audioSession.type = 'playback';
+		}
+		ctx.resume();
+		// resume() is async but we can't await here — if it fails,
+		// getContext() will retry on next user-gesture-triggered play
+		return ctx.state === 'running';
+	}
+	return false;
+}
+
 /** Set media session metadata so lock screen shows app name, not "localhost" */
 function setMediaSessionMetadata(title: string = 'Ear Trainer'): void {
 	if ('mediaSession' in navigator) {
