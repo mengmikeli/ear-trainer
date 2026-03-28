@@ -51,6 +51,39 @@
 
 	let playingNotes: number[] = $state([]);
 
+	let bounceCount = $state(0);
+	$effect(() => { if (playingNotes.length > 0) bounceCount++; });
+
+	const glitchChars = ['\uE000', '\uE001', '\uE002', '\uE003', '\uE004', '\uE005', '\uE006', '\uE007', '\uE008', '\uE010', '\uE017'];
+	let glitchText = $state('');
+	let glitchStartTime = 0;
+	$effect(() => {
+		const shouldGlitch = isGlitching || feedbackState === 'wrong' || feedbackState === 'correct';
+		if (shouldGlitch) {
+			glitchStartTime = Date.now();
+			const realText = `Q${questionNum}`;
+			const id = setInterval(() => {
+				const elapsed = Date.now() - glitchStartTime;
+				const settleBias = Math.min(1, elapsed / 600);
+				if (Math.random() < settleBias * 0.7) {
+					glitchText = realText;
+				} else {
+					const len = 1 + Math.floor(Math.random() * 3);
+					let t = '';
+					for (let i = 0; i < len; i++) {
+						t += Math.random() < 0.3 ? realText[Math.floor(Math.random() * realText.length)] : glitchChars[Math.floor(Math.random() * glitchChars.length)];
+					}
+					glitchText = t;
+				}
+			}, 50);
+			return () => { clearInterval(id); glitchText = ''; };
+		} else {
+			glitchText = '';
+		}
+	});
+	const showGlitch = $derived(isGlitching || feedbackState === 'wrong' || feedbackState === 'correct');
+	const displayText = $derived(glitchText || `Q${questionNum}`);
+
 	let showSummary = $state(false);
 	let results: QuestionResult[] = $state([]);
 
@@ -88,7 +121,7 @@
 			setTimeout(() => {
 				isGlitching = false;
 				play();
-			}, 100);
+			}, 600);
 		});
 	}
 
@@ -383,9 +416,11 @@
 			ontransitionend={handleTransitionEnd}
 			{playingNotes}
 		>
-			<button class="play-tap" onclick={hasPlayed && inResultMode ? replayInResult : play}>
-				<span class="q-text" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'}>
-					Q{questionNum}
+			<button class="play-tap" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} onclick={hasPlayed && inResultMode ? replayInResult : play}>
+				{#key bounceCount}<div class="bounce-ring"></div>{/key}
+				<div class="orbit-track"><div class="orbit-dot"></div></div>
+				<span class="q-text" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} class:glitch-text={showGlitch}>
+					{displayText}
 				</span>
 			</button>
 		</VizQuizLayout>
@@ -505,28 +540,40 @@
 		border-color: var(--accent);
 	}
 	.play-tap {
+		position: relative;
 		width: min(40vw, 160px);
 		height: min(40vw, 160px);
 		border-radius: 50%;
 		background: transparent;
-		border: none;
+		border: 1.5px solid var(--accent);
+		box-shadow: 0 0 8px rgba(194, 254, 12, 0.3);
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		cursor: pointer;
 		-webkit-tap-highlight-color: transparent;
+		transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
 	}
+	.play-tap.feedback-correct { background: var(--correct); border-color: var(--correct); box-shadow: 0 0 12px var(--correct); }
+	.play-tap.feedback-wrong { background: var(--hot); border-color: var(--hot); box-shadow: 0 0 12px var(--hot); }
 	.play-tap:active { transform: scale(0.95); }
+	.bounce-ring { position: absolute; inset: -1px; border-radius: 50%; border: 1.5px solid var(--accent); animation: note-pulse 0.25s ease-out; pointer-events: none; }
+	@keyframes note-pulse { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(1.12); opacity: 0; } }
+	.orbit-track { position: absolute; inset: 0; border-radius: 50%; animation: orbit 7s linear infinite; pointer-events: none; }
+	.orbit-dot { position: absolute; top: -3px; left: 50%; transform: translateX(-50%); width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+	.play-tap.feedback-wrong .orbit-dot { background: var(--hot); box-shadow: 0 0 6px var(--hot); }
+	@keyframes orbit { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 	.q-text {
 		font-family: var(--mono);
-		font-size: 1.1rem;
+		font-size: 2rem;
 		font-weight: 700;
 		letter-spacing: 0.05em;
 		color: var(--accent);
 		transition: color 0.3s ease-out;
 	}
-	.q-text.feedback-correct { color: var(--correct); }
-	.q-text.feedback-wrong { color: var(--wrong); }
+	.q-text.feedback-correct { color: var(--base); }
+	.q-text.feedback-wrong { color: var(--base); }
+	.q-text.glitch-text { }
 	.answer-area {
 		width: 100%;
 		margin-top: auto;
