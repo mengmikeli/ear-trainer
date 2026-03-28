@@ -511,8 +511,8 @@
 	.play-tap.feedback-correct { background: var(--correct); border-color: var(--correct); box-shadow: 0 0 12px var(--correct); }
 	.play-tap.feedback-wrong { background: var(--hot); border-color: var(--hot); box-shadow: 0 0 12px var(--hot); }
 	.play-tap:active { transform: scale(0.95); }
-	.play-tap.bouncing { animation: note-bounce 0.2s ease-out; }
-	@keyframes note-bounce { 0% { transform: scale(1.08); opacity: 1; } 100% { transform: scale(1); opacity: 0; } }
+	.play-tap.bouncing { animation: note-bounce 0.25s ease-in-out; }
+	@keyframes note-bounce { 0% { transform: scale(1); } 25% { transform: scale(1.08); } 50% { transform: scale(0.97); } 75% { transform: scale(1.02); } 100% { transform: scale(1); } }
 	.orbit-track { position: absolute; inset: 0; border-radius: 50%; animation: orbit 7s linear infinite; pointer-events: none; }
 	.orbit-dot { position: absolute; top: -3px; left: 50%; transform: translateX(-50%); width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px var(--accent); }
 	.play-tap.feedback-wrong .orbit-dot { background: var(--hot); box-shadow: 0 0 6px var(--hot); }
