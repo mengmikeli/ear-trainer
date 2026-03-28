@@ -28,8 +28,7 @@
 		ontransitionend?: () => void;
 		/** Currently sounding MIDI notes — drives Chladni pattern in sync with audio */
 		playingNotes?: number[];
-		/** Enable Chladni particles (overrides mobile default) */
-		superchargeViz?: boolean;
+		/** Content overlaid inside the canvas viewport (e.g. Q# tap target) */
 		children?: import('svelte').Snippet;
 	}
 
@@ -41,7 +40,6 @@
 		scaleIntervals,
 		countdownPct = -1,
 		playingNotes = [] as number[],
-		superchargeViz,
 		ontransitionend,
 		children,
 	}: Props = $props();
@@ -107,15 +105,13 @@
 
 	// ── Chladni constants (from lab) ──
 	const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-	// Reactive particle count — responds to superchargeViz prop changes
-	const PARTICLE_COUNT = isMobile ? 0 : 3500;
-
-	let particles: { x: number; y: number }[] = [];
+	const PARTICLE_COUNT = isMobile ? 0 : 3500; // disabled on mobile for perf
 	const SETTLE_SPEED_BASE = 0.003;
 	const SETTLE_SPEED_BOOST = 0.025;
 	const JITTER = 0.001;
 	const SHAKE_BASE = 0.02;
 	const SHAKE_AUDIO = 0.05;
+	let particles: { x: number; y: number }[] = [];
 	let settleSpeed = SETTLE_SPEED_BASE;
 	let migrateTimer = 0;
 
@@ -239,7 +235,6 @@
 			canvas.height = rect.height * dpr;
 			ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 			generateNoise(Math.ceil(rect.width), Math.ceil(rect.height));
-			if (typeof updateThemeColors === 'function') updateThemeColors();
 		}
 
 		resize();
@@ -249,20 +244,6 @@
 		initParticles();
 
 		let frameCount = 0;
-
-		// Cache theme-aware colors (update on resize which may indicate theme change)
-		let canvasFadeColor = 'rgba(0, 0, 0, 0.12)';
-		let canvasBgColor = '#000';
-		function updateThemeColors() {
-			// Check data-theme attribute or prefers-color-scheme
-			const root = document.documentElement;
-			const theme = root.getAttribute('data-theme') || '';
-			const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-			const isLight = theme === 'light' || (!theme && !prefersDark);
-			canvasFadeColor = isLight ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.12)';
-			canvasBgColor = isLight ? '#f5f5f5' : '#000';
-		}
-		updateThemeColors();
 
 		function draw() {
 			const w = canvas.width / dpr;
@@ -316,8 +297,8 @@
 			const activeStep = (Math.PI * 2 * TARGET_LOOPS / maxRatio) / TRAIL_POINTS;
 			const currentStep = circleStep + (activeStep - circleStep) * morphT;
 
-			// ── CLEAR (theme-aware, cached) ──
-			ctx.fillStyle = canvasFadeColor;
+			// ── CLEAR ──
+			ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
 			ctx.fillRect(0, 0, w, h);
 
 			// ── Migration decay (Chladni reacts to note changes) ──
@@ -409,7 +390,7 @@
 			animId = requestAnimationFrame(draw);
 		}
 
-		ctx.fillStyle = canvasBgColor;
+		ctx.fillStyle = '#000';
 		ctx.fillRect(0, 0, canvas.width, canvas.height);
 		draw();
 
@@ -446,7 +427,7 @@
 		flex: 1;
 		min-height: 0;
 		border: 1px solid var(--border-heavy);
-		background: var(--base, #000);
+		background: #000;
 	}
 	.viz-canvas {
 		display: block;
