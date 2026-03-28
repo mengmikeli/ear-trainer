@@ -1,4 +1,4 @@
-export const APP_VERSION = '3.3';
+export const APP_VERSION = '3.4';
 
 export interface ReleaseNote {
 	version: string;
@@ -8,6 +8,23 @@ export interface ReleaseNote {
 }
 
 export const RELEASE_NOTES: ReleaseNote[] = [
+	{
+		version: '3.4',
+		date: '2026-03-28',
+		title: 'VIZ QUIZ',
+		changes: [
+			'Chladni particle visualization on quiz pages — audio-reactive patterns synced to each note',
+			'CSS ring with orbiting dot replaces old play button — per-note bounce animation',
+			'Sustained vibration on chords and harmonic intervals, quick hits on sequential notes',
+			'Green fill on correct, red ring on wrong — instant color feedback',
+			'Glitch text transitions between questions with settling effect',
+			'Canvas-frame viewport with corner brackets (lab aesthetic)',
+			'Countdown fill bar on wrong answer card — tap to replay',
+			'App icon: P1 Lissajous circle with head dot',
+			'Performance: CSS ring (zero canvas compute), rAF pauses on idle, Chladni disabled on mobile',
+			'Bug fixes: ghost Chladni on mount, scales double-play, AudioContext race conditions',
+		],
+	},
 	{
 		version: '3.3',
 		date: '2026-03-26',

@@ -1,42 +1,45 @@
-# sv
+# Ear Trainer
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+Adaptive ear training web app for intervals, chords, and scales.
 
-## Creating a project
+**Live:** [hear.tasteful.work](https://hear.tasteful.work) | **Staging:** [mengmikeli.github.io/ear-trainer](https://mengmikeli.github.io/ear-trainer/)
 
-If you're seeing this, you've probably already done this step. Congrats!
+## Features
 
-```sh
-# create a new project
-npx sv create my-app
-```
+- **Interval Quiz** — 13 intervals across 5 tiers, ascending/descending/harmonic modes
+- **Chord Quiz** — Major, Minor, Dim, Aug + 7th chords with voicing inversions
+- **Scale Quiz** — 8 scales across 3 tiers with A/B comparison
+- **SM-2 Spaced Repetition** — adaptive question selection based on mastery
+- **Visualization** — Chladni particle patterns synced to audio, Lissajous ring with per-note bounce
+- **Lab** — Interactive visualization sandbox for intervals, chords, and scales
+- **PWA** — Installable, works offline
 
-To recreate this project with the same configuration:
+## Stack
 
-```sh
-# recreate this project
-npx sv@0.12.8 create --template minimal --types ts --install npm .
-```
+- SvelteKit + Web Audio API + localStorage (no backend)
+- Cloudflare Pages (production) + GitHub Pages (staging)
+- Marathon "Graphic Realism" aesthetic — Designers Republic inspired
 
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
+## Development
 
 ```sh
-npm run build
+npm install
+npm run dev -- --port 5173
 ```
 
-You can preview the production build with `npm run preview`.
+## Deploy
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+```sh
+# Staging (GitHub Pages)
+BASE_PATH=/ear-trainer npm run build && npx gh-pages -d build
+
+# Production (Cloudflare Pages)
+npm run build && npx wrangler pages deploy build --project-name ear-trainer
+```
+
+## Architecture
+
+- `src/lib/` — Audio engine, SM-2 algorithm, quiz logic, visualization math
+- `src/components/` — VizQuizLayout, AnswerGrid, ProgressBar, BottomNav
+- `src/routes/quiz/` — Interval, chord, and scale quiz pages
+- `src/routes/lab/` — Visualization sandbox pages
