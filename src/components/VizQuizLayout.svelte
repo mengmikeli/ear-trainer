@@ -105,7 +105,7 @@
 
 	// ── Chladni constants (from lab) ──
 	const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-	const PARTICLE_COUNT = isMobile ? 1500 : 3500;
+	const PARTICLE_COUNT = isMobile ? 0 : 3500; // disabled on mobile for perf
 	const SETTLE_SPEED_BASE = 0.003;
 	const SETTLE_SPEED_BOOST = 0.025;
 	const JITTER = 0.001;
@@ -310,8 +310,8 @@
 				if (migrateTimer === 0) settleSpeed = SETTLE_SPEED_BASE;
 			}
 
-			// ── CHLADNI PARTICLES (audio-reactive) ──
-			// Plain mutable boolean set by $effect — no reactivity issues in rAF
+			// ── CHLADNI PARTICLES (audio-reactive, disabled on mobile) ──
+			if (particles.length > 0) {
 			const chladniActive = chladniDriftEnabled;
 			const TAU = Math.PI * 2;
 			const currentShake = SHAKE_BASE + amp * SHAKE_AUDIO;
@@ -357,6 +357,7 @@
 			}
 			ctx.globalAlpha = 1;
 			ctx.shadowBlur = 0;
+			} // end particles.length > 0
 
 			// Ring + dot now CSS on .play-tap (removed canvas Lissajous)
 
