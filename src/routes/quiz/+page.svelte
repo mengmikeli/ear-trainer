@@ -56,10 +56,12 @@
 
 	// Per-note bounce
 	let isBouncing = $state(false);
-	function triggerBounce() {
+	let bounceDuration = $state(250);
+	function triggerBounce(durationMs = 250) {
+		bounceDuration = durationMs;
 		isBouncing = false;
 		requestAnimationFrame(() => { isBouncing = true; });
-		setTimeout(() => { isBouncing = false; }, 200);
+		setTimeout(() => { isBouncing = false; }, durationMs);
 	}
 	
 
@@ -165,7 +167,7 @@
 		// Sync Chladni + bounce with actual note timing
 		if (question.playMode === 'harmonic') {
 			// Both notes at once → 1 bounce
-			playingNotes = [rootMidi, secondMidi]; triggerBounce();
+			playingNotes = [rootMidi, secondMidi]; triggerBounce(700);
 		} else {
 			// Sequential → bounce per note
 			playingNotes = [rootMidi]; triggerBounce();
@@ -429,7 +431,7 @@
 			ontransitionend={handleTransitionEnd}
 			{playingNotes}
 		>
-			<button class="play-tap" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} class:bouncing={isBouncing} onclick={hasPlayed && inResultMode ? replayInResult : play}>
+			<button class="play-tap" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} class:bouncing={isBouncing} style:--bounce-duration="{bounceDuration}ms" onclick={hasPlayed && inResultMode ? replayInResult : play}>
 				<div class="orbit-track"><div class="orbit-dot"></div></div>
 				<span class="q-text" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} class:glitch-text={showGlitch}>
 					{displayText}
@@ -545,7 +547,7 @@
 	.play-tap.feedback-correct { background: var(--correct); border-color: var(--correct); box-shadow: 0 0 12px var(--correct); }
 	.play-tap.feedback-wrong { background: var(--hot); border-color: var(--hot); box-shadow: 0 0 12px var(--hot); transition: none; }
 	.play-tap:active { transform: scale(0.95); }
-	.play-tap.bouncing { animation: note-bounce 0.25s ease-in-out; }
+	.play-tap.bouncing { animation: note-bounce var(--bounce-duration, 250ms) ease-in-out; }
 	@keyframes note-bounce { 0% { transform: scale(1); } 25% { transform: scale(1.08); } 50% { transform: scale(0.97); } 75% { transform: scale(1.02); } 100% { transform: scale(1); } }
 	.orbit-track { position: absolute; inset: 0; border-radius: 50%; animation: orbit 7s linear infinite; pointer-events: none; }
 	.orbit-dot { position: absolute; top: -3px; left: 50%; transform: translateX(-50%); width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px var(--accent); }
