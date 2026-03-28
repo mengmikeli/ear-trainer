@@ -54,7 +54,7 @@
 	
 	
 	let bounceClass = $state('');
-	function triggerBounce(sustained = false) { const cls = sustained ? 'bounce-sustained' : 'bounce-short'; bounceClass = ''; requestAnimationFrame(() => { bounceClass = cls; }); setTimeout(() => { bounceClass = ''; }, sustained ? 800 : 300); }
+	function triggerBounce(sustained = false) { const cls = sustained ? 'bounce-sustained' : 'bounce-short'; bounceClass = ''; requestAnimationFrame(() => { bounceClass = cls; }); setTimeout(() => { bounceClass = ''; }, sustained ? 1200 : 300); }
 	
 
 	const glitchChars = ['\uE000', '\uE001', '\uE002', '\uE003', '\uE004', '\uE005', '\uE006', '\uE007', '\uE008', '\uE010', '\uE017'];
@@ -562,7 +562,7 @@
 	.play-tap.feedback-wrong { background: var(--hot); border-color: var(--hot); box-shadow: 0 0 12px var(--hot); transition: none; }
 	.play-tap:active { transform: scale(0.95); }
 	.play-tap.bounce-short { animation: bounce-short 0.3s ease-in-out; }
-	.play-tap.bounce-sustained { animation: bounce-sustained 0.8s ease-in-out; }
+	.play-tap.bounce-sustained { animation: bounce-sustained 1.2s ease-in-out; }
 	@keyframes bounce-short { 0% { transform: scale(1); } 25% { transform: scale(1.06); } 50% { transform: scale(0.98); } 100% { transform: scale(1); } }
 	@keyframes bounce-sustained { 0% { transform: scale(1); } 8% { transform: scale(1.06); } 16% { transform: scale(0.97); } 24% { transform: scale(1.05); } 32% { transform: scale(0.98); } 40% { transform: scale(1.04); } 50% { transform: scale(0.99); } 60% { transform: scale(1.02); } 75% { transform: scale(0.995); } 100% { transform: scale(1); } }
 	.orbit-track { position: absolute; inset: 0; border-radius: 50%; animation: orbit 7s linear infinite; pointer-events: none; }
