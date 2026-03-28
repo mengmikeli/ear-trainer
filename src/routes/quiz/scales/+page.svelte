@@ -179,42 +179,8 @@
 		if (correct) {
 			correctTimeout = setTimeout(() => nextQuestion(), 1350);
 		} else {
-			// Auto A/B comparison: play correct, then after a pause play wrong
 			enterResultMode();
-			playCorrectScale();
 		}
-	}
-
-	function playCorrectScale() {
-		if (!question || !state) return;
-		// Play the correct scale
-		playScale(
-			question.rootNote,
-			question.scale.intervals,
-			state.settings.toneType,
-			TEMPO
-		);
-		isPlaying = true;
-		const correctDuration = question.scale.intervals.length * TEMPO + 200;
-		abTimeouts.push(setTimeout(() => {
-			isPlaying = false;
-			// After 500ms pause, play the wrong (selected) answer
-			if (!question || !state || !selectedId) return;
-			const wrongDef = question.choices.find(c => c.id === selectedId);
-			if (!wrongDef) return;
-			abTimeouts.push(setTimeout(() => {
-				if (!state) return;
-				playScale(
-					question!.rootNote,
-					wrongDef.intervals,
-					state.settings.toneType,
-					TEMPO
-				);
-				isPlaying = true;
-				const wrongDuration = wrongDef.intervals.length * TEMPO + 200;
-				abTimeouts.push(setTimeout(() => { isPlaying = false; }, wrongDuration));
-			}, 500));
-		}, correctDuration));
 	}
 
 	function enterResultMode() {
