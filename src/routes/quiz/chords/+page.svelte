@@ -84,12 +84,12 @@
 			hasPlayed = false;
 			selectedId = null;
 			countdownPct = 1.0;
-		});
 
-		setTimeout(() => {
-			isGlitching = false;
-			play();
-		}, 100);
+			setTimeout(() => {
+				isGlitching = false;
+				play();
+			}, 100);
+		});
 	}
 
 	function play() {

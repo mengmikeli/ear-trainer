@@ -90,13 +90,12 @@
 			hasPlayed = false;
 			selectedId = null;
 			countdownPct = 1.0;
-		});
 
-		setTimeout(() => {
-			isGlitching = false;
-			// Auto-play the interval right after glitch settles
-			play();
-		}, 100);
+			setTimeout(() => {
+				isGlitching = false;
+				play();
+			}, 100);
+		});
 	}
 
 	function play() {

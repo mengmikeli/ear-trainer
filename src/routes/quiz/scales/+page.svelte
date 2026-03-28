@@ -4,7 +4,7 @@
 	import { base } from '$app/paths';
 	import { loadState, saveState, checkTierUnlock } from '$lib/state';
 	import { generateScaleQuestion } from '$lib/engine';
-	import { playScale, playFeedbackChime, suspendAudio, stopAudio } from '$lib/audio';
+	import { playScale, playFeedbackChime, suspendAudio } from '$lib/audio';
 	import { responseQuality, calculateSm2 } from '$lib/sm2';
 	import type { UserState, ScaleQuestion, ScaleDef } from '$lib/types';
 	import AnswerGrid from '../../../components/AnswerGrid.svelte';
@@ -70,6 +70,7 @@
 	});
 
 	function nextQuestion() {
+		console.log('[scales] nextQuestion', { questionNum, hasPlayed, inResultMode });
 		if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
 		if (!state) return;
 		if (questionNum >= totalQuestions) {
@@ -78,7 +79,8 @@
 		}
 
 		// Stop any currently-playing audio (Web Audio scheduled notes)
-		stopAudio();
+		// Suspend (not destroy) audio — keeps AudioContext alive for next auto-play
+		suspendAudio();
 		// Kill any lingering A/B replay timeouts
 		for (const t of abTimeouts) clearTimeout(t);
 		abTimeouts = [];
@@ -94,17 +96,19 @@
 			hasPlayed = false;
 			selectedId = null;
 			countdownPct = 1.0;
-		});
 
-		setTimeout(() => {
-			isGlitching = false;
-			play();
-		}, 100);
+			// Play after question is guaranteed to exist
+			setTimeout(() => {
+				isGlitching = false;
+				play();
+			}, 100);
+		});
 	}
 
 	function play() {
 		if (!question || !state) return;
 		const rootMidi = question.rootNote;
+		console.log('[scales] play', { questionNum, rootMidi, hasPlayed });
 		const intervals = question.scale.intervals;
 
 		playScale(
@@ -133,8 +137,9 @@
 
 	function selectAnswer(choice: { id: string; name: string }) {
 		if (!question || !state || selectedId) return;
-
 		const correct = choice.id === question.scale.id;
+		console.log('[scales] selectAnswer', { correct, selectedId: choice.id, feedbackState });
+
 		selectedId = choice.id;
 		isCorrect = correct;
 		feedbackState = correct ? 'correct' : 'wrong';
@@ -182,6 +187,7 @@
 	}
 
 	function enterResultMode() {
+		console.log('[scales] enterResultMode');
 		inResultMode = true;
 		countdownStart = performance.now();
 		countdownDuration = 10000;
@@ -201,6 +207,7 @@
 	}
 
 	function replayInResult() {
+		console.log('[scales] replayInResult');
 		// In result mode, replaying plays the correct scale only
 		if (!question || !state) return;
 		playScale(
