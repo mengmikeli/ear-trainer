@@ -121,12 +121,10 @@
 		const gap = 0.15;
 		const totalMs = (noteDuration * 2 + gap) * 1000 + 200;
 
-		// Sync Chladni — skip on first auto-play (mount)
-		if (questionNum > 1) {
-			playingNotes = [rootMidi];
-			const secondDelay = (noteDuration + gap) * 1000;
-			setTimeout(() => { playingNotes = [secondMidi]; }, secondDelay);
-		}
+		// Sync Chladni with interval notes
+		playingNotes = [rootMidi];
+		const secondDelay = (noteDuration + gap) * 1000;
+		setTimeout(() => { playingNotes = [secondMidi]; }, secondDelay);
 		setTimeout(() => { isPlaying = false; playingNotes = []; }, totalMs);
 	}
 

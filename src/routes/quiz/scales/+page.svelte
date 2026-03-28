@@ -122,14 +122,12 @@
 		isPlaying = true;
 		const totalMs = intervals.length * TEMPO + 200;
 
-		// Sync Chladni — skip on first auto-play (mount, AudioContext may be suspended)
-		if (questionNum > 1) {
-			intervals.forEach((semitone: number, i: number) => {
-				abTimeouts.push(setTimeout(() => {
-					playingNotes = [rootMidi + semitone];
-				}, i * TEMPO));
-			});
-		}
+		// Sync Chladni with scale notes
+		intervals.forEach((semitone: number, i: number) => {
+			abTimeouts.push(setTimeout(() => {
+				playingNotes = [rootMidi + semitone];
+			}, i * TEMPO));
+		});
 		abTimeouts.push(setTimeout(() => { isPlaying = false; playingNotes = []; }, totalMs));
 	}
 
