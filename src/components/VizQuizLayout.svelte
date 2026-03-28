@@ -238,6 +238,7 @@
 			canvas.height = rect.height * dpr;
 			ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 			generateNoise(Math.ceil(rect.width), Math.ceil(rect.height));
+			if (typeof updateThemeColors === 'function') updateThemeColors();
 		}
 
 		resize();
@@ -247,6 +248,17 @@
 		initParticles();
 
 		let frameCount = 0;
+
+		// Cache theme-aware colors (update on resize which may indicate theme change)
+		let canvasFadeColor = 'rgba(0, 0, 0, 0.12)';
+		let canvasBgColor = '#000';
+		function updateThemeColors() {
+			const bg = getComputedStyle(canvas).backgroundColor;
+			const isLight = bg && (bg.includes('255, 255, 255') || bg.includes('rgb(255'));
+			canvasFadeColor = isLight ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.12)';
+			canvasBgColor = isLight ? '#fff' : '#000';
+		}
+		updateThemeColors();
 
 		function draw() {
 			const w = canvas.width / dpr;
@@ -300,9 +312,8 @@
 			const activeStep = (Math.PI * 2 * TARGET_LOOPS / maxRatio) / TRAIL_POINTS;
 			const currentStep = circleStep + (activeStep - circleStep) * morphT;
 
-			// ── CLEAR (theme-aware) ──
-			const isDark = getComputedStyle(canvas).getPropertyValue('--base').trim() !== '#FFFFFF';
-			ctx.fillStyle = isDark ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)';
+			// ── CLEAR (theme-aware, cached) ──
+			ctx.fillStyle = canvasFadeColor;
 			ctx.fillRect(0, 0, w, h);
 
 			// ── Migration decay (Chladni reacts to note changes) ──
@@ -394,8 +405,7 @@
 			animId = requestAnimationFrame(draw);
 		}
 
-		const bgColor = getComputedStyle(canvas).getPropertyValue('--base').trim() || '#000';
-		ctx.fillStyle = bgColor;
+		ctx.fillStyle = canvasBgColor;
 		ctx.fillRect(0, 0, canvas.width, canvas.height);
 		draw();
 
