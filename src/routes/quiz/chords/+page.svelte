@@ -52,7 +52,7 @@
 	let playingNotes: number[] = $state([]);
 
 	let bounceCount = $state(0);
-	$effect(() => { if (playingNotes.length > 0) bounceCount++; });
+	
 
 	const glitchChars = ['\uE000', '\uE001', '\uE002', '\uE003', '\uE004', '\uE005', '\uE006', '\uE007', '\uE008', '\uE010', '\uE017'];
 	let glitchText = $state('');
@@ -150,10 +150,10 @@
 		// Sync Chladni with chord notes
 		if (isArpeggiated) {
 			chordMidis.forEach((midi: number, i: number) => {
-				setTimeout(() => { playingNotes = chordMidis.slice(0, i + 1); }, i * 150);
+				setTimeout(() => { playingNotes = chordMidis.slice(0, i + 1); bounceCount++; }, i * 150);
 			});
 		} else {
-			playingNotes = chordMidis;
+			playingNotes = chordMidis; bounceCount++;
 		}
 		setTimeout(() => { isPlaying = false; playingNotes = []; }, totalMs);
 	}

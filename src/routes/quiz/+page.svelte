@@ -56,7 +56,7 @@
 
 	// Per-note bounce
 	let bounceCount = $state(0);
-	$effect(() => { if (playingNotes.length > 0) bounceCount++; });
+	
 
 	// Q# glitch text — settles toward real Q#
 	const glitchChars = ['\uE000', '\uE001', '\uE002', '\uE003', '\uE004', '\uE005', '\uE006', '\uE007', '\uE008', '\uE010', '\uE017'];
@@ -156,9 +156,9 @@
 		const totalMs = (noteDuration * 2 + gap) * 1000 + 200;
 
 		// Sync Chladni with interval notes
-		playingNotes = [rootMidi];
+		playingNotes = [rootMidi]; bounceCount++;
 		const secondDelay = (noteDuration + gap) * 1000;
-		setTimeout(() => { playingNotes = [secondMidi]; }, secondDelay);
+		setTimeout(() => { playingNotes = [secondMidi]; bounceCount++; }, secondDelay);
 		setTimeout(() => { isPlaying = false; playingNotes = []; }, totalMs);
 	}
 
