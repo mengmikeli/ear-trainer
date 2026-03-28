@@ -15,7 +15,6 @@
 	} from '$lib/viz';
 	import type { ChladniMode } from '$lib/viz';
 	import { getAnalyser, getAmplitude } from '$lib/audio';
-	import { loadState } from '$lib/state';
 
 	type Phase = 'rest' | 'playing' | 'playing-a' | 'playing-b' | 'correct' | 'wrong' | 'transition';
 
@@ -109,7 +108,7 @@
 	// ── Chladni constants (from lab) ──
 	const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 	// Reactive particle count — responds to superchargeViz prop changes
-	let PARTICLE_COUNT = 0; // set in onMount after state is loaded
+	const PARTICLE_COUNT = isMobile ? 0 : 3500;
 
 	let particles: { x: number; y: number }[] = [];
 	const SETTLE_SPEED_BASE = 0.003;
@@ -247,10 +246,6 @@
 		window.addEventListener('resize', resize);
 		const ro = new ResizeObserver(() => resize());
 		ro.observe(canvas);
-
-		// Read superchargeViz directly from localStorage — prop may be undefined at mount
-		const sv = loadState()?.settings?.superchargeViz;
-		PARTICLE_COUNT = isMobile ? (sv ? 1500 : 0) : 3500;
 		initParticles();
 
 		let frameCount = 0;
