@@ -4,7 +4,7 @@
 	import { base } from '$app/paths';
 	import { loadState, saveState, checkTierUnlock } from '$lib/state';
 	import { generateScaleQuestion } from '$lib/engine';
-	import { playScale, playFeedbackChime, suspendAudio, isAudioRunning, stopAudio } from '$lib/audio';
+	import { playScale, playFeedbackChime, suspendAudio } from '$lib/audio';
 	import { responseQuality, calculateSm2 } from '$lib/sm2';
 	import type { UserState, ScaleQuestion, ScaleDef } from '$lib/types';
 	import AnswerGrid from '../../../components/AnswerGrid.svelte';
@@ -76,8 +76,6 @@
 			return;
 		}
 
-		playingNotes = [];
-		stopAudio(); // kill any lingering A/B replay before transition
 		isGlitching = true;
 		feedbackState = null;
 		questionNum++;
@@ -96,12 +94,17 @@
 		}, 100);
 	}
 
-	async function play() {
+	function play() {
 		if (!question || !state) return;
 		const rootMidi = question.rootNote;
 		const intervals = question.scale.intervals;
 
-		// Set UI state synchronously BEFORE async audio
+		playScale(
+			rootMidi,
+			intervals,
+			state.settings.toneType,
+			TEMPO
+		);
 		if (!hasPlayed) {
 			hasPlayed = true;
 			startTime = Date.now();
@@ -109,24 +112,14 @@
 			question.replays++;
 		}
 		isPlaying = true;
-
-		await playScale(
-			rootMidi,
-			intervals,
-			state.settings.toneType,
-			TEMPO
-		);
-
 		const totalMs = intervals.length * TEMPO + 200;
 
-		// Only sync Chladni if audio actually started
-		if (isAudioRunning()) {
-			intervals.forEach((semitone: number, i: number) => {
-				setTimeout(() => {
-					playingNotes = [rootMidi + semitone];
-				}, i * TEMPO);
-			});
-		}
+		// Sync Chladni: step through each scale note
+		intervals.forEach((semitone: number, i: number) => {
+			setTimeout(() => {
+				playingNotes = [rootMidi + semitone];
+			}, i * TEMPO);
+		});
 		setTimeout(() => { isPlaying = false; playingNotes = []; }, totalMs);
 	}
 
