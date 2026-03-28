@@ -11,7 +11,7 @@ export const RELEASE_NOTES: ReleaseNote[] = [
 	{
 		version: '3.4',
 		date: '2026-03-28',
-		title: 'VISUALIZATION',
+		title: 'QUIZ VISUALIZATION',
 		changes: [
 			'Chladni particle visualization on quiz pages — reacts to audio in real-time',
 			'Animated ring with orbiting dot and per-note bounce',
