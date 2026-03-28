@@ -39,7 +39,6 @@
 	let isGlitching = $state(false);
 	let correctTimeout: ReturnType<typeof setTimeout> | null = null;
 	let abTimeouts: ReturnType<typeof setTimeout>[] = [];
-	let userActivated = false; // true after first user-initiated play (AudioContext warm)
 
 	const vizPhase = $derived.by((): 'rest' | 'playing' | 'correct' | 'wrong' | 'transition' => {
 		if (isGlitching) return 'transition';
@@ -121,15 +120,13 @@
 		isPlaying = true;
 		const totalMs = intervals.length * TEMPO + 200;
 
-		// Sync Chladni only after user has activated AudioContext
-		if (userActivated) {
-			intervals.forEach((semitone: number, i: number) => {
-				abTimeouts.push(setTimeout(() => {
-					playingNotes = [rootMidi + semitone];
-				}, i * TEMPO));
-			});
-		}
-		abTimeouts.push(setTimeout(() => { isPlaying = false; playingNotes = []; }, totalMs));
+		// Sync Chladni: step through each scale note
+		intervals.forEach((semitone: number, i: number) => {
+			setTimeout(() => {
+				playingNotes = [rootMidi + semitone];
+			}, i * TEMPO);
+		});
+		setTimeout(() => { isPlaying = false; playingNotes = []; }, totalMs);
 	}
 
 	function selectAnswer(choice: { id: string; name: string }) {
@@ -246,7 +243,7 @@
 		);
 		isPlaying = true;
 		const totalMs = question.scale.intervals.length * TEMPO + 200;
-		abTimeouts.push(setTimeout(() => { isPlaying = false; }, totalMs));
+		setTimeout(() => { isPlaying = false; }, totalMs);
 		countdownStart = performance.now();
 		countdownPct = 1.0;
 	}
@@ -378,7 +375,7 @@
 			ontransitionend={handleTransitionEnd}
 			{playingNotes}
 		>
-			<button class="play-tap" onclick={() => { userActivated = true; (hasPlayed && inResultMode ? replayInResult : play)(); }}>
+			<button class="play-tap" onclick={hasPlayed && inResultMode ? replayInResult : play}>
 				<span class="q-text" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'}>
 					Q{questionNum}
 				</span>
@@ -393,8 +390,6 @@
 				correctId={selectedId ? question.scale.id : null}
 				{selectedId}
 				onCorrectClick={selectedId ? (inResultMode ? nextQuestion : skipCorrect) : null}
-				countdownPct={inResultMode ? countdownPct : -1}
-				onWrongClick={inResultMode ? replayInResult : null}
 			/>
 		</div>
 	{/if}

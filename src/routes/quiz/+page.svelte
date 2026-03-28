@@ -37,7 +37,6 @@
 	let rafId: number | null = null;
 	let isGlitching = $state(false);
 	let correctTimeout: ReturnType<typeof setTimeout> | null = null;
-	let userActivated = false;
 
 	// Viz phase — maps quiz state to VizQuizLayout phase
 	const vizPhase = $derived.by((): 'rest' | 'playing' | 'correct' | 'wrong' | 'transition' => {
@@ -122,12 +121,11 @@
 		const gap = 0.15;
 		const totalMs = (noteDuration * 2 + gap) * 1000 + 200;
 
-		// Sync Chladni only after user has activated AudioContext
-		if (userActivated) {
-			playingNotes = [rootMidi];
-			const secondDelay = (noteDuration + gap) * 1000;
-			setTimeout(() => { playingNotes = [secondMidi]; }, secondDelay);
-		}
+		// Sync Chladni: first note immediately
+		playingNotes = [rootMidi];
+		// Second note after first note + gap
+		const secondDelay = (noteDuration + gap) * 1000;
+		setTimeout(() => { playingNotes = [secondMidi]; }, secondDelay);
 		setTimeout(() => { isPlaying = false; playingNotes = []; }, totalMs);
 	}
 
@@ -385,7 +383,7 @@
 			ontransitionend={handleTransitionEnd}
 			{playingNotes}
 		>
-			<button class="play-tap" onclick={() => { userActivated = true; (hasPlayed && inResultMode ? replayInResult : play)(); }}>
+			<button class="play-tap" onclick={hasPlayed && inResultMode ? replayInResult : play}>
 				<span class="q-text" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'}>
 					Q{questionNum}
 				</span>
@@ -400,8 +398,6 @@
 				correctId={selectedId ? question.interval.id : null}
 				{selectedId}
 				onCorrectClick={selectedId ? (inResultMode ? nextQuestion : skipCorrect) : null}
-				countdownPct={inResultMode ? countdownPct : -1}
-				onWrongClick={inResultMode ? replayInResult : null}
 			/>
 		</div>
 	{/if}

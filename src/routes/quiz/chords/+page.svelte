@@ -37,7 +37,6 @@
 	let rafId: number | null = null;
 	let isGlitching = $state(false);
 	let correctTimeout: ReturnType<typeof setTimeout> | null = null;
-	let userActivated = false;
 	let isArpeggiated = $state(false);
 
 	const vizPhase = $derived.by((): 'rest' | 'playing' | 'correct' | 'wrong' | 'transition' => {
@@ -115,15 +114,13 @@
 		const noteCount = question.chord.intervals.length;
 		const totalMs = isArpeggiated ? (noteCount * 150 + 800 + 200) : 1400;
 
-		// Sync Chladni only after user has activated AudioContext
-		if (userActivated) {
-			if (isArpeggiated) {
-				chordMidis.forEach((midi: number, i: number) => {
-					setTimeout(() => { playingNotes = chordMidis.slice(0, i + 1); }, i * 150);
-				});
-			} else {
-				playingNotes = chordMidis;
-			}
+		// Sync Chladni: all chord notes at once (block), or sequentially (arp)
+		if (isArpeggiated) {
+			chordMidis.forEach((midi: number, i: number) => {
+				setTimeout(() => { playingNotes = chordMidis.slice(0, i + 1); }, i * 150);
+			});
+		} else {
+			playingNotes = chordMidis;
 		}
 		setTimeout(() => { isPlaying = false; playingNotes = []; }, totalMs);
 	}
@@ -386,7 +383,7 @@
 			ontransitionend={handleTransitionEnd}
 			{playingNotes}
 		>
-			<button class="play-tap" onclick={() => { userActivated = true; (hasPlayed && inResultMode ? replayInResult : play)(); }}>
+			<button class="play-tap" onclick={hasPlayed && inResultMode ? replayInResult : play}>
 				<span class="q-text" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'}>
 					Q{questionNum}
 				</span>
@@ -401,8 +398,6 @@
 				correctId={selectedId ? question.chord.id : null}
 				{selectedId}
 				onCorrectClick={selectedId ? (inResultMode ? nextQuestion : skipCorrect) : null}
-				countdownPct={inResultMode ? countdownPct : -1}
-				onWrongClick={inResultMode ? replayInResult : null}
 			/>
 		</div>
 	{/if}

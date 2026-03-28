@@ -12,12 +12,8 @@
 		correctId?: string | null;
 		selectedId?: string | null;
 		onCorrectClick?: (() => void) | null;
-		/** Countdown for wrong answer (1.0 → 0.0), drives fill bar on wrong card */
-		countdownPct?: number;
-		/** Called when user taps the wrong answer card (replay) */
-		onWrongClick?: (() => void) | null;
 	}
-	let { choices, onselect, disabled = false, correctId = null, selectedId = null, onCorrectClick = null, countdownPct = -1, onWrongClick = null }: Props = $props();
+	let { choices, onselect, disabled = false, correctId = null, selectedId = null, onCorrectClick = null }: Props = $props();
 
 	function btnClass(id: string): string {
 		if (!selectedId) return '';
@@ -30,24 +26,18 @@
 <div class="grid">
 	{#each choices as choice}
 		{@const isCorrectBtn = correctId != null && choice.id === correctId}
-		{@const isWrongBtn = selectedId != null && choice.id === selectedId && choice.id !== correctId}
 		<button
 			class="answer {btnClass(choice.id)}"
 			class:skip={isCorrectBtn && onCorrectClick}
 			onclick={() => {
 				if (isCorrectBtn && onCorrectClick) {
 					onCorrectClick();
-				} else if (isWrongBtn && onWrongClick) {
-					onWrongClick();
 				} else {
 					onselect(choice);
 				}
 			}}
-			disabled={isCorrectBtn && onCorrectClick ? false : isWrongBtn && onWrongClick ? false : disabled}
+			disabled={isCorrectBtn && onCorrectClick ? false : disabled}
 		>
-			{#if isWrongBtn && countdownPct >= 0}
-				<div class="countdown-fill" style="width: {Math.max(0, countdownPct) * 100}%"></div>
-			{/if}
 			<span class="id">{choice.label ?? choice.id}</span>
 			<span class="name">{choice.name}</span>
 			{#if isCorrectBtn && onCorrectClick}
@@ -88,13 +78,6 @@
 	.correct .id { color: var(--correct); }
 	.wrong { border-color: var(--wrong); background: #ED174F10; }
 	.wrong .id { color: var(--wrong); }
-	.countdown-fill {
-		position: absolute;
-		top: 0; right: 0; bottom: 0;
-		background: var(--wrong);
-		opacity: 0.08;
-		transition: width 0.1s linear;
-	}
 	.dim { opacity: 0.2; }
 	.skip-arrow {
 		position: absolute;
