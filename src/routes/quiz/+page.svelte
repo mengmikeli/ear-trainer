@@ -4,7 +4,7 @@
 	import { base } from '$app/paths';
 	import { loadState, saveState, checkTierUnlock } from '$lib/state';
 	import { generateQuestion } from '$lib/engine';
-	import { playInterval, playFeedbackChime, suspendAudio } from '$lib/audio';
+	import { playInterval, playFeedbackChime, suspendAudio, isAudioRunning, stopAudio } from '$lib/audio';
 	import { responseQuality, calculateSm2 } from '$lib/sm2';
 	import type { UserState, Question, IntervalDef, PlayMode } from '$lib/types';
 	import AnswerGrid from '../../components/AnswerGrid.svelte';
@@ -80,6 +80,7 @@
 
 		// Clear audio/viz state before transition
 		playingNotes = [];
+		stopAudio();
 
 		// Start glitch BEFORE clearing state — covers the visual transition
 		isGlitching = true;
@@ -102,12 +103,12 @@
 		}, 100);
 	}
 
-	function play() {
+	async function play() {
 		if (!question || !state) return;
 		const rootMidi = question.rootNote;
 		const secondMidi = rootMidi + question.interval.semitones;
 
-		playInterval(
+		await playInterval(
 			rootMidi,
 			question.interval.semitones,
 			question.playMode,
@@ -124,11 +125,12 @@
 		const gap = 0.15;
 		const totalMs = (noteDuration * 2 + gap) * 1000 + 200;
 
-		// Sync Chladni: first note immediately
-		playingNotes = [rootMidi];
-		// Second note after first note + gap
-		const secondDelay = (noteDuration + gap) * 1000;
-		setTimeout(() => { playingNotes = [secondMidi]; }, secondDelay);
+		// Only sync Chladni if audio actually started
+		if (isAudioRunning()) {
+			playingNotes = [rootMidi];
+			const secondDelay = (noteDuration + gap) * 1000;
+			setTimeout(() => { playingNotes = [secondMidi]; }, secondDelay);
+		}
 		setTimeout(() => { isPlaying = false; playingNotes = []; }, totalMs);
 	}
 

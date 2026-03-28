@@ -529,6 +529,11 @@ export function resumeAudio(): boolean {
 	return false;
 }
 
+/** Check if AudioContext is running (for gating viz sync to actual audio) */
+export function isAudioRunning(): boolean {
+	return ctx !== null && ctx.state === 'running';
+}
+
 /** Set media session metadata so lock screen shows app name, not "localhost" */
 function setMediaSessionMetadata(title: string = 'Ear Trainer'): void {
 	if ('mediaSession' in navigator) {

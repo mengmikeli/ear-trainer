@@ -4,7 +4,7 @@
 	import { base } from '$app/paths';
 	import { loadState, saveState, checkTierUnlock } from '$lib/state';
 	import { generateChordQuestion } from '$lib/engine';
-	import { playChord, playFeedbackChime, suspendAudio } from '$lib/audio';
+	import { playChord, playFeedbackChime, suspendAudio, isAudioRunning, stopAudio } from '$lib/audio';
 	import { responseQuality, calculateSm2 } from '$lib/sm2';
 	import type { UserState, ChordQuestion, ChordDef, ChordVoicing } from '$lib/types';
 	import AnswerGrid from '../../../components/AnswerGrid.svelte';
@@ -75,6 +75,7 @@
 		}
 
 		playingNotes = [];
+		stopAudio();
 		isGlitching = true;
 		feedbackState = null;
 		questionNum++;
@@ -93,12 +94,12 @@
 		}, 100);
 	}
 
-	function play() {
+	async function play() {
 		if (!question || !state) return;
 		const rootMidi = question.rootNote;
 		const chordMidis = question.chord.intervals.map((s: number) => rootMidi + s);
 
-		playChord(
+		await playChord(
 			rootMidi,
 			question.chord.intervals,
 			question.voicing,
@@ -115,13 +116,14 @@
 		const noteCount = question.chord.intervals.length;
 		const totalMs = isArpeggiated ? (noteCount * 150 + 800 + 200) : 1400;
 
-		// Sync Chladni: all chord notes at once (block), or sequentially (arp)
-		if (isArpeggiated) {
-			chordMidis.forEach((midi: number, i: number) => {
-				setTimeout(() => { playingNotes = chordMidis.slice(0, i + 1); }, i * 150);
-			});
-		} else {
-			playingNotes = chordMidis;
+		if (isAudioRunning()) {
+			if (isArpeggiated) {
+				chordMidis.forEach((midi: number, i: number) => {
+					setTimeout(() => { playingNotes = chordMidis.slice(0, i + 1); }, i * 150);
+				});
+			} else {
+				playingNotes = chordMidis;
+			}
 		}
 		setTimeout(() => { isPlaying = false; playingNotes = []; }, totalMs);
 	}
