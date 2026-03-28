@@ -111,6 +111,8 @@
 	const vizEnabled = $derived(superchargeViz ?? !isMobile);
 	const PARTICLE_COUNT = $derived(vizEnabled ? (isMobile ? 1500 : 3500) : 0);
 
+	let particles: { x: number; y: number }[] = [];
+
 	// Re-init particles when count changes
 	$effect(() => {
 		const count = PARTICLE_COUNT;
@@ -120,7 +122,6 @@
 			for (let i = 0; i < count; i++) {
 				particles.push({ x: Math.random() * TAU, y: Math.random() * TAU });
 			}
-			startAnim();
 		} else if (count === 0) {
 			particles = [];
 		}
@@ -130,7 +131,6 @@
 	const JITTER = 0.001;
 	const SHAKE_BASE = 0.02;
 	const SHAKE_AUDIO = 0.05;
-	let particles: { x: number; y: number }[] = [];
 	let settleSpeed = SETTLE_SPEED_BASE;
 	let migrateTimer = 0;
 
