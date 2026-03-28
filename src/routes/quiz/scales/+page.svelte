@@ -379,6 +379,7 @@
 
 	{#if question}
 		<VizQuizLayout
+			superchargeViz={state?.settings?.superchargeViz}
 			mode="scale"
 			phase={vizPhase}
 			scaleIntervals={question.scale.intervals}

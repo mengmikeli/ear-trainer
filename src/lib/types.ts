@@ -62,6 +62,7 @@ export interface Settings {
 	activeContent: 'intervals' | 'chords' | 'scales';
 	// Dev mode — bypasses mastery gates, shows lab link
 	devMode?: boolean;
+	superchargeViz?: boolean;
 }
 
 export interface GlobalStats {

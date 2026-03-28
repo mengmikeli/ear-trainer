@@ -28,7 +28,8 @@
 		ontransitionend?: () => void;
 		/** Currently sounding MIDI notes — drives Chladni pattern in sync with audio */
 		playingNotes?: number[];
-		/** Content overlaid inside the canvas viewport (e.g. Q# tap target) */
+		/** Enable Chladni particles (overrides mobile default) */
+		superchargeViz?: boolean;
 		children?: import('svelte').Snippet;
 	}
 
@@ -40,6 +41,7 @@
 		scaleIntervals,
 		countdownPct = -1,
 		playingNotes = [] as number[],
+		superchargeViz,
 		ontransitionend,
 		children,
 	}: Props = $props();
@@ -105,7 +107,8 @@
 
 	// ── Chladni constants (from lab) ──
 	const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-	const PARTICLE_COUNT = isMobile ? 0 : 3500; // disabled on mobile for perf
+	const showChladni = superchargeViz ?? !isMobile;
+	const PARTICLE_COUNT = showChladni ? (isMobile ? 1500 : 3500) : 0;
 	const SETTLE_SPEED_BASE = 0.003;
 	const SETTLE_SPEED_BOOST = 0.025;
 	const JITTER = 0.001;
@@ -297,8 +300,9 @@
 			const activeStep = (Math.PI * 2 * TARGET_LOOPS / maxRatio) / TRAIL_POINTS;
 			const currentStep = circleStep + (activeStep - circleStep) * morphT;
 
-			// ── CLEAR ──
-			ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+			// ── CLEAR (theme-aware) ──
+			const isDark = getComputedStyle(canvas).getPropertyValue('--base').trim() !== '#FFFFFF';
+			ctx.fillStyle = isDark ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)';
 			ctx.fillRect(0, 0, w, h);
 
 			// ── Migration decay (Chladni reacts to note changes) ──
@@ -390,7 +394,8 @@
 			animId = requestAnimationFrame(draw);
 		}
 
-		ctx.fillStyle = '#000';
+		const bgColor = getComputedStyle(canvas).getPropertyValue('--base').trim() || '#000';
+		ctx.fillStyle = bgColor;
 		ctx.fillRect(0, 0, canvas.width, canvas.height);
 		draw();
 
@@ -427,7 +432,7 @@
 		flex: 1;
 		min-height: 0;
 		border: 1px solid var(--border-heavy);
-		background: #000;
+		background: var(--base, #000);
 	}
 	.viz-canvas {
 		display: block;

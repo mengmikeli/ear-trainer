@@ -300,6 +300,17 @@
 				</button>
 			</div>
 
+			<div class="dev-toggle-row">
+				<span class="dev-label">SUPERCHARGE VIZ</span>
+				<button class="dev-btn supercharge" class:active={state.settings.superchargeViz ?? false}
+					onclick={() => {
+						state!.settings.superchargeViz = !(state!.settings.superchargeViz ?? false);
+						update();
+					}}>
+					{(state.settings.superchargeViz ?? false) ? 'ON' : 'OFF'}
+				</button>
+			</div>
+
 			{#if state.settings.devMode}
 				<button
 					class="lab-btn"
@@ -498,6 +509,10 @@
 	}
 	.dev-btn.active {
 		background: var(--hot);
+		color: var(--base);
+	}
+	.dev-btn.supercharge.active {
+		background: var(--marathon-blue);
 		color: var(--base);
 	}
 	.dev-link {

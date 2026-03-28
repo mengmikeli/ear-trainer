@@ -424,6 +424,7 @@
 
 	{#if question}
 		<VizQuizLayout
+			superchargeViz={state?.settings?.superchargeViz}
 			mode="interval"
 			phase={vizPhase}
 			semitones={question.interval.semitones}

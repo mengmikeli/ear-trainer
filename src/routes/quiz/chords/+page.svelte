@@ -414,6 +414,7 @@
 
 	{#if question}
 		<VizQuizLayout
+			superchargeViz={state?.settings?.superchargeViz}
 			mode="chord"
 			phase={vizPhase}
 			chordIntervals={question.chord.intervals}
