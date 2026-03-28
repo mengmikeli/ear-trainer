@@ -386,14 +386,6 @@
 				ctx.globalAlpha = 1;
 			}
 
-			// ── VIGNETTE ──
-			const vigR = Math.min(cx, cy) * 0.5;
-			const vigGrad = ctx.createRadialGradient(cx, cy, vigR, cx, cy, Math.max(w, h) * 0.72);
-			vigGrad.addColorStop(0, 'rgba(0,0,0,0)');
-			vigGrad.addColorStop(0.7, 'rgba(0,0,0,0.15)');
-			vigGrad.addColorStop(1, 'rgba(0,0,0,0.55)');
-			ctx.fillStyle = vigGrad;
-			ctx.fillRect(0, 0, w, h);
 
 			// ── SCANLINE FLICKER ──
 			if (frameCount % 120 < 2) {
