@@ -106,7 +106,6 @@
 	});
 
 	function nextQuestion() {
-		console.log('[scales] nextQuestion', { questionNum, hasPlayed, inResultMode });
 		if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
 		if (!state) return;
 		if (questionNum >= totalQuestions) {
@@ -144,7 +143,6 @@
 	function play() {
 		if (!question || !state) return;
 		const rootMidi = question.rootNote;
-		console.log('[scales] play', { questionNum, rootMidi, hasPlayed });
 		const intervals = question.scale.intervals;
 
 		playScale(
@@ -174,7 +172,6 @@
 	function selectAnswer(choice: { id: string; name: string }) {
 		if (!question || !state || selectedId) return;
 		const correct = choice.id === question.scale.id;
-		console.log('[scales] selectAnswer', { correct, selectedId: choice.id, feedbackState });
 
 		selectedId = choice.id;
 		isCorrect = correct;
@@ -223,7 +220,6 @@
 	}
 
 	function enterResultMode() {
-		console.log('[scales] enterResultMode');
 		inResultMode = true;
 		countdownStart = performance.now();
 		countdownDuration = 10000;
