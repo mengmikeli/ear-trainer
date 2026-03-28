@@ -10,8 +10,8 @@
 	 */
 	import { onMount, onDestroy } from 'svelte';
 	import {
-		getRatio, chladni, chladniGrad,
-		midiToChladniMode, harmonograph3D
+		getRatio, chladni, chladniGrad, chladniSuper, chladniGradSuper,
+		chordToModes, midiToChladniMode, harmonograph3D
 	} from '$lib/viz';
 	import type { ChladniMode } from '$lib/viz';
 	import { getAnalyser, getAmplitude } from '$lib/audio';
@@ -112,10 +112,13 @@
 	let settleSpeed = SETTLE_SPEED_BASE;
 	let migrateTimer = 0;
 
-	// Chladni mode — single mode, switches per note played (same as lab)
+	// Chladni mode — single mode for intervals, superposition for chords, sequential for scales
 	let chladniN = $state(1);
 	let chladniM = $state(1);
+	let chladniModes: ChladniMode[] = []; // for chord superposition
+	let useSuperposition = false;
 	let chladniTimer: ReturnType<typeof setTimeout> | null = null;
+	let scaleStepTimers: ReturnType<typeof setTimeout>[] = [];
 
 	function initParticles() {
 		particles = [];
@@ -184,26 +187,61 @@
 				} catch { /* not ready */ }
 			}
 
-			// Per-note Chladni pattern switching (same as lab handlePlay)
-			// Root note → root Chladni mode
-			const rootMidi = 60;
-			const [rootN, rootM] = midiToChladniMode(rootMidi);
-			chladniN = rootN;
-			chladniM = rootM;
-			settleSpeed = SETTLE_SPEED_BOOST;
-			migrateTimer = 90;
-
-			// Second note → second Chladni mode after delay
+			// Clear any pending timers
 			if (chladniTimer) clearTimeout(chladniTimer);
-			const secondMidi = rootMidi + (semitones || 0);
-			if (secondMidi !== rootMidi) {
-				chladniTimer = setTimeout(() => {
-					const [secN, secM] = midiToChladniMode(secondMidi);
-					chladniN = secN;
-					chladniM = secM;
-					settleSpeed = SETTLE_SPEED_BOOST;
-					migrateTimer = 90;
-				}, 700);
+			for (const t of scaleStepTimers) clearTimeout(t);
+			scaleStepTimers = [];
+
+			if (mode === 'interval') {
+				// Intervals: root note → root mode, second note after 700ms (same as lab)
+				useSuperposition = false;
+				const rootMidi = 60;
+				const [rootN, rootM] = midiToChladniMode(rootMidi);
+				chladniN = rootN;
+				chladniM = rootM;
+				settleSpeed = SETTLE_SPEED_BOOST;
+				migrateTimer = 90;
+
+				const secondMidi = rootMidi + (semitones || 0);
+				if (secondMidi !== rootMidi) {
+					chladniTimer = setTimeout(() => {
+						const [secN, secM] = midiToChladniMode(secondMidi);
+						chladniN = secN;
+						chladniM = secM;
+						settleSpeed = SETTLE_SPEED_BOOST;
+						migrateTimer = 90;
+					}, 700);
+				}
+			} else if (mode === 'chord') {
+				// Chords: superposition of all chord tones (same as lab/chords)
+				useSuperposition = true;
+				chladniModes = chordToModes(60, chordIntervals ?? [0, 4, 7]);
+				settleSpeed = SETTLE_SPEED_BOOST;
+				migrateTimer = 120;
+			} else if (mode === 'scale') {
+				// Scales: step through each note sequentially (same as lab/scales)
+				useSuperposition = false;
+				const intervals = scaleIntervals ?? [0, 2, 4, 5, 7, 9, 11, 12];
+				const rootMidi = 60;
+				// First note immediately
+				const [firstN, firstM] = midiToChladniMode(rootMidi + intervals[0]);
+				chladniN = firstN;
+				chladniM = firstM;
+				settleSpeed = SETTLE_SPEED_BOOST;
+				migrateTimer = 60;
+
+				// Subsequent notes at 500ms intervals (matching scale playback tempo)
+				for (let i = 1; i < intervals.length; i++) {
+					const timer = setTimeout(() => {
+						const midi = rootMidi + intervals[i];
+						const [n, m] = midiToChladniMode(midi);
+						chladniN = n;
+						chladniM = m;
+						settleSpeed = SETTLE_SPEED_BOOST;
+						migrateTimer = 60;
+					}, i * 500);
+					scaleStepTimers.push(timer);
+				}
 			}
 		}
 		if (vizPhase === 'transition') {
@@ -308,8 +346,12 @@
 			ctx.shadowBlur = 2;
 
 			for (const p of particles) {
-				const val = chladni(p.x, p.y, chladniN, chladniM);
-				const [gx, gy] = chladniGrad(p.x, p.y, chladniN, chladniM);
+				const val = useSuperposition
+					? chladniSuper(p.x, p.y, chladniModes)
+					: chladni(p.x, p.y, chladniN, chladniM);
+				const [gx, gy] = useSuperposition
+					? chladniGradSuper(p.x, p.y, chladniModes)
+					: chladniGrad(p.x, p.y, chladniN, chladniM);
 
 				p.x -= gx * val * settleSpeed;
 				p.y -= gy * val * settleSpeed;
