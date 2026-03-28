@@ -51,7 +51,8 @@
 
 	let playingNotes: number[] = $state([]);
 
-	let bounceCount = $state(0);
+	let isBouncing = $state(false);
+	function triggerBounce() { isBouncing = false; requestAnimationFrame(() => { isBouncing = true; }); setTimeout(() => { isBouncing = false; }, 200); }
 	
 
 	const glitchChars = ['\uE000', '\uE001', '\uE002', '\uE003', '\uE004', '\uE005', '\uE006', '\uE007', '\uE008', '\uE010', '\uE017'];
@@ -150,10 +151,10 @@
 		// Sync Chladni with chord notes
 		if (isArpeggiated) {
 			chordMidis.forEach((midi: number, i: number) => {
-				setTimeout(() => { playingNotes = chordMidis.slice(0, i + 1); bounceCount++; }, i * 150);
+				setTimeout(() => { playingNotes = chordMidis.slice(0, i + 1); triggerBounce(); }, i * 150);
 			});
 		} else {
-			playingNotes = chordMidis; bounceCount++;
+			playingNotes = chordMidis; triggerBounce();
 		}
 		setTimeout(() => { isPlaying = false; playingNotes = []; }, totalMs);
 	}
@@ -416,8 +417,7 @@
 			ontransitionend={handleTransitionEnd}
 			{playingNotes}
 		>
-			<button class="play-tap" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} onclick={hasPlayed && inResultMode ? replayInResult : play}>
-				{#key bounceCount}<div class="bounce-ring"></div>{/key}
+			<button class="play-tap" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} class:bouncing={isBouncing} onclick={hasPlayed && inResultMode ? replayInResult : play}>
 				<div class="orbit-track"><div class="orbit-dot"></div></div>
 				<span class="q-text" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} class:glitch-text={showGlitch}>
 					{displayText}
@@ -555,9 +555,9 @@
 		transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
 	}
 	.play-tap.feedback-correct { background: var(--correct); border-color: var(--correct); box-shadow: 0 0 12px var(--correct); }
-	.play-tap.feedback-wrong { background: transparent; border-color: var(--hot); box-shadow: 0 0 12px var(--hot); }
+	.play-tap.feedback-wrong { background: var(--hot); border-color: var(--hot); box-shadow: 0 0 12px var(--hot); }
 	.play-tap:active { transform: scale(0.95); }
-	.bounce-ring { position: absolute; inset: -2px; border-radius: 50%; border: 2px solid var(--accent); animation: note-bounce 0.2s ease-out; pointer-events: none; }
+	.play-tap.bouncing { animation: note-bounce 0.2s ease-out; }
 	@keyframes note-bounce { 0% { transform: scale(1.08); opacity: 1; } 100% { transform: scale(1); opacity: 0; } }
 	.orbit-track { position: absolute; inset: 0; border-radius: 50%; animation: orbit 7s linear infinite; pointer-events: none; }
 	.orbit-dot { position: absolute; top: -3px; left: 50%; transform: translateX(-50%); width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px var(--accent); }
