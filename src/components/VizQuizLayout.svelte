@@ -46,6 +46,14 @@
 
 	let canvas: HTMLCanvasElement;
 	let animId: number;
+	let animRunning = false;
+	let drawFn: (() => void) | null = null;
+	function startAnim() {
+		if (!animRunning && drawFn) {
+			animRunning = true;
+			animId = requestAnimationFrame(drawFn);
+		}
+	}
 	let t = 0;
 
 	// Audio analyser
@@ -198,6 +206,7 @@
 		chladniDriftEnabled = true;
 		settleSpeed = SETTLE_SPEED_BOOST;
 		migrateTimer = 90;
+		startAnim();
 	});
 
 	// ── State machine (P1 ring static, Chladni driven by playingNotes) ──
@@ -224,6 +233,7 @@
 		} else {
 			transitionActive = false;
 		}
+		startAnim();
 	});
 
 	onMount(() => {
@@ -245,6 +255,12 @@
 		initParticles();
 
 		let frameCount = 0;
+
+		// Detect theme once for canvas colors
+		const isLight = document.documentElement.getAttribute('data-theme') === 'light' ||
+			(!document.documentElement.getAttribute('data-theme') && !window.matchMedia('(prefers-color-scheme: dark)').matches);
+		const clearColor = isLight ? 'rgba(245, 245, 245, 0.15)' : 'rgba(0, 0, 0, 0.12)';
+		const bgColor = isLight ? '#f5f5f5' : '#000';
 
 		function draw() {
 			const w = canvas.width / dpr;
@@ -299,7 +315,7 @@
 			const currentStep = circleStep + (activeStep - circleStep) * morphT;
 
 			// ── CLEAR ──
-			ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+			ctx.fillStyle = clearColor;
 			ctx.fillRect(0, 0, w, h);
 
 			// ── Migration decay (Chladni reacts to note changes) ──
@@ -388,11 +404,19 @@
 
 			t += speed;
 			frameCount++;
-			animId = requestAnimationFrame(draw);
+			// Pause when nothing needs animation
+			const needsAnim = chladniDriftEnabled || migrateTimer > 0 || transitionActive;
+			if (needsAnim) {
+				animId = requestAnimationFrame(draw);
+			} else {
+				animRunning = false;
+			}
 		}
 
-		ctx.fillStyle = '#000';
+		ctx.fillStyle = bgColor;
 		ctx.fillRect(0, 0, canvas.width, canvas.height);
+		drawFn = draw;
+		animRunning = true;
 		draw();
 
 		return () => {
@@ -428,7 +452,7 @@
 		flex: 1;
 		min-height: 0;
 		border: 1px solid var(--border-heavy);
-		background: #000;
+		background: var(--base, #000);
 	}
 	.viz-canvas {
 		display: block;
