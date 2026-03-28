@@ -176,7 +176,9 @@
 		targetFx = fx;
 		targetFy = fy;
 		updateChladniModes();
-		// No migration burst — Chladni stays ambient
+		// Migration burst when question changes — Chladni reacts
+		settleSpeed = SETTLE_SPEED_BOOST;
+		migrateTimer = 90;
 		if (particles.length === 0) initParticles();
 	});
 
@@ -281,10 +283,19 @@
 			ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
 			ctx.fillRect(0, 0, w, h);
 
-			// ── CHLADNI PARTICLES (ambient — no reactive migration/scatter) ──
+			// ── Migration decay (Chladni reacts to note changes) ──
+			if (migrateTimer > 0) {
+				migrateTimer--;
+				if (migrateTimer < 30) {
+					settleSpeed = SETTLE_SPEED_BASE + (SETTLE_SPEED_BOOST - SETTLE_SPEED_BASE) * (migrateTimer / 30);
+				}
+				if (migrateTimer === 0) settleSpeed = SETTLE_SPEED_BASE;
+			}
+
+			// ── CHLADNI PARTICLES (audio-reactive) ──
 			const TAU = Math.PI * 2;
 			const currentShake = SHAKE_BASE + amp * SHAKE_AUDIO;
-			const migrating = false;
+			const migrating = migrateTimer > 0;
 			const modes = currentModes;
 
 			ctx.shadowColor = '#3A2CFF';
