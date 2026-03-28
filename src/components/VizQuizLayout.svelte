@@ -120,6 +120,7 @@
 	let chladniM = $state(1);
 	let chladniModes: ChladniMode[] = []; // for chord superposition
 	let useSuperposition = false;
+	let chladniDriftEnabled = false; // only true after playingNotes fires with real notes
 	let chladniTimer: ReturnType<typeof setTimeout> | null = null;
 	let scaleStepTimers: ReturnType<typeof setTimeout>[] = [];
 
@@ -188,6 +189,7 @@
 			});
 		}
 		// Migration burst — synced to note onset
+		chladniDriftEnabled = true;
 		settleSpeed = SETTLE_SPEED_BOOST;
 		migrateTimer = 90;
 	});
@@ -304,8 +306,8 @@
 			}
 
 			// ── CHLADNI PARTICLES (audio-reactive) ──
-			// Skip drift when no audio playing — pure random scatter
-			const chladniActive = playingNotes.length > 0;
+			// Skip drift when no audio has ever played — hard boolean, no reactive edge cases
+			const chladniActive = chladniDriftEnabled && playingNotes.length > 0;
 			const TAU = Math.PI * 2;
 			const currentShake = SHAKE_BASE + amp * SHAKE_AUDIO;
 			const migrating = migrateTimer > 0;
