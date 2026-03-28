@@ -38,6 +38,7 @@
 	let rafId: number | null = null;
 	let isGlitching = $state(false);
 	let correctTimeout: ReturnType<typeof setTimeout> | null = null;
+	let abTimeouts: ReturnType<typeof setTimeout>[] = [];
 
 	const vizPhase = $derived.by((): 'rest' | 'playing' | 'correct' | 'wrong' | 'transition' => {
 		if (isGlitching) return 'transition';
@@ -75,6 +76,11 @@
 			finishSession();
 			return;
 		}
+
+		// Kill any lingering A/B replay timeouts
+		for (const t of abTimeouts) clearTimeout(t);
+		abTimeouts = [];
+		playingNotes = [];
 
 		isGlitching = true;
 		feedbackState = null;
@@ -186,13 +192,13 @@
 		);
 		isPlaying = true;
 		const correctDuration = question.scale.intervals.length * TEMPO + 200;
-		setTimeout(() => {
+		abTimeouts.push(setTimeout(() => {
 			isPlaying = false;
 			// After 500ms pause, play the wrong (selected) answer
 			if (!question || !state || !selectedId) return;
 			const wrongDef = question.choices.find(c => c.id === selectedId);
 			if (!wrongDef) return;
-			setTimeout(() => {
+			abTimeouts.push(setTimeout(() => {
 				if (!state) return;
 				playScale(
 					question!.rootNote,
@@ -202,9 +208,9 @@
 				);
 				isPlaying = true;
 				const wrongDuration = wrongDef.intervals.length * TEMPO + 200;
-				setTimeout(() => { isPlaying = false; }, wrongDuration);
-			}, 500);
-		}, correctDuration);
+				abTimeouts.push(setTimeout(() => { isPlaying = false; }, wrongDuration));
+			}, 500));
+		}, correctDuration));
 	}
 
 	function enterResultMode() {
