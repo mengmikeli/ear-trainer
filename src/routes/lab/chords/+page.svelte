@@ -131,6 +131,21 @@
 		const ctx = mainCanvas.getContext('2d')!;
 		const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
+		// Theme-aware canvas colors
+		let canvasFadeColor = 'rgba(0, 0, 0, 0.1)';
+		let canvasBgColor = '#000';
+		function updateThemeColors() {
+			const root = document.documentElement;
+			const theme = root.getAttribute('data-theme') || '';
+			const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+			const isLight = theme === 'light' || (!theme && !prefersDark);
+			canvasFadeColor = isLight ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)';
+			canvasBgColor = isLight ? '#f5f5f5' : '#000';
+		}
+		updateThemeColors();
+		const themeObserver = new MutationObserver(updateThemeColors);
+		themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
 		function resize() {
 			const rect = mainCanvas.getBoundingClientRect();
 			mainCanvas.width = rect.width * dpr;
@@ -162,7 +177,7 @@
 			const amp = Math.min(1, amplitude * 3);
 
 			// Fade
-			ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+			ctx.fillStyle = canvasFadeColor;
 			ctx.fillRect(0, 0, w, h);
 
 			// Migration timer decay
@@ -310,7 +325,7 @@
 			animId = requestAnimationFrame(draw);
 		}
 
-		ctx.fillStyle = '#000';
+		ctx.fillStyle = canvasBgColor;
 		ctx.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
 
 		// Pause animation when page is hidden (saves CPU/battery)
@@ -333,6 +348,7 @@
 			document.removeEventListener('visibilitychange', handleVisibility);
 			window.removeEventListener('resize', resize);
 			ro.disconnect();
+			themeObserver.disconnect();
 			analyserRef = null;
 			dataArrayRef = null;
 			stopAudio();
@@ -361,9 +377,9 @@
 		<canvas bind:this={mainCanvas}></canvas>
 		<button class="play-btn" class:playing={isPlaying} onclick={handlePlay} aria-label="Play chord">
 			{#if isPlaying}
-				<span class="play-icon pulse">◉</span>
+				<span class="play-icon pulse"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="5"/></svg></span>
 			{:else}
-				<span class="play-icon">▶</span>
+				<span class="play-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><polygon points="6,3 20,12 6,21"/></svg></span>
 			{/if}
 		</button>
 		<div class="frame-corner tl"></div>
@@ -482,7 +498,7 @@
 		min-height: 0;
 		
 		border: 1px solid var(--border-heavy);
-		background: #000;
+		background: var(--base);
 	}
 
 	canvas {
@@ -607,8 +623,14 @@
 	}
 
 	.play-icon {
-		font-size: 0.9rem;
-		line-height: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		line-height: 0;
+	}
+
+	.play-icon svg {
+		display: block;
 	}
 
 	.play-icon.pulse {
@@ -616,7 +638,7 @@
 	}
 
 	@keyframes pulse-glow {
-		from { text-shadow: 0 0 4px var(--accent); }
-		to { text-shadow: 0 0 16px var(--accent), 0 0 24px var(--accent); }
+		from { filter: drop-shadow(0 0 4px var(--accent)); }
+		to { filter: drop-shadow(0 0 16px var(--accent)) drop-shadow(0 0 24px var(--accent)); }
 	}
 </style>

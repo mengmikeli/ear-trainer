@@ -130,7 +130,7 @@
 
 		// Clear ghost trail
 		if (ghostCtx && ghostCanvas) {
-			ghostCtx.fillStyle = '#000';
+			ghostCtx.fillStyle = canvasBgColor;
 			ghostCtx.fillRect(0, 0, ghostCanvas.width, ghostCanvas.height);
 		}
 
@@ -243,6 +243,21 @@
 		const ctx = mainCanvas.getContext('2d')!;
 		const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
+		// Theme-aware canvas colors
+		let canvasFadeColor = 'rgba(0, 0, 0, 0.1)';
+		let canvasBgColor = '#000';
+		function updateThemeColors() {
+			const root = document.documentElement;
+			const theme = root.getAttribute('data-theme') || '';
+			const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+			const isLight = theme === 'light' || (!theme && !prefersDark);
+			canvasFadeColor = isLight ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)';
+			canvasBgColor = isLight ? '#f5f5f5' : '#000';
+		}
+		updateThemeColors();
+		const themeObserver = new MutationObserver(updateThemeColors);
+		themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
 		// Ghost trail canvas
 		ghostCanvas = document.createElement('canvas');
 		ghostCtx = ghostCanvas.getContext('2d')!;
@@ -280,7 +295,7 @@
 			}
 
 			// Fade
-			ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+			ctx.fillStyle = canvasFadeColor;
 			ctx.fillRect(0, 0, w, h);
 
 			// Migration timer decay
@@ -718,7 +733,7 @@
 			animId = requestAnimationFrame(draw);
 		}
 
-		ctx.fillStyle = '#000';
+		ctx.fillStyle = canvasBgColor;
 		ctx.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
 
 		// Pause animation when page is hidden (saves CPU/battery)
@@ -741,6 +756,7 @@
 			document.removeEventListener('visibilitychange', handleVisibility);
 			window.removeEventListener('resize', resize);
 			ro.disconnect();
+			themeObserver.disconnect();
 			// Kill any in-progress scale playback
 			playGeneration++;
 			isPlaying = false;
@@ -886,7 +902,7 @@
 		min-height: 0;
 		
 		border: 1px solid var(--border-heavy);
-		background: #000;
+		background: var(--base);
 	}
 
 	canvas {
