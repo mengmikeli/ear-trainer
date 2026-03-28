@@ -509,7 +509,7 @@
 		transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
 	}
 	.play-tap.feedback-correct { background: var(--correct); border-color: var(--correct); box-shadow: 0 0 12px var(--correct); }
-	.play-tap.feedback-wrong { background: var(--hot); border-color: var(--hot); box-shadow: 0 0 12px var(--hot); }
+	.play-tap.feedback-wrong { background: var(--hot); border-color: var(--hot); box-shadow: 0 0 12px var(--hot); transition: none; }
 	.play-tap:active { transform: scale(0.95); }
 	.play-tap.bouncing { animation: note-bounce 0.25s ease-in-out; }
 	@keyframes note-bounce { 0% { transform: scale(1); } 25% { transform: scale(1.08); } 50% { transform: scale(0.97); } 75% { transform: scale(1.02); } 100% { transform: scale(1); } }
