@@ -182,15 +182,15 @@
 		if (particles.length === 0) initParticles();
 	});
 
-	// ── State machine (simplified — viz is decoration, not reactive) ──
+	// ── State machine (P1 ring static, Chladni reactive to audio) ──
 	$effect(() => {
-		// All states keep P1 circle, accent color. No morph, no harmonograph.
+		// Ring stays P1 circle + accent color always
 		morphTarget = 0;
 		wrongTarget = 0;
 		targetR = 194; targetG = 254; targetB = 12;
 
 		if (vizPhase === 'playing' || vizPhase === 'playing-a' || vizPhase === 'playing-b') {
-			// Init analyser for potential future audio reactivity
+			// Init analyser — must happen during user interaction (play tap)
 			if (!analyserRef) {
 				try {
 					const { analyser, dataArray } = getAnalyser();
@@ -198,6 +198,9 @@
 					dataArrayRef = dataArray;
 				} catch { /* not ready */ }
 			}
+			// Chladni: migration burst on each play — particles react to the sound
+			settleSpeed = SETTLE_SPEED_BOOST;
+			migrateTimer = 90;
 		}
 		if (vizPhase === 'transition') {
 			transitionActive = true;
