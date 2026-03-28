@@ -109,7 +109,6 @@
 	const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 	const showChladni = superchargeViz ?? !isMobile;
 	const PARTICLE_COUNT = showChladni ? (isMobile ? 1500 : 3500) : 0;
-	console.log('[VizQuizLayout] superchargeViz:', superchargeViz, 'isMobile:', isMobile, 'showChladni:', showChladni, 'particles:', PARTICLE_COUNT);
 	const SETTLE_SPEED_BASE = 0.003;
 	const SETTLE_SPEED_BOOST = 0.025;
 	const JITTER = 0.001;
