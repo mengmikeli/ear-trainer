@@ -15,6 +15,7 @@
 	} from '$lib/viz';
 	import type { ChladniMode } from '$lib/viz';
 	import { getAnalyser, getAmplitude } from '$lib/audio';
+	import { loadState } from '$lib/state';
 
 	type Phase = 'rest' | 'playing' | 'playing-a' | 'playing-b' | 'correct' | 'wrong' | 'transition';
 
@@ -247,8 +248,9 @@
 		const ro = new ResizeObserver(() => resize());
 		ro.observe(canvas);
 
-		// Desktop always 3500. Mobile: 0 by default, 1500 when supercharge ON.
-		PARTICLE_COUNT = isMobile ? (superchargeViz ? 1500 : 0) : 3500;
+		// Read superchargeViz directly from localStorage — prop may be undefined at mount
+		const sv = loadState()?.settings?.superchargeViz;
+		PARTICLE_COUNT = isMobile ? (sv ? 1500 : 0) : 3500;
 		initParticles();
 
 		let frameCount = 0;
