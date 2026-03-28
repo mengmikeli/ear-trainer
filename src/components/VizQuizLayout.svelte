@@ -304,8 +304,8 @@
 			}
 
 			// ── CHLADNI PARTICLES (audio-reactive) ──
-			// Skip drift when in degenerate rest state (n=1,m=1 → chladni=0 everywhere)
-			const chladniActive = !(chladniN === 1 && chladniM === 1 && !useSuperposition);
+			// Skip drift when no audio playing — pure random scatter
+			const chladniActive = playingNotes.length > 0;
 			const TAU = Math.PI * 2;
 			const currentShake = SHAKE_BASE + amp * SHAKE_AUDIO;
 			const migrating = migrateTimer > 0;
