@@ -256,11 +256,12 @@
 
 		let frameCount = 0;
 
-		// Detect theme once for canvas colors
-		const isLight = document.documentElement.getAttribute('data-theme') === 'light' ||
-			(!document.documentElement.getAttribute('data-theme') && !window.matchMedia('(prefers-color-scheme: dark)').matches);
-		const clearColor = isLight ? 'rgba(245, 245, 245, 0.15)' : 'rgba(0, 0, 0, 0.12)';
-		const bgColor = isLight ? '#f5f5f5' : '#000';
+		// Read actual theme bg from CSS variable
+		const computedBg = getComputedStyle(document.documentElement).getPropertyValue('--base').trim();
+		const bgColor = computedBg || '#000';
+		// Detect light by checking if bg is NOT black
+		const isLight = !/^#0{3,6}$|^rgb\(0/.test(bgColor);
+		const clearColor = isLight ? 'rgba(200, 200, 200, 0.15)' : 'rgba(0, 0, 0, 0.12)';
 
 		function draw() {
 			const w = canvas.width / dpr;
