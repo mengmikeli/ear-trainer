@@ -425,7 +425,7 @@
 </script>
 
 <!-- Contained canvas viewport — lab style with frame corners -->
-<div class="canvas-frame">
+<div class="canvas-frame" style="background: var(--base, #000)">
 	<canvas bind:this={canvas} class="viz-canvas"></canvas>
 	<!-- Overlay inside viewport (e.g. Q# tap target) -->
 	<div class="viz-inner-overlay">
