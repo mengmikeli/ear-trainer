@@ -99,13 +99,7 @@
 		const rootMidi = question.rootNote;
 		const chordMidis = question.chord.intervals.map((s: number) => rootMidi + s);
 
-		await playChord(
-			rootMidi,
-			question.chord.intervals,
-			question.voicing,
-			state.settings.toneType,
-			isArpeggiated
-		);
+		// Set UI state synchronously BEFORE async audio
 		if (!hasPlayed) {
 			hasPlayed = true;
 			startTime = Date.now();
@@ -113,6 +107,15 @@
 			question.replays++;
 		}
 		isPlaying = true;
+
+		await playChord(
+			rootMidi,
+			question.chord.intervals,
+			question.voicing,
+			state.settings.toneType,
+			isArpeggiated
+		);
+
 		const noteCount = question.chord.intervals.length;
 		const totalMs = isArpeggiated ? (noteCount * 150 + 800 + 200) : 1400;
 

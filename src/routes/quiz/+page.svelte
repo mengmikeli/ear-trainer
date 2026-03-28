@@ -108,12 +108,7 @@
 		const rootMidi = question.rootNote;
 		const secondMidi = rootMidi + question.interval.semitones;
 
-		await playInterval(
-			rootMidi,
-			question.interval.semitones,
-			question.playMode,
-			state.settings.toneType
-		);
+		// Set UI state synchronously BEFORE async audio
 		if (!hasPlayed) {
 			hasPlayed = true;
 			startTime = Date.now();
@@ -121,6 +116,14 @@
 			question.replays++;
 		}
 		isPlaying = true;
+
+		await playInterval(
+			rootMidi,
+			question.interval.semitones,
+			question.playMode,
+			state.settings.toneType
+		);
+
 		const noteDuration = 0.6;
 		const gap = 0.15;
 		const totalMs = (noteDuration * 2 + gap) * 1000 + 200;

@@ -101,12 +101,7 @@
 		const rootMidi = question.rootNote;
 		const intervals = question.scale.intervals;
 
-		await playScale(
-			rootMidi,
-			intervals,
-			state.settings.toneType,
-			TEMPO
-		);
+		// Set UI state synchronously BEFORE async audio
 		if (!hasPlayed) {
 			hasPlayed = true;
 			startTime = Date.now();
@@ -114,6 +109,14 @@
 			question.replays++;
 		}
 		isPlaying = true;
+
+		await playScale(
+			rootMidi,
+			intervals,
+			state.settings.toneType,
+			TEMPO
+		);
+
 		const totalMs = intervals.length * TEMPO + 200;
 
 		// Only sync Chladni if audio actually started
