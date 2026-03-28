@@ -108,24 +108,9 @@
 	// ── Chladni constants (from lab) ──
 	const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 	// Reactive particle count — responds to superchargeViz prop changes
-	const vizEnabled = $derived(superchargeViz ?? !isMobile);
-	const PARTICLE_COUNT = $derived(vizEnabled ? (isMobile ? 1500 : 3500) : 0);
+	let PARTICLE_COUNT = 0; // set in onMount after state is loaded
 
 	let particles: { x: number; y: number }[] = [];
-
-	// Re-init particles when count changes
-	$effect(() => {
-		const count = PARTICLE_COUNT;
-		if (count > 0 && particles.length !== count) {
-			particles = [];
-			const TAU = Math.PI * 2;
-			for (let i = 0; i < count; i++) {
-				particles.push({ x: Math.random() * TAU, y: Math.random() * TAU });
-			}
-		} else if (count === 0) {
-			particles = [];
-		}
-	});
 	const SETTLE_SPEED_BASE = 0.003;
 	const SETTLE_SPEED_BOOST = 0.025;
 	const JITTER = 0.001;
@@ -261,7 +246,11 @@
 		window.addEventListener('resize', resize);
 		const ro = new ResizeObserver(() => resize());
 		ro.observe(canvas);
-		// Particles init handled by $effect watching PARTICLE_COUNT
+
+		// Init particles after state is guaranteed loaded
+		const sv = superchargeViz ?? !isMobile;
+		PARTICLE_COUNT = sv ? (isMobile ? 1500 : 3500) : 0;
+		initParticles();
 
 		let frameCount = 0;
 
