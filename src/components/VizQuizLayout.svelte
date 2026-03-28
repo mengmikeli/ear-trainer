@@ -167,8 +167,6 @@
 		// Chladni modes only update via playingNotes effect — not here
 		if (particles.length === 0) initParticles();
 	});
-		if (particles.length === 0) initParticles();
-	});
 
 	// ── Chladni driven by playingNotes (synced to actual audio) ──
 	$effect(() => {
