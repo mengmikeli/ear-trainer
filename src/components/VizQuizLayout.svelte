@@ -247,9 +247,8 @@
 		const ro = new ResizeObserver(() => resize());
 		ro.observe(canvas);
 
-		// Init particles after state is guaranteed loaded
-		const sv = superchargeViz ?? !isMobile;
-		PARTICLE_COUNT = sv ? (isMobile ? 1500 : 3500) : 0;
+		// Desktop always 3500. Mobile: 0 by default, 1500 when supercharge ON.
+		PARTICLE_COUNT = isMobile ? (superchargeViz ? 1500 : 0) : 3500;
 		initParticles();
 
 		let frameCount = 0;
