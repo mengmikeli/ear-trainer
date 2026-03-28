@@ -46,6 +46,14 @@
 
 	let canvas: HTMLCanvasElement;
 	let animId: number;
+	let animRunning = false;
+	let drawFn: (() => void) | null = null;
+	function startAnim() {
+		if (!animRunning && drawFn) {
+			animRunning = true;
+			animId = requestAnimationFrame(drawFn);
+		}
+	}
 	let t = 0;
 
 	// Audio analyser
@@ -198,6 +206,7 @@
 		chladniDriftEnabled = true;
 		settleSpeed = SETTLE_SPEED_BOOST;
 		migrateTimer = 90;
+		startAnim();
 	});
 
 	// ── State machine (P1 ring static, Chladni driven by playingNotes) ──
@@ -224,6 +233,7 @@
 		} else {
 			transitionActive = false;
 		}
+		startAnim();
 	});
 
 	onMount(() => {
@@ -241,10 +251,27 @@
 		resize();
 		window.addEventListener('resize', resize);
 		const ro = new ResizeObserver(() => resize());
+
+		// Force canvas frame bg from CSS variable (scoping workaround)
+		const baseBg = getComputedStyle(document.documentElement).getPropertyValue('--surface').trim();
+		if (baseBg && canvas.parentElement) {
+			canvas.parentElement.style.background = baseBg;
+		}
 		ro.observe(canvas);
 		initParticles();
 
 		let frameCount = 0;
+
+				// Read actual surface color for canvas bg + fade
+		const surfaceHex = getComputedStyle(document.documentElement).getPropertyValue('--surface').trim();
+		const bgColor = surfaceHex || '#000';
+		// Parse to rgb for semi-transparent fade
+		const tmp = document.createElement('div');
+		tmp.style.color = bgColor;
+		document.body.appendChild(tmp);
+		const parsedRgb = getComputedStyle(tmp).color;
+		document.body.removeChild(tmp);
+		const clearColor = parsedRgb.replace('rgb(', 'rgba(').replace(')', ', 0.14)');
 
 		function draw() {
 			const w = canvas.width / dpr;
@@ -299,7 +326,7 @@
 			const currentStep = circleStep + (activeStep - circleStep) * morphT;
 
 			// ── CLEAR ──
-			ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+			ctx.fillStyle = clearColor;
 			ctx.fillRect(0, 0, w, h);
 
 			// ── Migration decay (Chladni reacts to note changes) ──
@@ -370,29 +397,29 @@
 				ctx.globalAlpha = 1;
 			}
 
-			// ── VIGNETTE ──
-			const vigR = Math.min(cx, cy) * 0.5;
-			const vigGrad = ctx.createRadialGradient(cx, cy, vigR, cx, cy, Math.max(w, h) * 0.72);
-			vigGrad.addColorStop(0, 'rgba(0,0,0,0)');
-			vigGrad.addColorStop(0.7, 'rgba(0,0,0,0.15)');
-			vigGrad.addColorStop(1, 'rgba(0,0,0,0.55)');
-			ctx.fillStyle = vigGrad;
-			ctx.fillRect(0, 0, w, h);
 
 			// ── SCANLINE FLICKER ──
 			if (frameCount % 120 < 2) {
 				const glitchY = Math.random() * h;
-				ctx.fillStyle = 'rgba(194, 254, 12, 0.03)';
-				ctx.fillRect(0, glitchY, w, 1);
+				ctx.fillStyle = 'rgba(194, 254, 12, 0.07)';
+				ctx.fillRect(0, glitchY, w, 2);
 			}
 
 			t += speed;
 			frameCount++;
-			animId = requestAnimationFrame(draw);
+			// Pause when nothing needs animation
+			const needsAnim = chladniDriftEnabled || migrateTimer > 0 || transitionActive;
+			if (needsAnim) {
+				animId = requestAnimationFrame(draw);
+			} else {
+				animRunning = false;
+			}
 		}
 
-		ctx.fillStyle = '#000';
+		ctx.fillStyle = bgColor;
 		ctx.fillRect(0, 0, canvas.width, canvas.height);
+		drawFn = draw;
+		animRunning = true;
 		draw();
 
 		return () => {
@@ -408,7 +435,7 @@
 </script>
 
 <!-- Contained canvas viewport — lab style with frame corners -->
-<div class="canvas-frame">
+<div class="canvas-frame" style="background: var(--surface, #000)">
 	<canvas bind:this={canvas} class="viz-canvas"></canvas>
 	<!-- Overlay inside viewport (e.g. Q# tap target) -->
 	<div class="viz-inner-overlay">
@@ -428,7 +455,7 @@
 		flex: 1;
 		min-height: 0;
 		border: 1px solid var(--border-heavy);
-		background: #000;
+		background: var(--surface, #000);
 	}
 	.viz-canvas {
 		display: block;
