@@ -401,8 +401,8 @@
 			// ── SCANLINE FLICKER ──
 			if (frameCount % 120 < 2) {
 				const glitchY = Math.random() * h;
-				ctx.fillStyle = 'rgba(194, 254, 12, 0.03)';
-				ctx.fillRect(0, glitchY, w, 1);
+				ctx.fillStyle = 'rgba(194, 254, 12, 0.07)';
+				ctx.fillRect(0, glitchY, w, 2);
 			}
 
 			t += speed;
