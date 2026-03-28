@@ -4,7 +4,7 @@
 	import { base } from '$app/paths';
 	import { loadState, saveState, checkTierUnlock } from '$lib/state';
 	import { generateScaleQuestion } from '$lib/engine';
-	import { playScale, playFeedbackChime, suspendAudio } from '$lib/audio';
+	import { playScale, playFeedbackChime, suspendAudio, stopAudio } from '$lib/audio';
 	import { responseQuality, calculateSm2 } from '$lib/sm2';
 	import type { UserState, ScaleQuestion, ScaleDef } from '$lib/types';
 	import AnswerGrid from '../../../components/AnswerGrid.svelte';
@@ -77,6 +77,8 @@
 			return;
 		}
 
+		// Stop any currently-playing audio (Web Audio scheduled notes)
+		stopAudio();
 		// Kill any lingering A/B replay timeouts
 		for (const t of abTimeouts) clearTimeout(t);
 		abTimeouts = [];
@@ -120,13 +122,15 @@
 		isPlaying = true;
 		const totalMs = intervals.length * TEMPO + 200;
 
-		// Sync Chladni: step through each scale note
-		intervals.forEach((semitone: number, i: number) => {
-			setTimeout(() => {
-				playingNotes = [rootMidi + semitone];
-			}, i * TEMPO);
-		});
-		setTimeout(() => { isPlaying = false; playingNotes = []; }, totalMs);
+		// Sync Chladni — skip on first auto-play (mount, AudioContext may be suspended)
+		if (questionNum > 1) {
+			intervals.forEach((semitone: number, i: number) => {
+				abTimeouts.push(setTimeout(() => {
+					playingNotes = [rootMidi + semitone];
+				}, i * TEMPO));
+			});
+		}
+		abTimeouts.push(setTimeout(() => { isPlaying = false; playingNotes = []; }, totalMs));
 	}
 
 	function selectAnswer(choice: { id: string; name: string }) {

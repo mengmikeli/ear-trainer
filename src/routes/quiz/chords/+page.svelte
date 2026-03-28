@@ -114,13 +114,15 @@
 		const noteCount = question.chord.intervals.length;
 		const totalMs = isArpeggiated ? (noteCount * 150 + 800 + 200) : 1400;
 
-		// Sync Chladni: all chord notes at once (block), or sequentially (arp)
-		if (isArpeggiated) {
-			chordMidis.forEach((midi: number, i: number) => {
-				setTimeout(() => { playingNotes = chordMidis.slice(0, i + 1); }, i * 150);
-			});
-		} else {
-			playingNotes = chordMidis;
+		// Sync Chladni — skip on first auto-play (mount)
+		if (questionNum > 1) {
+			if (isArpeggiated) {
+				chordMidis.forEach((midi: number, i: number) => {
+					setTimeout(() => { playingNotes = chordMidis.slice(0, i + 1); }, i * 150);
+				});
+			} else {
+				playingNotes = chordMidis;
+			}
 		}
 		setTimeout(() => { isPlaying = false; playingNotes = []; }, totalMs);
 	}
