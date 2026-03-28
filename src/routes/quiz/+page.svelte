@@ -553,8 +553,8 @@
 		color: var(--accent);
 		transition: color 0.3s ease-out;
 	}
-	.q-text.feedback-correct { color: var(--base); }
-	.q-text.feedback-wrong { color: var(--base); }
+	.q-text.feedback-correct { color: var(--base); transition: none; }
+	.q-text.feedback-wrong { color: var(--base); transition: none; }
 	.q-text.glitch-text { /* clean glyph cycling, no effects */ }
 	.answer-area {
 		width: 100%;
