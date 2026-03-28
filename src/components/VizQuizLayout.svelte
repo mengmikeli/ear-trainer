@@ -120,7 +120,7 @@
 	let chladniM = $state(1);
 	let chladniModes: ChladniMode[] = []; // for chord superposition
 	let useSuperposition = false;
-	let chladniDriftEnabled = false; // only true after playingNotes fires with real notes
+	let chladniDriftEnabled = false; // plain mutable — set by $effect, read by rAF draw loop
 	let chladniTimer: ReturnType<typeof setTimeout> | null = null;
 	let scaleStepTimers: ReturnType<typeof setTimeout>[] = [];
 
@@ -172,7 +172,12 @@
 	// ── Chladni driven by playingNotes (synced to actual audio) ──
 	$effect(() => {
 		const notes = playingNotes;
-		if (!notes || notes.length === 0) return; // no change when silent
+		if (!notes || notes.length === 0) {
+			chladniDriftEnabled = false;
+			return;
+		}
+
+		chladniDriftEnabled = true;
 
 		if (notes.length === 1) {
 			// Single note → single Chladni mode
@@ -306,8 +311,8 @@
 			}
 
 			// ── CHLADNI PARTICLES (audio-reactive) ──
-			// Skip drift when no audio has ever played — hard boolean, no reactive edge cases
-			const chladniActive = chladniDriftEnabled && playingNotes.length > 0;
+			// Plain mutable boolean set by $effect — no reactivity issues in rAF
+			const chladniActive = chladniDriftEnabled;
 			const TAU = Math.PI * 2;
 			const currentShake = SHAKE_BASE + amp * SHAKE_AUDIO;
 			const migrating = migrateTimer > 0;
