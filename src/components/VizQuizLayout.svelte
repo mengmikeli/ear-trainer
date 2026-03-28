@@ -156,7 +156,7 @@
 		noiseCtx.putImageData(imgData, 0, 0);
 	}
 
-	// ── React to interval/chord/scale changes ──
+	// ── React to interval/chord/scale changes (Lissajous ratio only) ──
 	$effect(() => {
 		const _s = semitones;
 		const _c = chordIntervals;
@@ -164,12 +164,9 @@
 		const [fx, fy] = getTargetRatio();
 		targetFx = fx;
 		targetFy = fy;
-		// Set initial Chladni mode from root note
-		const [n, m] = midiToChladniMode(60);
-		chladniN = n;
-		chladniM = m;
-		settleSpeed = SETTLE_SPEED_BOOST;
-		migrateTimer = 90;
+		// Chladni modes only update via playingNotes effect — not here
+		if (particles.length === 0) initParticles();
+	});
 		if (particles.length === 0) initParticles();
 	});
 

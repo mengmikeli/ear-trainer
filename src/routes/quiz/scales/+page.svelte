@@ -122,11 +122,11 @@
 
 		// Sync Chladni: step through each scale note
 		intervals.forEach((semitone: number, i: number) => {
-			setTimeout(() => {
+			abTimeouts.push(setTimeout(() => {
 				playingNotes = [rootMidi + semitone];
-			}, i * TEMPO);
+			}, i * TEMPO));
 		});
-		setTimeout(() => { isPlaying = false; playingNotes = []; }, totalMs);
+		abTimeouts.push(setTimeout(() => { isPlaying = false; playingNotes = []; }, totalMs));
 	}
 
 	function selectAnswer(choice: { id: string; name: string }) {
@@ -243,7 +243,7 @@
 		);
 		isPlaying = true;
 		const totalMs = question.scale.intervals.length * TEMPO + 200;
-		setTimeout(() => { isPlaying = false; }, totalMs);
+		abTimeouts.push(setTimeout(() => { isPlaying = false; }, totalMs));
 		countdownStart = performance.now();
 		countdownPct = 1.0;
 	}
@@ -390,6 +390,8 @@
 				correctId={selectedId ? question.scale.id : null}
 				{selectedId}
 				onCorrectClick={selectedId ? (inResultMode ? nextQuestion : skipCorrect) : null}
+				countdownPct={inResultMode ? countdownPct : -1}
+				onWrongClick={inResultMode ? replayInResult : null}
 			/>
 		</div>
 	{/if}
