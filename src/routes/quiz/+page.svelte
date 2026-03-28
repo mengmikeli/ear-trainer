@@ -162,10 +162,16 @@
 		const gap = 0.15;
 		const totalMs = (noteDuration * 2 + gap) * 1000 + 200;
 
-		// Sync Chladni with interval notes
-		playingNotes = [rootMidi]; triggerBounce();
-		const secondDelay = (noteDuration + gap) * 1000;
-		setTimeout(() => { playingNotes = [secondMidi]; triggerBounce(); }, secondDelay);
+		// Sync Chladni + bounce with actual note timing
+		if (question.playMode === 'harmonic') {
+			// Both notes at once → 1 bounce
+			playingNotes = [rootMidi, secondMidi]; triggerBounce();
+		} else {
+			// Sequential → bounce per note
+			playingNotes = [rootMidi]; triggerBounce();
+			const secondDelay = (noteDuration + gap) * 1000;
+			setTimeout(() => { playingNotes = [secondMidi]; triggerBounce(); }, secondDelay);
+		}
 		setTimeout(() => { isPlaying = false; playingNotes = []; }, totalMs);
 	}
 
