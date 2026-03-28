@@ -1,26 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="#000"/>
-  <!-- Pass 1: outer glow -->
-  <circle cx="256" cy="256" r="180" fill="none" stroke="#C2FE0C" stroke-width="6" opacity="0.15">
-    <animate attributeName="opacity" values="0.12;0.18;0.12" dur="3s" repeatCount="indefinite"/>
-  </circle>
-  <!-- Pass 2: bloom -->
-  <circle cx="256" cy="256" r="180" fill="none" stroke="#C2FE0C" stroke-width="3.5" opacity="0.4"/>
-  <!-- Pass 3: primary stroke -->
-  <circle cx="256" cy="256" r="180" fill="none" stroke="#C2FE0C" stroke-width="2.2" opacity="0.85"/>
-  <!-- Head dot at 12 o'clock -->
-  <circle cx="256" cy="76" r="8" fill="#C2FE0C" opacity="1">
-    <!-- Subtle glow around head dot -->
-  </circle>
-  <!-- Glow filter for head dot -->
-  <defs>
-    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="4" result="blur"/>
-      <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-  </defs>
-  <circle cx="256" cy="76" r="6" fill="#C2FE0C" filter="url(#glow)"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Transparent background — works on any tab bar color -->
+  <!-- Outer glow -->
+  <circle cx="32" cy="32" r="24" fill="none" stroke="#C2FE0C" stroke-width="5" opacity="0.2"/>
+  <!-- Primary ring — thick enough to read at 16px -->
+  <circle cx="32" cy="32" r="24" fill="none" stroke="#C2FE0C" stroke-width="3" opacity="0.9"/>
+  <!-- Head dot at 12 o'clock — proportionally larger -->
+  <circle cx="32" cy="8" r="4" fill="#C2FE0C"/>
 </svg>
