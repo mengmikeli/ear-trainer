@@ -15,6 +15,7 @@
 	} from '$lib/viz';
 	import type { ChladniMode } from '$lib/viz';
 	import { getAnalyser, getAmplitude } from '$lib/audio';
+	import { loadState } from '$lib/state';
 
 	type Phase = 'rest' | 'playing' | 'playing-a' | 'playing-b' | 'correct' | 'wrong' | 'transition';
 
@@ -107,8 +108,9 @@
 
 	// ── Chladni constants (from lab) ──
 	const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-	const showChladni = superchargeViz ?? !isMobile;
-	const PARTICLE_COUNT = showChladni ? (isMobile ? 1500 : 3500) : 0;
+	// Read superchargeViz from prop or directly from state
+	const vizEnabled = superchargeViz ?? loadState()?.settings?.superchargeViz ?? !isMobile;
+	const PARTICLE_COUNT = vizEnabled ? (isMobile ? 1500 : 3500) : 0;
 	const SETTLE_SPEED_BASE = 0.003;
 	const SETTLE_SPEED_BOOST = 0.025;
 	const JITTER = 0.001;
