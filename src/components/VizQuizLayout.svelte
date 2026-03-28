@@ -10,8 +10,8 @@
 	 */
 	import { onMount, onDestroy } from 'svelte';
 	import {
-		getRatio, chladni, chladniGrad, chladniSuper, chladniGradSuper,
-		chordToModes, midiToChladniMode, harmonograph3D
+		getRatio, chladni, chladniGrad,
+		midiToChladniMode, harmonograph3D
 	} from '$lib/viz';
 	import type { ChladniMode } from '$lib/viz';
 	import { getAnalyser, getAmplitude } from '$lib/audio';
@@ -111,34 +111,17 @@
 	let particles: { x: number; y: number }[] = [];
 	let settleSpeed = SETTLE_SPEED_BASE;
 	let migrateTimer = 0;
-	let scatterTimer = 0;
 
-	// Chladni mode(s)
-	let currentModes: ChladniMode[] = [{ n: 1, m: 1, amp: 1 }];
-	let useSuperposition = false;
+	// Chladni mode — single mode, switches per note played (same as lab)
+	let chladniN = $state(1);
+	let chladniM = $state(1);
+	let chladniTimer: ReturnType<typeof setTimeout> | null = null;
 
 	function initParticles() {
 		particles = [];
 		const TAU = Math.PI * 2;
 		for (let i = 0; i < PARTICLE_COUNT; i++) {
 			particles.push({ x: Math.random() * TAU, y: Math.random() * TAU });
-		}
-	}
-
-	function updateChladniModes() {
-		if (chordIntervals && chordIntervals.length > 1) {
-			currentModes = chordToModes(60, chordIntervals);
-			useSuperposition = true;
-		} else if (scaleIntervals && scaleIntervals.length > 1) {
-			const filtered = scaleIntervals.filter(s => s > 0 && s < 12);
-			const dominant = filtered.includes(7) ? 7 : Math.max(...filtered, 0);
-			const [n, m] = midiToChladniMode(60 + dominant);
-			currentModes = [{ n, m, amp: 1 }];
-			useSuperposition = false;
-		} else {
-			const [n, m] = midiToChladniMode(60 + semitones);
-			currentModes = [{ n, m, amp: 1 }];
-			useSuperposition = false;
 		}
 	}
 
@@ -175,14 +158,16 @@
 		const [fx, fy] = getTargetRatio();
 		targetFx = fx;
 		targetFy = fy;
-		updateChladniModes();
-		// Migration burst when question changes — Chladni reacts
+		// Set initial Chladni mode from root note
+		const [n, m] = midiToChladniMode(60);
+		chladniN = n;
+		chladniM = m;
 		settleSpeed = SETTLE_SPEED_BOOST;
 		migrateTimer = 90;
 		if (particles.length === 0) initParticles();
 	});
 
-	// ── State machine (P1 ring static, Chladni reactive to audio) ──
+	// ── State machine (P1 ring static, Chladni fully reactive like lab) ──
 	$effect(() => {
 		// Ring stays P1 circle + accent color always
 		morphTarget = 0;
@@ -190,7 +175,7 @@
 		targetR = 194; targetG = 254; targetB = 12;
 
 		if (vizPhase === 'playing' || vizPhase === 'playing-a' || vizPhase === 'playing-b') {
-			// Init analyser — must happen during user interaction (play tap)
+			// Init analyser
 			if (!analyserRef) {
 				try {
 					const { analyser, dataArray } = getAnalyser();
@@ -198,9 +183,28 @@
 					dataArrayRef = dataArray;
 				} catch { /* not ready */ }
 			}
-			// Chladni: migration burst on each play — particles react to the sound
+
+			// Per-note Chladni pattern switching (same as lab handlePlay)
+			// Root note → root Chladni mode
+			const rootMidi = 60;
+			const [rootN, rootM] = midiToChladniMode(rootMidi);
+			chladniN = rootN;
+			chladniM = rootM;
 			settleSpeed = SETTLE_SPEED_BOOST;
 			migrateTimer = 90;
+
+			// Second note → second Chladni mode after delay
+			if (chladniTimer) clearTimeout(chladniTimer);
+			const secondMidi = rootMidi + (semitones || 0);
+			if (secondMidi !== rootMidi) {
+				chladniTimer = setTimeout(() => {
+					const [secN, secM] = midiToChladniMode(secondMidi);
+					chladniN = secN;
+					chladniM = secM;
+					settleSpeed = SETTLE_SPEED_BOOST;
+					migrateTimer = 90;
+				}, 700);
+			}
 		}
 		if (vizPhase === 'transition') {
 			transitionActive = true;
@@ -299,18 +303,13 @@
 			const TAU = Math.PI * 2;
 			const currentShake = SHAKE_BASE + amp * SHAKE_AUDIO;
 			const migrating = migrateTimer > 0;
-			const modes = currentModes;
 
 			ctx.shadowColor = '#3A2CFF';
 			ctx.shadowBlur = 2;
 
 			for (const p of particles) {
-				const val = useSuperposition
-					? chladniSuper(p.x, p.y, modes)
-					: chladni(p.x, p.y, modes[0].n, modes[0].m);
-				const [gx, gy] = useSuperposition
-					? chladniGradSuper(p.x, p.y, modes)
-					: chladniGrad(p.x, p.y, modes[0].n, modes[0].m);
+				const val = chladni(p.x, p.y, chladniN, chladniM);
+				const [gx, gy] = chladniGrad(p.x, p.y, chladniN, chladniM);
 
 				p.x -= gx * val * settleSpeed;
 				p.y -= gy * val * settleSpeed;
