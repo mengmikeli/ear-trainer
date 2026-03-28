@@ -554,7 +554,7 @@
 		justify-content: center;
 		cursor: pointer;
 		-webkit-tap-highlight-color: transparent;
-		transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+		
 	}
 	.play-tap.feedback-correct { background: var(--correct); border-color: var(--correct); box-shadow: 0 0 12px var(--correct); }
 	.play-tap.feedback-wrong { background: var(--hot); border-color: var(--hot); box-shadow: 0 0 12px var(--hot); transition: none; }
@@ -571,7 +571,7 @@
 		font-weight: 700;
 		letter-spacing: 0.05em;
 		color: var(--accent);
-		transition: color 0.3s ease-out;
+		
 	}
 	.q-text.feedback-correct { color: var(--base); transition: none; }
 	.q-text.feedback-wrong { color: var(--base); transition: none; }
