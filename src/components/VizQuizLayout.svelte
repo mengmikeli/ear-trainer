@@ -105,7 +105,8 @@
 
 	// ── Chladni constants (from lab) ──
 	const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-	const PARTICLE_COUNT = isMobile ? 0 : 3500; // disabled on mobile for perf
+	const sv = JSON.parse(localStorage.getItem('ear-trainer-state') || '{}')?.settings?.superchargeViz;
+	const PARTICLE_COUNT = isMobile ? (sv ? 1500 : 0) : (sv === false ? 0 : 3500);
 	const SETTLE_SPEED_BASE = 0.003;
 	const SETTLE_SPEED_BOOST = 0.025;
 	const JITTER = 0.001;
