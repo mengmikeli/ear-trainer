@@ -74,6 +74,7 @@
 			return;
 		}
 
+		playingNotes = [];
 		isGlitching = true;
 		feedbackState = null;
 		questionNum++;

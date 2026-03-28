@@ -78,6 +78,9 @@
 			return;
 		}
 
+		// Clear audio/viz state before transition
+		playingNotes = [];
+
 		// Start glitch BEFORE clearing state — covers the visual transition
 		isGlitching = true;
 		feedbackState = null; // clear feedback immediately so glitch style takes over
