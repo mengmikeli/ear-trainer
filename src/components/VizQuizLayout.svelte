@@ -176,71 +176,32 @@
 		targetFx = fx;
 		targetFy = fy;
 		updateChladniModes();
-		settleSpeed = SETTLE_SPEED_BOOST;
-		migrateTimer = 90;
+		// No migration burst — Chladni stays ambient
 		if (particles.length === 0) initParticles();
 	});
 
-	// ── State machine ──
+	// ── State machine (simplified — viz is decoration, not reactive) ──
 	$effect(() => {
-		switch (vizPhase) {
-			case 'rest':
-				morphTarget = 0;
-				wrongTarget = 0;
-				targetR = 194; targetG = 254; targetB = 12;
-				transitionActive = false;
-				break;
-			case 'playing':
-			case 'playing-a':
-			case 'playing-b':
-				morphTarget = 1;
-				wrongTarget = 0;
-				targetR = 194; targetG = 254; targetB = 12;
-				if (!analyserRef) {
-					try {
-						const { analyser, dataArray } = getAnalyser();
-						analyserRef = analyser;
-						dataArrayRef = dataArray;
-					} catch { /* not ready */ }
-				}
-				break;
-			case 'correct':
-				morphTarget = 0; // snap to circle (consonance = resolution)
-				wrongTarget = 0;
-				targetR = 0; targetG = 255; targetB = 136;
-				bloomT = 1;
-				// Chladni: boost migration
-				settleSpeed = SETTLE_SPEED_BOOST;
-				migrateTimer = 120;
-				break;
-			case 'wrong':
-				wrongTarget = 1; // destabilize to harmonograph
-				targetR = 194; targetG = 254; targetB = 12; // stay accent, dim via wrong
-				// Random dissonant frequencies
-				wrongFreqs = [
-					1 + Math.random() * 2,
-					1.3 + Math.random() * 1.5,
-					0.7 + Math.random() * 2,
-				];
-				// Chladni: scatter
-				scatterTimer = 30;
-				const TAU = Math.PI * 2;
-				for (const p of particles) {
-					p.x += (Math.random() - 0.5) * 0.5;
-					p.y += (Math.random() - 0.5) * 0.5;
-					if (p.x < 0) p.x += TAU;
-					if (p.x > TAU) p.x -= TAU;
-					if (p.y < 0) p.y += TAU;
-					if (p.y > TAU) p.y -= TAU;
-				}
-				break;
-			case 'transition':
-				morphTarget = 0;
-				wrongTarget = 0;
-				targetR = 194; targetG = 254; targetB = 12;
-				transitionActive = true;
-				transitionT = 0;
-				break;
+		// All states keep P1 circle, accent color. No morph, no harmonograph.
+		morphTarget = 0;
+		wrongTarget = 0;
+		targetR = 194; targetG = 254; targetB = 12;
+
+		if (vizPhase === 'playing' || vizPhase === 'playing-a' || vizPhase === 'playing-b') {
+			// Init analyser for potential future audio reactivity
+			if (!analyserRef) {
+				try {
+					const { analyser, dataArray } = getAnalyser();
+					analyserRef = analyser;
+					dataArrayRef = dataArray;
+				} catch { /* not ready */ }
+			}
+		}
+		if (vizPhase === 'transition') {
+			transitionActive = true;
+			transitionT = 0;
+		} else {
+			transitionActive = false;
 		}
 	});
 
@@ -305,7 +266,7 @@
 
 			const drawFx = 1 + (fx - 1) * morphT;
 			const drawFy = 1 + (fy - 1) * morphT;
-			const radius = Math.min(cx, cy) * 0.78 * radiusPulse; // Same as lab
+			const radius = Math.min(cx, cy) * 0.70 * radiusPulse; // 10% smaller than lab
 
 			// Speed
 			const maxRatio = Math.max(fx, fy);
@@ -320,21 +281,10 @@
 			ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
 			ctx.fillRect(0, 0, w, h);
 
-			// ── Migration / scatter decay ──
-			if (migrateTimer > 0) {
-				migrateTimer--;
-				if (migrateTimer < 30) {
-					settleSpeed = SETTLE_SPEED_BASE + (SETTLE_SPEED_BOOST - SETTLE_SPEED_BASE) * (migrateTimer / 30);
-				}
-				if (migrateTimer === 0) settleSpeed = SETTLE_SPEED_BASE;
-			}
-			const scatterBoost = scatterTimer > 0 ? 0.03 : 0;
-			if (scatterTimer > 0) scatterTimer--;
-
-			// ── CHLADNI PARTICLES ──
+			// ── CHLADNI PARTICLES (ambient — no reactive migration/scatter) ──
 			const TAU = Math.PI * 2;
-			const currentShake = SHAKE_BASE + amp * SHAKE_AUDIO + scatterBoost;
-			const migrating = migrateTimer > 0;
+			const currentShake = SHAKE_BASE + amp * SHAKE_AUDIO;
+			const migrating = false;
 			const modes = currentModes;
 
 			ctx.shadowColor = '#3A2CFF';
@@ -376,66 +326,15 @@
 			ctx.globalAlpha = 1;
 			ctx.shadowBlur = 0;
 
-			// ── LISSAJOUS SHAPE ──
-			// Countdown: trail erases from tail
-			const visiblePoints = countdownPct >= 0
-				? Math.max(1, Math.floor(TRAIL_POINTS * Math.max(0, countdownPct)))
-				: TRAIL_POINTS;
+			// ── LISSAJOUS SHAPE (P1 circle only — no morph, no harmonograph) ──
+			const visiblePoints = TRAIL_POINTS;
 
-			// Wrong state dimming
-			const wrongDim = 1 - wrongT * 0.5;
-
-			// Bloom glow
-			if (bloomT > 0.01) {
-				const bloomRadius = radius * (1 + bloomT * 0.4);
-				const grad = ctx.createRadialGradient(cx, cy, radius * 0.5, cx, cy, bloomRadius * 1.3);
-				grad.addColorStop(0, `rgba(${Math.round(colorR)}, ${Math.round(colorG)}, ${Math.round(colorB)}, ${0.25 * bloomT})`);
-				grad.addColorStop(0.6, `rgba(${Math.round(colorR)}, ${Math.round(colorG)}, ${Math.round(colorB)}, ${0.08 * bloomT})`);
-				grad.addColorStop(1, `rgba(${Math.round(colorR)}, ${Math.round(colorG)}, ${Math.round(colorB)}, 0)`);
-				ctx.fillStyle = grad;
-				ctx.fillRect(0, 0, w, h);
-			}
-
-			// Compute trail points
+			// Compute trail points — always P1 circle (fx=1, fy=1)
 			const lissPoints: [number, number][] = [];
 			for (let i = 0; i < visiblePoints; i++) {
 				const tt = t - i * currentStep;
-				let px: number, py: number;
-
-				// Blend between clean Lissajous and harmonograph chaos
-				if (wrongT > 0.01) {
-					// Clean Lissajous position
-					const pointMorph = Math.max(0, morphT - (i / TRAIL_POINTS) * 0.3);
-					const ptFx = 1 + (fx - 1) * pointMorph;
-					const ptFy = 1 + (fy - 1) * pointMorph;
-					const cleanX = radius * Math.sin(ptFx * tt + PHASE_DELTA);
-					const cleanY = radius * Math.sin(ptFy * tt);
-
-					// Harmonograph chaos position
-					const [hx, hy] = harmonograph3D(tt, wrongFreqs, radius, PHASE_DELTA, 0);
-
-					// Blend
-					px = cleanX * (1 - wrongT) + hx * wrongT;
-					py = cleanY * (1 - wrongT) + hy * wrongT;
-				} else if (transitionActive) {
-					// Transition: brief chaos then settle
-					const chaos = Math.max(0, 1 - transitionT * 2); // chaos decays quickly
-					const pointMorph = Math.max(0, morphT - (i / TRAIL_POINTS) * 0.3);
-					const ptFx = 1 + (fx - 1) * pointMorph;
-					const ptFy = 1 + (fy - 1) * pointMorph;
-					const cleanX = radius * Math.sin(ptFx * tt + PHASE_DELTA);
-					const cleanY = radius * Math.sin(ptFy * tt);
-					const noise = chaos * Math.sin(i * 0.5 + t * 12) * 15;
-					px = cleanX + noise;
-					py = cleanY + noise * 0.6;
-				} else {
-					// Normal: per-point morph (head leads, tail follows)
-					const pointMorph = Math.max(0, morphT - (i / TRAIL_POINTS) * 0.3);
-					const ptFx = 1 + (fx - 1) * pointMorph;
-					const ptFy = 1 + (fy - 1) * pointMorph;
-					px = radius * Math.sin(ptFx * tt + PHASE_DELTA);
-					py = radius * Math.sin(ptFy * tt);
-				}
+				const px = radius * Math.sin(tt + PHASE_DELTA);
+				const py = radius * Math.sin(tt);
 
 				lissPoints.push([px, py]);
 			}
@@ -452,7 +351,7 @@
 			ctx.shadowColor = strokeColor;
 
 			for (const [mx, my, baseAlpha] of mirrors) {
-				const mirrorAlpha = baseAlpha * wrongDim;
+				const mirrorAlpha = baseAlpha;
 				if (mirrorAlpha < 0.02) continue;
 
 				// Pass 1: outer glow
@@ -465,7 +364,7 @@
 				}
 				ctx.lineWidth = 3;
 				ctx.globalAlpha = 0.1 * mirrorAlpha;
-				ctx.shadowBlur = 8 + glowBoost + bloomT * 12;
+				ctx.shadowBlur = 8 + glowBoost;
 				ctx.stroke();
 
 				// Pass 2: bloom
@@ -478,7 +377,7 @@
 				}
 				ctx.lineWidth = 1.8 + lwBoost * 0.5;
 				ctx.globalAlpha = 0.3 * mirrorAlpha;
-				ctx.shadowBlur = 4 + glowBoost * 0.5 + bloomT * 6;
+				ctx.shadowBlur = 4 + glowBoost * 0.5;
 				ctx.stroke();
 
 				// Pass 3: primary stroke
@@ -506,7 +405,7 @@
 				ctx.arc(headX, headY, 3, 0, Math.PI * 2);
 				ctx.fillStyle = strokeColor;
 				ctx.shadowColor = strokeColor;
-				ctx.shadowBlur = 6 + glowBoost + bloomT * 10;
+				ctx.shadowBlur = 6 + glowBoost;
 				ctx.globalAlpha = 1 - wrongT;
 				ctx.fill();
 				ctx.globalAlpha = 1;
