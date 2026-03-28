@@ -251,6 +251,12 @@
 		resize();
 		window.addEventListener('resize', resize);
 		const ro = new ResizeObserver(() => resize());
+
+		// Force canvas frame bg from CSS variable (scoping workaround)
+		const baseBg = getComputedStyle(document.documentElement).getPropertyValue('--base').trim();
+		if (baseBg && canvas.parentElement) {
+			canvas.parentElement.style.background = baseBg;
+		}
 		ro.observe(canvas);
 		initParticles();
 
