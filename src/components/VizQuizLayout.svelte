@@ -253,7 +253,7 @@
 		const ro = new ResizeObserver(() => resize());
 
 		// Force canvas frame bg from CSS variable (scoping workaround)
-		const baseBg = getComputedStyle(document.documentElement).getPropertyValue('--base').trim();
+		const baseBg = getComputedStyle(document.documentElement).getPropertyValue('--surface').trim();
 		if (baseBg && canvas.parentElement) {
 			canvas.parentElement.style.background = baseBg;
 		}
@@ -263,7 +263,7 @@
 		let frameCount = 0;
 
 		// Read actual theme bg from CSS variable
-		const computedBg = getComputedStyle(document.documentElement).getPropertyValue('--base').trim();
+		const computedBg = getComputedStyle(document.documentElement).getPropertyValue('--surface').trim();
 		const bgColor = computedBg || '#000';
 		// Detect light by checking if bg is NOT black
 		const isLight = !/^#0{3,6}$|^rgb\(0/.test(bgColor);
@@ -431,7 +431,7 @@
 </script>
 
 <!-- Contained canvas viewport — lab style with frame corners -->
-<div class="canvas-frame" style="background: var(--base, #000)">
+<div class="canvas-frame" style="background: var(--surface, #000)">
 	<canvas bind:this={canvas} class="viz-canvas"></canvas>
 	<!-- Overlay inside viewport (e.g. Q# tap target) -->
 	<div class="viz-inner-overlay">
@@ -451,7 +451,7 @@
 		flex: 1;
 		min-height: 0;
 		border: 1px solid var(--border-heavy);
-		background: var(--base, #000);
+		background: var(--surface, #000);
 	}
 	.viz-canvas {
 		display: block;
