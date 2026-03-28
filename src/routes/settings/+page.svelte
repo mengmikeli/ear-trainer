@@ -17,6 +17,7 @@
 	let holdStart = 0;
 	let holdRaf: number | null = null;
 	let resetDone = $state(false);
+	const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 	let glitchText = $state('RESET PROGRESS');
 	let glitchInterval: ReturnType<typeof setInterval> | null = null;
 	let systemThemeCleanup: (() => void) | undefined;
@@ -302,12 +303,12 @@
 
 			<div class="dev-toggle-row">
 				<span class="dev-label">SUPERCHARGE VIZ</span>
-				<button class="dev-btn supercharge" class:active={state.settings.superchargeViz ?? false}
+				<button class="dev-btn supercharge" class:active={state.settings.superchargeViz ?? !isMobile}
 					onclick={() => {
-						state!.settings.superchargeViz = !(state!.settings.superchargeViz ?? false);
+						state!.settings.superchargeViz = !(state!.settings.superchargeViz ?? !isMobile);
 						update();
 					}}>
-					{(state.settings.superchargeViz ?? false) ? 'ON' : 'OFF'}
+					{(state.settings.superchargeViz ?? !isMobile) ? 'ON' : 'OFF'}
 				</button>
 			</div>
 
