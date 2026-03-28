@@ -15,7 +15,6 @@
 	} from '$lib/viz';
 	import type { ChladniMode } from '$lib/viz';
 	import { getAnalyser, getAmplitude } from '$lib/audio';
-	import { loadState } from '$lib/state';
 
 	type Phase = 'rest' | 'playing' | 'playing-a' | 'playing-b' | 'correct' | 'wrong' | 'transition';
 
@@ -108,9 +107,24 @@
 
 	// ── Chladni constants (from lab) ──
 	const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-	// Read superchargeViz from prop or directly from state
-	const vizEnabled = superchargeViz ?? loadState()?.settings?.superchargeViz ?? !isMobile;
-	const PARTICLE_COUNT = vizEnabled ? (isMobile ? 1500 : 3500) : 0;
+	// Reactive particle count — responds to superchargeViz prop changes
+	const vizEnabled = $derived(superchargeViz ?? !isMobile);
+	const PARTICLE_COUNT = $derived(vizEnabled ? (isMobile ? 1500 : 3500) : 0);
+
+	// Re-init particles when count changes
+	$effect(() => {
+		const count = PARTICLE_COUNT;
+		if (count > 0 && particles.length !== count) {
+			particles = [];
+			const TAU = Math.PI * 2;
+			for (let i = 0; i < count; i++) {
+				particles.push({ x: Math.random() * TAU, y: Math.random() * TAU });
+			}
+			startAnim();
+		} else if (count === 0) {
+			particles = [];
+		}
+	});
 	const SETTLE_SPEED_BASE = 0.003;
 	const SETTLE_SPEED_BOOST = 0.025;
 	const JITTER = 0.001;
