@@ -240,18 +240,22 @@
 	}
 
 	function replayInResult() {
-		console.log('[scales] replayInResult');
-		// In result mode, replaying plays the correct scale only
 		if (!question || !state) return;
-		playScale(
-			question.rootNote,
-			question.scale.intervals,
-			state.settings.toneType,
-			TEMPO
-		);
+		const rootMidi = question.rootNote;
+		const intervals = question.scale.intervals;
+
+		playScale(rootMidi, intervals, state.settings.toneType, TEMPO);
 		isPlaying = true;
-		const totalMs = question.scale.intervals.length * TEMPO + 200;
-		setTimeout(() => { isPlaying = false; }, totalMs);
+		const totalMs = intervals.length * TEMPO + 200;
+
+		// Sync Chladni + bounce on replay
+		intervals.forEach((semitone: number, i: number) => {
+			abTimeouts.push(setTimeout(() => {
+				playingNotes = [rootMidi + semitone];
+				bounceCount++;
+			}, i * TEMPO));
+		});
+		abTimeouts.push(setTimeout(() => { isPlaying = false; playingNotes = []; }, totalMs));
 		countdownStart = performance.now();
 		countdownPct = 1.0;
 	}
