@@ -17,6 +17,7 @@
 	let holdStart = 0;
 	let holdRaf: number | null = null;
 	let resetDone = $state(false);
+	const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 	let glitchText = $state('RESET PROGRESS');
 	let glitchInterval: ReturnType<typeof setInterval> | null = null;
 	let systemThemeCleanup: (() => void) | undefined;
@@ -301,6 +302,16 @@
 			</div>
 
 			{#if state.settings.devMode}
+			<div class="dev-toggle-row">
+				<span class="dev-label" style="color: var(--marathon-blue)">SUPERCHARGE VIZ</span>
+				<button class="dev-btn supercharge" class:active={state.settings.superchargeViz ?? !isMobile}
+					onclick={() => {
+						state!.settings.superchargeViz = !(state!.settings.superchargeViz ?? !isMobile);
+						update();
+					}}>
+					{(state.settings.superchargeViz ?? !isMobile) ? 'ON' : 'OFF'}
+				</button>
+			</div>
 				<button
 					class="lab-btn"
 					class:holding={labHoldActive}
@@ -498,6 +509,14 @@
 	}
 	.dev-btn.active {
 		background: var(--hot);
+		color: var(--base);
+	}
+	.dev-btn.supercharge {
+		border-color: var(--marathon-blue);
+		color: var(--marathon-blue);
+	}
+	.dev-btn.supercharge.active {
+		background: var(--marathon-blue);
 		color: var(--base);
 	}
 	.dev-link {

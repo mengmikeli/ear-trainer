@@ -7,10 +7,10 @@
 	import { playScale, playFeedbackChime, suspendAudio } from '$lib/audio';
 	import { responseQuality, calculateSm2 } from '$lib/sm2';
 	import type { UserState, ScaleQuestion, ScaleDef } from '$lib/types';
-	import PlayButton from '../../../components/PlayButton.svelte';
 	import AnswerGrid from '../../../components/AnswerGrid.svelte';
 	import ProgressBar from '../../../components/ProgressBar.svelte';
 	import TelemetryBar from '../../../components/TelemetryBar.svelte';
+	import VizQuizLayout from '../../../components/VizQuizLayout.svelte';
 
 	const TEMPO = 150; // ms per note
 
@@ -38,6 +38,55 @@
 	let rafId: number | null = null;
 	let isGlitching = $state(false);
 	let correctTimeout: ReturnType<typeof setTimeout> | null = null;
+	let abTimeouts: ReturnType<typeof setTimeout>[] = [];
+
+	const vizPhase = $derived.by((): 'rest' | 'playing' | 'correct' | 'wrong' | 'transition' => {
+		if (isGlitching) return 'transition';
+		if (feedbackState === 'correct') return 'correct';
+		if (feedbackState === 'wrong') return 'wrong';
+		if (isPlaying) return 'playing';
+		return 'rest';
+	});
+
+	function handleTransitionEnd() {}
+
+	let playingNotes: number[] = $state([]);
+
+	
+	
+	let bounceClass = $state('');
+	function triggerBounce(sustained = false) { const cls = sustained ? 'bounce-sustained' : 'bounce-short'; bounceClass = ''; requestAnimationFrame(() => { bounceClass = cls; }); setTimeout(() => { bounceClass = ''; }, sustained ? 1200 : 300); }
+	
+
+	const glitchChars = ['\uE000', '\uE001', '\uE002', '\uE003', '\uE004', '\uE005', '\uE006', '\uE007', '\uE008', '\uE010', '\uE017'];
+	let glitchText = $state('');
+	let glitchStartTime = 0;
+	$effect(() => {
+		const shouldGlitch = isGlitching || feedbackState === 'wrong' || feedbackState === 'correct';
+		if (shouldGlitch) {
+			glitchStartTime = Date.now();
+			const realText = `Q${questionNum}`;
+			const id = setInterval(() => {
+				const elapsed = Date.now() - glitchStartTime;
+				const settleBias = Math.min(1, elapsed / 600);
+				if (Math.random() < settleBias * 0.7) {
+					glitchText = realText;
+				} else {
+					const len = 1 + Math.floor(Math.random() * 3);
+					let t = '';
+					for (let i = 0; i < len; i++) {
+						t += Math.random() < 0.3 ? realText[Math.floor(Math.random() * realText.length)] : glitchChars[Math.floor(Math.random() * glitchChars.length)];
+					}
+					glitchText = t;
+				}
+			}, 50);
+			return () => { clearInterval(id); glitchText = ''; };
+		} else {
+			glitchText = '';
+		}
+	});
+	const showGlitch = $derived(isGlitching || feedbackState === 'wrong' || feedbackState === 'correct');
+	const displayText = $derived(glitchText || `Q${questionNum}`);
 
 	let showSummary = $state(false);
 	let results: QuestionResult[] = $state([]);
@@ -64,6 +113,14 @@
 			return;
 		}
 
+		// Stop any currently-playing audio (Web Audio scheduled notes)
+		// Suspend (not destroy) audio — keeps AudioContext alive for next auto-play
+		suspendAudio();
+		// Kill any lingering A/B replay timeouts
+		for (const t of abTimeouts) clearTimeout(t);
+		abTimeouts = [];
+		playingNotes = [];
+
 		isGlitching = true;
 		feedbackState = null;
 		questionNum++;
@@ -74,19 +131,23 @@
 			hasPlayed = false;
 			selectedId = null;
 			countdownPct = 1.0;
-		});
 
-		setTimeout(() => {
-			isGlitching = false;
-			play();
-		}, 100);
+			// Play after question is guaranteed to exist
+			setTimeout(() => {
+				isGlitching = false;
+				play();
+			}, 600);
+		});
 	}
 
 	function play() {
 		if (!question || !state) return;
+		const rootMidi = question.rootNote;
+		const intervals = question.scale.intervals;
+
 		playScale(
-			question.rootNote,
-			question.scale.intervals,
+			rootMidi,
+			intervals,
 			state.settings.toneType,
 			TEMPO
 		);
@@ -97,14 +158,21 @@
 			question.replays++;
 		}
 		isPlaying = true;
-		const totalMs = question.scale.intervals.length * TEMPO + 200;
-		setTimeout(() => { isPlaying = false; }, totalMs);
+		const totalMs = intervals.length * TEMPO + 200;
+
+		// Sync Chladni with scale notes
+		intervals.forEach((semitone: number, i: number) => {
+			abTimeouts.push(setTimeout(() => {
+				playingNotes = [rootMidi + semitone]; triggerBounce();
+			}, i * TEMPO));
+		});
+		abTimeouts.push(setTimeout(() => { isPlaying = false; playingNotes = []; }, totalMs));
 	}
 
 	function selectAnswer(choice: { id: string; name: string }) {
 		if (!question || !state || selectedId) return;
-
 		const correct = choice.id === question.scale.id;
+
 		selectedId = choice.id;
 		isCorrect = correct;
 		feedbackState = correct ? 'correct' : 'wrong';
@@ -147,42 +215,8 @@
 		if (correct) {
 			correctTimeout = setTimeout(() => nextQuestion(), 1350);
 		} else {
-			// Auto A/B comparison: play correct, then after a pause play wrong
 			enterResultMode();
-			playCorrectScale();
 		}
-	}
-
-	function playCorrectScale() {
-		if (!question || !state) return;
-		// Play the correct scale
-		playScale(
-			question.rootNote,
-			question.scale.intervals,
-			state.settings.toneType,
-			TEMPO
-		);
-		isPlaying = true;
-		const correctDuration = question.scale.intervals.length * TEMPO + 200;
-		setTimeout(() => {
-			isPlaying = false;
-			// After 500ms pause, play the wrong (selected) answer
-			if (!question || !state || !selectedId) return;
-			const wrongDef = question.choices.find(c => c.id === selectedId);
-			if (!wrongDef) return;
-			setTimeout(() => {
-				if (!state) return;
-				playScale(
-					question!.rootNote,
-					wrongDef.intervals,
-					state.settings.toneType,
-					TEMPO
-				);
-				isPlaying = true;
-				const wrongDuration = wrongDef.intervals.length * TEMPO + 200;
-				setTimeout(() => { isPlaying = false; }, wrongDuration);
-			}, 500);
-		}, correctDuration);
 	}
 
 	function enterResultMode() {
@@ -205,17 +239,22 @@
 	}
 
 	function replayInResult() {
-		// In result mode, replaying plays the correct scale only
 		if (!question || !state) return;
-		playScale(
-			question.rootNote,
-			question.scale.intervals,
-			state.settings.toneType,
-			TEMPO
-		);
+		const rootMidi = question.rootNote;
+		const intervals = question.scale.intervals;
+
+		playScale(rootMidi, intervals, state.settings.toneType, TEMPO);
 		isPlaying = true;
-		const totalMs = question.scale.intervals.length * TEMPO + 200;
-		setTimeout(() => { isPlaying = false; }, totalMs);
+		const totalMs = intervals.length * TEMPO + 200;
+
+		// Sync Chladni + bounce on replay
+		intervals.forEach((semitone: number, i: number) => {
+			abTimeouts.push(setTimeout(() => {
+				playingNotes = [rootMidi + semitone];
+				triggerBounce();
+			}, i * TEMPO));
+		});
+		abTimeouts.push(setTimeout(() => { isPlaying = false; playingNotes = []; }, totalMs));
 		countdownStart = performance.now();
 		countdownPct = 1.0;
 	}
@@ -339,19 +378,22 @@
 	</div>
 
 	{#if question}
-		<div class="play-area">
-			<PlayButton
-				onplay={hasPlayed && inResultMode ? replayInResult : play}
-				replaying={hasPlayed}
-				playing={isPlaying}
-				noBorder={hasPlayed && inResultMode}
-				questionNum={questionNum}
-				countdownPct={hasPlayed && inResultMode ? countdownPct : -1}
-				glitching={isGlitching}
-				feedback={feedbackState}
-				semitones={Math.max(...(question?.scale.intervals ?? [0]))}
-			/>
-		</div>
+		<VizQuizLayout
+			superchargeViz={state?.settings?.superchargeViz}
+			mode="scale"
+			phase={vizPhase}
+			scaleIntervals={question.scale.intervals}
+			countdownPct={hasPlayed && inResultMode ? countdownPct : -1}
+			ontransitionend={handleTransitionEnd}
+			{playingNotes}
+		>
+			<button class="play-tap" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} class:bounce-short={bounceClass === 'bounce-short'} class:bounce-sustained={bounceClass === 'bounce-sustained'} onclick={hasPlayed && inResultMode ? replayInResult : play}>
+				<div class="orbit-track"><div class="orbit-dot"></div></div>
+				<span class="q-text" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} class:glitch-text={showGlitch}>
+					{displayText}
+				</span>
+			</button>
+		</VizQuizLayout>
 
 		<div class="answer-area" class:hidden={!hasPlayed}>
 			<AnswerGrid
@@ -361,6 +403,8 @@
 				correctId={selectedId ? question.scale.id : null}
 				{selectedId}
 				onCorrectClick={selectedId ? (inResultMode ? nextQuestion : skipCorrect) : null}
+				countdownPct={inResultMode ? countdownPct : -1}
+				onWrongClick={inResultMode ? replayInResult : null}
 			/>
 		</div>
 	{/if}
@@ -369,6 +413,8 @@
 
 <style>
 	.quiz {
+		position: relative;
+		z-index: 1;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
@@ -446,16 +492,45 @@
 		color: var(--hot);
 		border-color: var(--hot);
 	}
-	.play-area {
+	.play-tap {
+		position: relative;
+		width: min(40vw, 160px);
+		height: min(40vw, 160px);
+		border-radius: 50%;
+		background: transparent;
+		border: 1.5px solid var(--accent);
+		box-shadow: 0 0 8px rgba(194, 254, 12, 0.3);
 		display: flex;
-		flex-direction: column;
 		align-items: center;
-		gap: 1rem;
-		flex: 1;
 		justify-content: center;
+		cursor: pointer;
+		-webkit-tap-highlight-color: transparent;
+		
 	}
+	.play-tap.feedback-correct { background: var(--correct); border-color: var(--correct); box-shadow: 0 0 12px var(--correct); }
+	.play-tap.feedback-wrong { background: var(--hot); border-color: var(--hot); box-shadow: 0 0 12px var(--hot); transition: none; }
+	.play-tap:active { transform: scale(0.95); }
+	.play-tap.bounce-short { animation: bounce-sustained 0.3s ease-in-out; }
+	.play-tap.bounce-sustained { animation: bounce-sustained 1.2s ease-in-out; }
+	@keyframes bounce-sustained { 0% { transform: scale(1); } 6% { transform: scale(1.06); } 12% { transform: scale(0.97); } 18% { transform: scale(1.05); } 24% { transform: scale(0.98); } 30% { transform: scale(1.04); } 36% { transform: scale(0.985); } 42% { transform: scale(1.03); } 48% { transform: scale(0.99); } 54% { transform: scale(1.02); } 60% { transform: scale(0.995); } 66% { transform: scale(1.015); } 72% { transform: scale(0.997); } 80% { transform: scale(1.008); } 90% { transform: scale(0.999); } 100% { transform: scale(1); } }
+	.orbit-track { position: absolute; inset: 0; border-radius: 50%; animation: orbit 7s linear infinite; pointer-events: none; }
+	.orbit-dot { position: absolute; top: -3px; left: 50%; transform: translateX(-50%); width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+	.play-tap.feedback-wrong .orbit-dot { background: var(--hot); box-shadow: 0 0 6px var(--hot); }
+	@keyframes orbit { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+	.q-text {
+		font-family: var(--mono);
+		font-size: 2rem;
+		font-weight: 700;
+		letter-spacing: 0.05em;
+		color: var(--accent);
+		
+	}
+	.q-text.feedback-correct { color: var(--base); transition: none; }
+	.q-text.feedback-wrong { color: var(--base); transition: none; }
+	.q-text.glitch-text { }
 	.answer-area {
 		width: 100%;
+		margin-top: auto;
 	}
 	.answer-area.hidden {
 		visibility: hidden;

@@ -1,4 +1,4 @@
-export const APP_VERSION = '3.3';
+export const APP_VERSION = '3.4';
 
 export interface ReleaseNote {
 	version: string;
@@ -8,6 +8,24 @@ export interface ReleaseNote {
 }
 
 export const RELEASE_NOTES: ReleaseNote[] = [
+	{
+		version: '3.4',
+		date: '2026-03-28',
+		title: 'QUIZ VISUALIZATION',
+		changes: [
+			'Chladni particle visualization on quiz pages — reacts to audio in real-time',
+			'Animated ring with orbiting dot and per-note bounce',
+			'Damped oscillation for chords and harmonic intervals',
+			'Red/green feedback on correct and wrong answers',
+			'Glitch text transitions between questions',
+			'Wrong-answer countdown bar with tap-to-replay',
+			'Supercharge Viz toggle (Dev Mode) — enable particles on mobile',
+			'Light mode support',
+			'New app icon',
+			'Performance: CSS-based ring, idle animation pausing',
+			'Audio fixes: improved AudioContext handling, eliminated double-play on scales',
+		],
+	},
 	{
 		version: '3.3',
 		date: '2026-03-26',
