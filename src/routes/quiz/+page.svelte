@@ -51,6 +51,9 @@
 		// VizQuizLayout settled to P1 — safe to show next question
 	}
 
+	// Track currently sounding MIDI notes for Chladni sync
+	let playingNotes: number[] = $state([]);
+
 	// Summary state
 	let showSummary = $state(false);
 	let results: QuestionResult[] = $state([]);
@@ -98,8 +101,11 @@
 
 	function play() {
 		if (!question || !state) return;
+		const rootMidi = question.rootNote;
+		const secondMidi = rootMidi + question.interval.semitones;
+
 		playInterval(
-			question.rootNote,
+			rootMidi,
 			question.interval.semitones,
 			question.playMode,
 			state.settings.toneType
@@ -114,7 +120,13 @@
 		const noteDuration = 0.6;
 		const gap = 0.15;
 		const totalMs = (noteDuration * 2 + gap) * 1000 + 200;
-		setTimeout(() => { isPlaying = false; }, totalMs);
+
+		// Sync Chladni: first note immediately
+		playingNotes = [rootMidi];
+		// Second note after first note + gap
+		const secondDelay = (noteDuration + gap) * 1000;
+		setTimeout(() => { playingNotes = [secondMidi]; }, secondDelay);
+		setTimeout(() => { isPlaying = false; playingNotes = []; }, totalMs);
 	}
 
 	function selectAnswer(choice: IntervalDef) {
@@ -369,6 +381,7 @@
 			semitones={question.interval.semitones}
 			countdownPct={hasPlayed && inResultMode ? countdownPct : -1}
 			ontransitionend={handleTransitionEnd}
+			{playingNotes}
 		>
 			<button class="play-tap" onclick={hasPlayed && inResultMode ? replayInResult : play}>
 				<span class="q-text" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'}>

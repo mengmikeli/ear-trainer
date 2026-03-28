@@ -49,6 +49,8 @@
 
 	function handleTransitionEnd() {}
 
+	let playingNotes: number[] = $state([]);
+
 	let showSummary = $state(false);
 	let results: QuestionResult[] = $state([]);
 
@@ -94,9 +96,12 @@
 
 	function play() {
 		if (!question || !state) return;
+		const rootMidi = question.rootNote;
+		const intervals = question.scale.intervals;
+
 		playScale(
-			question.rootNote,
-			question.scale.intervals,
+			rootMidi,
+			intervals,
 			state.settings.toneType,
 			TEMPO
 		);
@@ -107,8 +112,15 @@
 			question.replays++;
 		}
 		isPlaying = true;
-		const totalMs = question.scale.intervals.length * TEMPO + 200;
-		setTimeout(() => { isPlaying = false; }, totalMs);
+		const totalMs = intervals.length * TEMPO + 200;
+
+		// Sync Chladni: step through each scale note
+		intervals.forEach((semitone: number, i: number) => {
+			setTimeout(() => {
+				playingNotes = [rootMidi + semitone];
+			}, i * TEMPO);
+		});
+		setTimeout(() => { isPlaying = false; playingNotes = []; }, totalMs);
 	}
 
 	function selectAnswer(choice: { id: string; name: string }) {
@@ -355,6 +367,7 @@
 			scaleIntervals={question.scale.intervals}
 			countdownPct={hasPlayed && inResultMode ? countdownPct : -1}
 			ontransitionend={handleTransitionEnd}
+			{playingNotes}
 		>
 			<button class="play-tap" onclick={hasPlayed && inResultMode ? replayInResult : play}>
 				<span class="q-text" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'}>

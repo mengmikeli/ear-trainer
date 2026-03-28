@@ -26,6 +26,8 @@
 		scaleIntervals?: number[];
 		countdownPct?: number;
 		ontransitionend?: () => void;
+		/** Currently sounding MIDI notes — drives Chladni pattern in sync with audio */
+		playingNotes?: number[];
 		/** Content overlaid inside the canvas viewport (e.g. Q# tap target) */
 		children?: import('svelte').Snippet;
 	}
@@ -37,6 +39,7 @@
 		chordIntervals,
 		scaleIntervals,
 		countdownPct = -1,
+		playingNotes = [] as number[],
 		ontransitionend,
 		children,
 	}: Props = $props();
@@ -170,7 +173,31 @@
 		if (particles.length === 0) initParticles();
 	});
 
-	// ── State machine (P1 ring static, Chladni fully reactive like lab) ──
+	// ── Chladni driven by playingNotes (synced to actual audio) ──
+	$effect(() => {
+		const notes = playingNotes;
+		if (!notes || notes.length === 0) return; // no change when silent
+
+		if (notes.length === 1) {
+			// Single note → single Chladni mode
+			useSuperposition = false;
+			const [n, m] = midiToChladniMode(notes[0]);
+			chladniN = n;
+			chladniM = m;
+		} else {
+			// Multiple notes → superposition
+			useSuperposition = true;
+			chladniModes = notes.map(midi => {
+				const [n, m] = midiToChladniMode(midi);
+				return { n, m, amp: 1 };
+			});
+		}
+		// Migration burst — synced to note onset
+		settleSpeed = SETTLE_SPEED_BOOST;
+		migrateTimer = 90;
+	});
+
+	// ── State machine (P1 ring static, Chladni driven by playingNotes) ──
 	$effect(() => {
 		// Ring stays P1 circle + accent color always
 		morphTarget = 0;
@@ -186,63 +213,7 @@
 					dataArrayRef = dataArray;
 				} catch { /* not ready */ }
 			}
-
-			// Clear any pending timers
-			if (chladniTimer) clearTimeout(chladniTimer);
-			for (const t of scaleStepTimers) clearTimeout(t);
-			scaleStepTimers = [];
-
-			if (mode === 'interval') {
-				// Intervals: root note → root mode, second note after 700ms (same as lab)
-				useSuperposition = false;
-				const rootMidi = 60;
-				const [rootN, rootM] = midiToChladniMode(rootMidi);
-				chladniN = rootN;
-				chladniM = rootM;
-				settleSpeed = SETTLE_SPEED_BOOST;
-				migrateTimer = 90;
-
-				const secondMidi = rootMidi + (semitones || 0);
-				if (secondMidi !== rootMidi) {
-					chladniTimer = setTimeout(() => {
-						const [secN, secM] = midiToChladniMode(secondMidi);
-						chladniN = secN;
-						chladniM = secM;
-						settleSpeed = SETTLE_SPEED_BOOST;
-						migrateTimer = 90;
-					}, 700);
-				}
-			} else if (mode === 'chord') {
-				// Chords: superposition of all chord tones (same as lab/chords)
-				useSuperposition = true;
-				chladniModes = chordToModes(60, chordIntervals ?? [0, 4, 7]);
-				settleSpeed = SETTLE_SPEED_BOOST;
-				migrateTimer = 120;
-			} else if (mode === 'scale') {
-				// Scales: step through each note sequentially (same as lab/scales)
-				useSuperposition = false;
-				const intervals = scaleIntervals ?? [0, 2, 4, 5, 7, 9, 11, 12];
-				const rootMidi = 60;
-				// First note immediately
-				const [firstN, firstM] = midiToChladniMode(rootMidi + intervals[0]);
-				chladniN = firstN;
-				chladniM = firstM;
-				settleSpeed = SETTLE_SPEED_BOOST;
-				migrateTimer = 60;
-
-				// Subsequent notes at 500ms intervals (matching scale playback tempo)
-				for (let i = 1; i < intervals.length; i++) {
-					const timer = setTimeout(() => {
-						const midi = rootMidi + intervals[i];
-						const [n, m] = midiToChladniMode(midi);
-						chladniN = n;
-						chladniM = m;
-						settleSpeed = SETTLE_SPEED_BOOST;
-						migrateTimer = 60;
-					}, i * 500);
-					scaleStepTimers.push(timer);
-				}
-			}
+			// Chladni is now driven by playingNotes prop — no timers here
 		}
 		if (vizPhase === 'transition') {
 			transitionActive = true;

@@ -49,6 +49,8 @@
 
 	function handleTransitionEnd() {}
 
+	let playingNotes: number[] = $state([]);
+
 	let showSummary = $state(false);
 	let results: QuestionResult[] = $state([]);
 
@@ -92,8 +94,11 @@
 
 	function play() {
 		if (!question || !state) return;
+		const rootMidi = question.rootNote;
+		const chordMidis = question.chord.intervals.map((s: number) => rootMidi + s);
+
 		playChord(
-			question.rootNote,
+			rootMidi,
 			question.chord.intervals,
 			question.voicing,
 			state.settings.toneType,
@@ -108,7 +113,16 @@
 		isPlaying = true;
 		const noteCount = question.chord.intervals.length;
 		const totalMs = isArpeggiated ? (noteCount * 150 + 800 + 200) : 1400;
-		setTimeout(() => { isPlaying = false; }, totalMs);
+
+		// Sync Chladni: all chord notes at once (block), or sequentially (arp)
+		if (isArpeggiated) {
+			chordMidis.forEach((midi: number, i: number) => {
+				setTimeout(() => { playingNotes = chordMidis.slice(0, i + 1); }, i * 150);
+			});
+		} else {
+			playingNotes = chordMidis;
+		}
+		setTimeout(() => { isPlaying = false; playingNotes = []; }, totalMs);
 	}
 
 	function selectAnswer(choice: { id: string; name: string }) {
@@ -367,6 +381,7 @@
 			chordIntervals={question.chord.intervals}
 			countdownPct={hasPlayed && inResultMode ? countdownPct : -1}
 			ontransitionend={handleTransitionEnd}
+			{playingNotes}
 		>
 			<button class="play-tap" onclick={hasPlayed && inResultMode ? replayInResult : play}>
 				<span class="q-text" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'}>
