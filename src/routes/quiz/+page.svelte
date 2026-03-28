@@ -399,6 +399,8 @@
 				correctId={selectedId ? question.interval.id : null}
 				{selectedId}
 				onCorrectClick={selectedId ? (inResultMode ? nextQuestion : skipCorrect) : null}
+				countdownPct={inResultMode ? countdownPct : -1}
+				onWrongClick={inResultMode ? replayInResult : null}
 			/>
 		</div>
 	{/if}
