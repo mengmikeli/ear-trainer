@@ -304,6 +304,8 @@
 			}
 
 			// ── CHLADNI PARTICLES (audio-reactive) ──
+			// Skip drift when in degenerate rest state (n=1,m=1 → chladni=0 everywhere)
+			const chladniActive = !(chladniN === 1 && chladniM === 1 && !useSuperposition);
 			const TAU = Math.PI * 2;
 			const currentShake = SHAKE_BASE + amp * SHAKE_AUDIO;
 			const migrating = migrateTimer > 0;
@@ -312,20 +314,23 @@
 			ctx.shadowBlur = 2;
 
 			for (const p of particles) {
-				const val = useSuperposition
-					? chladniSuper(p.x, p.y, chladniModes)
-					: chladni(p.x, p.y, chladniN, chladniM);
-				const [gx, gy] = useSuperposition
-					? chladniGradSuper(p.x, p.y, chladniModes)
-					: chladniGrad(p.x, p.y, chladniN, chladniM);
+				if (chladniActive) {
+					const val = useSuperposition
+						? chladniSuper(p.x, p.y, chladniModes)
+						: chladni(p.x, p.y, chladniN, chladniM);
+					const [gx, gy] = useSuperposition
+						? chladniGradSuper(p.x, p.y, chladniModes)
+						: chladniGrad(p.x, p.y, chladniN, chladniM);
 
-				p.x -= gx * val * settleSpeed;
-				p.y -= gy * val * settleSpeed;
+					p.x -= gx * val * settleSpeed;
+					p.y -= gy * val * settleSpeed;
 
-				const nearLine = Math.max(0.3, 1 - Math.abs(val) * 3);
-				const shakeAmp = currentShake * nearLine;
-				p.x += (Math.random() - 0.5) * shakeAmp;
-				p.y += (Math.random() - 0.5) * shakeAmp;
+					const nearLine = Math.max(0.3, 1 - Math.abs(val) * 3);
+					const shakeAmp = currentShake * nearLine;
+					p.x += (Math.random() - 0.5) * shakeAmp;
+					p.y += (Math.random() - 0.5) * shakeAmp;
+				}
+				// Always apply jitter (keeps particles alive)
 				p.x += (Math.random() - 0.5) * JITTER;
 				p.y += (Math.random() - 0.5) * JITTER;
 
@@ -336,10 +341,9 @@
 
 				const sx = (p.x / TAU) * w;
 				const sy = (p.y / TAU) * h;
-				const dist = Math.abs(val);
-				const migrateGlow = migrating ? 0.3 * (dist * 2) : 0;
-				const alpha = Math.min(0.6, Math.max(0.05, 0.4 - dist * 2) + migrateGlow);
 
+				// Uniform dim particles when inactive, organized when active
+				const alpha = chladniActive ? 0.15 : 0.08;
 				ctx.globalAlpha = alpha;
 				ctx.fillStyle = migrating ? '#5A4CFF' : '#3A2CFF';
 				ctx.fillRect(sx, sy, migrating ? 1.6 : 1.2, migrating ? 1.6 : 1.2);
