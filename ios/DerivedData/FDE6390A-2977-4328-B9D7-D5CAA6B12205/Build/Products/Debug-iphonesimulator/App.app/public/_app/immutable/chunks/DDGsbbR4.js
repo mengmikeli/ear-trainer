@@ -1,1 +1,0 @@
-function t(n){return n.attempts>=20&&n.correct/n.attempts>=.85}function i(n){const r=n.modes;let e=0;return t(r.ascending)&&e++,t(r.descending)&&e++,t(r.harmonic)&&e++,e===0?"none":e===1?"bronze":e===2?"silver":"gold"}export{i as g,t as i};
