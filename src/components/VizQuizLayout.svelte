@@ -262,12 +262,16 @@
 
 		let frameCount = 0;
 
-		// Read actual theme bg from CSS variable
-		const computedBg = getComputedStyle(document.documentElement).getPropertyValue('--surface').trim();
-		const bgColor = computedBg || '#000';
-		// Detect light by checking if bg is NOT black
-		const isLight = !/^#0{3,6}$|^rgb\(0/.test(bgColor);
-		const clearColor = isLight ? 'rgba(200, 200, 200, 0.15)' : 'rgba(0, 0, 0, 0.12)';
+				// Read actual surface color for canvas bg + fade
+		const surfaceHex = getComputedStyle(document.documentElement).getPropertyValue('--surface').trim();
+		const bgColor = surfaceHex || '#000';
+		// Parse to rgb for semi-transparent fade
+		const tmp = document.createElement('div');
+		tmp.style.color = bgColor;
+		document.body.appendChild(tmp);
+		const parsedRgb = getComputedStyle(tmp).color;
+		document.body.removeChild(tmp);
+		const clearColor = parsedRgb.replace('rgb(', 'rgba(').replace(')', ', 0.14)');
 
 		function draw() {
 			const w = canvas.width / dpr;
