@@ -261,7 +261,7 @@
 		window.addEventListener('resize', resize);
 		const ro = new ResizeObserver(() => resize());
 		ro.observe(canvas);
-		initParticles();
+		// Particles init handled by $effect watching PARTICLE_COUNT
 
 		let frameCount = 0;
 
@@ -269,10 +269,13 @@
 		let canvasFadeColor = 'rgba(0, 0, 0, 0.12)';
 		let canvasBgColor = '#000';
 		function updateThemeColors() {
-			const bg = getComputedStyle(canvas).backgroundColor;
-			const isLight = bg && (bg.includes('255, 255, 255') || bg.includes('rgb(255'));
+			// Check data-theme attribute or prefers-color-scheme
+			const root = document.documentElement;
+			const theme = root.getAttribute('data-theme') || '';
+			const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+			const isLight = theme === 'light' || (!theme && !prefersDark);
 			canvasFadeColor = isLight ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.12)';
-			canvasBgColor = isLight ? '#fff' : '#000';
+			canvasBgColor = isLight ? '#f5f5f5' : '#000';
 		}
 		updateThemeColors();
 
