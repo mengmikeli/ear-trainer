@@ -547,9 +547,8 @@
 	.play-tap.feedback-correct { background: var(--correct); border-color: var(--correct); box-shadow: 0 0 12px var(--correct); }
 	.play-tap.feedback-wrong { background: var(--hot); border-color: var(--hot); box-shadow: 0 0 12px var(--hot); transition: none; }
 	.play-tap:active { transform: scale(0.95); }
-	.play-tap.bounce-short { animation: bounce-short 0.3s ease-in-out; }
+	.play-tap.bounce-short { animation: bounce-sustained 0.3s ease-in-out; }
 	.play-tap.bounce-sustained { animation: bounce-sustained 1.2s ease-in-out; }
-	@keyframes bounce-short { 0% { transform: scale(1); } 25% { transform: scale(1.06); } 50% { transform: scale(0.98); } 100% { transform: scale(1); } }
 	@keyframes bounce-sustained { 0% { transform: scale(1); } 6% { transform: scale(1.06); } 12% { transform: scale(0.97); } 18% { transform: scale(1.05); } 24% { transform: scale(0.98); } 30% { transform: scale(1.04); } 36% { transform: scale(0.985); } 42% { transform: scale(1.03); } 48% { transform: scale(0.99); } 54% { transform: scale(1.02); } 60% { transform: scale(0.995); } 66% { transform: scale(1.015); } 72% { transform: scale(0.997); } 80% { transform: scale(1.008); } 90% { transform: scale(0.999); } 100% { transform: scale(1); } }
 	.orbit-track { position: absolute; inset: 0; border-radius: 50%; animation: orbit 7s linear infinite; pointer-events: none; }
 	.orbit-dot { position: absolute; top: -3px; left: 50%; transform: translateX(-50%); width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px var(--accent); }
