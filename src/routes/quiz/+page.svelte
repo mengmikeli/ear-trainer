@@ -447,7 +447,9 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="quiz" onclick={() => { if (needsTap) play(); }}>
 	{#if needsTap}
-		<button class="audio-banner" onclick={() => play()}>⚡ NEURAL LINK OFFLINE — TAP TO RECONNECT</button>
+		<button class="audio-banner" onclick={() => play()}>
+			<span class="ticker-text">NEURAL LINK OFFLINE — TAP TO RECONNECT &nbsp;&nbsp;&nbsp; NEURAL LINK OFFLINE — TAP TO RECONNECT &nbsp;&nbsp;&nbsp; NEURAL LINK OFFLINE — TAP TO RECONNECT &nbsp;&nbsp;&nbsp;</span>
+		</button>
 	{/if}
 	<h2 class="heading">PRACTICE</h2>
 	<div class="top">
@@ -507,20 +509,30 @@
 		gap: 1rem;
 	}
 	.audio-banner {
-		width: 100%;
-		padding: 0.5rem;
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		z-index: 100;
+		height: 24px;
 		background: var(--accent);
 		color: var(--base);
 		font-family: var(--mono);
 		font-size: 0.4rem;
 		font-weight: 900;
 		letter-spacing: 0.15em;
-		text-align: center;
 		border: none;
 		cursor: pointer;
-		animation: banner-pulse 1.5s ease-in-out infinite;
+		overflow: hidden;
+		white-space: nowrap;
+		display: flex;
+		align-items: center;
 	}
-	@keyframes banner-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+	.ticker-text {
+		display: inline-block;
+		animation: ticker 12s linear infinite;
+	}
+	@keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-33.33%); } }
 	.heading {
 		font-size: 3rem; font-weight: 400;
 		letter-spacing: 0.12em; color: var(--text-primary);
