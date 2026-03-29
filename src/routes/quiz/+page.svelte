@@ -182,7 +182,8 @@
 	function play() {
 		if (!question || !state) return;
 		warmUpAudio();
-		// iOS: first call with no gesture → show gate. User tap → skip gate.
+		// iOS: only gate on cold start (no prior user gesture in this session).
+		// Once audioUnlocked, skip the gate — ensureResumed() in playInterval handles resume.
 		if (!audioUnlocked && !isAudioReady() && !needsTap) {
 			needsTap = true;
 			return;
@@ -191,6 +192,7 @@
 			audioUnlocked = true;
 			needsTap = false;
 		}
+		if (!audioUnlocked) audioUnlocked = true;
 		// Reset auto-advance on any replay during correct feedback
 		if (feedbackState === 'correct' && correctTimeout) {
 			clearTimeout(correctTimeout);
@@ -528,7 +530,7 @@
 	}
 	.audio-banner {
 		position: fixed;
-		top: 0;
+		top: env(safe-area-inset-top, 0px);
 		left: 0;
 		right: 0;
 		z-index: 100;
