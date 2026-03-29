@@ -190,6 +190,7 @@
 			audioUnlocked = true;
 			needsTap = false;
 		}
+		if (!audioUnlocked) audioUnlocked = true;
 		// Reset auto-advance on any replay during correct feedback
 		if (feedbackState === 'correct' && correctTimeout) {
 			clearTimeout(correctTimeout);
@@ -484,7 +485,7 @@
 	}
 	.audio-banner {
 		position: fixed;
-		top: 0;
+		top: env(safe-area-inset-top, 0px);
 		left: 0;
 		right: 0;
 		z-index: 100;
