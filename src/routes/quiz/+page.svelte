@@ -25,6 +25,7 @@
 	let totalQuestions = $state(20);
 	let hasPlayed = $state(false);
 	let needsTap = $state(false);
+	let audioUnlocked = false;
 	let selectedId: string | null = $state(null);
 	let feedbackState: 'correct' | 'wrong' | null = $state(null);
 	let isCorrect = $state(false);
@@ -130,6 +131,7 @@
 		// Re-check audio on background resume (iOS suspends AudioContext)
 		const onVisible = () => {
 			if (document.visibilityState === 'visible' && !isAudioReady()) {
+				audioUnlocked = false;
 				needsTap = true;
 			}
 		};
@@ -176,12 +178,15 @@
 	function play() {
 		if (!question || !state) return;
 		warmUpAudio();
-		// iOS: if context is still suspended and no user gesture yet, wait for tap
-		if (!isAudioReady() && !hasPlayed && !needsTap) {
+		// iOS: first call with no gesture → show gate. User tap → skip gate.
+		if (!audioUnlocked && !isAudioReady() && !needsTap) {
 			needsTap = true;
 			return;
 		}
-		needsTap = false;
+		if (needsTap) {
+			audioUnlocked = true;
+			needsTap = false;
+		}
 		// Reset auto-advance on any replay during correct feedback
 		if (feedbackState === 'correct' && correctTimeout) {
 			clearTimeout(correctTimeout);

@@ -25,6 +25,7 @@
 	let totalQuestions = $state(20);
 	let hasPlayed = $state(false);
 	let needsTap = $state(false);
+	let audioUnlocked = false;
 	let selectedId: string | null = $state(null);
 	let feedbackState: 'correct' | 'wrong' | null = $state(null);
 	let isCorrect = $state(false);
@@ -123,6 +124,7 @@
 
 		const onVisible = () => {
 			if (document.visibilityState === 'visible' && !isAudioReady()) {
+				audioUnlocked = false;
 				needsTap = true;
 			}
 		};
@@ -167,11 +169,14 @@
 	function play() {
 		if (!question || !state) return;
 		warmUpAudio();
-		if (!isAudioReady() && !hasPlayed && !needsTap) {
+		if (!audioUnlocked && !isAudioReady() && !needsTap) {
 			needsTap = true;
 			return;
 		}
-		needsTap = false;
+		if (needsTap) {
+			audioUnlocked = true;
+			needsTap = false;
+		}
 		// Reset auto-advance on any replay during correct feedback
 		if (feedbackState === 'correct' && correctTimeout) {
 			clearTimeout(correctTimeout);
