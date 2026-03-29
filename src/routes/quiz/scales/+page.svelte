@@ -81,11 +81,18 @@
 	let glitchText = $state('');
 	let glitchStartTime = 0;
 	$effect(() => {
-		const shouldGlitch = isGlitching || feedbackState === 'wrong' || feedbackState === 'correct';
+		const shouldGlitch = isGlitching || feedbackState === 'wrong' || feedbackState === 'correct' || needsTap;
 		if (shouldGlitch) {
 			glitchStartTime = Date.now();
 			const realText = `Q${questionNum}`;
 			const id = setInterval(() => {
+				if (needsTap) {
+					const len = 1 + Math.floor(Math.random() * 3);
+					let t = '';
+					for (let i = 0; i < len; i++) t += glitchChars[Math.floor(Math.random() * glitchChars.length)];
+					glitchText = t;
+					return;
+				}
 				const elapsed = Date.now() - glitchStartTime;
 				const settleBias = Math.min(1, elapsed / 600);
 				if (Math.random() < settleBias * 0.7) {
@@ -104,7 +111,7 @@
 			glitchText = '';
 		}
 	});
-	const showGlitch = $derived(isGlitching || feedbackState === 'wrong' || feedbackState === 'correct');
+	const showGlitch = $derived(isGlitching || feedbackState === 'wrong' || feedbackState === 'correct' || needsTap);
 	const displayText = $derived(glitchText || `Q${questionNum}`);
 
 	let showSummary = $state(false);
@@ -392,7 +399,12 @@
 	</div>
 </div>
 {:else}
-<div class="quiz">
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div class="quiz" onclick={() => { if (needsTap) play(); }}>
+	{#if needsTap}
+		<div class="audio-banner">⚡ TAP TO INITIALIZE AUDIO</div>
+	{/if}
 	<h2 class="heading">SCALES</h2>
 	<div class="top">
 		<div class="bar-track-full">
@@ -420,16 +432,16 @@
 			<button bind:this={playBtnEl} class="play-tap" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} onclick={hasPlayed && inResultMode ? replayInResult : play}>
 				<div class="orbit-track"><div class="orbit-dot"></div></div>
 				<span class="q-text" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} class:glitch-text={showGlitch}>
-					{needsTap ? '▶' : displayText}
+					{displayText}
 				</span>
 			</button>
 		</VizQuizLayout>
 
-		<div class="answer-area" class:hidden={!hasPlayed}>
+		<div class="answer-area" class:hidden={!hasPlayed && !needsTap}>
 			<AnswerGrid
 				choices={question.choices}
 				onselect={selectAnswer}
-				disabled={!hasPlayed || !!selectedId}
+				disabled={needsTap || !hasPlayed || !!selectedId}
 				correctId={selectedId ? question.scale.id : null}
 				{selectedId}
 				onCorrectClick={selectedId ? (inResultMode ? nextQuestion : skipCorrect) : null}
@@ -451,6 +463,19 @@
 		height: 100%;
 		gap: 1rem;
 	}
+	.audio-banner {
+		background: var(--accent);
+		color: var(--base);
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		letter-spacing: 0.15em;
+		text-transform: uppercase;
+		padding: 0.4rem 1rem;
+		text-align: center;
+		width: 100%;
+		animation: banner-pulse 1.5s ease-in-out infinite;
+	}
+	@keyframes banner-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
 	.heading {
 		font-size: 3rem; font-weight: 400;
 		letter-spacing: 0.12em; color: var(--text-primary);
