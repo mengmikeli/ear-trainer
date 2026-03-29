@@ -311,8 +311,13 @@
 			animId = requestAnimationFrame(draw);
 		}
 
-		ctx.fillStyle = bgColor;
-		ctx.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
+		// Delay first clear+draw by one frame so theme CSS is resolved
+		requestAnimationFrame(() => {
+			const resolvedSurface = getComputedStyle(document.documentElement).getPropertyValue('--surface').trim() || '#000';
+			ctx.fillStyle = resolvedSurface;
+			ctx.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
+			draw();
+		});
 
 		// Pause animation when page is hidden (saves CPU/battery)
 		let animPaused = false;
@@ -326,8 +331,6 @@
 			}
 		}
 		document.addEventListener('visibilitychange', handleVisibility);
-
-		draw();
 
 		return () => {
 			cancelAnimationFrame(animId);
