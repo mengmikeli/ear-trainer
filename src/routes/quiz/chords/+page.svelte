@@ -159,7 +159,7 @@
 	function play() {
 		if (!question || !state) return;
 		warmUpAudio();
-		if (!isAudioReady() && !hasPlayed) {
+		if (!isAudioReady() && !hasPlayed && !needsTap) {
 			needsTap = true;
 			return;
 		}

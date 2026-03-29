@@ -167,8 +167,8 @@
 	function play() {
 		if (!question || !state) return;
 		warmUpAudio();
-		// iOS: if context is still suspended after warmup, wait for user tap
-		if (!isAudioReady() && !hasPlayed) {
+		// iOS: if context is still suspended and no user gesture yet, wait for tap
+		if (!isAudioReady() && !hasPlayed && !needsTap) {
 			needsTap = true;
 			return;
 		}
