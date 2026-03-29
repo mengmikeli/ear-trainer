@@ -131,6 +131,16 @@
 		const ctx = mainCanvas.getContext('2d')!;
 		const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
+		// Theme-aware background
+		const surfaceHex = getComputedStyle(document.documentElement).getPropertyValue('--surface').trim() || '#000';
+		const tmp = document.createElement('div');
+		tmp.style.color = surfaceHex;
+		document.body.appendChild(tmp);
+		const parsedRgb = getComputedStyle(tmp).color;
+		document.body.removeChild(tmp);
+		const bgColor = surfaceHex;
+		const clearColor = parsedRgb.replace('rgb(', 'rgba(').replace(')', ', 0.14)');
+
 		function resize() {
 			const rect = mainCanvas.getBoundingClientRect();
 			mainCanvas.width = rect.width * dpr;
@@ -162,7 +172,7 @@
 			const amp = Math.min(1, amplitude * 3);
 
 			// Fade
-			ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+			ctx.fillStyle = clearColor;
 			ctx.fillRect(0, 0, w, h);
 
 			// Migration timer decay
@@ -310,7 +320,7 @@
 			animId = requestAnimationFrame(draw);
 		}
 
-		ctx.fillStyle = '#000';
+		ctx.fillStyle = bgColor;
 		ctx.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
 
 		// Pause animation when page is hidden (saves CPU/battery)
@@ -482,7 +492,7 @@
 		min-height: 0;
 		
 		border: 1px solid var(--border-heavy);
-		background: #000;
+		background: var(--surface, #000);
 	}
 
 	canvas {

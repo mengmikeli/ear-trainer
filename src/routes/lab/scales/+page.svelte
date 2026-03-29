@@ -23,6 +23,8 @@
 		{ id: 'MajP', name: 'Major Pentatonic', intervals: [0, 2, 4, 7, 9, 12] },
 		{ id: 'MinP', name: 'Minor Pentatonic', intervals: [0, 3, 5, 7, 10, 12] },
 		{ id: 'Blu', name: 'Blues', intervals: [0, 3, 5, 6, 7, 10, 12] },
+		{ id: 'MBlu', name: 'Major Blues', intervals: [0, 2, 3, 4, 7, 9, 12] },
+		{ id: 'Whol', name: 'Whole Tone', intervals: [0, 2, 4, 6, 8, 10, 12] },
 		{ id: 'Chr', name: 'Chromatic', intervals: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] },
 	];
 
@@ -73,6 +75,7 @@
 	// ── Ghost trail: offscreen canvas accumulates past positions ──
 	let ghostCanvas: HTMLCanvasElement | null = null;
 	let ghostCtx: CanvasRenderingContext2D | null = null;
+	let themeBg = '#000';  // theme-aware background, set in onMount
 
 	// ── Playback generation (for aborting mid-play) ──
 	let playGeneration = 0;
@@ -130,7 +133,7 @@
 
 		// Clear ghost trail
 		if (ghostCtx && ghostCanvas) {
-			ghostCtx.fillStyle = '#000';
+			ghostCtx.fillStyle = themeBg;
 			ghostCtx.fillRect(0, 0, ghostCanvas.width, ghostCanvas.height);
 		}
 
@@ -243,6 +246,16 @@
 		const ctx = mainCanvas.getContext('2d')!;
 		const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
+		// Theme-aware background
+		const surfaceHex = getComputedStyle(document.documentElement).getPropertyValue('--surface').trim() || '#000';
+		const tmp = document.createElement('div');
+		tmp.style.color = surfaceHex;
+		document.body.appendChild(tmp);
+		const parsedRgb = getComputedStyle(tmp).color;
+		document.body.removeChild(tmp);
+		themeBg = surfaceHex;
+		const clearColor = parsedRgb.replace('rgb(', 'rgba(').replace(')', ', 0.14)');
+
 		// Ghost trail canvas
 		ghostCanvas = document.createElement('canvas');
 		ghostCtx = ghostCanvas.getContext('2d')!;
@@ -280,7 +293,7 @@
 			}
 
 			// Fade
-			ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+			ctx.fillStyle = clearColor;
 			ctx.fillRect(0, 0, w, h);
 
 			// Migration timer decay
@@ -718,7 +731,7 @@
 			animId = requestAnimationFrame(draw);
 		}
 
-		ctx.fillStyle = '#000';
+		ctx.fillStyle = themeBg;
 		ctx.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
 
 		// Pause animation when page is hidden (saves CPU/battery)
@@ -886,7 +899,7 @@
 		min-height: 0;
 		
 		border: 1px solid var(--border-heavy);
-		background: #000;
+		background: var(--surface, #000);
 	}
 
 	canvas {
