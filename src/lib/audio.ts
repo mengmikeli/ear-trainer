@@ -2,6 +2,37 @@ import type { ToneType } from './types';
 import type { ChordVoicing } from './types';
 import { applyInversion } from './chords';
 
+// Capacitor: eagerly pre-warm audio pipeline on app foreground
+// Runs during the app switch animation so pipeline is hot by the time user taps
+if (typeof window !== 'undefined') {
+	import('@capacitor/app').then(({ App }) => {
+		App.addListener('appStateChange', async ({ isActive }) => {
+			if (isActive && ctx) {
+				try {
+					// Resume the suspended AudioContext
+					if (ctx.state === 'suspended' || (ctx.state as string) === 'interrupted') {
+						await ctx.resume();
+					}
+					// Restore iOS audio session type
+					if ('audioSession' in navigator && 'type' in (navigator as any).audioSession) {
+						(navigator as any).audioSession.type = 'playback';
+					}
+					// Play silent buffer to flush the native audio pipeline
+					const silent = ctx.createBuffer(1, 1, ctx.sampleRate);
+					const source = ctx.createBufferSource();
+					source.buffer = silent;
+					source.connect(ctx.destination);
+					source.start();
+				} catch (e) {
+					console.warn('[AudioSession] Pre-warm failed:', e);
+				}
+			}
+		});
+	}).catch(() => {
+		// Not running in Capacitor — no-op
+	});
+}
+
 let ctx: AudioContext | null = null;
 let analyserNode: AnalyserNode | null = null;
 let masterOutput: GainNode | null = null;
