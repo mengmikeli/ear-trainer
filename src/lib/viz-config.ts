@@ -11,7 +11,7 @@ function isMobile(): boolean {
 
 export const CHLADNI_CONFIG = {
 	/** Number of particles (scaled for mobile) */
-	get particleCount() { return isMobile() ? 1500 : 3500; },
+	get particleCount() { return isMobile() ? 1000 : 3500; },
 
 	/** Base particle settle speed (drift toward nodal lines) */
 	settleSpeedBase: 0.003,

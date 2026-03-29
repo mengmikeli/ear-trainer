@@ -115,4 +115,14 @@
 		border: none;
 		cursor: pointer;
 	}
+
+	/* Desktop: wider container, more breathing room */
+	@media (min-width: 768px) {
+		.app {
+			max-width: 960px;
+		}
+		.content {
+			padding: 2rem 2.5rem;
+		}
+	}
 </style>
