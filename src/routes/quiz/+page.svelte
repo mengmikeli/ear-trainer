@@ -4,7 +4,7 @@
 	import { base } from '$app/paths';
 	import { loadState, saveState, checkTierUnlock } from '$lib/state';
 	import { generateQuestion } from '$lib/engine';
-	import { playInterval, playFeedbackChime, suspendAudio } from '$lib/audio';
+	import { playInterval, playFeedbackChime, suspendAudio, warmUpAudio } from '$lib/audio';
 	import { responseQuality, calculateSm2 } from '$lib/sm2';
 	import type { UserState, Question, IntervalDef, PlayMode } from '$lib/types';
 	import AnswerGrid from '../../components/AnswerGrid.svelte';
@@ -157,6 +157,7 @@
 
 	function play() {
 		if (!question || !state) return;
+		warmUpAudio();
 		// Reset auto-advance on any replay during correct feedback
 		if (feedbackState === 'correct' && correctTimeout) {
 			clearTimeout(correctTimeout);
