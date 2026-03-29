@@ -4,7 +4,7 @@
 	import { base } from '$app/paths';
 	import { loadState, saveState, checkTierUnlock } from '$lib/state';
 	import { generateQuestion } from '$lib/engine';
-	import { playInterval, playFeedbackChime, suspendAudio, warmUpAudio } from '$lib/audio';
+	import { playInterval, playFeedbackChime, suspendAudio, warmUpAudio, isAudioReady, stopAudio } from '$lib/audio';
 	import { responseQuality, calculateSm2 } from '$lib/sm2';
 	import type { UserState, Question, IntervalDef, PlayMode } from '$lib/types';
 	import AnswerGrid from '../../components/AnswerGrid.svelte';
@@ -24,6 +24,8 @@
 	let questionNum = $state(0);
 	let totalQuestions = $state(20);
 	let hasPlayed = $state(false);
+	let needsTap = $state(false);
+	let audioUnlocked = false;
 	let selectedId: string | null = $state(null);
 	let feedbackState: 'correct' | 'wrong' | null = $state(null);
 	let isCorrect = $state(false);
@@ -83,11 +85,19 @@
 	let glitchText = $state('');
 	let glitchStartTime = 0;
 	$effect(() => {
-		const shouldGlitch = isGlitching || feedbackState === 'wrong' || feedbackState === 'correct';
+		const shouldGlitch = isGlitching || feedbackState === 'wrong' || feedbackState === 'correct' || needsTap;
 		if (shouldGlitch) {
 			glitchStartTime = Date.now();
 			const realText = `Q${questionNum}`;
 			const id = setInterval(() => {
+				if (needsTap) {
+					// Continuous scramble — no settle
+					const len = 1 + Math.floor(Math.random() * 3);
+					let t = '';
+					for (let i = 0; i < len; i++) t += glitchChars[Math.floor(Math.random() * glitchChars.length)];
+					glitchText = t;
+					return;
+				}
 				const elapsed = Date.now() - glitchStartTime;
 				const settleBias = Math.min(1, elapsed / 600);
 				if (Math.random() < settleBias * 0.7) {
@@ -106,7 +116,7 @@
 			glitchText = '';
 		}
 	});
-	const showGlitch = $derived(isGlitching || feedbackState === 'wrong' || feedbackState === 'correct');
+	const showGlitch = $derived(isGlitching || feedbackState === 'wrong' || feedbackState === 'correct' || needsTap);
 	const displayText = $derived(glitchText || `Q${questionNum}`);
 
 	// Summary state
@@ -118,9 +128,23 @@
 		totalQuestions = state.settings.sessionLength;
 		nextQuestion();
 
+		// Re-check audio on background resume (iOS suspends AudioContext)
+		const onVisible = () => {
+			if (document.visibilityState === 'visible' && !isAudioReady()) {
+				audioUnlocked = false;
+				needsTap = true;
+				// Destroy old context — iOS can't resume interrupted contexts
+				stopAudio();
+				isPlaying = false;
+				playingNotes = [];
+			}
+		};
+		document.addEventListener('visibilitychange', onVisible);
+
 		return () => {
 			if (rafId) cancelAnimationFrame(rafId);
 			if (correctTimeout) clearTimeout(correctTimeout);
+			document.removeEventListener('visibilitychange', onVisible);
 			suspendAudio();
 		};
 	});
@@ -158,6 +182,15 @@
 	function play() {
 		if (!question || !state) return;
 		warmUpAudio();
+		// iOS: first call with no gesture → show gate. User tap → skip gate.
+		if (!audioUnlocked && !isAudioReady() && !needsTap) {
+			needsTap = true;
+			return;
+		}
+		if (needsTap) {
+			audioUnlocked = true;
+			needsTap = false;
+		}
 		// Reset auto-advance on any replay during correct feedback
 		if (feedbackState === 'correct' && correctTimeout) {
 			clearTimeout(correctTimeout);
@@ -428,7 +461,14 @@
 	</div>
 </div>
 {:else}
-<div class="quiz">
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div class="quiz" onclick={() => { if (needsTap) play(); }}>
+	{#if needsTap}
+		<button class="audio-banner" onclick={() => play()}>
+			<span class="ticker-text">NEURAL LINK OFFLINE — TAP TO RECONNECT &nbsp;&nbsp;&nbsp; NEURAL LINK OFFLINE — TAP TO RECONNECT &nbsp;&nbsp;&nbsp; NEURAL LINK OFFLINE — TAP TO RECONNECT &nbsp;&nbsp;&nbsp;</span>
+		</button>
+	{/if}
 	<h2 class="heading">PRACTICE</h2>
 	<div class="top">
 		<div class="bar-track-full">
@@ -459,11 +499,12 @@
 			</button>
 		</VizQuizLayout>
 
-		<div class="answer-area" class:hidden={!hasPlayed}>
+		<div class="answer-area" class:hidden={!hasPlayed && !needsTap}>
 			<AnswerGrid
-				choices={question.choices}
+				choices={needsTap ? question.choices.map(c => ({ ...c, label: 'NA', name: 'UNAVAILABLE' })) : question.choices}
 				onselect={selectAnswer}
-				disabled={!hasPlayed || !!selectedId}
+				disabled={needsTap || !hasPlayed || !!selectedId}
+				offline={needsTap}
 				correctId={selectedId ? question.interval.id : null}
 				{selectedId}
 				onCorrectClick={selectedId ? (inResultMode ? nextQuestion : skipCorrect) : null}
@@ -485,6 +526,31 @@
 		height: 100%;
 		gap: 1rem;
 	}
+	.audio-banner {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		z-index: 100;
+		height: 24px;
+		background: var(--accent);
+		color: var(--base);
+		font-family: var(--mono);
+		font-size: 0.4rem;
+		font-weight: 900;
+		letter-spacing: 0.15em;
+		border: none;
+		cursor: pointer;
+		overflow: hidden;
+		white-space: nowrap;
+		display: flex;
+		align-items: center;
+	}
+	.ticker-text {
+		display: inline-block;
+		animation: ticker 12s linear infinite;
+	}
+	@keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-33.33%); } }
 	.heading {
 		font-size: 3rem; font-weight: 400;
 		letter-spacing: 0.12em; color: var(--text-primary);

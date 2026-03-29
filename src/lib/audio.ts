@@ -536,6 +536,12 @@ export function warmUpAudio(): void {
 	getContext();
 }
 
+/** Returns true if AudioContext is running (not suspended/blocked by browser policy) */
+export function isAudioReady(): boolean {
+	if (!ctx) return false;
+	return ctx.state === 'running';
+}
+
 /**
  * Try to resume the AudioContext after returning from background.
  * Returns true if the context was successfully resumed (or was already running).
