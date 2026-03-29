@@ -453,7 +453,9 @@
 	.canvas-frame {
 		position: relative;
 		flex: 1;
-		min-height: 0;
+		min-height: 120px;
+		min-width: 120px;
+		overflow: hidden;
 		border: 1px solid var(--border-heavy);
 		background: var(--surface, #000);
 	}
