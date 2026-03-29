@@ -160,6 +160,11 @@
 
 	function play() {
 		if (!question || !state) return;
+		// Reset auto-advance on any replay during correct feedback
+		if (correctTimeout) {
+			clearTimeout(correctTimeout);
+			correctTimeout = setTimeout(() => nextQuestion(), 1350);
+		}
 		const rootMidi = question.rootNote;
 		const intervals = question.scale.intervals;
 
@@ -258,10 +263,6 @@
 
 	function replayInResult() {
 		if (!question || !state) return;
-		if (correctTimeout) {
-			clearTimeout(correctTimeout);
-			correctTimeout = setTimeout(() => nextQuestion(), 1350);
-		}
 		const rootMidi = question.rootNote;
 		const intervals = question.scale.intervals;
 

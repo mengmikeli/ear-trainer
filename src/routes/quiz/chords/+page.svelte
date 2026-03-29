@@ -150,6 +150,11 @@
 
 	function play() {
 		if (!question || !state) return;
+		// Reset auto-advance on any replay during correct feedback
+		if (correctTimeout) {
+			clearTimeout(correctTimeout);
+			correctTimeout = setTimeout(() => nextQuestion(), 1350);
+		}
 		const rootMidi = question.rootNote;
 		const chordMidis = question.chord.intervals.map((s: number) => rootMidi + s);
 
@@ -268,10 +273,6 @@
 	}
 
 	function replayInResult() {
-		if (correctTimeout) {
-			clearTimeout(correctTimeout);
-			correctTimeout = setTimeout(() => nextQuestion(), 1350);
-		}
 		play();
 		countdownStart = performance.now();
 		countdownPct = 1.0;
