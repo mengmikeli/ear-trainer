@@ -453,6 +453,7 @@
 	.canvas-frame {
 		position: relative;
 		flex: 1;
+		width: 100%;
 		min-height: 120px;
 		min-width: 120px;
 		overflow: hidden;
