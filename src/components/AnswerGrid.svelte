@@ -89,7 +89,7 @@
 	.correct { border-color: var(--correct); background: #C2FE0C10; }
 	.correct .id { color: var(--correct); }
 	.offline .id { color: var(--hot, #ED174F); }
-	.offline .name { opacity: 0.4; font-style: italic; }
+	.offline .name { opacity: 0.4; }
 	.wrong { border-color: var(--wrong); background: #ED174F10; }
 	.wrong .id { color: var(--wrong); }
 	.countdown-fill {
