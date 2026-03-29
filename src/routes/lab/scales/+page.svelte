@@ -246,15 +246,8 @@
 		const ctx = mainCanvas.getContext('2d')!;
 		const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
-		// Theme-aware background
-		const surfaceHex = getComputedStyle(document.documentElement).getPropertyValue('--surface').trim() || '#000';
-		const tmp = document.createElement('div');
-		tmp.style.color = surfaceHex;
-		document.body.appendChild(tmp);
-		const parsedRgb = getComputedStyle(tmp).color;
-		document.body.removeChild(tmp);
-		themeBg = surfaceHex;
-		const clearColor = parsedRgb.replace('rgb(', 'rgba(').replace(')', ', 0.14)');
+		// Theme-aware background — computed lazily in first rAF
+		let clearColor = 'rgba(0,0,0,0.14)';  // fallback, overwritten below
 
 		// Ghost trail canvas
 		ghostCanvas = document.createElement('canvas');
@@ -726,6 +719,13 @@
 		requestAnimationFrame(() => {
 			const resolvedSurface = getComputedStyle(document.documentElement).getPropertyValue('--surface').trim() || '#000';
 			themeBg = resolvedSurface;
+			// Compute clearColor from resolved theme
+			const tmp = document.createElement('div');
+			tmp.style.color = resolvedSurface;
+			document.body.appendChild(tmp);
+			const parsedRgb = getComputedStyle(tmp).color;
+			document.body.removeChild(tmp);
+			clearColor = parsedRgb.replace('rgb(', 'rgba(').replace(')', ', 0.14)');
 			ctx.fillStyle = resolvedSurface;
 			ctx.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
 			draw();

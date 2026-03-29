@@ -235,15 +235,9 @@
 		const ctx = mainCanvas.getContext('2d')!;
 		const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
-		// Theme-aware background
-		const surfaceHex = getComputedStyle(document.documentElement).getPropertyValue('--surface').trim() || '#000';
-		const tmp = document.createElement('div');
-		tmp.style.color = surfaceHex;
-		document.body.appendChild(tmp);
-		const parsedRgb = getComputedStyle(tmp).color;
-		document.body.removeChild(tmp);
-		const bgColor = surfaceHex;
-		const clearColor = parsedRgb.replace('rgb(', 'rgba(').replace(')', ', 0.14)');
+		// Theme-aware background — computed lazily in first rAF
+		let clearColor = 'rgba(0,0,0,0.14)';
+		let bgColor = '#000';
 
 		// Offscreen burn-in canvas
 		burnCanvas = document.createElement('canvas');
@@ -444,9 +438,15 @@
 			animId = requestAnimationFrame(draw);
 		}
 
-		// Delay first clear+draw by one frame so theme CSS is resolved
 		requestAnimationFrame(() => {
 			const resolvedSurface = getComputedStyle(document.documentElement).getPropertyValue('--surface').trim() || '#000';
+			bgColor = resolvedSurface;
+			const tmp = document.createElement('div');
+			tmp.style.color = resolvedSurface;
+			document.body.appendChild(tmp);
+			const parsedRgb = getComputedStyle(tmp).color;
+			document.body.removeChild(tmp);
+			clearColor = parsedRgb.replace('rgb(', 'rgba(').replace(')', ', 0.14)');
 			ctx.fillStyle = resolvedSurface;
 			ctx.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
 			burnCtx.fillStyle = resolvedSurface;
