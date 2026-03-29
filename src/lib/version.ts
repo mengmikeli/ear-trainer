@@ -1,4 +1,4 @@
-export const APP_VERSION = '3.4';
+export const APP_VERSION = '3.5';
 
 export interface ReleaseNote {
 	version: string;
@@ -8,6 +8,24 @@ export interface ReleaseNote {
 }
 
 export const RELEASE_NOTES: ReleaseNote[] = [
+	{
+		version: '3.5',
+		date: '2026-03-30',
+		title: 'AUDIO HARDENING + VISUAL POLISH',
+		changes: [
+			'Whole Tone + Major Blues scales',
+			'AudioContext pre-warm on GO button — eliminates first-tap silence',
+			'Adaptive audio reconnect with visual ticker banner',
+			'Physics bounce animation on correct answers',
+			'Replay timer reset on wrong answers',
+			'SVG play/pause icons — consistent rendering across all browsers',
+			'Viz pod layout — ring hugs content, answers match width',
+			'Viz pod resize stability — no collapse on window resize',
+			'Light mode lab background fix',
+			'Chladni idle pause for performance',
+			'Scanline contrast tuning',
+		],
+	},
 	{
 		version: '3.4',
 		date: '2026-03-28',
