@@ -452,8 +452,10 @@
 <style>
 	.canvas-frame {
 		position: relative;
-		flex: 1;
-		min-height: 120px;
+		width: 100%;
+		aspect-ratio: 1;
+		max-height: 50vh;  /* don't dominate the page on tall screens */
+		min-height: 12rem;
 		min-width: 120px;
 		overflow: hidden;
 		border: 1px solid var(--border-heavy);
