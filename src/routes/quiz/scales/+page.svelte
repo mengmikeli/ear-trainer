@@ -52,10 +52,28 @@
 
 	let playingNotes: number[] = $state([]);
 
-	
-	
-	let bounceClass = $state('');
-	function triggerBounce(sustained = false) { const cls = sustained ? 'bounce-sustained' : 'bounce-short'; bounceClass = ''; requestAnimationFrame(() => { bounceClass = cls; }); setTimeout(() => { bounceClass = ''; }, sustained ? 1200 : 300); }
+	// Per-note bounce — damped oscillation (physics-based)
+	let bounceStartTime = 0;
+	let bounceDuration = 0;
+	let bounceAnimId = 0;
+	let playBtnEl: HTMLButtonElement | undefined = $state();
+	function triggerBounce(sustained = false) {
+		bounceStartTime = performance.now();
+		bounceDuration = sustained ? 1200 : 300;
+		if (!bounceAnimId) bounceLoop();
+	}
+	function bounceLoop() {
+		const elapsed = performance.now() - bounceStartTime;
+		if (elapsed < bounceDuration && playBtnEl) {
+			const t = elapsed / bounceDuration;
+			const scale = 1 + 0.06 * Math.cos(40 * t) * Math.exp(-4 * t);
+			playBtnEl.style.transform = `scale(${scale})`;
+			bounceAnimId = requestAnimationFrame(bounceLoop);
+		} else {
+			if (playBtnEl) playBtnEl.style.transform = '';
+			bounceAnimId = 0;
+		}
+	}
 	
 
 	const glitchChars = ['\uE000', '\uE001', '\uE002', '\uE003', '\uE004', '\uE005', '\uE006', '\uE007', '\uE008', '\uE010', '\uE017'];
@@ -142,6 +160,11 @@
 
 	function play() {
 		if (!question || !state) return;
+		// Reset auto-advance on any replay during correct feedback
+		if (feedbackState === 'correct' && correctTimeout) {
+			clearTimeout(correctTimeout);
+			correctTimeout = setTimeout(() => nextQuestion(), 1350);
+		}
 		const rootMidi = question.rootNote;
 		const intervals = question.scale.intervals;
 
@@ -291,7 +314,7 @@
 	}
 
 	function skipCorrect() {
-		if (correctTimeout) { clearTimeout(correctTimeout); correctTimeout = null; }
+		if (feedbackState === 'correct' && correctTimeout) { clearTimeout(correctTimeout); correctTimeout = null; }
 		nextQuestion();
 	}
 
@@ -387,7 +410,7 @@
 			ontransitionend={handleTransitionEnd}
 			{playingNotes}
 		>
-			<button class="play-tap" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} class:bounce-short={bounceClass === 'bounce-short'} class:bounce-sustained={bounceClass === 'bounce-sustained'} onclick={hasPlayed && inResultMode ? replayInResult : play}>
+			<button bind:this={playBtnEl} class="play-tap" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} onclick={hasPlayed && inResultMode ? replayInResult : play}>
 				<div class="orbit-track"><div class="orbit-dot"></div></div>
 				<span class="q-text" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} class:glitch-text={showGlitch}>
 					{displayText}
@@ -510,9 +533,7 @@
 	.play-tap.feedback-correct { background: var(--correct); border-color: var(--correct); box-shadow: 0 0 12px var(--correct); }
 	.play-tap.feedback-wrong { background: var(--hot); border-color: var(--hot); box-shadow: 0 0 12px var(--hot); transition: none; }
 	.play-tap:active { transform: scale(0.95); }
-	.play-tap.bounce-short { animation: bounce-sustained 0.3s ease-in-out; }
-	.play-tap.bounce-sustained { animation: bounce-sustained 1.2s ease-in-out; }
-	@keyframes bounce-sustained { 0% { transform: scale(1); } 6% { transform: scale(1.06); } 12% { transform: scale(0.97); } 18% { transform: scale(1.05); } 24% { transform: scale(0.98); } 30% { transform: scale(1.04); } 36% { transform: scale(0.985); } 42% { transform: scale(1.03); } 48% { transform: scale(0.99); } 54% { transform: scale(1.02); } 60% { transform: scale(0.995); } 66% { transform: scale(1.015); } 72% { transform: scale(0.997); } 80% { transform: scale(1.008); } 90% { transform: scale(0.999); } 100% { transform: scale(1); } }
+	/* bounce is JS-driven via transform: scale() */
 	.orbit-track { position: absolute; inset: 0; border-radius: 50%; animation: orbit 7s linear infinite; pointer-events: none; }
 	.orbit-dot { position: absolute; top: -3px; left: 50%; transform: translateX(-50%); width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px var(--accent); }
 	.play-tap.feedback-wrong .orbit-dot { background: var(--hot); box-shadow: 0 0 6px var(--hot); }
