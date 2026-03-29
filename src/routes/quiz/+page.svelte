@@ -280,6 +280,10 @@
 	}
 
 	function replayInResult() {
+		if (correctTimeout) {
+			clearTimeout(correctTimeout);
+			correctTimeout = setTimeout(() => nextQuestion(), 1350);
+		}
 		play();
 		countdownStart = performance.now();
 		countdownPct = 1.0;

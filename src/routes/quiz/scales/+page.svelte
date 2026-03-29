@@ -258,6 +258,10 @@
 
 	function replayInResult() {
 		if (!question || !state) return;
+		if (correctTimeout) {
+			clearTimeout(correctTimeout);
+			correctTimeout = setTimeout(() => nextQuestion(), 1350);
+		}
 		const rootMidi = question.rootNote;
 		const intervals = question.scale.intervals;
 
