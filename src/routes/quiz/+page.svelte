@@ -158,7 +158,7 @@
 	function play() {
 		if (!question || !state) return;
 		// Reset auto-advance on any replay during correct feedback
-		if (correctTimeout) {
+		if (feedbackState === 'correct' && correctTimeout) {
 			clearTimeout(correctTimeout);
 			correctTimeout = setTimeout(() => nextQuestion(), 1350);
 		}
@@ -359,7 +359,7 @@
 	}
 
 	function skipCorrect() {
-		if (correctTimeout) { clearTimeout(correctTimeout); correctTimeout = null; }
+		if (feedbackState === 'correct' && correctTimeout) { clearTimeout(correctTimeout); correctTimeout = null; }
 		nextQuestion();
 	}
 
