@@ -233,7 +233,11 @@
 
 	onMount(() => {
 		const ctx = mainCanvas.getContext('2d')!;
-		const dpr = Math.min(window.devicePixelRatio || 1, 2);  // cap at 2x for perf
+		const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+		// Theme-aware background — computed lazily in first rAF
+		let clearColor = 'rgba(0,0,0,0.14)';
+		let bgColor = '#000';
 
 		// Offscreen burn-in canvas
 		burnCanvas = document.createElement('canvas');
@@ -292,7 +296,7 @@
 			const radius = Math.min(cx, cy) * 0.78 * radiusPulse;
 
 			// === MAIN CANVAS ===
-			ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+			ctx.fillStyle = clearColor;
 			ctx.fillRect(0, 0, w, h);
 
 			// --- Migration timer decay ---
@@ -420,13 +424,6 @@
 				ctx.globalAlpha = 1;
 			}
 
-			// --- Vignette — radial gradient darkening corners ---
-			const vigGrad = ctx.createRadialGradient(cx, cy, radius * 0.5, cx, cy, Math.max(w, h) * 0.72);
-			vigGrad.addColorStop(0, 'rgba(0,0,0,0)');
-			vigGrad.addColorStop(0.7, 'rgba(0,0,0,0.15)');
-			vigGrad.addColorStop(1, 'rgba(0,0,0,0.55)');
-			ctx.fillStyle = vigGrad;
-			ctx.fillRect(0, 0, w, h);
 
 			// --- Iodide burn scanline flicker ---
 			if (frameCount % 120 < 2) {
@@ -441,10 +438,21 @@
 			animId = requestAnimationFrame(draw);
 		}
 
-		ctx.fillStyle = '#000000';
-		ctx.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
-		burnCtx.fillStyle = '#000000';
-		burnCtx.fillRect(0, 0, burnCanvas.width, burnCanvas.height);
+		requestAnimationFrame(() => {
+			const resolvedSurface = getComputedStyle(document.documentElement).getPropertyValue('--surface').trim() || '#000';
+			bgColor = resolvedSurface;
+			const tmp = document.createElement('div');
+			tmp.style.color = resolvedSurface;
+			document.body.appendChild(tmp);
+			const parsedRgb = getComputedStyle(tmp).color;
+			document.body.removeChild(tmp);
+			clearColor = parsedRgb.replace('rgb(', 'rgba(').replace(')', ', 0.14)');
+			ctx.fillStyle = resolvedSurface;
+			ctx.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
+			burnCtx.fillStyle = resolvedSurface;
+			burnCtx.fillRect(0, 0, burnCanvas.width, burnCanvas.height);
+			draw();
+		});
 
 		// Pause animation when page is hidden (saves CPU/battery)
 		let animPaused = false;
@@ -458,8 +466,6 @@
 			}
 		}
 		document.addEventListener('visibilitychange', handleVisibility);
-
-		draw();
 
 		return () => {
 			cancelAnimationFrame(animId);
@@ -643,7 +649,7 @@
 		min-height: 0;
 		
 		border: 1px solid var(--border-heavy);
-		background: #000;
+		background: var(--surface, #000);
 	}
 
 	canvas {

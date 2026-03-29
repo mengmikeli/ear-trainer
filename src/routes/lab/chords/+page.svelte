@@ -131,6 +131,10 @@
 		const ctx = mainCanvas.getContext('2d')!;
 		const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
+		// Theme-aware background — computed lazily in first rAF
+		let clearColor = 'rgba(0,0,0,0.14)';
+		let bgColor = '#000';
+
 		function resize() {
 			const rect = mainCanvas.getBoundingClientRect();
 			mainCanvas.width = rect.width * dpr;
@@ -162,7 +166,7 @@
 			const amp = Math.min(1, amplitude * 3);
 
 			// Fade
-			ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+			ctx.fillStyle = clearColor;
 			ctx.fillRect(0, 0, w, h);
 
 			// Migration timer decay
@@ -290,15 +294,6 @@
 				ctx.globalAlpha = 1;
 			}
 
-			// ── Vignette ──
-			const vigR = Math.min(cx, cy) * 0.5;
-			const vigGrad = ctx.createRadialGradient(cx, cy, vigR, cx, cy, Math.max(w, h) * 0.72);
-			vigGrad.addColorStop(0, 'rgba(0,0,0,0)');
-			vigGrad.addColorStop(0.7, 'rgba(0,0,0,0.15)');
-			vigGrad.addColorStop(1, 'rgba(0,0,0,0.55)');
-			ctx.fillStyle = vigGrad;
-			ctx.fillRect(0, 0, w, h);
-
 			// ── Scanline flicker ──
 			if (frameCount % 120 < 2) {
 				const glitchY = Math.random() * h;
@@ -310,8 +305,19 @@
 			animId = requestAnimationFrame(draw);
 		}
 
-		ctx.fillStyle = '#000';
-		ctx.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
+		requestAnimationFrame(() => {
+			const resolvedSurface = getComputedStyle(document.documentElement).getPropertyValue('--surface').trim() || '#000';
+			bgColor = resolvedSurface;
+			const tmp = document.createElement('div');
+			tmp.style.color = resolvedSurface;
+			document.body.appendChild(tmp);
+			const parsedRgb = getComputedStyle(tmp).color;
+			document.body.removeChild(tmp);
+			clearColor = parsedRgb.replace('rgb(', 'rgba(').replace(')', ', 0.14)');
+			ctx.fillStyle = resolvedSurface;
+			ctx.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
+			draw();
+		});
 
 		// Pause animation when page is hidden (saves CPU/battery)
 		let animPaused = false;
@@ -325,8 +331,6 @@
 			}
 		}
 		document.addEventListener('visibilitychange', handleVisibility);
-
-		draw();
 
 		return () => {
 			cancelAnimationFrame(animId);
@@ -482,7 +486,7 @@
 		min-height: 0;
 		
 		border: 1px solid var(--border-heavy);
-		background: #000;
+		background: var(--surface, #000);
 	}
 
 	canvas {

@@ -23,6 +23,8 @@
 		{ id: 'MajP', name: 'Major Pentatonic', intervals: [0, 2, 4, 7, 9, 12] },
 		{ id: 'MinP', name: 'Minor Pentatonic', intervals: [0, 3, 5, 7, 10, 12] },
 		{ id: 'Blu', name: 'Blues', intervals: [0, 3, 5, 6, 7, 10, 12] },
+		{ id: 'MBlu', name: 'Major Blues', intervals: [0, 2, 3, 4, 7, 9, 12] },
+		{ id: 'Whol', name: 'Whole Tone', intervals: [0, 2, 4, 6, 8, 10, 12] },
 		{ id: 'Chr', name: 'Chromatic', intervals: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] },
 	];
 
@@ -73,6 +75,7 @@
 	// ── Ghost trail: offscreen canvas accumulates past positions ──
 	let ghostCanvas: HTMLCanvasElement | null = null;
 	let ghostCtx: CanvasRenderingContext2D | null = null;
+	let themeBg = '#000';  // theme-aware background, set in onMount
 
 	// ── Playback generation (for aborting mid-play) ──
 	let playGeneration = 0;
@@ -130,7 +133,7 @@
 
 		// Clear ghost trail
 		if (ghostCtx && ghostCanvas) {
-			ghostCtx.fillStyle = '#000';
+			ghostCtx.fillStyle = themeBg;
 			ghostCtx.fillRect(0, 0, ghostCanvas.width, ghostCanvas.height);
 		}
 
@@ -243,6 +246,9 @@
 		const ctx = mainCanvas.getContext('2d')!;
 		const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
+		// Theme-aware background — computed lazily in first rAF
+		let clearColor = 'rgba(0,0,0,0.14)';  // fallback, overwritten below
+
 		// Ghost trail canvas
 		ghostCanvas = document.createElement('canvas');
 		ghostCtx = ghostCanvas.getContext('2d')!;
@@ -280,7 +286,7 @@
 			}
 
 			// Fade
-			ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+			ctx.fillStyle = clearColor;
 			ctx.fillRect(0, 0, w, h);
 
 			// Migration timer decay
@@ -698,15 +704,6 @@
 				ctx.globalAlpha = 1;
 			}
 
-			// ── Vignette ──
-			const vigR = Math.min(cx, cy) * 0.5;
-			const vigGrad = ctx.createRadialGradient(cx, cy, vigR, cx, cy, Math.max(w, h) * 0.72);
-			vigGrad.addColorStop(0, 'rgba(0,0,0,0)');
-			vigGrad.addColorStop(0.7, 'rgba(0,0,0,0.15)');
-			vigGrad.addColorStop(1, 'rgba(0,0,0,0.55)');
-			ctx.fillStyle = vigGrad;
-			ctx.fillRect(0, 0, w, h);
-
 			// ── Scanline flicker ──
 			if (frameCount % 120 < 2) {
 				const glitchY = Math.random() * h;
@@ -718,8 +715,21 @@
 			animId = requestAnimationFrame(draw);
 		}
 
-		ctx.fillStyle = '#000';
-		ctx.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
+		// Delay first clear+draw by one frame so theme CSS is resolved
+		requestAnimationFrame(() => {
+			const resolvedSurface = getComputedStyle(document.documentElement).getPropertyValue('--surface').trim() || '#000';
+			themeBg = resolvedSurface;
+			// Compute clearColor from resolved theme
+			const tmp = document.createElement('div');
+			tmp.style.color = resolvedSurface;
+			document.body.appendChild(tmp);
+			const parsedRgb = getComputedStyle(tmp).color;
+			document.body.removeChild(tmp);
+			clearColor = parsedRgb.replace('rgb(', 'rgba(').replace(')', ', 0.14)');
+			ctx.fillStyle = resolvedSurface;
+			ctx.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
+			draw();
+		});
 
 		// Pause animation when page is hidden (saves CPU/battery)
 		let animPaused = false;
@@ -733,8 +743,6 @@
 			}
 		}
 		document.addEventListener('visibilitychange', handleVisibility);
-
-		draw();
 
 		return () => {
 			cancelAnimationFrame(animId);
@@ -886,7 +894,7 @@
 		min-height: 0;
 		
 		border: 1px solid var(--border-heavy);
-		background: #000;
+		background: var(--surface, #000);
 	}
 
 	canvas {
