@@ -435,7 +435,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="quiz" onclick={() => { if (needsTap) play(); }}>
 	{#if needsTap}
-		<div class="audio-banner">⚡ TAP TO INITIALIZE AUDIO</div>
+		<button class="audio-banner" onclick={() => play()}>⚡ NEURAL LINK OFFLINE — TAP TO RECONNECT</button>
 	{/if}
 	<h2 class="heading">CHORDS</h2>
 	<div class="top">
@@ -474,9 +474,10 @@
 
 		<div class="answer-area" class:hidden={!hasPlayed && !needsTap}>
 			<AnswerGrid
-				choices={question.choices}
+				choices={needsTap ? question.choices.map(c => ({ ...c, label: 'NA', name: 'UNAVAILABLE' })) : question.choices}
 				onselect={selectAnswer}
 				disabled={needsTap || !hasPlayed || !!selectedId}
+				offline={needsTap}
 				correctId={selectedId ? question.chord.id : null}
 				{selectedId}
 				onCorrectClick={selectedId ? (inResultMode ? nextQuestion : skipCorrect) : null}
@@ -499,15 +500,17 @@
 		gap: 1rem;
 	}
 	.audio-banner {
+		width: 100%;
+		padding: 0.5rem;
 		background: var(--accent);
 		color: var(--base);
-		font-family: var(--font-mono);
-		font-size: 0.75rem;
+		font-family: var(--mono);
+		font-size: 0.4rem;
+		font-weight: 900;
 		letter-spacing: 0.15em;
-		text-transform: uppercase;
-		padding: 0.4rem 1rem;
 		text-align: center;
-		width: 100%;
+		border: none;
+		cursor: pointer;
 		animation: banner-pulse 1.5s ease-in-out infinite;
 	}
 	@keyframes banner-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }

@@ -16,8 +16,9 @@
 		countdownPct?: number;
 		/** Called when wrong answer card is tapped (replay) */
 		onWrongClick?: (() => void) | null;
+		offline?: boolean;
 	}
-	let { choices, onselect, disabled = false, correctId = null, selectedId = null, onCorrectClick = null, countdownPct = -1, onWrongClick = null }: Props = $props();
+	let { choices, onselect, disabled = false, correctId = null, selectedId = null, onCorrectClick = null, countdownPct = -1, onWrongClick = null, offline = false }: Props = $props();
 
 	function btnClass(id: string): string {
 		if (!selectedId) return '';
@@ -34,6 +35,7 @@
 		<button
 			class="answer {btnClass(choice.id)}"
 			class:skip={isCorrectBtn && onCorrectClick}
+			class:offline={offline}
 			onclick={() => {
 				if (isCorrectBtn && onCorrectClick) {
 					onCorrectClick();
@@ -86,6 +88,8 @@
 	}
 	.correct { border-color: var(--correct); background: #C2FE0C10; }
 	.correct .id { color: var(--correct); }
+	.offline .id { color: var(--hot, #ED174F); }
+	.offline .name { opacity: 0.4; font-style: italic; }
 	.wrong { border-color: var(--wrong); background: #ED174F10; }
 	.wrong .id { color: var(--wrong); }
 	.countdown-fill {
