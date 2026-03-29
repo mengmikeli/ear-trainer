@@ -127,9 +127,18 @@
 		totalQuestions = state.settings.sessionLength;
 		nextQuestion();
 
+		// Re-check audio on background resume (iOS suspends AudioContext)
+		const onVisible = () => {
+			if (document.visibilityState === 'visible' && !isAudioReady()) {
+				needsTap = true;
+			}
+		};
+		document.addEventListener('visibilitychange', onVisible);
+
 		return () => {
 			if (rafId) cancelAnimationFrame(rafId);
 			if (correctTimeout) clearTimeout(correctTimeout);
+			document.removeEventListener('visibilitychange', onVisible);
 			suspendAudio();
 		};
 	});

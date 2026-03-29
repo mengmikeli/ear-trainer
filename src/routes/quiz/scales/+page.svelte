@@ -124,9 +124,17 @@
 		totalQuestions = state.settings.sessionLength;
 		nextQuestion();
 
+		const onVisible = () => {
+			if (document.visibilityState === 'visible' && !isAudioReady()) {
+				needsTap = true;
+			}
+		};
+		document.addEventListener('visibilitychange', onVisible);
+
 		return () => {
 			if (rafId) cancelAnimationFrame(rafId);
 			if (correctTimeout) clearTimeout(correctTimeout);
+			document.removeEventListener('visibilitychange', onVisible);
 			suspendAudio();
 		};
 	});
