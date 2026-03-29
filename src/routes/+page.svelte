@@ -3,6 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { base } from '$app/paths';
 	import { loadState, saveState } from '$lib/state';
+	import { warmUpAudio } from '$lib/audio';
 	import { INTERVALS } from '$lib/intervals';
 	import { CHORDS } from '$lib/chords';
 	import { SCALES } from '$lib/scales';
@@ -62,6 +63,7 @@
 
 	function handleGo(e: Event) {
 		e.preventDefault();
+		warmUpAudio(); // Pre-warm AudioContext with user gesture
 		if (goGlitching) return;
 		goGlitching = true;
 		const content = activeContent();
