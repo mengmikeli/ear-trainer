@@ -4,7 +4,7 @@
 	import { base } from '$app/paths';
 	import { loadState, saveState, checkTierUnlock } from '$lib/state';
 	import { generateScaleQuestion } from '$lib/engine';
-	import { playScale, playFeedbackChime, suspendAudio, warmUpAudio, isAudioReady } from '$lib/audio';
+	import { playScale, playFeedbackChime, suspendAudio, warmUpAudio, isAudioReady, stopAudio } from '$lib/audio';
 	import { responseQuality, calculateSm2 } from '$lib/sm2';
 	import type { UserState, ScaleQuestion, ScaleDef } from '$lib/types';
 	import AnswerGrid from '../../../components/AnswerGrid.svelte';
@@ -129,7 +129,7 @@
 			if (document.visibilityState === 'visible' && !isAudioReady()) {
 				audioUnlocked = false;
 				needsTap = true;
-				suspendAudio();
+				stopAudio();
 				isPlaying = false;
 				playingNotes = [];
 			}

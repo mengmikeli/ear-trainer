@@ -4,7 +4,7 @@
 	import { base } from '$app/paths';
 	import { loadState, saveState, checkTierUnlock } from '$lib/state';
 	import { generateQuestion } from '$lib/engine';
-	import { playInterval, playFeedbackChime, suspendAudio, warmUpAudio, isAudioReady } from '$lib/audio';
+	import { playInterval, playFeedbackChime, suspendAudio, warmUpAudio, isAudioReady, stopAudio } from '$lib/audio';
 	import { responseQuality, calculateSm2 } from '$lib/sm2';
 	import type { UserState, Question, IntervalDef, PlayMode } from '$lib/types';
 	import AnswerGrid from '../../components/AnswerGrid.svelte';
@@ -133,8 +133,8 @@
 			if (document.visibilityState === 'visible' && !isAudioReady()) {
 				audioUnlocked = false;
 				needsTap = true;
-				// Kill stale audio that was queued while backgrounded
-				suspendAudio();
+				// Destroy old context — iOS can't resume interrupted contexts
+				stopAudio();
 				isPlaying = false;
 				playingNotes = [];
 			}
