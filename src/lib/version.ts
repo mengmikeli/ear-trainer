@@ -1,4 +1,16 @@
-export const APP_VERSION = '3.4';
+export const APP_VERSION = '3.5.0';
+
+/**
+ * Git commit hash injected at build time via vite.config.ts define.
+ * Falls back to 'dev' for local dev server.
+ */
+declare const __BUILD_HASH__: string;
+const BUILD_HASH = typeof __BUILD_HASH__ !== 'undefined' ? __BUILD_HASH__ : 'dev';
+
+/**
+ * Full version string for display: v3.5.0+abc1234
+ */
+export const VERSION_STRING = `v${APP_VERSION}+${BUILD_HASH}`;
 
 export interface ReleaseNote {
 	version: string;
@@ -8,6 +20,22 @@ export interface ReleaseNote {
 }
 
 export const RELEASE_NOTES: ReleaseNote[] = [
+	{
+		version: '3.5.0',
+		date: '2026-03-30',
+		title: 'iOS + PROCESS',
+		changes: [
+			'iOS native app via Capacitor — same codebase, two deploy targets',
+			'Native AVAudioSession for audio resume on iOS',
+			'Whole Tone + Major Blues scales in lab',
+			'Light mode fix for lab Chladni backgrounds',
+			'Viz pod responsive fix (no more 1px collapse)',
+			'CI test fix for @capacitor/app mock',
+			'README overhaul',
+			'RETRO.md — sprint retrospectives',
+			'Versioning: semver + git hash visible in Settings',
+		],
+	},
 	{
 		version: '3.4',
 		date: '2026-03-28',

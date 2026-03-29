@@ -32,5 +32,14 @@ jobs:
       - name: Unit tests
         run: npm test
 
+      - name: Check version bump
+        if: github.event_name == 'pull_request'
+        run: |
+          # Ensure version.ts was changed in this PR
+          git fetch origin main --depth=1
+          if ! git diff origin/main -- src/lib/version.ts | grep -q '^[+-]export const APP_VERSION'; then
+            echo "::warning::APP_VERSION in src/lib/version.ts was not bumped. Please update the version for this PR."
+          fi
+
       - name: Build
         run: npm run build

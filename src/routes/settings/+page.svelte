@@ -5,7 +5,7 @@
 	import type { UserState, ToneType, SessionLength, ThemeMode } from '$lib/types';
 	import { applyTheme, watchSystemTheme } from '$lib/theme';
 	import { playInterval } from '$lib/audio';
-	import { APP_VERSION, RELEASE_NOTES } from '$lib/version';
+	import { APP_VERSION, VERSION_STRING, RELEASE_NOTES } from '$lib/version';
 
 	let showReleaseNotes = $state(false);
 
@@ -343,7 +343,7 @@
 		<div class="section version-section">
 			<label class="field-label">ABOUT</label>
 			<button class="version-btn" onclick={() => showReleaseNotes = !showReleaseNotes}>
-				<span class="version-label">v{APP_VERSION}</span>
+				<span class="version-label">{VERSION_STRING}</span>
 				<span class="version-toggle" class:open={showReleaseNotes}>{showReleaseNotes ? '^' : '>'}</span>
 			</button>
 
