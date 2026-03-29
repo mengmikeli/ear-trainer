@@ -4,7 +4,7 @@
 	import { base } from '$app/paths';
 	import { loadState, saveState, checkTierUnlock } from '$lib/state';
 	import { generateChordQuestion } from '$lib/engine';
-	import { playChord, playFeedbackChime, suspendAudio, warmUpAudio } from '$lib/audio';
+	import { playChord, playFeedbackChime, suspendAudio, warmUpAudio, isAudioReady } from '$lib/audio';
 	import { responseQuality, calculateSm2 } from '$lib/sm2';
 	import type { UserState, ChordQuestion, ChordDef, ChordVoicing } from '$lib/types';
 	import AnswerGrid from '../../../components/AnswerGrid.svelte';
@@ -24,6 +24,7 @@
 	let questionNum = $state(0);
 	let totalQuestions = $state(20);
 	let hasPlayed = $state(false);
+	let needsTap = $state(false);
 	let selectedId: string | null = $state(null);
 	let feedbackState: 'correct' | 'wrong' | null = $state(null);
 	let isCorrect = $state(false);
@@ -151,6 +152,11 @@
 	function play() {
 		if (!question || !state) return;
 		warmUpAudio();
+		if (!isAudioReady() && !hasPlayed) {
+			needsTap = true;
+			return;
+		}
+		needsTap = false;
 		// Reset auto-advance on any replay during correct feedback
 		if (feedbackState === 'correct' && correctTimeout) {
 			clearTimeout(correctTimeout);
@@ -449,7 +455,7 @@
 			<button bind:this={playBtnEl} class="play-tap" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} onclick={hasPlayed && inResultMode ? replayInResult : play}>
 				<div class="orbit-track"><div class="orbit-dot"></div></div>
 				<span class="q-text" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} class:glitch-text={showGlitch}>
-					{displayText}
+					{needsTap ? '▶' : displayText}
 				</span>
 			</button>
 		</VizQuizLayout>
