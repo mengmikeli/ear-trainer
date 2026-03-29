@@ -430,13 +430,6 @@
 				ctx.globalAlpha = 1;
 			}
 
-			// --- Vignette — radial gradient darkening corners ---
-			const vigGrad = ctx.createRadialGradient(cx, cy, radius * 0.5, cx, cy, Math.max(w, h) * 0.72);
-			vigGrad.addColorStop(0, 'rgba(0,0,0,0)');
-			vigGrad.addColorStop(0.7, 'rgba(0,0,0,0.15)');
-			vigGrad.addColorStop(1, 'rgba(0,0,0,0.55)');
-			ctx.fillStyle = vigGrad;
-			ctx.fillRect(0, 0, w, h);
 
 			// --- Iodide burn scanline flicker ---
 			if (frameCount % 120 < 2) {
