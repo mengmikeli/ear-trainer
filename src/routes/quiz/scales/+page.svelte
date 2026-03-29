@@ -129,6 +129,9 @@
 			if (document.visibilityState === 'visible' && !isAudioReady()) {
 				audioUnlocked = false;
 				needsTap = true;
+				suspendAudio();
+				isPlaying = false;
+				playingNotes = [];
 			}
 		};
 		document.addEventListener('visibilitychange', onVisible);

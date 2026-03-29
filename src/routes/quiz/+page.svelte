@@ -133,6 +133,10 @@
 			if (document.visibilityState === 'visible' && !isAudioReady()) {
 				audioUnlocked = false;
 				needsTap = true;
+				// Kill stale audio that was queued while backgrounded
+				suspendAudio();
+				isPlaying = false;
+				playingNotes = [];
 			}
 		};
 		document.addEventListener('visibilitychange', onVisible);
