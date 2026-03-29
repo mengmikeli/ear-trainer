@@ -453,7 +453,7 @@
 	.canvas-frame {
 		position: relative;
 		flex: 1;
-		min-height: 120px;
+		min-height: calc(2.5rem + 1.5rem); /* play button diameter + margin */
 		min-width: 120px;
 		overflow: hidden;
 		border: 1px solid var(--border-heavy);
