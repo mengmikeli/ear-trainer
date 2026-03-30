@@ -41,7 +41,7 @@
 	let inResultMode = $state(false);
 	let countdownPct = $state(1.0);
 	let countdownStart = 0;
-	let countdownDuration = 10000; // longer for A/B comparison
+	let countdownDuration = 4000;
 	let rafId: number | null = null;
 	let isGlitching = $state(false);
 	let correctTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -58,9 +58,6 @@
 	// Drone state
 	let drone: DroneHandle | null = $state(null);
 	let droneMuted = $state(false);
-
-	// A/B comparison state (for wrong answers)
-	let abPlaying: string | null = $state(null);
 
 	// Viz phase — maps quiz state to VizQuizLayout phase
 	const vizPhase = $derived.by((): 'rest' | 'playing' | 'correct' | 'wrong' | 'transition' => {
@@ -153,7 +150,6 @@
 		}
 
 		feedbackState = null;
-		abPlaying = null;
 		isPlaying = false;
 		playingNotes = [];
 		questionNum++;
@@ -236,6 +232,14 @@
 		noteTimeouts.forEach(clearTimeout);
 		noteTimeouts = [];
 
+		// Reset auto-advance on replay during correct feedback
+		if (feedbackState === 'correct' && correctTimeout) {
+			clearTimeout(correctTimeout);
+			correctTimeout = setTimeout(() => {
+				stopDrone(); drone = null; nextQuestion();
+			}, 1350);
+		}
+
 		playScale(
 			question.rootNote,
 			question.mode.intervals,
@@ -258,26 +262,6 @@
 			}, i * TEMPO));
 		});
 		noteTimeouts.push(setTimeout(() => { isPlaying = false; playingNotes = []; }, dur));
-	}
-
-	function playAB(modeId: string) {
-		if (!question || !state || abPlaying) return;
-		const mode = MODES.find(m => m.id === modeId);
-		if (!mode) return;
-
-		abPlaying = modeId;
-		playScale(
-			question.rootNote,
-			mode.intervals,
-			state.settings.toneType,
-			TEMPO,
-		);
-		const dur = mode.intervals.length * TEMPO + 400;
-		setTimeout(() => { abPlaying = null; }, dur);
-
-		// Reset countdown on A/B play
-		countdownStart = performance.now();
-		countdownPct = 1.0;
 	}
 
 	function toggleDroneMute() {
@@ -372,7 +356,7 @@
 	function enterResultMode() {
 		inResultMode = true;
 		countdownStart = performance.now();
-		countdownDuration = 10000;
+		countdownDuration = 8000;
 		countdownPct = 1.0;
 		rafId = requestAnimationFrame(tickCountdown);
 	}
@@ -427,6 +411,12 @@
 		questionNum = 0;
 		results = [];
 		state = loadState();
+		nextQuestion();
+	}
+
+	function skipCorrect() {
+		if (feedbackState === 'correct' && correctTimeout) { clearTimeout(correctTimeout); correctTimeout = null; }
+		stopDrone(); drone = null;
 		nextQuestion();
 	}
 
@@ -531,34 +521,15 @@
 		</VizQuizLayout>
 
 		<div class="answer-area" class:hidden={!hasPlayed}>
-			{#if inResultMode && selectedId}
-				<!-- A/B comparison buttons for wrong answers -->
-				<div class="ab-section">
-					<div class="section-label">COMPARE</div>
-					<div class="ab-grid">
-						{#each [question.mode, ...question.choices.filter(c => c.id !== question?.mode.id).slice(0, 1)] as comp}
-							<button
-								class="ab-btn"
-								class:playing={abPlaying === comp.id}
-								class:correct-ab={comp.id === question.mode.id}
-								onclick={() => playAB(comp.id)}
-								disabled={!!abPlaying}
-							>
-								<span class="ab-label">{comp.label}</span>
-								<span class="ab-name">{comp.name}</span>
-							</button>
-						{/each}
-					</div>
-				</div>
-			{/if}
-
 			<AnswerGrid
 				choices={question.choices.map(c => ({ id: c.id, name: c.name, label: c.label }))}
 				onselect={selectAnswer}
 				disabled={!hasPlayed || !!selectedId}
 				correctId={selectedId ? question.mode.id : null}
 				{selectedId}
-				onCorrectClick={selectedId ? (inResultMode ? () => { stopDrone(); drone = null; nextQuestion(); } : () => { if (correctTimeout) { clearTimeout(correctTimeout); correctTimeout = null; } stopDrone(); drone = null; nextQuestion(); }) : null}
+				onCorrectClick={selectedId ? (inResultMode ? () => { stopDrone(); drone = null; nextQuestion(); } : skipCorrect) : null}
+				countdownPct={inResultMode ? countdownPct : -1}
+				onWrongClick={inResultMode ? replayInResult : null}
 			/>
 		</div>
 	{/if}
@@ -696,60 +667,6 @@
 	}
 	.answer-area.hidden {
 		visibility: hidden;
-	}
-
-	/* A/B comparison */
-	.ab-section {
-		margin-bottom: 0.75rem;
-	}
-	.ab-section .section-label {
-		font-size: 0.35rem; font-weight: 900;
-		font-family: var(--mono); color: var(--marathon-blue);
-		letter-spacing: 0.15em;
-		margin-bottom: 0.5rem;
-	}
-	.ab-grid {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 0.5rem;
-	}
-	.ab-btn {
-		padding: 0.5rem;
-		background: var(--surface);
-		border: 1px solid var(--border-heavy);
-		text-align: center;
-		cursor: pointer;
-		transition: border-color 0.15s;
-	}
-	.ab-btn:not(:disabled):active {
-		border-color: var(--accent);
-	}
-	.ab-btn.playing {
-		border-color: var(--accent);
-		background: rgba(194, 254, 12, 0.05);
-	}
-	.ab-btn.correct-ab {
-		border-color: var(--correct);
-	}
-	.ab-btn.correct-ab .ab-label {
-		color: var(--correct);
-	}
-	.ab-label {
-		display: block;
-		font-size: 1.2rem;
-		font-weight: 900;
-		font-family: 'BPdots', var(--mono);
-		color: var(--accent);
-		line-height: 1;
-	}
-	.ab-name {
-		display: block;
-		font-size: 0.5rem;
-		color: var(--text-secondary);
-		font-family: var(--font-display);
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		margin-top: 0.15rem;
 	}
 
 	/* Summary */
