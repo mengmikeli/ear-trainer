@@ -4,7 +4,7 @@
 	import { base } from '$app/paths';
 	import { loadState, saveState, checkTierUnlock } from '$lib/state';
 	import { generateModeQuestion } from '$lib/engine';
-	import { playScale, playFeedbackChime, startDrone, stopDrone, type DroneHandle } from '$lib/audio';
+	import { playScale, playFeedbackChime, startDrone, stopDrone, warmUpAudio, isAudioReady, stopAudio, suspendAudio, type DroneHandle } from '$lib/audio';
 	import { responseQuality, calculateSm2 } from '$lib/sm2';
 	import {
 		needsLearnCard, findNeighbor, buildAllItems, recordAdaptiveAnswer,
@@ -32,6 +32,8 @@
 	let questionNum = $state(0);
 	let totalQuestions = $state(20);
 	let hasPlayed = $state(false);
+	let needsTap = $state(false);
+	let audioUnlocked = false;
 	let selectedId: string | null = $state(null);
 	let feedbackState: 'correct' | 'wrong' | null = $state(null);
 	let isCorrect = $state(false);
@@ -101,11 +103,18 @@
 	let glitchText = $state('');
 	let glitchStartTime = 0;
 	$effect(() => {
-		const shouldGlitch = isGlitching || feedbackState === 'wrong' || feedbackState === 'correct';
+		const shouldGlitch = isGlitching || feedbackState === 'wrong' || feedbackState === 'correct' || needsTap;
 		if (shouldGlitch) {
 			glitchStartTime = Date.now();
 			const realText = `Q${questionNum}`;
 			const id = setInterval(() => {
+				if (needsTap) {
+					const len = 1 + Math.floor(Math.random() * 3);
+					let t = '';
+					for (let i = 0; i < len; i++) t += glitchChars[Math.floor(Math.random() * glitchChars.length)];
+					glitchText = t;
+					return;
+				}
 				const elapsed = Date.now() - glitchStartTime;
 				const settleBias = Math.min(1, elapsed / 600);
 				if (Math.random() < settleBias * 0.7) {
@@ -124,13 +133,35 @@
 			glitchText = '';
 		}
 	});
-	const showGlitch = $derived(isGlitching || feedbackState === 'wrong' || feedbackState === 'correct');
+	const showGlitch = $derived(isGlitching || feedbackState === 'wrong' || feedbackState === 'correct' || needsTap);
 	const displayText = $derived(glitchText || `Q${questionNum}`);
 
 	onMount(() => {
 		state = loadState();
 		totalQuestions = state.settings.sessionLength;
 		nextQuestion();
+
+		// Re-check audio on background resume (iOS suspends AudioContext)
+		const onVisible = () => {
+			if (document.visibilityState === 'visible' && !isAudioReady()) {
+				audioUnlocked = false;
+				needsTap = true;
+				stopAudio();
+				stopDrone();
+				drone = null;
+				isPlaying = false;
+				playingNotes = [];
+			}
+		};
+		document.addEventListener('visibilitychange', onVisible);
+
+		return () => {
+			if (rafId) cancelAnimationFrame(rafId);
+			if (correctTimeout) clearTimeout(correctTimeout);
+			noteTimeouts.forEach(clearTimeout);
+			document.removeEventListener('visibilitychange', onVisible);
+			suspendAudio();
+		};
 	});
 
 	onDestroy(() => {
@@ -191,8 +222,8 @@
 			selectedId = null;
 			countdownPct = 1.0;
 
-			// Start drone on root note
-			if (question) {
+			// Start drone on root note (only if audio is ready)
+			if (question && audioUnlocked) {
 				stopDrone();
 				startDrone(question.droneNote).then(h => { drone = h; });
 				droneMuted = false;
@@ -228,6 +259,18 @@
 
 	function play() {
 		if (!question || !state) return;
+		warmUpAudio();
+		// iOS audio gate — block until user gesture unlocks AudioContext
+		if (!audioUnlocked && !isAudioReady() && !needsTap) {
+			needsTap = true;
+			return;
+		}
+		if (needsTap) {
+			audioUnlocked = true;
+			needsTap = false;
+		}
+		if (!audioUnlocked) audioUnlocked = true;
+
 		// Clear pending note timeouts
 		noteTimeouts.forEach(clearTimeout);
 		noteTimeouts = [];
@@ -238,6 +281,13 @@
 			correctTimeout = setTimeout(() => {
 				stopDrone(); drone = null; nextQuestion();
 			}, 1350);
+		}
+
+		// Start drone if not active
+		if (!drone) {
+			stopDrone();
+			startDrone(question.droneNote).then(h => { drone = h; });
+			droneMuted = false;
 		}
 
 		playScale(
@@ -474,7 +524,14 @@
 	</div>
 </div>
 {:else}
-<div class="quiz">
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div class="quiz" onclick={() => { if (needsTap) play(); }}>
+	{#if needsTap}
+		<button class="audio-banner" onclick={() => play()}>
+			<span class="ticker-text">NEURAL LINK OFFLINE — TAP TO RECONNECT &nbsp;&nbsp;&nbsp; NEURAL LINK OFFLINE — TAP TO RECONNECT &nbsp;&nbsp;&nbsp; NEURAL LINK OFFLINE — TAP TO RECONNECT &nbsp;&nbsp;&nbsp;</span>
+		</button>
+	{/if}
 	<h2 class="heading">MODES</h2>
 	<div class="top">
 		<div class="bar-track-full">
@@ -521,7 +578,7 @@
 			</button>
 		</VizQuizLayout>
 
-		<div class="answer-area" class:hidden={!hasPlayed}>
+		<div class="answer-area" class:hidden={!hasPlayed && !needsTap}>
 			<AnswerGrid
 				choices={question.choices.map(c => ({ id: c.id, name: c.name, label: c.label }))}
 				onselect={selectAnswer}
@@ -547,6 +604,31 @@
 		width: 100%;
 		padding: 0 1rem;
 	}
+	.audio-banner {
+		position: fixed;
+		top: env(safe-area-inset-top, 0px);
+		left: 0;
+		right: 0;
+		z-index: 100;
+		height: 24px;
+		background: var(--accent);
+		color: var(--base);
+		font-family: var(--mono);
+		font-size: 0.4rem;
+		font-weight: 900;
+		letter-spacing: 0.15em;
+		border: none;
+		cursor: pointer;
+		overflow: hidden;
+		white-space: nowrap;
+		display: flex;
+		align-items: center;
+	}
+	.ticker-text {
+		display: inline-block;
+		animation: ticker 12s linear infinite;
+	}
+	@keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-33.33%); } }
 	.quiz {
 		display: flex;
 		flex-direction: column;
