@@ -4,14 +4,37 @@ import { describe, it, expect } from 'vitest';
 import { MODES, getModeById, getModesByTier } from '../src/lib/modes';
 
 describe('MODES', () => {
-	it('has 4 modes', () => {
-		expect(MODES.length).toBe(4);
+	it('has 7 modes (all major scale modes)', () => {
+		expect(MODES.length).toBe(7);
 	});
 
-	it('all modes are tier 4', () => {
-		for (const mode of MODES) {
-			expect(mode.tier).toBe(4);
-		}
+	it('has modes across 4 tiers', () => {
+		const tiers = new Set(MODES.map(m => m.tier));
+		expect(tiers).toEqual(new Set([1, 2, 3, 4]));
+	});
+
+	it('tier 1 has Ionian and Aeolian', () => {
+		const t1 = getModesByTier(1);
+		expect(t1.length).toBe(2);
+		expect(t1.map(m => m.id).sort()).toEqual(['aeolian', 'ionian']);
+	});
+
+	it('tier 2 has Dorian and Mixolydian', () => {
+		const t2 = getModesByTier(2);
+		expect(t2.length).toBe(2);
+		expect(t2.map(m => m.id).sort()).toEqual(['dorian', 'mixolydian']);
+	});
+
+	it('tier 3 has Lydian and Phrygian', () => {
+		const t3 = getModesByTier(3);
+		expect(t3.length).toBe(2);
+		expect(t3.map(m => m.id).sort()).toEqual(['lydian', 'phrygian']);
+	});
+
+	it('tier 4 has Locrian', () => {
+		const t4 = getModesByTier(4);
+		expect(t4.length).toBe(1);
+		expect(t4[0].id).toBe('locrian');
 	});
 
 	it('all modes have category "mode"', () => {
@@ -34,6 +57,20 @@ describe('MODES', () => {
 				expect(mode.intervals).toContain(c);
 			}
 		}
+	});
+
+	it('ionian has major scale intervals', () => {
+		const ion = getModeById('ionian');
+		expect(ion).toBeDefined();
+		expect(ion!.intervals).toEqual([0, 2, 4, 5, 7, 9, 11, 12]);
+		expect(ion!.degree).toBe(1);
+	});
+
+	it('aeolian has natural minor intervals', () => {
+		const aeo = getModeById('aeolian');
+		expect(aeo).toBeDefined();
+		expect(aeo!.intervals).toEqual([0, 2, 3, 5, 7, 8, 10, 12]);
+		expect(aeo!.degree).toBe(6);
 	});
 
 	it('dorian has correct intervals', () => {
@@ -61,25 +98,45 @@ describe('MODES', () => {
 		expect(lyd).toBeDefined();
 		expect(lyd!.intervals).toEqual([0, 2, 4, 6, 7, 9, 11, 12]);
 	});
+
+	it('locrian has correct intervals', () => {
+		const loc = getModeById('locrian');
+		expect(loc).toBeDefined();
+		expect(loc!.intervals).toEqual([0, 1, 3, 5, 6, 8, 10, 12]);
+		expect(loc!.degree).toBe(7);
+	});
 });
 
 describe('getModeById', () => {
 	it('returns mode for valid id', () => {
 		expect(getModeById('dorian')).toBeDefined();
+		expect(getModeById('ionian')).toBeDefined();
+		expect(getModeById('locrian')).toBeDefined();
 	});
 
 	it('returns undefined for invalid id', () => {
-		expect(getModeById('locrian')).toBeUndefined();
+		expect(getModeById('superlocrian')).toBeUndefined();
 	});
 });
 
 describe('getModesByTier', () => {
-	it('returns all modes for tier 4', () => {
-		expect(getModesByTier(4).length).toBe(4);
+	it('returns 2 modes for tier 1', () => {
+		expect(getModesByTier(1).length).toBe(2);
 	});
 
-	it('returns empty for other tiers', () => {
-		expect(getModesByTier(1).length).toBe(0);
-		expect(getModesByTier(3).length).toBe(0);
+	it('returns 2 modes for tier 2', () => {
+		expect(getModesByTier(2).length).toBe(2);
+	});
+
+	it('returns 2 modes for tier 3', () => {
+		expect(getModesByTier(3).length).toBe(2);
+	});
+
+	it('returns 1 mode for tier 4', () => {
+		expect(getModesByTier(4).length).toBe(1);
+	});
+
+	it('returns empty for non-existent tier', () => {
+		expect(getModesByTier(5).length).toBe(0);
 	});
 });
