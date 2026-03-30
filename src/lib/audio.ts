@@ -89,7 +89,7 @@ function getContext(): AudioContext {
  * Unlike getContext(), this awaits the resume() promise so oscillators
  * scheduled immediately after won't hit a still-suspended context.
  */
-async function ensureResumed(): Promise<AudioContext> {
+export async function ensureResumed(): Promise<AudioContext> {
 	const audioCtx = getContext();
 	if (audioCtx.state === 'suspended' || (audioCtx.state as string) === 'interrupted') {
 		await audioCtx.resume();
@@ -874,74 +874,103 @@ export async function startDrone(midi: number): Promise<DroneHandle> {
 	osc2.type = 'sine';
 	osc2.frequency.value = midiToFreq(midi + 7);
 
-	// Slow LFO on gain for organic breathing feel
+	// Slow LFO on gain for organic breathing feel — delayed start
 	const lfo = audioCtx.createOscillator();
 	lfo.type = 'sine';
 	lfo.frequency.value = 0.15; // very slow
 
 	const lfoGain = audioCtx.createGain();
-	lfoGain.gain.value = 0.03; // subtle modulation
+	// LFO silent during fade-in, fades in after attack completes
+	lfoGain.gain.setValueAtTime(0, audioCtx.currentTime);
 
 	lfo.connect(lfoGain);
 
-	// Per-oscillator gains
+	// Per-oscillator gains — drone is background support, not prominent
 	const osc1Gain = audioCtx.createGain();
-	osc1Gain.gain.value = 0.15;
+	osc1Gain.gain.value = 0.10;  // softer fundamental
 	const osc2Gain = audioCtx.createGain();
-	osc2Gain.gain.value = 0.04;
+	osc2Gain.gain.value = 0.02;  // barely audible fifth
 
-	// Low-pass filter for warmth
+	// Low-pass filter for warmth — FIXED frequency, no sweep
+	// (Sweeping filter caused audible resonance/"buzz" even at low Q)
 	const filter = audioCtx.createBiquadFilter();
 	filter.type = 'lowpass';
-	filter.frequency.value = 800;
-	filter.Q.value = 0.7;
+	filter.frequency.value = 700; // warm fixed cutoff — removes harsh harmonics
+	filter.Q.value = 0.1; // nearly flat — zero resonance
 
 	// Master drone gain (for fade in/out + mute)
 	const droneGain = audioCtx.createGain();
-	droneGain.gain.value = 0;
+	droneGain.gain.value = 0; // true zero — no leak
 
-	// Wire it up
+	// Wire internal chain (osc → gain → filter → droneGain)
+	// but DON'T connect droneGain to master yet — connect after
+	// oscillators have started to avoid filter init transient
 	osc1.connect(osc1Gain);
 	osc2.connect(osc2Gain);
 	osc1Gain.connect(filter);
 	osc2Gain.connect(filter);
 	lfoGain.connect(droneGain.gain); // LFO modulates master gain
 	filter.connect(droneGain);
-	droneGain.connect(master);
+	// droneGain → master connected below, after oscillators start
 
-	// Fade in over 1 second
+	// Schedule oscillator start in the future
 	const now = audioCtx.currentTime;
+	const t0 = now + 0.05; // 50ms scheduling buffer
+
+	// Pin gain at 0 through the entire startup window
 	droneGain.gain.setValueAtTime(0, now);
-	droneGain.gain.linearRampToValueAtTime(1, now + 1.0);
+	droneGain.gain.setValueAtTime(0, t0);
+	droneGain.gain.setValueAtTime(0, t0 + 0.05); // extra safety window
+	droneGain.gain.linearRampToValueAtTime(1, t0 + 0.55); // 500ms fade in
+	// LFO fades in after attack completes (avoids wobble during ramp)
+	lfoGain.gain.setValueAtTime(0, now);
+	lfoGain.gain.setValueAtTime(0, t0 + 0.55);
+	lfoGain.gain.linearRampToValueAtTime(0.03, t0 + 0.85);
 
-	osc1.start(now);
-	osc2.start(now);
-	lfo.start(now);
+	// Start oscillators (not yet connected to output — no transient possible)
+	osc1.start(t0);
+	osc2.start(t0);
+	lfo.start(t0);
 
+	// Connect to output AFTER oscillators have started and stabilized
+	// The 70ms timeout ensures osc.start() has initialized before
+	// the signal chain reaches the destination
 	let muted = false;
 	let stopped = false;
+
+	setTimeout(() => {
+		if (!stopped) {
+			droneGain.connect(master);
+		}
+	}, 70);
 
 	const handle: DroneHandle = {
 		stop() {
 			if (stopped) return;
 			stopped = true;
 			const t = audioCtx.currentTime;
+			// Fade out: pure gain ramp to silence
+			const fadeStart = t + 0.01;
+			// Kill LFO immediately to prevent modulation during fade
+			lfoGain.gain.cancelScheduledValues(t);
+			lfoGain.gain.setValueAtTime(0, t);
+			// Capture current gain, ramp to 0 over 600ms
 			droneGain.gain.cancelScheduledValues(t);
-			droneGain.gain.setValueAtTime(droneGain.gain.value, t);
-			droneGain.gain.linearRampToValueAtTime(0, t + 0.5);
+			const currentGain = droneGain.gain.value;
+			droneGain.gain.setValueAtTime(currentGain, t);
+			droneGain.gain.setValueAtTime(currentGain, fadeStart);
+			droneGain.gain.linearRampToValueAtTime(0, fadeStart + 0.6);
+			// DISCONNECT from master first (removes from output graph),
+			// THEN stop oscillators. osc.stop() while connected to
+			// destination causes a click at the waveform's current phase.
 			setTimeout(() => {
-				try {
-					osc1.stop();
-					osc2.stop();
-					lfo.stop();
-					osc1.disconnect();
-					osc2.disconnect();
-					lfo.disconnect();
-					droneGain.disconnect();
-				} catch {
-					// already stopped
-				}
-			}, 600);
+				try { droneGain.disconnect(); } catch { /* already disconnected */ }
+				// Stop oscillators 100ms after disconnect — no longer audible
+				setTimeout(() => {
+					try { osc1.stop(); osc2.stop(); lfo.stop(); } catch { /* ok */ }
+					try { osc1.disconnect(); osc2.disconnect(); lfo.disconnect(); } catch { /* ok */ }
+				}, 100);
+			}, 700);
 			if (activeDrone === handle) activeDrone = null;
 			// Schedule audio suspend now that drone is done
 			scheduleSuspend(1000);

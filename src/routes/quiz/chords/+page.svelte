@@ -4,7 +4,7 @@
 	import { base } from '$app/paths';
 	import { loadState, saveState, checkTierUnlock } from '$lib/state';
 	import { generateChordQuestion } from '$lib/engine';
-	import { playChord, playFeedbackChime, suspendAudio, warmUpAudio, isAudioReady, stopAudio } from '$lib/audio';
+	import { playChord, playFeedbackChime, suspendAudio, ensureResumed, isAudioReady, stopAudio } from '$lib/audio';
 	import { responseQuality, calculateSm2 } from '$lib/sm2';
 	import {
 		needsLearnCard, findNeighbor, buildAllItems, recordAdaptiveAnswer,
@@ -228,9 +228,11 @@
 		nextQuestion();
 	}
 
-	function play() {
+	async function play() {
 		if (!question || !state) return;
-		warmUpAudio();
+		// Await AudioContext resume — fixes race where sync isAudioReady()
+		// returned false because ctx.resume() hadn't completed yet
+		try { await ensureResumed(); } catch { /* fall through to gate */ }
 		if (!audioUnlocked && !isAudioReady() && !needsTap) {
 			needsTap = true;
 			return;
@@ -544,27 +546,24 @@
 			{/key}
 		</div>
 	{:else if question}
-		<div class="quiz-body">
-			<div class="quiz-viz">
-				<VizQuizLayout
-					superchargeViz={state?.settings?.superchargeViz}
-					mode="chord"
-					phase={vizPhase}
-					chordIntervals={question.chord.intervals}
-					countdownPct={hasPlayed && inResultMode ? countdownPct : -1}
-					ontransitionend={handleTransitionEnd}
-					{playingNotes}
-				>
-					<button bind:this={playBtnEl} class="play-tap" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} onclick={hasPlayed && inResultMode ? replayInResult : play}>
-						<div class="orbit-track"><div class="orbit-dot"></div></div>
-						<span class="q-text" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} class:glitch-text={showGlitch}>
-							{displayText}
-						</span>
-					</button>
-				</VizQuizLayout>
-			</div>
+		<VizQuizLayout
+			superchargeViz={state?.settings?.superchargeViz}
+			mode="chord"
+			phase={vizPhase}
+			chordIntervals={question.chord.intervals}
+			countdownPct={hasPlayed && inResultMode ? countdownPct : -1}
+			ontransitionend={handleTransitionEnd}
+			{playingNotes}
+		>
+			<button bind:this={playBtnEl} class="play-tap" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} onclick={hasPlayed && inResultMode ? replayInResult : play}>
+				<div class="orbit-track"><div class="orbit-dot"></div></div>
+				<span class="q-text" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} class:glitch-text={showGlitch}>
+					{displayText}
+				</span>
+			</button>
+		</VizQuizLayout>
 
-			<div class="answer-area" class:hidden={!hasPlayed && !needsTap}>
+		<div class="answer-area" class:hidden={!hasPlayed && !needsTap}>
 			<AnswerGrid
 				choices={needsTap ? question.choices.map(c => ({ ...c, label: 'NA', name: 'UNAVAILABLE' })) : question.choices}
 				onselect={selectAnswer}
@@ -576,7 +575,6 @@
 				countdownPct={inResultMode ? countdownPct : -1}
 				onWrongClick={inResultMode ? replayInResult : null}
 			/>
-		</div>
 		</div>
 	{/if}
 </div>
@@ -873,41 +871,9 @@
 	}
 	.action-btn.primary:active { opacity: 0.85; }
 
-	/* Desktop: two-column quiz layout */
+	/* Desktop: wider layout */
 	@media (min-width: 768px) {
-		.quiz { gap: 0.75rem; }
-		.quiz-body {
-			display: flex;
-			flex-direction: row;
-			gap: 2rem;
-			width: 100%;
-			flex: 1;
-			min-height: 0;
-			align-items: stretch;
-		}
-		.quiz-viz {
-			flex: 1 1 55%;
-			min-width: 0;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-		}
-		.quiz-viz :global(.canvas-frame) {
-			max-height: 100%;
-			aspect-ratio: 1;
-		}
-		.answer-area {
-			flex: 1 1 40%;
-			min-width: 0;
-			margin-top: 0;
-			display: flex;
-			align-items: center;
-		}
 		.heading { font-size: 3.5rem; }
-		.play-tap {
-			width: min(35vw, 200px);
-			height: min(35vw, 200px);
-		}
 		.summary {
 			max-width: 600px;
 			margin: 0 auto;

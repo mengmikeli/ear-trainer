@@ -30,7 +30,7 @@ jobs:
       - if: github.event.action != 'closed'
         run: npm run build
         env:
-          BASE_PATH: '/ear-trainer/pr/${{ github.event.number }}'
+          BASE_PATH: '/ear-trainer/pr/pr-${{ github.event.number }}'
 
       - uses: rossjrw/pr-preview-action@v1
         with:

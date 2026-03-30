@@ -4,7 +4,7 @@
 	import { base } from '$app/paths';
 	import { loadState, saveState, checkTierUnlock } from '$lib/state';
 	import { generateModeQuestion } from '$lib/engine';
-	import { playScale, playFeedbackChime, startDrone, stopDrone, type DroneHandle } from '$lib/audio';
+	import { playScale, playFeedbackChime, startDrone, stopDrone, ensureResumed, isAudioReady, stopAudio, suspendAudio, type DroneHandle } from '$lib/audio';
 	import { responseQuality, calculateSm2 } from '$lib/sm2';
 	import {
 		needsLearnCard, findNeighbor, buildAllItems, recordAdaptiveAnswer,
@@ -13,11 +13,11 @@
 	import type { UserState, ModeQuestion } from '$lib/types';
 	import type { ModeDef } from '$lib/modes';
 	import { MODES } from '$lib/modes';
-	import PlayButton from '../../../components/PlayButton.svelte';
 	import AnswerGrid from '../../../components/AnswerGrid.svelte';
 	import ProgressBar from '../../../components/ProgressBar.svelte';
 	import TelemetryBar from '../../../components/TelemetryBar.svelte';
 	import LearnCard from '../../../components/LearnCard.svelte';
+	import VizQuizLayout from '../../../components/VizQuizLayout.svelte';
 
 	const TEMPO = 180; // ms per note — slightly slower than scales for clarity over drone
 
@@ -32,6 +32,8 @@
 	let questionNum = $state(0);
 	let totalQuestions = $state(20);
 	let hasPlayed = $state(false);
+	let needsTap = $state(false);
+	let audioUnlocked = false;
 	let selectedId: string | null = $state(null);
 	let feedbackState: 'correct' | 'wrong' | null = $state(null);
 	let isCorrect = $state(false);
@@ -41,7 +43,7 @@
 	let inResultMode = $state(false);
 	let countdownPct = $state(1.0);
 	let countdownStart = 0;
-	let countdownDuration = 10000; // longer for A/B comparison
+	let countdownDuration = 4000;
 	let rafId: number | null = null;
 	let isGlitching = $state(false);
 	let correctTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -59,22 +61,119 @@
 	let drone: DroneHandle | null = $state(null);
 	let droneMuted = $state(false);
 
-	// A/B comparison state (for wrong answers)
-	let abPlaying: string | null = $state(null);
+	// Viz phase — maps quiz state to VizQuizLayout phase
+	const vizPhase = $derived.by((): 'rest' | 'playing' | 'correct' | 'wrong' | 'transition' => {
+		if (isGlitching) return 'transition';
+		if (feedbackState === 'correct') return 'correct';
+		if (feedbackState === 'wrong') return 'wrong';
+		if (isPlaying) return 'playing';
+		return 'rest';
+	});
+
+	function handleTransitionEnd() {}
+
+	let playingNotes: number[] = $state([]);
+	let noteTimeouts: ReturnType<typeof setTimeout>[] = [];
+
+	// Per-note bounce
+	let bounceStartTime = 0;
+	let bounceDuration = 0;
+	let bounceAnimId = 0;
+	let playBtnEl: HTMLButtonElement | undefined = $state();
+	function triggerBounce(sustained = false) {
+		bounceStartTime = performance.now();
+		bounceDuration = sustained ? 1200 : 300;
+		if (!bounceAnimId) bounceLoop();
+	}
+	function bounceLoop() {
+		const elapsed = performance.now() - bounceStartTime;
+		if (elapsed < bounceDuration && playBtnEl) {
+			const t = elapsed / bounceDuration;
+			const scale = 1 + 0.06 * Math.cos(40 * t) * Math.exp(-4 * t);
+			playBtnEl.style.transform = `scale(${scale})`;
+			bounceAnimId = requestAnimationFrame(bounceLoop);
+		} else {
+			if (playBtnEl) playBtnEl.style.transform = '';
+			bounceAnimId = 0;
+		}
+	}
+
+	// Glitch text
+	const glitchChars = ['\uE000', '\uE001', '\uE002', '\uE003', '\uE004', '\uE005', '\uE006', '\uE007', '\uE008', '\uE010', '\uE017'];
+	let glitchText = $state('');
+	let glitchStartTime = 0;
+	$effect(() => {
+		const shouldGlitch = isGlitching || feedbackState === 'wrong' || feedbackState === 'correct' || needsTap;
+		if (shouldGlitch) {
+			glitchStartTime = Date.now();
+			const realText = `Q${questionNum}`;
+			const id = setInterval(() => {
+				if (needsTap) {
+					const len = 1 + Math.floor(Math.random() * 3);
+					let t = '';
+					for (let i = 0; i < len; i++) t += glitchChars[Math.floor(Math.random() * glitchChars.length)];
+					glitchText = t;
+					return;
+				}
+				const elapsed = Date.now() - glitchStartTime;
+				const settleBias = Math.min(1, elapsed / 600);
+				if (Math.random() < settleBias * 0.7) {
+					glitchText = realText;
+				} else {
+					const len = 1 + Math.floor(Math.random() * 3);
+					let t = '';
+					for (let i = 0; i < len; i++) {
+						t += Math.random() < 0.3 ? realText[Math.floor(Math.random() * realText.length)] : glitchChars[Math.floor(Math.random() * glitchChars.length)];
+					}
+					glitchText = t;
+				}
+			}, 50);
+			return () => { clearInterval(id); glitchText = ''; };
+		} else {
+			glitchText = '';
+		}
+	});
+	const showGlitch = $derived(isGlitching || feedbackState === 'wrong' || feedbackState === 'correct' || needsTap);
+	const displayText = $derived(glitchText || `Q${questionNum}`);
 
 	onMount(() => {
 		state = loadState();
 		totalQuestions = state.settings.sessionLength;
 		nextQuestion();
+
+		// Re-check audio on background resume (iOS suspends AudioContext)
+		const onVisible = () => {
+			if (document.visibilityState === 'visible' && !isAudioReady()) {
+				audioUnlocked = false;
+				needsTap = true;
+				stopAudio();
+				stopDrone();
+				drone = null;
+				isPlaying = false;
+				playingNotes = [];
+			}
+		};
+		document.addEventListener('visibilitychange', onVisible);
+
+		return () => {
+			if (rafId) cancelAnimationFrame(rafId);
+			if (correctTimeout) clearTimeout(correctTimeout);
+			noteTimeouts.forEach(clearTimeout);
+			document.removeEventListener('visibilitychange', onVisible);
+			suspendAudio();
+		};
 	});
 
 	onDestroy(() => {
 		stopDrone();
 		if (rafId) cancelAnimationFrame(rafId);
+		noteTimeouts.forEach(clearTimeout);
 	});
 
 	function nextQuestion() {
 		if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+		noteTimeouts.forEach(clearTimeout);
+		noteTimeouts = [];
 		if (!state) return;
 		if (questionNum >= totalQuestions) {
 			finishSession();
@@ -82,7 +181,8 @@
 		}
 
 		feedbackState = null;
-		abPlaying = null;
+		isPlaying = false;
+		playingNotes = [];
 		questionNum++;
 
 		const nextQ = generateModeQuestion(state);
@@ -121,13 +221,6 @@
 			hasPlayed = false;
 			selectedId = null;
 			countdownPct = 1.0;
-
-			// Start drone on root note
-			if (question) {
-				stopDrone();
-				startDrone(question.droneNote).then(h => { drone = h; });
-				droneMuted = false;
-			}
 		});
 
 		setTimeout(() => {
@@ -157,14 +250,59 @@
 		nextQuestion();
 	}
 
-	function play() {
+	async function play() {
 		if (!question || !state) return;
-		playScale(
-			question.rootNote,
-			question.mode.intervals,
-			state.settings.toneType,
-			TEMPO,
-		);
+		// Await AudioContext resume — fixes race where sync isAudioReady()
+		// returned false because ctx.resume() hadn't completed yet
+		try { await ensureResumed(); } catch { /* fall through to gate */ }
+		// iOS audio gate — block until user gesture unlocks AudioContext
+		if (!audioUnlocked && !isAudioReady() && !needsTap) {
+			needsTap = true;
+			return;
+		}
+		if (needsTap) {
+			audioUnlocked = true;
+			needsTap = false;
+		}
+		if (!audioUnlocked) audioUnlocked = true;
+
+		// Clear pending note timeouts
+		noteTimeouts.forEach(clearTimeout);
+		noteTimeouts = [];
+
+		// Reset auto-advance on replay during correct feedback
+		if (feedbackState === 'correct' && correctTimeout) {
+			clearTimeout(correctTimeout);
+			correctTimeout = setTimeout(() => {
+				stopDrone(); drone = null; nextQuestion();
+			}, 1350);
+		}
+
+		// Start a fresh drone for this playback (time-bounded)
+		// Drone leads in before notes, sustains through, fades out after
+		const droneLeadIn = 400; // ms — let drone build up before first note
+		const droneTail = 800;   // ms — drone sustains after last note ends
+
+		stopDrone();
+		drone = null;
+		if (question) {
+			startDrone(question.droneNote).then(h => {
+				drone = h;
+				if (droneMuted) h.setMuted(true);
+			});
+		}
+
+		// Delay scale notes so drone has time to ease in
+		noteTimeouts.push(setTimeout(() => {
+			if (!question || !state) return;
+			playScale(
+				question.rootNote,
+				question.mode.intervals,
+				state.settings.toneType,
+				TEMPO,
+			);
+		}, droneLeadIn));
+
 		if (!hasPlayed) {
 			hasPlayed = true;
 			startTime = Date.now();
@@ -172,28 +310,17 @@
 			question.replays++;
 		}
 		isPlaying = true;
-		const dur = question.mode.intervals.length * TEMPO + 400;
-		setTimeout(() => { isPlaying = false; }, dur);
-	}
+		const notesDur = question.mode.intervals.length * TEMPO + 400;
 
-	function playAB(modeId: string) {
-		if (!question || !state || abPlaying) return;
-		const mode = MODES.find(m => m.id === modeId);
-		if (!mode) return;
-
-		abPlaying = modeId;
-		playScale(
-			question.rootNote,
-			mode.intervals,
-			state.settings.toneType,
-			TEMPO,
-		);
-		const dur = mode.intervals.length * TEMPO + 400;
-		setTimeout(() => { abPlaying = null; }, dur);
-
-		// Reset countdown on A/B play
-		countdownStart = performance.now();
-		countdownPct = 1.0;
+		// Sync Chladni with mode notes (offset by lead-in)
+		question.mode.intervals.forEach((semitone: number, i: number) => {
+			noteTimeouts.push(setTimeout(() => {
+				playingNotes = [question!.rootNote + semitone]; triggerBounce();
+			}, droneLeadIn + i * TEMPO));
+		});
+		noteTimeouts.push(setTimeout(() => { isPlaying = false; playingNotes = []; }, droneLeadIn + notesDur));
+		// Stop drone after notes + tail (total = leadIn + notesDur + tail)
+		noteTimeouts.push(setTimeout(() => { stopDrone(); drone = null; }, droneLeadIn + notesDur + droneTail));
 	}
 
 	function toggleDroneMute() {
@@ -288,7 +415,7 @@
 	function enterResultMode() {
 		inResultMode = true;
 		countdownStart = performance.now();
-		countdownDuration = 10000;
+		countdownDuration = 8000;
 		countdownPct = 1.0;
 		rafId = requestAnimationFrame(tickCountdown);
 	}
@@ -346,6 +473,12 @@
 		nextQuestion();
 	}
 
+	function skipCorrect() {
+		if (feedbackState === 'correct' && correctTimeout) { clearTimeout(correctTimeout); correctTimeout = null; }
+		stopDrone(); drone = null;
+		nextQuestion();
+	}
+
 	function endEarly() {
 		stopDrone();
 		if (questionNum > 1 && state) {
@@ -400,7 +533,14 @@
 	</div>
 </div>
 {:else}
-<div class="quiz">
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div class="quiz" onclick={() => { if (needsTap) play(); }}>
+	{#if needsTap}
+		<button class="audio-banner" onclick={() => play()}>
+			<span class="ticker-text">NEURAL LINK OFFLINE — TAP TO RECONNECT &nbsp;&nbsp;&nbsp; NEURAL LINK OFFLINE — TAP TO RECONNECT &nbsp;&nbsp;&nbsp; NEURAL LINK OFFLINE — TAP TO RECONNECT &nbsp;&nbsp;&nbsp;</span>
+		</button>
+	{/if}
 	<h2 class="heading">MODES</h2>
 	<div class="top">
 		<div class="bar-track-full">
@@ -408,12 +548,13 @@
 		</div>
 		<div class="top-controls">
 			<button class="close exit" onclick={endEarly}>EXIT</button>
-			<div class="drone-indicator" class:muted={droneMuted}>
-				<button class="drone-btn" onclick={toggleDroneMute}>
-					{droneMuted ? 'DRONE OFF' : 'DRONE ON'}
+			<span class="mode-icon">MODE</span>
+			<div class="top-right">
+				<button class="drone-toggle" class:active={!droneMuted} onclick={toggleDroneMute}>
+					{droneMuted ? 'DRN' : 'DRN'}
 				</button>
+				<span class="counter">{String(questionNum).padStart(2, '0')}/{String(totalQuestions).padStart(2, '0')}</span>
 			</div>
-			<span class="counter">{String(questionNum).padStart(2, '0')}/{String(totalQuestions).padStart(2, '0')}</span>
 		</div>
 	</div>
 
@@ -429,49 +570,34 @@
 			{/key}
 		</div>
 	{:else if question}
-		<div class="play-area">
-			<PlayButton
-				onplay={hasPlayed && inResultMode ? replayInResult : play}
-				replaying={hasPlayed}
-				playing={isPlaying}
-				noBorder={hasPlayed && inResultMode}
-				questionNum={questionNum}
-				countdownPct={hasPlayed && inResultMode ? countdownPct : -1}
-				glitching={isGlitching}
-				feedback={feedbackState}
-				semitones={0}
-			/>
-		</div>
+		<VizQuizLayout
+			superchargeViz={state?.settings?.superchargeViz}
+			mode="scale"
+			phase={vizPhase}
+			scaleIntervals={question.mode.intervals}
+			countdownPct={hasPlayed && inResultMode ? countdownPct : -1}
+			ontransitionend={handleTransitionEnd}
+			{playingNotes}
+		>
+			<button bind:this={playBtnEl} class="play-tap" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} onclick={hasPlayed && inResultMode ? replayInResult : play}>
+				<div class="orbit-track"><div class="orbit-dot"></div></div>
+				<span class="q-text" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} class:glitch-text={showGlitch}>
+					{displayText}
+				</span>
+			</button>
+		</VizQuizLayout>
 
-		<div class="answer-area" class:hidden={!hasPlayed}>
-			{#if inResultMode && selectedId}
-				<!-- A/B comparison buttons for wrong answers -->
-				<div class="ab-section">
-					<div class="section-label">COMPARE</div>
-					<div class="ab-grid">
-						{#each [question.mode, ...question.choices.filter(c => c.id !== question?.mode.id).slice(0, 1)] as comp}
-							<button
-								class="ab-btn"
-								class:playing={abPlaying === comp.id}
-								class:correct-ab={comp.id === question.mode.id}
-								onclick={() => playAB(comp.id)}
-								disabled={!!abPlaying}
-							>
-								<span class="ab-label">{comp.label}</span>
-								<span class="ab-name">{comp.name}</span>
-							</button>
-						{/each}
-					</div>
-				</div>
-			{/if}
-
+		<div class="answer-area" class:hidden={!hasPlayed && !needsTap}>
 			<AnswerGrid
-				choices={question.choices.map(c => ({ id: c.id, name: c.name, label: c.label }))}
+				choices={needsTap ? question.choices.map(c => ({ ...c, label: 'NA', name: 'UNAVAILABLE' })) : question.choices.map(c => ({ id: c.id, name: c.name, label: c.label }))}
 				onselect={selectAnswer}
-				disabled={!hasPlayed || !!selectedId}
+				disabled={needsTap || !hasPlayed || !!selectedId}
+				offline={needsTap}
 				correctId={selectedId ? question.mode.id : null}
 				{selectedId}
-				onCorrectClick={selectedId ? (inResultMode ? () => { stopDrone(); drone = null; nextQuestion(); } : () => { if (correctTimeout) { clearTimeout(correctTimeout); correctTimeout = null; } stopDrone(); drone = null; nextQuestion(); }) : null}
+				onCorrectClick={selectedId ? (inResultMode ? () => { stopDrone(); drone = null; nextQuestion(); } : skipCorrect) : null}
+				countdownPct={inResultMode ? countdownPct : -1}
+				onWrongClick={inResultMode ? replayInResult : null}
 			/>
 		</div>
 	{/if}
@@ -488,6 +614,31 @@
 		width: 100%;
 		padding: 0 1rem;
 	}
+	.audio-banner {
+		position: fixed;
+		top: env(safe-area-inset-top, 0px);
+		left: 0;
+		right: 0;
+		z-index: 100;
+		height: 24px;
+		background: var(--accent);
+		color: var(--base);
+		font-family: var(--mono);
+		font-size: 0.4rem;
+		font-weight: 900;
+		letter-spacing: 0.15em;
+		border: none;
+		cursor: pointer;
+		overflow: hidden;
+		white-space: nowrap;
+		display: flex;
+		align-items: center;
+	}
+	.ticker-text {
+		display: inline-block;
+		animation: ticker 12s linear infinite;
+	}
+	@keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-33.33%); } }
 	.quiz {
 		display: flex;
 		flex-direction: column;
@@ -535,28 +686,38 @@
 		padding: 0 6px;
 		line-height: 1.6;
 	}
-	.drone-indicator {
+	.mode-icon {
 		position: absolute;
 		left: 50%;
 		transform: translateX(-50%);
-	}
-	.drone-btn {
-		font-size: 0.35rem;
+		font-size: 0.4rem;
 		font-family: var(--mono);
 		font-weight: 900;
-		letter-spacing: 0.1em;
-		color: var(--accent);
-		background: transparent;
-		border: 1px solid var(--accent);
-		padding: 0 8px;
-		line-height: 1.6;
-		cursor: pointer;
-		transition: color 0.15s, border-color 0.15s, opacity 0.15s;
+		color: var(--marathon-blue);
+		letter-spacing: 0.08em;
+		line-height: 1;
 	}
-	.drone-indicator.muted .drone-btn {
+	.top-right {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+	.drone-toggle {
+		font-size: 0.35rem;
+		font-weight: 900;
+		font-family: var(--mono);
+		letter-spacing: 0.08em;
+		padding: 0 5px;
+		line-height: 1.6;
+		background: transparent;
 		color: var(--text-secondary);
-		border-color: var(--border-heavy);
-		opacity: 0.5;
+		border: 1px solid var(--border-heavy);
+		cursor: pointer;
+		transition: color 0.15s, border-color 0.15s;
+	}
+	.drone-toggle.active {
+		color: var(--accent);
+		border-color: var(--accent);
 	}
 	.close {
 		font-size: 0.4rem;
@@ -573,73 +734,42 @@
 		color: var(--hot);
 		border-color: var(--hot);
 	}
-	.play-area {
+	.play-tap {
+		position: relative;
+		width: min(40vw, 160px);
+		height: min(40vw, 160px);
+		border-radius: 50%;
+		background: transparent;
+		border: 1.5px solid var(--accent);
+		box-shadow: 0 0 8px rgba(194, 254, 12, 0.3);
 		display: flex;
-		flex-direction: column;
 		align-items: center;
-		gap: 1rem;
-		flex: 1;
 		justify-content: center;
+		cursor: pointer;
+		-webkit-tap-highlight-color: transparent;
 	}
+	.play-tap.feedback-correct { background: var(--correct); border-color: var(--correct); box-shadow: 0 0 12px var(--correct); }
+	.play-tap.feedback-wrong { background: var(--hot); border-color: var(--hot); box-shadow: 0 0 12px var(--hot); transition: none; }
+	.play-tap:active { transform: scale(0.95); }
+	.orbit-track { position: absolute; inset: 0; border-radius: 50%; animation: orbit 7s linear infinite; pointer-events: none; }
+	.orbit-dot { position: absolute; top: -3px; left: 50%; transform: translateX(-50%); width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+	.play-tap.feedback-wrong .orbit-dot { background: var(--hot); box-shadow: 0 0 6px var(--hot); }
+	@keyframes orbit { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+	.q-text {
+		font-family: var(--mono);
+		font-size: 2rem;
+		font-weight: 700;
+		letter-spacing: 0.05em;
+		color: var(--accent);
+	}
+	.q-text.feedback-correct { color: var(--base); transition: none; }
+	.q-text.feedback-wrong { color: var(--base); transition: none; }
+	.q-text.glitch-text { /* clean glyph cycling */ }
 	.answer-area {
 		width: 100%;
 	}
 	.answer-area.hidden {
 		visibility: hidden;
-	}
-
-	/* A/B comparison */
-	.ab-section {
-		margin-bottom: 0.75rem;
-	}
-	.ab-section .section-label {
-		font-size: 0.35rem; font-weight: 900;
-		font-family: var(--mono); color: var(--marathon-blue);
-		letter-spacing: 0.15em;
-		margin-bottom: 0.5rem;
-	}
-	.ab-grid {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 0.5rem;
-	}
-	.ab-btn {
-		padding: 0.5rem;
-		background: var(--surface);
-		border: 1px solid var(--border-heavy);
-		text-align: center;
-		cursor: pointer;
-		transition: border-color 0.15s;
-	}
-	.ab-btn:not(:disabled):active {
-		border-color: var(--accent);
-	}
-	.ab-btn.playing {
-		border-color: var(--accent);
-		background: rgba(194, 254, 12, 0.05);
-	}
-	.ab-btn.correct-ab {
-		border-color: var(--correct);
-	}
-	.ab-btn.correct-ab .ab-label {
-		color: var(--correct);
-	}
-	.ab-label {
-		display: block;
-		font-size: 1.2rem;
-		font-weight: 900;
-		font-family: 'BPdots', var(--mono);
-		color: var(--accent);
-		line-height: 1;
-	}
-	.ab-name {
-		display: block;
-		font-size: 0.5rem;
-		color: var(--text-secondary);
-		font-family: var(--font-display);
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		margin-top: 0.15rem;
 	}
 
 	/* Summary */
