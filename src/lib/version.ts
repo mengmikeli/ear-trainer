@@ -1,16 +1,6 @@
-export const APP_VERSION = '3.7.0';
-
-/**
- * Git commit hash injected at build time via vite.config.ts define.
- * Falls back to 'dev' for local dev server.
- */
-declare const __BUILD_HASH__: string;
-const BUILD_HASH = typeof __BUILD_HASH__ !== 'undefined' ? __BUILD_HASH__ : 'dev';
-
-/**
- * Full version string for display: v3.6.0+abc1234
- */
-export const VERSION_STRING = `v${APP_VERSION}+${BUILD_HASH}`;
+export const APP_VERSION = '3.5';
+export const __BUILD_HASH__ = (globalThis as any).__BUILD_HASH__ ?? '';
+export const VERSION_STRING = __BUILD_HASH__ ? `${APP_VERSION} (${__BUILD_HASH__})` : APP_VERSION;
 
 export interface ReleaseNote {
 	version: string;
@@ -21,49 +11,21 @@ export interface ReleaseNote {
 
 export const RELEASE_NOTES: ReleaseNote[] = [
 	{
-		version: '3.7.0',
+		version: '3.5',
 		date: '2026-03-30',
-		title: 'LEARN LAYER',
+		title: 'AUDIO HARDENING + VISUAL POLISH',
 		changes: [
-			'Learn cards — 4-step micro-lesson for every new content item (Hear → Compare → Quiz → Done)',
-			'A/B comparison with closest practiced neighbor item',
-			'Connection text during Compare step — surfaces interval/chord/scale relationships',
-			'Cold start intro sequence — P1 → P8 → P5 for brand-new users',
-			'Smart session planner integrates learn phase (max 3 per session)',
-			'Learn cards in all quiz routes — intervals, chords, scales, modes, adaptive',
-			'Debrief shows count of new items learned',
-		],
-	},
-	{
-		version: '3.6.0',
-		date: '2026-03-30',
-		title: 'ADAPTIVE LEARNING',
-		changes: [
-			'Unified adaptive engine — cross-content SM-2 tracking across intervals, chords, scales, and modes',
-			'Smart session planner — TRAIN button generates mixed-content sessions with warmup → focus → review phases',
-			'Cross-content connection map — failing related items boosts connected content',
-			'Musical modes — Dorian, Mixolydian, Phrygian, Lydian with drone playback',
-			'Drone audio — sustained root note with LFO breathing for modal context',
-			'A/B comparison on wrong mode answers — hear the correct vs selected mode',
-			'Drone mute toggle during mode quiz',
-			'Per-type debrief breakdown in adaptive sessions',
-			'Session history tracking (last 20 sessions)',
-		],
-	},
-	{
-		version: '3.5.0',
-		date: '2026-03-30',
-		title: 'iOS + PROCESS',
-		changes: [
-			'iOS native app via Capacitor — same codebase, two deploy targets',
-			'Native AVAudioSession for audio resume on iOS',
-			'Whole Tone + Major Blues scales in lab',
-			'Light mode fix for lab Chladni backgrounds',
-			'Viz pod responsive fix (no more 1px collapse)',
-			'CI test fix for @capacitor/app mock',
-			'README overhaul',
-			'RETRO.md — sprint retrospectives',
-			'Versioning: semver + git hash visible in Settings',
+			'Whole Tone + Major Blues scales',
+			'AudioContext pre-warm on GO button — eliminates first-tap silence',
+			'Adaptive audio reconnect with visual ticker banner',
+			'Physics bounce animation on correct answers',
+			'Replay timer reset on wrong answers',
+			'SVG play/pause icons — consistent rendering across all browsers',
+			'Viz pod layout — ring hugs content, answers match width',
+			'Viz pod resize stability — no collapse on window resize',
+			'Light mode lab background fix',
+			'Chladni idle pause for performance',
+			'Scanline contrast tuning',
 		],
 	},
 	{
