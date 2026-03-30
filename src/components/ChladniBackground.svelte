@@ -41,12 +41,15 @@
 
 	// ── Constants — matched to lab pages ──
 	const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-	const PARTICLE_COUNT = isMobile ? 1500 : 3500;
+	const PARTICLE_COUNT = isMobile ? 1000 : 3500;
 	const SETTLE_SPEED_BASE = 0.003;
 	const SETTLE_SPEED_BOOST = 0.025;
 	const JITTER = 0.001;
 	const SHAKE_BASE = 0.02;
 	const SHAKE_AUDIO = 0.05;
+	// 30fps throttle on mobile — skip every other frame
+	const FRAME_SKIP = isMobile ? 2 : 1;
+	const NOISE_INTERVAL = isMobile ? 6 : 3;
 
 	let particles: { x: number; y: number }[] = [];
 	let settleSpeed = SETTLE_SPEED_BASE;
@@ -174,6 +177,13 @@
 		let frameCount = 0;
 
 		function draw() {
+			frameCount++;
+			// 30fps throttle on mobile — skip every other frame
+			if (FRAME_SKIP > 1 && frameCount % FRAME_SKIP !== 0) {
+				animId = requestAnimationFrame(draw);
+				return;
+			}
+
 			const w = canvas.width / dpr;
 			const h = canvas.height / dpr;
 			const cx = w / 2;
@@ -211,8 +221,11 @@
 			const TAU = Math.PI * 2;
 			const modes = currentModes;
 
-			ctx.shadowColor = '#3A2CFF';
-			ctx.shadowBlur = 2;
+			// Skip shadowBlur on mobile — it's the #1 canvas perf hog
+			if (!isMobile) {
+				ctx.shadowColor = '#3A2CFF';
+				ctx.shadowBlur = 2;
+			}
 
 			for (const p of particles) {
 				// Use superposition or single mode (same as lab pages)
@@ -255,24 +268,26 @@
 				ctx.fillRect(sx, sy, pSize, pSize);
 			}
 			ctx.globalAlpha = 1;
-			ctx.shadowBlur = 0;
+			if (!isMobile) ctx.shadowBlur = 0;
 
-			// Noise grain (every 3rd frame, same as lab)
-			if (noiseCanvas && frameCount % 3 === 0) {
+			// Noise grain (throttled on mobile)
+			if (noiseCanvas && frameCount % NOISE_INTERVAL === 0) {
 				refreshNoise(Math.ceil(w), Math.ceil(h));
 				ctx.globalAlpha = 0.5;
 				ctx.drawImage(noiseCanvas, 0, 0, w, h);
 				ctx.globalAlpha = 1;
 			}
 
-			// Vignette (same as lab)
-			const vigR = Math.min(cx, cy) * 0.5;
-			const vigGrad = ctx.createRadialGradient(cx, cy, vigR, cx, cy, Math.max(w, h) * 0.72);
-			vigGrad.addColorStop(0, 'rgba(0,0,0,0)');
-			vigGrad.addColorStop(0.7, 'rgba(0,0,0,0.15)');
-			vigGrad.addColorStop(1, 'rgba(0,0,0,0.55)');
-			ctx.fillStyle = vigGrad;
-			ctx.fillRect(0, 0, w, h);
+			// Vignette — skip on mobile (radialGradient per frame is expensive)
+			if (!isMobile) {
+				const vigR = Math.min(cx, cy) * 0.5;
+				const vigGrad = ctx.createRadialGradient(cx, cy, vigR, cx, cy, Math.max(w, h) * 0.72);
+				vigGrad.addColorStop(0, 'rgba(0,0,0,0)');
+				vigGrad.addColorStop(0.7, 'rgba(0,0,0,0.15)');
+				vigGrad.addColorStop(1, 'rgba(0,0,0,0.55)');
+				ctx.fillStyle = vigGrad;
+				ctx.fillRect(0, 0, w, h);
+			}
 
 			// Scanline flicker (same as lab)
 			if (frameCount % 120 < 2) {
@@ -281,7 +296,6 @@
 				ctx.fillRect(0, glitchY, w, 1);
 			}
 
-			frameCount++;
 			animId = requestAnimationFrame(draw);
 		}
 

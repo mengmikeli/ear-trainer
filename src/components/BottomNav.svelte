@@ -56,4 +56,13 @@
 	}
 	.disabled { cursor: default; }
 	.icon { font-size: 1.25rem; font-family: var(--mono); }
+
+	/* Desktop: nav items more spacious */
+	@media (min-width: 768px) {
+		a, .nav-item {
+			padding: 0.85rem 1.5rem;
+			font-size: 0.65rem;
+		}
+		.icon { font-size: 1.4rem; }
+	}
 </style>

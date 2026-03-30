@@ -673,4 +673,15 @@
 		border-top: 1px solid var(--border);
 	}
 	.credits-accent { color: var(--marathon-blue); }
+
+	/* Desktop: constrained width, larger type */
+	@media (min-width: 768px) {
+		.settings-page { max-width: 600px; margin: 0 auto; }
+		.heading { font-size: 3.5rem; }
+		.credits-grid {
+			display: grid;
+			grid-template-columns: repeat(2, 1fr);
+			gap: 0.5rem;
+		}
+	}
 </style>

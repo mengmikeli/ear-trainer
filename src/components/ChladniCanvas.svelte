@@ -8,9 +8,10 @@
 	let animId: number;
 
 	const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-	const PARTICLE_COUNT = isMobile ? 1500 : 3000;
+	const PARTICLE_COUNT = isMobile ? 1000 : 3000;
 	const SETTLE_SPEED = 0.004;    // how fast particles drift to nodal lines
 	const JITTER = 0.001;          // random noise to keep things alive
+	const FRAME_SKIP = isMobile ? 2 : 1;
 
 	// Chladni equation: cos(n*x)*cos(m*y) - cos(m*x)*cos(n*y)
 	// Nodal lines are where this equals zero
@@ -71,7 +72,15 @@
 		window.addEventListener('resize', resize);
 		initParticles();
 
+		let frameCount = 0;
+
 		function draw() {
+			frameCount++;
+			if (FRAME_SKIP > 1 && frameCount % FRAME_SKIP !== 0) {
+				animId = requestAnimationFrame(draw);
+				return;
+			}
+
 			const w = canvas.width / dpr;
 			const h = canvas.height / dpr;
 			const n = currentN;
@@ -83,8 +92,10 @@
 
 			// Update + draw particles
 			ctx.fillStyle = '#C2FE0C';
-			ctx.shadowColor = '#C2FE0C';
-			ctx.shadowBlur = 2;
+			if (!isMobile) {
+				ctx.shadowColor = '#C2FE0C';
+				ctx.shadowBlur = 2;
+			}
 
 			for (const p of particles) {
 				// Compute gradient and drift toward nodal line
@@ -119,7 +130,7 @@
 			}
 
 			ctx.globalAlpha = 1;
-			ctx.shadowBlur = 0;
+			if (!isMobile) ctx.shadowBlur = 0;
 
 			animId = requestAnimationFrame(draw);
 		}

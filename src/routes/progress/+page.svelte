@@ -340,4 +340,15 @@
 		z-index: 1;
 		position: relative;
 	}
+
+	/* Desktop: two-column card grid */
+	@media (min-width: 768px) {
+		.progress-page { max-width: 800px; margin: 0 auto; }
+		.interval-list {
+			display: grid;
+			grid-template-columns: repeat(2, 1fr);
+			gap: 0.75rem;
+		}
+		.heading { font-size: 3.5rem; }
+	}
 </style>

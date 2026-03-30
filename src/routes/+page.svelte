@@ -437,4 +437,14 @@
 		z-index: 1;
 		position: relative;
 	}
+
+	/* Desktop: bigger radar zone + GO button */
+	@media (min-width: 768px) {
+		.title { font-size: 8rem; }
+		.title-accent { font-size: 4.5rem; }
+		.center-area { width: 440px; }
+		.radar-zone { width: 380px; height: 380px; }
+		.start-btn { width: 220px; height: 220px; }
+		.btn-text { font-size: 2.5rem; }
+	}
 </style>
