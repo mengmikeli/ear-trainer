@@ -325,6 +325,8 @@
 					<span class="lab-text" class:glitching={labHoldActive}>{labGlitchText}</span>
 				</button>
 
+				<a href="{base}/quiz/adaptive" class="dev-link">→ TRAINING (ADAPTIVE QUIZ)</a>
+
 				<button
 					class="dev-btn reset-learn"
 					onclick={() => {

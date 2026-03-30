@@ -9,7 +9,6 @@
 	import { SCALES } from '$lib/scales';
 	import { VERSION_STRING } from '$lib/version';
 	import { isModeMastered } from '$lib/mastery';
-	import { planSession, type SessionConfig } from '$lib/adaptive';
 	import type { UserState } from '$lib/types';
 	import RadarGrid from '../components/RadarGrid.svelte';
 	import TelemetryBar from '../components/TelemetryBar.svelte';
@@ -17,29 +16,11 @@
 	let state: UserState | null = $state(null);
 	let goGlitching = $state(false);
 	let goText = $state('GO');
-	let trainGlitching = $state(false);
-	let trainText = $state('TRAIN');
-	let sessionPreview = $state('');
 
 	const glitchChars = ['\uE000', '\uE001', '\uE002', '\uE003', '\uE004', '\uE005', '\uE006', '\uE007', '\uE008', '\uE010', '\uE013', '\uE014', '\uE017'];
 
 	onMount(() => {
 		state = loadState();
-
-		// Generate session preview for TRAIN button
-		if (state) {
-			try {
-				const config: SessionConfig = {
-					length: state.settings.sessionLength,
-					allowedKinds: ['interval', 'chord', 'scale', 'mode'],
-					mixStrategy: 'adaptive',
-				};
-				const plan = planSession(state, config);
-				sessionPreview = plan.summary;
-			} catch {
-				sessionPreview = '';
-			}
-		}
 	});
 
 	// Chord system unlock: Bronze mastery on 5+ intervals
@@ -88,21 +69,6 @@
 		if (!state) return;
 		state.settings.activeContent = mode;
 		saveState(state);
-	}
-
-	function handleTrain(e: Event) {
-		e.preventDefault();
-		if (trainGlitching) return;
-		trainGlitching = true;
-		let tick = 0;
-		const iv = setInterval(() => {
-			trainText = glitchChars[Math.floor(Math.random() * glitchChars.length)];
-			tick++;
-			if (tick >= 6) {
-				clearInterval(iv);
-				goto(`${base}/quiz/adaptive`);
-			}
-		}, 50);
 	}
 
 	function handleGo(e: Event) {
@@ -230,15 +196,6 @@
 	{#if state}
 		<div class="center-area">
 			{#if chordsUnlocked() || scalesUnlocked()}
-				{#if state?.settings?.devMode}
-					<a href="{base}/quiz/adaptive" class="train-btn" class:glitching={trainGlitching} onclick={handleTrain}>
-						<span class="train-text">{trainText}</span>
-						{#if sessionPreview}
-							<span class="train-preview">{sessionPreview}</span>
-						{/if}
-					</a>
-				{/if}
-
 				<div class="content-switcher">
 					<button
 						class="switch-btn"
@@ -386,38 +343,6 @@
 		display: flex;
 		gap: 0;
 		margin-bottom: 1rem;
-	}
-	.train-btn {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 0.25rem;
-		padding: 0.6rem 2rem;
-		background: transparent;
-		border: 2px solid var(--accent);
-		cursor: pointer;
-		transition: background 0.15s, transform 0.1s;
-		text-decoration: none;
-		margin-bottom: 0.75rem;
-		width: 100%;
-	}
-	.train-btn:active { transform: scale(0.97); background: rgba(194, 254, 12, 0.05); }
-	.train-btn.glitching {
-		animation: go-glitch 50ms infinite;
-	}
-	.train-text {
-		font-size: 1rem;
-		font-weight: 900;
-		font-family: var(--mono);
-		color: var(--accent);
-		letter-spacing: 0.2em;
-	}
-	.train-preview {
-		font-size: 0.35rem;
-		font-family: var(--mono);
-		color: var(--text-secondary);
-		letter-spacing: 0.1em;
-		text-transform: uppercase;
 	}
 	.switch-btn {
 		font-size: 0.4rem;
