@@ -221,13 +221,6 @@
 			hasPlayed = false;
 			selectedId = null;
 			countdownPct = 1.0;
-
-			// Start drone on root note (only if audio is ready)
-			if (question && audioUnlocked) {
-				stopDrone();
-				startDrone(question.droneNote).then(h => { drone = h; });
-				droneMuted = false;
-			}
 		});
 
 		setTimeout(() => {
@@ -283,9 +276,10 @@
 			}, 1350);
 		}
 
-		// Ensure drone is running (starts on first play after audio gate clears)
-		if (!drone && question) {
-			stopDrone();
+		// Start a fresh drone for this playback (time-bounded)
+		stopDrone();
+		drone = null;
+		if (question) {
 			startDrone(question.droneNote).then(h => {
 				drone = h;
 				if (droneMuted) h.setMuted(true);
@@ -306,6 +300,7 @@
 		}
 		isPlaying = true;
 		const dur = question.mode.intervals.length * TEMPO + 400;
+		const droneTail = 800; // drone fades out after notes finish
 
 		// Sync Chladni with mode notes
 		question.mode.intervals.forEach((semitone: number, i: number) => {
@@ -314,6 +309,8 @@
 			}, i * TEMPO));
 		});
 		noteTimeouts.push(setTimeout(() => { isPlaying = false; playingNotes = []; }, dur));
+		// Stop drone after notes + tail
+		noteTimeouts.push(setTimeout(() => { stopDrone(); drone = null; }, dur + droneTail));
 	}
 
 	function toggleDroneMute() {

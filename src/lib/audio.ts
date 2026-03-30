@@ -533,17 +533,7 @@ export function cancelScheduledSuspend(): void {
  * iOS Safari has unlocked audio before the user reaches the quiz.
  */
 export function warmUpAudio(): void {
-	const audioCtx = getContext();
-	// If context is suspended (e.g. iOS background, stale from earlier navigation),
-	// close it and create a fresh one. A new AudioContext created during a user
-	// gesture starts 'running' synchronously on iOS — no async resume needed.
-	if (audioCtx.state === 'suspended') {
-		try { audioCtx.close(); } catch { /* ignore */ }
-		ctx = null;
-		analyserNode = null;
-		masterOutput = null;
-		getContext(); // creates fresh context + plays silent buffer → running
-	}
+	getContext();
 }
 
 /** Returns true if AudioContext is running (not suspended/blocked by browser policy) */
