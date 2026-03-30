@@ -583,9 +583,7 @@
 			{/key}
 		</div>
 	{:else if question}
-		<div class="quiz-body">
-			<div class="quiz-viz">
-				<VizQuizLayout
+		<VizQuizLayout
 			superchargeViz={state?.settings?.superchargeViz}
 			mode="interval"
 			phase={vizPhase}
@@ -600,10 +598,9 @@
 					{displayText}
 				</span>
 			</button>
-			</VizQuizLayout>
-			</div>
+		</VizQuizLayout>
 
-			<div class="answer-area" class:hidden={!hasPlayed && !needsTap}>
+		<div class="answer-area" class:hidden={!hasPlayed && !needsTap}>
 			<AnswerGrid
 				choices={needsTap ? question.choices.map(c => ({ ...c, label: 'NA', name: 'UNAVAILABLE' })) : question.choices}
 				onselect={selectAnswer}
@@ -615,7 +612,6 @@
 				countdownPct={inResultMode ? countdownPct : -1}
 				onWrongClick={inResultMode ? replayInResult : null}
 			/>
-		</div>
 		</div>
 	{/if}
 </div>
@@ -888,46 +884,9 @@
 	}
 	.action-btn.primary:active { opacity: 0.85; }
 
-	/* Desktop: two-column quiz layout */
+	/* Desktop: wider layout */
 	@media (min-width: 768px) {
-		.quiz { gap: 0.75rem; }
-		.quiz-body {
-			display: flex;
-			flex-direction: row;
-			gap: 2rem;
-			width: 100%;
-			flex: 1;
-			min-height: 0;
-			align-items: stretch;
-		}
-		.quiz-viz {
-			flex: 1 1 55%;
-			min-width: 0;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-		}
-		.quiz-viz :global(.canvas-frame) {
-			max-height: 100%;
-			aspect-ratio: 1;
-		}
-		.answer-area {
-			flex: 1 1 40%;
-			min-width: 0;
-			margin-top: 0;
-			display: flex;
-			align-items: center;
-			width: 100%;
-		}
-		.answer-area :global(.answer-grid) {
-			width: 100%;
-		}
 		.heading { font-size: 3.5rem; }
-		.play-tap {
-			width: min(30vw, 180px);
-			height: min(30vw, 180px);
-		}
-		.q-text { font-size: 1.8rem; }
 		.summary {
 			max-width: 600px;
 			margin: 0 auto;
