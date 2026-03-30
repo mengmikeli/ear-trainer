@@ -14,6 +14,13 @@
 	import TelemetryBar from '../components/TelemetryBar.svelte';
 
 	let state: UserState | null = $state(null);
+	let versionCopied = $state(false);
+
+	function copyVersion() {
+		navigator.clipboard.writeText(VERSION_STRING);
+		versionCopied = true;
+		setTimeout(() => { versionCopied = false; }, 1500);
+	}
 	let goGlitching = $state(false);
 	let goText = $state('GO');
 
@@ -188,7 +195,9 @@
 		</div>
 		<div class="version-tag">
 			<span class="hazard-bar"></span>
-			<span class="version">SYS {VERSION_STRING}</span>
+			<span class="version" role="button" tabindex="0" onclick={copyVersion}>
+				{versionCopied ? 'COPIED' : `SYS ${VERSION_STRING}`}
+			</span>
 			<span class="hazard-bar"></span>
 		</div>
 	</header>
@@ -276,6 +285,12 @@
 		background: var(--marathon-blue); padding: 0.3rem 0.75rem;
 		display: inline-flex; align-items: center;
 		line-height: 1;
+		cursor: pointer;
+		transition: background 0.15s;
+	}
+	.version:active {
+		background: var(--accent);
+		color: var(--base);
 	}
 	.center-area {
 		position: relative;
