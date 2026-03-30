@@ -482,12 +482,13 @@
 		</div>
 		<div class="top-controls">
 			<button class="close exit" onclick={endEarly}>EXIT</button>
-			<div class="drone-indicator" class:muted={droneMuted}>
-				<button class="drone-btn" onclick={toggleDroneMute}>
-					{droneMuted ? 'DRONE OFF' : 'DRONE ON'}
+			<span class="mode-icon">MODE</span>
+			<div class="top-right">
+				<button class="drone-toggle" class:active={!droneMuted} onclick={toggleDroneMute}>
+					{droneMuted ? 'DRN' : 'DRN'}
 				</button>
+				<span class="counter">{String(questionNum).padStart(2, '0')}/{String(totalQuestions).padStart(2, '0')}</span>
 			</div>
-			<span class="counter">{String(questionNum).padStart(2, '0')}/{String(totalQuestions).padStart(2, '0')}</span>
 		</div>
 	</div>
 
@@ -593,28 +594,38 @@
 		padding: 0 6px;
 		line-height: 1.6;
 	}
-	.drone-indicator {
+	.mode-icon {
 		position: absolute;
 		left: 50%;
 		transform: translateX(-50%);
-	}
-	.drone-btn {
-		font-size: 0.35rem;
+		font-size: 0.4rem;
 		font-family: var(--mono);
 		font-weight: 900;
-		letter-spacing: 0.1em;
-		color: var(--accent);
-		background: transparent;
-		border: 1px solid var(--accent);
-		padding: 0 8px;
-		line-height: 1.6;
-		cursor: pointer;
-		transition: color 0.15s, border-color 0.15s, opacity 0.15s;
+		color: var(--marathon-blue);
+		letter-spacing: 0.08em;
+		line-height: 1;
 	}
-	.drone-indicator.muted .drone-btn {
+	.top-right {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+	.drone-toggle {
+		font-size: 0.35rem;
+		font-weight: 900;
+		font-family: var(--mono);
+		letter-spacing: 0.08em;
+		padding: 0 5px;
+		line-height: 1.6;
+		background: transparent;
 		color: var(--text-secondary);
-		border-color: var(--border-heavy);
-		opacity: 0.5;
+		border: 1px solid var(--border-heavy);
+		cursor: pointer;
+		transition: color 0.15s, border-color 0.15s;
+	}
+	.drone-toggle.active {
+		color: var(--accent);
+		border-color: var(--accent);
 	}
 	.close {
 		font-size: 0.4rem;
