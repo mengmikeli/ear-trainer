@@ -534,9 +534,15 @@ export function cancelScheduledSuspend(): void {
  */
 export function warmUpAudio(): void {
 	const audioCtx = getContext();
-	// Resume during user gesture — iOS requires this to transition from suspended → running
+	// If context is suspended (e.g. iOS background, stale from earlier navigation),
+	// close it and create a fresh one. A new AudioContext created during a user
+	// gesture starts 'running' synchronously on iOS — no async resume needed.
 	if (audioCtx.state === 'suspended') {
-		audioCtx.resume();
+		try { audioCtx.close(); } catch { /* ignore */ }
+		ctx = null;
+		analyserNode = null;
+		masterOutput = null;
+		getContext(); // creates fresh context + plays silent buffer → running
 	}
 }
 
