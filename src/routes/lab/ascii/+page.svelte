@@ -23,7 +23,7 @@
 
 	const PHASE_DELTA = Math.PI / 2;
 
-	// ASCII brightness ramp — dark to bright
+	// ASCII brightness ramp — dark to bright (monospace)
 	const RAMP = ' .`-_:,;^=+/|)\\!?0oOQ#%@';
 
 	// Trail settings
@@ -31,18 +31,21 @@
 	const TARGET_LOOPS = 2;
 	const BASE_SPEED = 0.006;
 
-	// Viz mode
+	// Viz source
 	type VizMode = 'lissajous' | 'chladni';
 	let vizMode = $state<VizMode>('lissajous');
+
+	// Render mode
+	type RenderMode = 'mono' | 'typo';
+	let renderMode = $state<RenderMode>('mono');
 
 	let selected = $state('P5');
 	let isPlaying = $state(false);
 	let playGeneration = 0;
-	let gridText = $state('');
+	let gridText = $state('');     // monospace mode
+	let gridHtml = $state('');     // typo mode (raw HTML)
 	let frameRef: HTMLDivElement | undefined = $state();
 
-	let freqX = $derived(RATIOS[selected][0]);
-	let freqY = $derived(RATIOS[selected][1]);
 	let ratioLabel = $derived(`${RATIOS[selected][0]} : ${RATIOS[selected][1]}`);
 	let intervalName = $derived(INTERVALS.find(i => i.id === selected)?.name ?? selected);
 	let intervalSemitones = $derived(INTERVALS.find(i => i.id === selected)?.semitones ?? 7);
@@ -77,9 +80,36 @@
 	let chladniM = 1;
 	let chladniTimer: ReturnType<typeof setTimeout> | null = null;
 
-	// Current field — reallocated on resize
+	// Current field
 	let field = new Float32Array(COLS * ROWS);
 
+	// --- Pretext palette ---
+	const PROP_FONT_FAMILY = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+	const PROP_FONT_SIZE = 14;
+	const CHARSET = ' .,:;!+-=*#@%&abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<>()[]{}|/\\~^';
+	const WEIGHTS = [300, 500, 800] as const;
+	const STYLES = ['normal', 'italic'] as const;
+
+	type PaletteEntry = {
+		char: string;
+		weight: number;
+		style: string;
+		font: string;
+		width: number;
+		brightness: number;
+	};
+
+	type BrightnessEntry = {
+		monoChar: string;
+		propSpan: string; // pre-built HTML span
+	};
+
+	let pretextReady = false;
+	let palette: PaletteEntry[] = [];
+	let brightnessLookup: BrightnessEntry[] = [];
+	let targetCellW = 8; // will be recalculated
+
+	// --- Chladni math ---
 	function midiToChladniMode(midi: number): [number, number] {
 		const note = midi % 12;
 		const modes: [number, number][] = [
@@ -103,10 +133,7 @@
 	function initParticles() {
 		particles = [];
 		for (let i = 0; i < PARTICLE_COUNT; i++) {
-			particles.push({
-				x: Math.random() * TAU,
-				y: Math.random() * TAU,
-			});
+			particles.push({ x: Math.random() * TAU, y: Math.random() * TAU });
 		}
 	}
 
@@ -122,13 +149,11 @@
 		const rootMidi = 60;
 		isPlaying = true;
 
-		// Lissajous morph
 		morphTarget = 0;
 		morphT = 0;
 		if (morphTimer) clearTimeout(morphTimer);
 		morphTimer = setTimeout(() => { morphTarget = 1; }, 500);
 
-		// Chladni: root note pattern, then second note
 		const [rootN, rootM] = midiToChladniMode(rootMidi);
 		chladniN = rootN;
 		chladniM = rootM;
@@ -176,6 +201,107 @@
 		return { cols, rows };
 	}
 
+	// --- Pretext palette builder ---
+	function esc(ch: string): string {
+		if (ch === '<') return '&lt;';
+		if (ch === '>') return '&gt;';
+		if (ch === '&') return '&amp;';
+		if (ch === '"') return '&quot;';
+		return ch;
+	}
+
+	function buildPalette(prepareWithSegments: Function) {
+		const bc = document.createElement('canvas');
+		bc.width = 28; bc.height = 28;
+		const bctx = bc.getContext('2d', { willReadFrequently: true })!;
+
+		palette = [];
+		for (const style of STYLES) {
+			for (const weight of WEIGHTS) {
+				const font = `${style === 'italic' ? 'italic ' : ''}${weight} ${PROP_FONT_SIZE}px ${PROP_FONT_FAMILY}`;
+				for (const ch of CHARSET) {
+					if (ch === ' ') continue;
+					// Measure width with pretext
+					const prepared = prepareWithSegments(ch, font);
+					const width = prepared.widths.length > 0 ? prepared.widths[0] : 0;
+					if (width <= 0) continue;
+
+					// Measure brightness via canvas alpha
+					bctx.clearRect(0, 0, 28, 28);
+					bctx.font = font;
+					bctx.fillStyle = '#fff';
+					bctx.textBaseline = 'middle';
+					bctx.fillText(ch, 1, 14);
+					const data = bctx.getImageData(0, 0, 28, 28).data;
+					let sum = 0;
+					for (let i = 3; i < data.length; i += 4) sum += data[i];
+					const brightness = sum / (255 * 28 * 28);
+
+					palette.push({ char: ch, weight, style, font, width, brightness });
+				}
+			}
+		}
+
+		// Normalize brightness
+		const maxB = Math.max(...palette.map(e => e.brightness));
+		if (maxB > 0) palette.forEach(e => e.brightness /= maxB);
+		palette.sort((a, b) => a.brightness - b.brightness);
+	}
+
+	function buildBrightnessLookup(containerWidth: number) {
+		targetCellW = containerWidth / COLS;
+
+		brightnessLookup = [];
+		for (let b = 0; b < 256; b++) {
+			const brightness = b / 255;
+			const monoIdx = Math.min(RAMP.length - 1, Math.floor(brightness * RAMP.length));
+			const monoChar = RAMP[monoIdx];
+
+			if (brightness < 0.02 || palette.length === 0) {
+				// Thin space for empty cells — preserves proportional row width
+				brightnessLookup.push({
+					monoChar,
+					propSpan: `<span class="tc" style="display:inline-block;width:${targetCellW.toFixed(2)}px"> </span>`,
+				});
+				continue;
+			}
+
+			// Binary search nearest brightness
+			let lo = 0, hi = palette.length - 1;
+			while (lo < hi) {
+				const mid = (lo + hi) >> 1;
+				if (palette[mid].brightness < brightness) lo = mid + 1;
+				else hi = mid;
+			}
+
+			// Score nearby entries: brightness match + width match
+			let best = palette[lo];
+			let bestScore = Infinity;
+			const start = Math.max(0, lo - 15);
+			const end = Math.min(palette.length, lo + 15);
+			for (let i = start; i < end; i++) {
+				const e = palette[i];
+				const bErr = Math.abs(e.brightness - brightness) * 2.5;
+				const wErr = Math.abs(e.width - targetCellW) / targetCellW;
+				const score = bErr + wErr;
+				if (score < bestScore) { bestScore = score; best = e; }
+			}
+
+			const wClass = best.weight === 300 ? 'w3' : best.weight === 500 ? 'w5' : 'w8';
+			const sClass = best.style === 'italic' ? ' it' : '';
+			const alpha = Math.max(0.15, Math.min(1, brightness));
+			// Pad character into target cell width for consistent row width
+			const pad = Math.max(0, targetCellW - best.width);
+			const padL = pad / 2;
+			const padR = pad - padL;
+
+			brightnessLookup.push({
+				monoChar,
+				propSpan: `<span class="tc ${wClass}${sClass}" style="opacity:${alpha.toFixed(2)};padding-left:${padL.toFixed(1)}px;padding-right:${padR.toFixed(1)}px">${esc(best.char)}</span>`,
+			});
+		}
+	}
+
 	let firstRun = true;
 	$effect(() => {
 		const _ = selected;
@@ -186,7 +312,6 @@
 		} else {
 			morphT = 1;
 			morphTarget = 1;
-			// Init Chladni with a real pattern on first load
 			const [n, m] = midiToChladniMode(60);
 			chladniN = n;
 			chladniM = m;
@@ -196,14 +321,14 @@
 		firstRun = false;
 	});
 
-	onMount(() => {
+	onMount(async () => {
 		let phase = 0;
 		let animId: number;
 		const LISSAJOUS_DECAY = 0.88;
 
 		initParticles();
 
-		// Initial grid size from container
+		// Initial grid size
 		if (frameRef) {
 			const size = computeGridSize(frameRef);
 			COLS = size.cols;
@@ -211,7 +336,20 @@
 			field = new Float32Array(COLS * ROWS);
 		}
 
-		// Resize observer — recompute grid on container size change
+		// Load pretext
+		try {
+			const pretext = await import('@chenglou/pretext');
+			buildPalette(pretext.prepareWithSegments);
+			if (frameRef) {
+				const padPx = parseFloat(getComputedStyle(frameRef).fontSize) || 16;
+				buildBrightnessLookup(frameRef.clientWidth - padPx * 2);
+			}
+			pretextReady = true;
+		} catch (e) {
+			console.warn('pretext not available', e);
+		}
+
+		// Resize observer
 		let ro: ResizeObserver | null = null;
 		if (frameRef) {
 			ro = new ResizeObserver(() => {
@@ -222,15 +360,23 @@
 					ROWS = size.rows;
 					field = new Float32Array(COLS * ROWS);
 				}
+				// Rebuild proportional lookup for new container width
+				if (pretextReady) {
+					const padPx = parseFloat(getComputedStyle(frameRef).fontSize) || 16;
+					buildBrightnessLookup(frameRef.clientWidth - padPx * 2);
+				}
 			});
 			ro.observe(frameRef);
 		}
+
+		// Throttle typo rendering (DOM-heavy) — skip frames
+		let typoFrameCount = 0;
+		const TYPO_FRAME_SKIP = 2; // render every 3rd frame in typo mode
 
 		function draw() {
 			const fx = RATIOS[selected][0];
 			const fy = RATIOS[selected][1];
 
-			// Audio amplitude
 			if (analyserRef && dataArrayRef) {
 				amplitude = getAmplitude(analyserRef, dataArrayRef);
 			} else {
@@ -238,30 +384,33 @@
 			}
 			const amp = Math.min(1, amplitude * 3);
 
-			// Ensure field matches current grid
 			if (field.length !== COLS * ROWS) {
 				field = new Float32Array(COLS * ROWS);
 			}
 
-			// Clear field
 			if (vizMode === 'lissajous') {
-				// Decay for trail persistence
 				for (let i = 0; i < field.length; i++) field[i] *= LISSAJOUS_DECAY;
 				drawLissajous(field, fx, fy, phase, amp);
 			} else {
-				// Chladni: zero field each frame, accumulate from particles
 				for (let i = 0; i < field.length; i++) field[i] = 0;
 				drawChladni(field, amp);
 			}
 
-			// Audio pulse — subtle global brightness boost
 			if (amp > 0.05) {
 				for (let i = 0; i < field.length; i++) {
 					field[i] = Math.min(1, field[i] * (1 + amp * 0.15));
 				}
 			}
 
-			gridText = renderMonospace(field);
+			if (renderMode === 'typo' && pretextReady) {
+				typoFrameCount++;
+				if (typoFrameCount % (TYPO_FRAME_SKIP + 1) === 0) {
+					gridHtml = renderTypographic(field);
+				}
+			} else {
+				gridText = renderMonospace(field);
+			}
+
 			phase += SPEED;
 			animId = requestAnimationFrame(draw);
 		}
@@ -271,7 +420,6 @@
 			const drawFx = 1 + (fx - 1) * morphT;
 			const drawFy = 1 + (fy - 1) * morphT;
 
-			// Aspect-corrected radii: fit a square coordinate space into the rectangular grid
 			const maxR = Math.min(COLS, ROWS / CELL_ASPECT) / 2 - 1;
 			const radiusX = maxR;
 			const radiusY = maxR * CELL_ASPECT;
@@ -294,7 +442,6 @@
 				const age = i / TRAIL_POINTS;
 				const intensity = (1 - age * age) * (0.6 + amp * 0.4);
 
-				// Sub-pixel splat
 				const gx = Math.floor(px);
 				const gy = Math.floor(py);
 				const fx2 = px - gx;
@@ -315,7 +462,6 @@
 				}
 			}
 
-			// Head dot
 			const headX = cx + radiusX * Math.sin(drawFx * phase + PHASE_DELTA);
 			const headY = cy + radiusY * Math.sin(drawFy * phase);
 			const hgx = Math.round(headX);
@@ -337,7 +483,6 @@
 		function drawChladni(field: Float32Array, amp: number) {
 			const currentShake = SHAKE_BASE + amp * SHAKE_AUDIO;
 
-			// Migration timer decay
 			if (migrateTimer > 0) {
 				migrateTimer--;
 				if (migrateTimer < 30) {
@@ -347,31 +492,25 @@
 				if (migrateTimer === 0) settleSpeed = SETTLE_SPEED_BASE;
 			}
 
-			// Simulate particles
 			for (const p of particles) {
 				const val = chladniFn(p.x, p.y, chladniN, chladniM);
 				const [gx, gy] = chladniGrad(p.x, p.y, chladniN, chladniM);
 
-				// Drift toward nodal lines
 				p.x -= gx * val * settleSpeed;
 				p.y -= gy * val * settleSpeed;
 
-				// Micro-shake — stronger near nodal lines + audio
 				const nearLine = Math.max(0.3, 1 - Math.abs(val) * 3);
 				const shakeAmp = currentShake * nearLine;
 				p.x += (Math.random() - 0.5) * shakeAmp;
 				p.y += (Math.random() - 0.5) * shakeAmp;
-
 				p.x += (Math.random() - 0.5) * JITTER;
 				p.y += (Math.random() - 0.5) * JITTER;
 
-				// Wrap
 				if (p.x < 0) p.x += TAU;
 				if (p.x > TAU) p.x -= TAU;
 				if (p.y < 0) p.y += TAU;
 				if (p.y > TAU) p.y -= TAU;
 
-				// Map particle to grid cell
 				const col = Math.floor((p.x / TAU) * COLS);
 				const row = Math.floor((p.y / TAU) * ROWS);
 				if (col >= 0 && col < COLS && row >= 0 && row < ROWS) {
@@ -386,7 +525,6 @@
 
 		animId = requestAnimationFrame(draw);
 
-		// Pause when hidden
 		let paused = false;
 		function handleVis() {
 			if (document.hidden) {
@@ -421,6 +559,20 @@
 		}
 		return out;
 	}
+
+	function renderTypographic(field: Float32Array): string {
+		let html = '';
+		for (let y = 0; y < ROWS; y++) {
+			html += '<div class="tr">';
+			for (let x = 0; x < COLS; x++) {
+				const v = field[y * COLS + x];
+				const byte = Math.min(255, Math.floor(v * 255));
+				html += brightnessLookup[byte].propSpan;
+			}
+			html += '</div>';
+		}
+		return html;
+	}
 </script>
 
 <div class="lab">
@@ -443,7 +595,11 @@
 			<span class="interval-ratio">{ratioLabel}</span>
 		</div>
 
-		<pre class="ascii-grid">{gridText}</pre>
+		{#if renderMode === 'mono'}
+			<pre class="ascii-grid">{gridText}</pre>
+		{:else}
+			<div class="ascii-grid typo-grid">{@html gridHtml}</div>
+		{/if}
 
 		<button class="play-btn" class:playing={isPlaying} onclick={handlePlay} aria-label="Play interval">
 			{#if isPlaying}
@@ -488,8 +644,24 @@
 			>
 				<span class="toggle-dot" class:on={vizMode === 'chladni'}></span>CHLADNI
 			</button>
+			<span class="footer-sep">·</span>
+			<button
+				class="hud-tag"
+				class:dimmed={renderMode !== 'mono'}
+				onclick={() => renderMode = 'mono'}
+			>
+				<span class="toggle-dot" class:on={renderMode === 'mono'}></span>MONO
+			</button>
+			<button
+				class="hud-tag"
+				class:dimmed={renderMode !== 'typo'}
+				onclick={() => { if (pretextReady) renderMode = 'typo'; }}
+				class:unavailable={!pretextReady}
+			>
+				<span class="toggle-dot" class:on={renderMode === 'typo'}></span>TYPO
+			</button>
 		</div>
-		<span class="grid-info">{COLS}×{ROWS}</span>
+		<span class="grid-info">{COLS}×{ROWS}{renderMode === 'typo' ? ' · pretext' : ''}</span>
 	</footer>
 </div>
 
@@ -584,7 +756,8 @@
 		justify-content: center;
 	}
 
-	.ascii-grid {
+	/* Monospace mode */
+	pre.ascii-grid {
 		font-family: 'Matrix Mono', 'JetBrains Mono', 'Fira Code', monospace;
 		font-size: clamp(0.35rem, 1.4vw, 0.7rem);
 		line-height: 1.15;
@@ -595,15 +768,45 @@
 		white-space: pre;
 		overflow: hidden;
 		text-shadow: 0 0 4px rgba(194, 254, 12, 0.3);
-		/* CRT scanline effect */
 		background: repeating-linear-gradient(
-			0deg,
-			transparent,
-			transparent 2px,
-			rgba(0, 0, 0, 0.08) 2px,
-			rgba(0, 0, 0, 0.08) 4px
+			0deg, transparent, transparent 2px,
+			rgba(0, 0, 0, 0.08) 2px, rgba(0, 0, 0, 0.08) 4px
 		);
 	}
+
+	/* Typographic / pretext mode */
+	.typo-grid {
+		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+		font-size: 14px;
+		line-height: 1.1;
+		color: var(--accent);
+		margin: 0;
+		padding: 1rem;
+		overflow: hidden;
+		text-shadow: 0 0 5px rgba(194, 254, 12, 0.35);
+		background: repeating-linear-gradient(
+			0deg, transparent, transparent 2px,
+			rgba(0, 0, 0, 0.06) 2px, rgba(0, 0, 0, 0.06) 4px
+		);
+	}
+
+	/* Typographic row + cell (rendered via @html) */
+	.typo-grid :global(.tr) {
+		white-space: nowrap;
+		height: 1.1em;
+		overflow: hidden;
+	}
+
+	.typo-grid :global(.tc) {
+		display: inline;
+		font-size: inherit;
+		line-height: inherit;
+	}
+
+	.typo-grid :global(.w3) { font-weight: 300; }
+	.typo-grid :global(.w5) { font-weight: 500; }
+	.typo-grid :global(.w8) { font-weight: 800; }
+	.typo-grid :global(.it) { font-style: italic; }
 
 	.frame-corner {
 		position: absolute;
@@ -662,11 +865,19 @@
 		justify-content: center;
 		gap: 0.75rem;
 		margin-bottom: -0.75rem;
+		flex-direction: column;
 	}
 
 	.footer-tags {
 		display: flex;
 		gap: 0.35rem;
+		align-items: center;
+	}
+
+	.footer-sep {
+		color: var(--text-secondary);
+		opacity: 0.3;
+		font-size: 0.6rem;
 	}
 
 	.footer-tags .hud-tag {
@@ -676,6 +887,11 @@
 
 	.footer-tags .hud-tag.dimmed {
 		opacity: 0.3;
+	}
+
+	.footer-tags .hud-tag.unavailable {
+		opacity: 0.15;
+		cursor: not-allowed;
 	}
 
 	.toggle-dot {
