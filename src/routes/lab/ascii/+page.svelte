@@ -402,7 +402,6 @@
 
 			// --- Build curve obstacle map: for each text row, find x-ranges blocked by curve ---
 			const numRows = Math.floor(h / LINE_HEIGHT);
-			const rowObstacles: { left: number; right: number }[] = [];
 
 			// Sample curve densely and collect x positions per row
 			const SAMPLE_COUNT = 2000;
@@ -422,67 +421,85 @@
 				}
 			}
 
+			// Build obstacle bands per row: cluster nearby x-points into bands
+			type Band = { left: number; right: number };
+			const rowBands: Band[][] = [];
 			for (let r = 0; r < numRows; r++) {
 				const xs = rowXSets[r];
-				if (xs.size === 0) {
-					rowObstacles.push({ left: -1, right: -1 }); // no obstacle
-				} else {
-					let minX = Infinity, maxX = -Infinity;
-					for (const x of xs) {
-						if (x < minX) minX = x;
-						if (x > maxX) maxX = x;
+				if (xs.size === 0) { rowBands.push([]); continue; }
+
+				const sorted = [...xs].sort((a, b) => a - b);
+				const bands: Band[] = [];
+				let bStart = sorted[0]; let bEnd = sorted[0];
+
+				for (let i = 1; i < sorted.length; i++) {
+					if (sorted[i] - bEnd <= CURVE_MARGIN) {
+						bEnd = sorted[i]; // extend current band
+					} else {
+						bands.push({
+							left: Math.max(0, bStart - CURVE_MARGIN),
+							right: Math.min(w, bEnd + CURVE_MARGIN),
+						});
+						bStart = sorted[i]; bEnd = sorted[i];
 					}
-					rowObstacles.push({
-						left: Math.max(0, minX - CURVE_MARGIN),
-						right: Math.min(w, maxX + CURVE_MARGIN),
-					});
 				}
+				bands.push({
+					left: Math.max(0, bStart - CURVE_MARGIN),
+					right: Math.min(w, bEnd + CURVE_MARGIN),
+				});
+				rowBands.push(bands);
 			}
 
-			// --- Reflow poem using pretext layoutNextLine ---
+			// --- Reflow poem: fill every gap between curve bands ---
 			let html = '';
 			let cursor = { segmentIndex: 0, graphemeIndex: 0 };
 			const { layoutNextLine } = pretextModule;
+			const MIN_SEG = 15; // minimum segment width to bother laying out text
 
 			for (let r = 0; r < numRows; r++) {
-				const obs = rowObstacles[r];
+				const bands = rowBands[r];
 				const y = r * LINE_HEIGHT;
 
-				if (obs.left < 0) {
+				if (bands.length === 0) {
 					// No obstacle — full width line
 					const line = layoutNextLine(preparedPoem, cursor, w);
-					if (line === null) {
-						html += `<div class="pl" style="top:${y}px;left:0;width:${w}px"></div>`;
-						continue;
+					if (line !== null) {
+						html += `<div class="pl" style="top:${y}px;left:0;width:${w}px">${esc(line.text)}</div>`;
+						cursor = line.end;
 					}
-					html += `<div class="pl" style="top:${y}px;left:0;width:${w}px">${esc(line.text)}</div>`;
-					cursor = line.end;
-				} else {
-					// Obstacle: render text on left side, then right side
-					const leftW = obs.left;
-					const rightW = w - obs.right;
+					continue;
+				}
 
-					// Left segment
-					if (leftW > 20) {
-						const line = layoutNextLine(preparedPoem, cursor, leftW);
-						if (line !== null) {
-							html += `<div class="pl" style="top:${y}px;left:0;width:${leftW}px">${esc(line.text)}</div>`;
-							cursor = line.end;
-						}
+				// Build gap segments: [0..band0.left] [band0.right..band1.left] ... [bandN.right..w]
+				const gaps: { left: number; width: number }[] = [];
+
+				// Gap before first band
+				if (bands[0].left > MIN_SEG) {
+					gaps.push({ left: 0, width: bands[0].left });
+				}
+
+				// Gaps between bands
+				for (let i = 0; i < bands.length - 1; i++) {
+					const gapLeft = bands[i].right;
+					const gapWidth = bands[i + 1].left - gapLeft;
+					if (gapWidth > MIN_SEG) {
+						gaps.push({ left: gapLeft, width: gapWidth });
 					}
+				}
 
-					// Right segment
-					if (rightW > 20) {
-						const line = layoutNextLine(preparedPoem, cursor, rightW);
-						if (line !== null) {
-							html += `<div class="pl" style="top:${y}px;left:${obs.right}px;width:${rightW}px">${esc(line.text)}</div>`;
-							cursor = line.end;
-						}
-					}
+				// Gap after last band
+				const lastRight = bands[bands.length - 1].right;
+				if (w - lastRight > MIN_SEG) {
+					gaps.push({ left: lastRight, width: w - lastRight });
+				}
 
-					// If both too narrow, skip row
-					if (leftW <= 20 && rightW <= 20) {
-						html += `<div class="pl" style="top:${y}px;left:0;width:${w}px"></div>`;
+				// Fill each gap with text
+				if (gaps.length === 0) continue;
+				for (const gap of gaps) {
+					const line = layoutNextLine(preparedPoem, cursor, gap.width);
+					if (line !== null) {
+						html += `<div class="pl" style="top:${y}px;left:${gap.left}px;width:${gap.width}px">${esc(line.text)}</div>`;
+						cursor = line.end;
 					}
 				}
 			}
