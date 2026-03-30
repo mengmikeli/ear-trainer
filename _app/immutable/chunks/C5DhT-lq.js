@@ -1,1 +1,0 @@
-import{p as r}from"./CEt_s72g.js";import{s as t}from"./BOY9Vs_2.js";const e={get error(){return r.error},get status(){return r.status},get url(){return r.url}};t.updated.check;const a=e;export{a as p};
