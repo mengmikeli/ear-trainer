@@ -20,11 +20,11 @@
 	interface Props {
 		item: ContentItem;
 		neighbor: ContentItem | null;
-		state: UserState;
+		userState: UserState;
 		onComplete: (correct: boolean) => void;
 	}
 
-	let { item, neighbor, state, onComplete }: Props = $props();
+	let { item, neighbor, userState, onComplete }: Props = $props();
 
 	// Step: 1=hear, 2=compare, 3=quiz, 4=done
 	let step = $state(1);
@@ -85,7 +85,7 @@
 		return null;
 	});
 
-	const toneType: ToneType = $derived(state.settings.toneType);
+	const toneType: ToneType = $derived(userState.settings.toneType);
 	const SCALE_TEMPO = 150;
 	const MODE_TEMPO = 180;
 

@@ -422,7 +422,7 @@
 			<LearnCard
 				item={learnItem}
 				neighbor={learnNeighbor}
-				{state}
+				userState={state}
 				onComplete={handleLearnComplete}
 			/>
 		</div>
