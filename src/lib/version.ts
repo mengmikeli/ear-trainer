@@ -3,7 +3,7 @@ export const APP_VERSION = '3.6';
 // Vite `define` injects this at build time — declared to satisfy TypeScript
 declare const __BUILD_HASH__: string;
 const buildHash = typeof __BUILD_HASH__ !== 'undefined' ? __BUILD_HASH__ : '';
-export const VERSION_STRING = buildHash ? `v${APP_VERSION}+${buildHash}` : `v${APP_VERSION}`;
+export const VERSION_STRING = buildHash ? `v${APP_VERSION}-${buildHash}` : `v${APP_VERSION}`;
 
 export interface ReleaseNote {
 	version: string;

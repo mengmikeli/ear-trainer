@@ -8,6 +8,7 @@
 	import { APP_VERSION, VERSION_STRING, RELEASE_NOTES } from '$lib/version';
 
 	let showReleaseNotes = $state(false);
+	let versionCopied = $state(false);
 
 	let state: UserState | null = $state(null);
 
@@ -360,10 +361,19 @@
 
 		<div class="section version-section">
 			<label class="field-label">ABOUT</label>
-			<button class="version-btn" onclick={() => showReleaseNotes = !showReleaseNotes}>
-				<span class="version-label">{VERSION_STRING}</span>
-				<span class="version-toggle" class:open={showReleaseNotes}>{showReleaseNotes ? '^' : '>'}</span>
-			</button>
+			<div class="version-row">
+				<button class="version-copy" onclick={(e) => {
+					e.stopPropagation();
+					navigator.clipboard.writeText(VERSION_STRING);
+					versionCopied = true;
+					setTimeout(() => { versionCopied = false; }, 1500);
+				}}>
+					<span class="version-label">{versionCopied ? 'COPIED' : VERSION_STRING}</span>
+				</button>
+				<button class="version-btn" onclick={() => showReleaseNotes = !showReleaseNotes}>
+					<span class="version-toggle" class:open={showReleaseNotes}>{showReleaseNotes ? '^' : '>'}</span>
+				</button>
+			</div>
 
 			{#if showReleaseNotes}
 				<div class="release-notes">
@@ -604,9 +614,24 @@
 
 	/* Version + Release Notes */
 	.version-section { margin-top: 1rem; }
+	.version-row {
+		display: flex; gap: 0;
+	}
+	.version-copy {
+		flex: 1;
+		display: flex; align-items: center;
+		padding: 0.6rem 0.85rem;
+		background: var(--surface); border: 1px solid var(--border);
+		border-right: none;
+		color: var(--text-secondary); font-size: 0.45rem;
+		font-family: var(--mono); letter-spacing: 0.08em;
+		cursor: pointer;
+		transition: color 0.15s;
+	}
+	.version-copy:active { color: var(--accent); }
 	.version-btn {
-		display: flex; align-items: center; justify-content: space-between;
-		width: 100%; padding: 0.6rem 0.85rem;
+		display: flex; align-items: center; justify-content: center;
+		padding: 0.6rem 0.85rem;
 		background: var(--surface); border: 1px solid var(--border);
 		color: var(--text-secondary); font-size: 0.45rem;
 		font-family: var(--mono); letter-spacing: 0.08em;
