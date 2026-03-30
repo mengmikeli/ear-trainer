@@ -874,13 +874,14 @@ export async function startDrone(midi: number): Promise<DroneHandle> {
 	osc2.type = 'sine';
 	osc2.frequency.value = midiToFreq(midi + 7);
 
-	// Slow LFO on gain for organic breathing feel
+	// Slow LFO on gain for organic breathing feel — delayed start
 	const lfo = audioCtx.createOscillator();
 	lfo.type = 'sine';
 	lfo.frequency.value = 0.15; // very slow
 
 	const lfoGain = audioCtx.createGain();
-	lfoGain.gain.value = 0.03; // subtle modulation
+	// LFO silent during fade-in, fades in after attack completes
+	lfoGain.gain.setValueAtTime(0, audioCtx.currentTime);
 
 	lfo.connect(lfoGain);
 
@@ -888,17 +889,17 @@ export async function startDrone(midi: number): Promise<DroneHandle> {
 	const osc1Gain = audioCtx.createGain();
 	osc1Gain.gain.value = 0.15;
 	const osc2Gain = audioCtx.createGain();
-	osc2Gain.gain.value = 0.04;
+	osc2Gain.gain.value = 0.03; // quieter fifth — less harmonic buzz
 
-	// Low-pass filter for warmth — start dark, open up with fade-in
+	// Low-pass filter for warmth — start very dark, open gradually
 	const filter = audioCtx.createBiquadFilter();
 	filter.type = 'lowpass';
-	filter.frequency.value = 200;
-	filter.Q.value = 0.7;
+	filter.frequency.value = 80; // start below most fundamentals
+	filter.Q.value = 0.3; // low Q — no resonant bump during sweep
 
 	// Master drone gain (for fade in/out + mute)
 	const droneGain = audioCtx.createGain();
-	droneGain.gain.value = 0;
+	droneGain.gain.value = 0; // true zero — no leak
 
 	// Wire it up
 	osc1.connect(osc1Gain);
@@ -909,12 +910,16 @@ export async function startDrone(midi: number): Promise<DroneHandle> {
 	filter.connect(droneGain);
 	droneGain.connect(master);
 
-	// Fade in: gain over 350ms, filter opens over 400ms (smooth ease-in)
+	// Fade in: linear gain (can start from true 0), filter opens smoothly
 	const now = audioCtx.currentTime;
-	droneGain.gain.setValueAtTime(0.001, now);
-	droneGain.gain.exponentialRampToValueAtTime(1, now + 0.35);
-	filter.frequency.setValueAtTime(150, now);
-	filter.frequency.exponentialRampToValueAtTime(800, now + 0.4);
+	droneGain.gain.setValueAtTime(0, now);
+	droneGain.gain.linearRampToValueAtTime(1, now + 0.5);
+	filter.frequency.setValueAtTime(80, now);
+	filter.frequency.exponentialRampToValueAtTime(900, now + 0.6);
+	// LFO fades in after attack completes (avoids wobble during ramp)
+	lfoGain.gain.setValueAtTime(0, now);
+	lfoGain.gain.linearRampToValueAtTime(0, now + 0.5);
+	lfoGain.gain.linearRampToValueAtTime(0.03, now + 0.8);
 
 	osc1.start(now);
 	osc2.start(now);
@@ -928,13 +933,18 @@ export async function startDrone(midi: number): Promise<DroneHandle> {
 			if (stopped) return;
 			stopped = true;
 			const t = audioCtx.currentTime;
-			// Fade out: close filter over 300ms, gain over 500ms (smooth ease-out)
+			// Fade out: kill LFO wobble, close filter, then fade gain
+			// LFO off immediately to prevent modulation artifacts during fade
+			lfoGain.gain.cancelScheduledValues(t);
+			lfoGain.gain.setValueAtTime(0, t);
+			// Close filter smoothly (no resonant sweep — Q is already low)
 			filter.frequency.cancelScheduledValues(t);
 			filter.frequency.setValueAtTime(filter.frequency.value, t);
-			filter.frequency.exponentialRampToValueAtTime(100, t + 0.3);
+			filter.frequency.exponentialRampToValueAtTime(60, t + 0.4);
+			// Gain fade — linear to true 0
 			droneGain.gain.cancelScheduledValues(t);
 			droneGain.gain.setValueAtTime(droneGain.gain.value, t);
-			droneGain.gain.linearRampToValueAtTime(0, t + 0.5);
+			droneGain.gain.linearRampToValueAtTime(0, t + 0.6);
 			setTimeout(() => {
 				try {
 					osc1.stop();
@@ -947,7 +957,7 @@ export async function startDrone(midi: number): Promise<DroneHandle> {
 				} catch {
 					// already stopped
 				}
-			}, 600);
+			}, 750);
 			if (activeDrone === handle) activeDrone = null;
 			// Schedule audio suspend now that drone is done
 			scheduleSuspend(1000);
