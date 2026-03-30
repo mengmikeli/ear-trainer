@@ -1,6 +1,9 @@
-export const APP_VERSION = '3.5';
-export const __BUILD_HASH__ = (globalThis as any).__BUILD_HASH__ ?? '';
-export const VERSION_STRING = __BUILD_HASH__ ? `${APP_VERSION} (${__BUILD_HASH__})` : APP_VERSION;
+export const APP_VERSION = '3.6';
+
+// Vite `define` injects this at build time — declared to satisfy TypeScript
+declare const __BUILD_HASH__: string;
+const buildHash = typeof __BUILD_HASH__ !== 'undefined' ? __BUILD_HASH__ : '';
+export const VERSION_STRING = buildHash ? `v${APP_VERSION}+${buildHash}` : `v${APP_VERSION}`;
 
 export interface ReleaseNote {
 	version: string;
@@ -10,6 +13,19 @@ export interface ReleaseNote {
 }
 
 export const RELEASE_NOTES: ReleaseNote[] = [
+	{
+		version: '3.6',
+		date: '2026-03-30',
+		title: 'BUG BASH + MODES',
+		changes: [
+			'Progress page Modes tab with 4 modes across 2 tiers',
+			'Adaptive/Training UI hidden behind dev mode toggle',
+			'Learn cards disabled on cold start — quizzes work immediately',
+			'Version string shows build hash (v3.6+abc1234)',
+			'Light mode Chladni background fix',
+			'Whole Tone + Major Blues scales in lab',
+		],
+	},
 	{
 		version: '3.5',
 		date: '2026-03-30',

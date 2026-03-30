@@ -7,7 +7,7 @@
 	import { INTERVALS } from '$lib/intervals';
 	import { CHORDS } from '$lib/chords';
 	import { SCALES } from '$lib/scales';
-	import { APP_VERSION } from '$lib/version';
+	import { VERSION_STRING } from '$lib/version';
 	import { isModeMastered } from '$lib/mastery';
 	import { planSession, type SessionConfig } from '$lib/adaptive';
 	import type { UserState } from '$lib/types';
@@ -222,7 +222,7 @@
 		</div>
 		<div class="version-tag">
 			<span class="hazard-bar"></span>
-			<span class="version">SYS v{APP_VERSION}</span>
+			<span class="version">SYS {VERSION_STRING}</span>
 			<span class="hazard-bar"></span>
 		</div>
 	</header>
