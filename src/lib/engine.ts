@@ -336,18 +336,19 @@ export function generateScaleQuestion(state: UserState): ScaleQuestion {
 
 // --- Mode engine (v3.5) ---
 
-export function getEnabledModes(modeStates: Record<string, import('./types').ModeState> | undefined): ModeDef[] {
-	if (!modeStates) return [];
+export function getEnabledModes(modeStates: Record<string, import('./types').ModeState> | undefined, devMode = false): ModeDef[] {
+	if (!modeStates) return devMode ? MODES : [];
+	if (devMode) return MODES;
 	return MODES.filter(m => modeStates[m.id]?.unlocked && modeStates[m.id]?.enabled);
 }
 
-export function generateModeDistractors(correctId: string, modeStates?: Record<string, import('./types').ModeState>): ModeDef[] {
+export function generateModeDistractors(correctId: string, modeStates?: Record<string, import('./types').ModeState>, devMode = false): ModeDef[] {
 	const correctDef = MODES.find(m => m.id === correctId);
 	const correctIntervals = new Set(correctDef?.intervals ?? []);
 
 	// Use enabled modes first, then fall back to all modes
 	const enabled = modeStates
-		? getEnabledModes(modeStates).filter(m => m.id !== correctId)
+		? getEnabledModes(modeStates, devMode).filter(m => m.id !== correctId)
 		: MODES.filter(m => m.id !== correctId);
 	const shuffled = [...enabled].sort(() => Math.random() - 0.5);
 
@@ -373,7 +374,7 @@ export function generateModeDistractors(correctId: string, modeStates?: Record<s
 }
 
 export function generateModeQuestion(state: UserState): ModeQuestion {
-	const enabled = getEnabledModes(state.modes);
+	const enabled = getEnabledModes(state.modes, state.settings.devMode);
 	if (enabled.length === 0) throw new Error('No enabled modes');
 
 	// Simple weighted pick (same pattern as scales — flat, no per-variant)

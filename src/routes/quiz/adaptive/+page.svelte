@@ -217,7 +217,7 @@
 			// Root note C3-C4 for comfortable drone register
 			rootNote = 48 + Math.floor(Math.random() * 13);
 
-			const distractors = generateModeDistractors(def.id, state.modes);
+			const distractors = generateModeDistractors(def.id, state.modes, state.settings.devMode);
 			const seen = new Set<string>();
 			const raw = [def, ...distractors].filter(c => {
 				if (seen.has(c.id)) return false;
