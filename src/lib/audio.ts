@@ -837,6 +837,7 @@ export async function playFeedbackChime(correct: boolean): Promise<void> {
 
 export interface DroneHandle {
 	stop: () => void;
+	forceStop: () => void;
 	setMuted: (muted: boolean) => void;
 	isMuted: () => boolean;
 }
@@ -975,6 +976,17 @@ export async function startDrone(midi: number): Promise<DroneHandle> {
 			// Schedule audio suspend now that drone is done
 			scheduleSuspend(1000);
 		},
+		forceStop() {
+			// Instant kill — no fade, no timeout. For page teardown / navigation.
+			if (stopped) return;
+			stopped = true;
+			try { droneGain.gain.setValueAtTime(0, audioCtx.currentTime); } catch { /* ok */ }
+			try { droneGain.disconnect(); } catch { /* ok */ }
+			try { osc1.stop(); osc2.stop(); lfo.stop(); } catch { /* ok */ }
+			try { osc1.disconnect(); osc2.disconnect(); lfo.disconnect(); lfoGain.disconnect(); } catch { /* ok */ }
+			if (activeDrone === handle) activeDrone = null;
+			scheduleSuspend(500);
+		},
 		setMuted(m: boolean) {
 			if (stopped) return;
 			muted = m;
@@ -998,6 +1010,17 @@ export async function startDrone(midi: number): Promise<DroneHandle> {
 export function stopDrone(): void {
 	if (activeDrone) {
 		activeDrone.stop();
+		activeDrone = null;
+	}
+}
+
+/**
+ * Force-kill drone instantly — no fade, no timeouts.
+ * Use on page teardown / navigation where residual audio is unacceptable.
+ */
+export function forceStopDrone(): void {
+	if (activeDrone) {
+		activeDrone.forceStop();
 		activeDrone = null;
 	}
 }
