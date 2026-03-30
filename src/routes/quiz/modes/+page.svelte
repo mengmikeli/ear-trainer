@@ -593,7 +593,7 @@
 			</button>
 		</VizQuizLayout>
 
-		<div class="answer-area" class:hidden={!hasPlayed && !needsTap}>
+		<div class="answer-area" class:hidden={!question}>
 			<AnswerGrid
 				choices={needsTap ? question.choices.map(c => ({ ...c, label: 'NA', name: 'UNAVAILABLE' })) : question.choices.map(c => ({ id: c.id, name: c.name, label: c.label }))}
 				onselect={selectAnswer}
