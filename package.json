@@ -28,6 +28,7 @@
 		"@capacitor/app": "^8.1.0",
 		"@capacitor/cli": "^8.3.0",
 		"@capacitor/core": "^8.3.0",
-		"@capacitor/ios": "^8.3.0"
+		"@capacitor/ios": "^8.3.0",
+		"@chenglou/pretext": "^0.0.3"
 	}
 }
