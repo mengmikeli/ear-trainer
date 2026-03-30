@@ -890,10 +890,10 @@ export async function startDrone(midi: number): Promise<DroneHandle> {
 	const osc2Gain = audioCtx.createGain();
 	osc2Gain.gain.value = 0.04;
 
-	// Low-pass filter for warmth
+	// Low-pass filter for warmth — start dark, open up with fade-in
 	const filter = audioCtx.createBiquadFilter();
 	filter.type = 'lowpass';
-	filter.frequency.value = 800;
+	filter.frequency.value = 200;
 	filter.Q.value = 0.7;
 
 	// Master drone gain (for fade in/out + mute)
@@ -909,10 +909,12 @@ export async function startDrone(midi: number): Promise<DroneHandle> {
 	filter.connect(droneGain);
 	droneGain.connect(master);
 
-	// Fade in over 1 second
+	// Fade in: gain over 150ms, filter opens over 400ms (removes initial buzz)
 	const now = audioCtx.currentTime;
-	droneGain.gain.setValueAtTime(0, now);
-	droneGain.gain.linearRampToValueAtTime(1, now + 1.0);
+	droneGain.gain.setValueAtTime(0.001, now);
+	droneGain.gain.exponentialRampToValueAtTime(1, now + 0.15);
+	filter.frequency.setValueAtTime(200, now);
+	filter.frequency.exponentialRampToValueAtTime(800, now + 0.4);
 
 	osc1.start(now);
 	osc2.start(now);
@@ -926,9 +928,13 @@ export async function startDrone(midi: number): Promise<DroneHandle> {
 			if (stopped) return;
 			stopped = true;
 			const t = audioCtx.currentTime;
+			// Fade out: close filter first, then gain (no abrupt cutoff)
+			filter.frequency.cancelScheduledValues(t);
+			filter.frequency.setValueAtTime(filter.frequency.value, t);
+			filter.frequency.exponentialRampToValueAtTime(100, t + 0.15);
 			droneGain.gain.cancelScheduledValues(t);
 			droneGain.gain.setValueAtTime(droneGain.gain.value, t);
-			droneGain.gain.linearRampToValueAtTime(0, t + 0.5);
+			droneGain.gain.linearRampToValueAtTime(0, t + 0.3);
 			setTimeout(() => {
 				try {
 					osc1.stop();
@@ -941,7 +947,7 @@ export async function startDrone(midi: number): Promise<DroneHandle> {
 				} catch {
 					// already stopped
 				}
-			}, 600);
+			}, 400);
 			if (activeDrone === handle) activeDrone = null;
 			// Schedule audio suspend now that drone is done
 			scheduleSuspend(1000);
