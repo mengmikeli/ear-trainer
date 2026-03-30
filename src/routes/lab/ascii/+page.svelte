@@ -400,13 +400,19 @@
 			ctx.fill();
 			ctx.shadowBlur = 0;
 
-			// --- Build curve obstacle map: for each text row, find x-ranges blocked by curve ---
+			// --- Build curve obstacle map: for each text row, find crossing x-positions ---
 			const numRows = Math.floor(h / LINE_HEIGHT);
+			const CURVE_WIDTH = 5; // half-width of the curve "ribbon" in px
 
-			// Sample curve densely and collect x positions per row
+			// Track where the curve enters and exits each row
+			// Each pass through a row records only entry-x and exit-x
+			const rowPasses: { enter: number; exit: number }[][] = [];
+			for (let r = 0; r < numRows; r++) rowPasses.push([]);
+
 			const SAMPLE_COUNT = 2000;
-			const rowXSets: Set<number>[] = [];
-			for (let r = 0; r < numRows; r++) rowXSets.push(new Set());
+			let prevRow = -999;
+			let passEntryX = 0;
+			let passLastX = 0;
 
 			for (let i = 0; i < SAMPLE_COUNT; i++) {
 				const t = phase - i * (Math.PI * 2 * 3 / Math.max(fx, fy)) / SAMPLE_COUNT;
@@ -416,38 +422,55 @@
 				const px = cx + rx * Math.sin(ptFx * t + PHASE_DELTA);
 				const py = cy + ry * Math.sin(ptFy * t);
 				const row = Math.floor(py / LINE_HEIGHT);
-				if (row >= 0 && row < numRows) {
-					rowXSets[row].add(Math.round(px));
+
+				if (row !== prevRow) {
+					// Exiting previous row — record the pass
+					if (prevRow >= 0 && prevRow < numRows) {
+						rowPasses[prevRow].push({ enter: passEntryX, exit: passLastX });
+					}
+					// Entering new row
+					passEntryX = px;
+					passLastX = px;
+				} else {
+					passLastX = px;
 				}
+				prevRow = row;
+			}
+			// Final pass
+			if (prevRow >= 0 && prevRow < numRows) {
+				rowPasses[prevRow].push({ enter: passEntryX, exit: passLastX });
 			}
 
-			// Build obstacle bands per row: cluster nearby x-points into bands
+			// Convert passes into thin obstacle bands
 			type Band = { left: number; right: number };
 			const rowBands: Band[][] = [];
+
 			for (let r = 0; r < numRows; r++) {
-				const xs = rowXSets[r];
-				if (xs.size === 0) { rowBands.push([]); continue; }
+				const passes = rowPasses[r];
+				if (passes.length === 0) { rowBands.push([]); continue; }
 
-				const sorted = [...xs].sort((a, b) => a - b);
 				const bands: Band[] = [];
-				let bStart = sorted[0]; let bEnd = sorted[0];
+				for (const pass of passes) {
+					const minX = Math.min(pass.enter, pass.exit);
+					const maxX = Math.max(pass.enter, pass.exit);
+					bands.push({
+						left: Math.max(0, minX - CURVE_WIDTH),
+						right: Math.min(w, maxX + CURVE_WIDTH),
+					});
+				}
 
-				for (let i = 1; i < sorted.length; i++) {
-					if (sorted[i] - bEnd <= CURVE_MARGIN) {
-						bEnd = sorted[i]; // extend current band
+				// Sort and merge overlapping bands
+				bands.sort((a, b) => a.left - b.left);
+				const merged: Band[] = [bands[0]];
+				for (let i = 1; i < bands.length; i++) {
+					const prev = merged[merged.length - 1];
+					if (bands[i].left <= prev.right + 2) {
+						prev.right = Math.max(prev.right, bands[i].right);
 					} else {
-						bands.push({
-							left: Math.max(0, bStart - CURVE_MARGIN),
-							right: Math.min(w, bEnd + CURVE_MARGIN),
-						});
-						bStart = sorted[i]; bEnd = sorted[i];
+						merged.push(bands[i]);
 					}
 				}
-				bands.push({
-					left: Math.max(0, bStart - CURVE_MARGIN),
-					right: Math.min(w, bEnd + CURVE_MARGIN),
-				});
-				rowBands.push(bands);
+				rowBands.push(merged);
 			}
 
 			// --- Reflow poem: fill every gap between curve bands ---
