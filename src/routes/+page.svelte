@@ -79,7 +79,10 @@
 	});
 
 	const activeContent = $derived(() => {
-		return state?.settings.activeContent ?? 'intervals';
+		const content = state?.settings.activeContent ?? 'intervals';
+		// Don't expose adaptive flow to non-dev users
+		if (content === 'adaptive' && !state?.settings.devMode) return 'intervals';
+		return content;
 	});
 
 	function setActiveContent(mode: 'intervals' | 'chords' | 'scales' | 'modes') {
@@ -228,12 +231,14 @@
 	{#if state}
 		<div class="center-area">
 			{#if chordsUnlocked() || scalesUnlocked()}
+				{#if state.settings.devMode}
 				<a href="{base}/quiz/adaptive" class="train-btn" class:glitching={trainGlitching} onclick={handleTrain}>
 					<span class="train-text">{trainText}</span>
 					{#if sessionPreview}
 						<span class="train-preview">{sessionPreview}</span>
 					{/if}
 				</a>
+				{/if}
 
 				<div class="content-switcher">
 					<button
