@@ -114,12 +114,15 @@
 	// ── Chladni constants (from lab) ──
 	const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 	const sv = JSON.parse(localStorage.getItem('ear-trainer-state') || '{}')?.settings?.superchargeViz;
-	const PARTICLE_COUNT = isMobile ? (sv ? 1500 : 0) : (sv === false ? 0 : 3500);
+	const PARTICLE_COUNT = isMobile ? (sv ? 1000 : 0) : (sv === false ? 0 : 3500);
 	const SETTLE_SPEED_BASE = 0.003;
 	const SETTLE_SPEED_BOOST = 0.025;
 	const JITTER = 0.001;
 	const SHAKE_BASE = 0.02;
 	const SHAKE_AUDIO = 0.05;
+	// 30fps throttle on mobile — skip every other frame
+	const FRAME_SKIP = isMobile ? 2 : 1;
+	const NOISE_INTERVAL = isMobile ? 6 : 3;
 	let particles: { x: number; y: number }[] = [];
 	let settleSpeed = SETTLE_SPEED_BASE;
 	let migrateTimer = 0;
@@ -274,6 +277,13 @@
 		const clearColor = parsedRgb.replace('rgb(', 'rgba(').replace(')', ', 0.14)');
 
 		function draw() {
+			frameCount++;
+			// 30fps throttle on mobile — skip every other frame
+			if (FRAME_SKIP > 1 && frameCount % FRAME_SKIP !== 0) {
+				animId = requestAnimationFrame(draw);
+				return;
+			}
+
 			const w = canvas.width / dpr;
 			const h = canvas.height / dpr;
 			const cx = w / 2;
@@ -345,8 +355,10 @@
 			const currentShake = SHAKE_BASE + amp * SHAKE_AUDIO;
 			const migrating = migrateTimer > 0;
 
-			ctx.shadowColor = '#3A2CFF';
-			ctx.shadowBlur = 2;
+			if (!isMobile) {
+				ctx.shadowColor = '#3A2CFF';
+				ctx.shadowBlur = 2;
+			}
 
 			for (const p of particles) {
 				if (chladniActive) {
@@ -384,13 +396,13 @@
 				ctx.fillRect(sx, sy, migrating ? 1.6 : 1.2, migrating ? 1.6 : 1.2);
 			}
 			ctx.globalAlpha = 1;
-			ctx.shadowBlur = 0;
+			if (!isMobile) ctx.shadowBlur = 0;
 			} // end particles.length > 0
 
 			// Ring + dot now CSS on .play-tap (removed canvas Lissajous)
 
 			// ── NOISE GRAIN ──
-			if (noiseCanvas && frameCount % 3 === 0) {
+			if (noiseCanvas && frameCount % NOISE_INTERVAL === 0) {
 				refreshNoise(Math.ceil(w), Math.ceil(h));
 				ctx.globalAlpha = 0.5;
 				ctx.drawImage(noiseCanvas, 0, 0, w, h);
@@ -406,7 +418,6 @@
 			}
 
 			t += speed;
-			frameCount++;
 			// Pause when nothing needs animation
 			const needsAnim = chladniDriftEnabled || migrateTimer > 0 || transitionActive;
 			if (needsAnim) {
@@ -491,4 +502,11 @@
 	.frame-corner.tr { top: -1px; right: -1px; border-width: 2px 2px 0 0; }
 	.frame-corner.bl { bottom: -1px; left: -1px; border-width: 0 0 2px 2px; }
 	.frame-corner.br { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+	/* Desktop: canvas can be taller in two-column layout */
+	@media (min-width: 768px) {
+		.canvas-frame {
+			max-height: 65vh;
+		}
+	}
 </style>

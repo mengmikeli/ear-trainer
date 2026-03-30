@@ -6,11 +6,16 @@
 	import { generateChordQuestion } from '$lib/engine';
 	import { playChord, playFeedbackChime, suspendAudio, warmUpAudio, isAudioReady, stopAudio } from '$lib/audio';
 	import { responseQuality, calculateSm2 } from '$lib/sm2';
+	import {
+		needsLearnCard, findNeighbor, buildAllItems, recordAdaptiveAnswer,
+		type ContentItem,
+	} from '$lib/adaptive';
 	import type { UserState, ChordQuestion, ChordDef, ChordVoicing } from '$lib/types';
 	import AnswerGrid from '../../../components/AnswerGrid.svelte';
 	import ProgressBar from '../../../components/ProgressBar.svelte';
 	import TelemetryBar from '../../../components/TelemetryBar.svelte';
 	import VizQuizLayout from '../../../components/VizQuizLayout.svelte';
+	import LearnCard from '../../../components/LearnCard.svelte';
 
 	interface QuestionResult {
 		chord: ChordDef;
@@ -40,6 +45,11 @@
 	let isGlitching = $state(false);
 	let correctTimeout: ReturnType<typeof setTimeout> | null = null;
 	let isArpeggiated = $state(false);
+
+	// Learn card state
+	let isLearnPhase = $state(false);
+	let learnItem: ContentItem | null = $state(null);
+	let learnNeighbor: ContentItem | null = $state(null);
 
 	const vizPhase = $derived.by((): 'rest' | 'playing' | 'correct' | 'wrong' | 'transition' => {
 		if (isGlitching) return 'transition';
@@ -151,13 +161,41 @@
 
 		isPlaying = false;
 		playingNotes = [];
-		isGlitching = true;
 		feedbackState = null;
 		questionNum++;
 
+		const nextQ = generateChordQuestion(state);
+		const stats = state.adaptive?.stats ?? {};
+		const voicing = nextQ.voicing;
+		const adaptiveId = `chord:${nextQ.chord.id}:${voicing}`;
+		const devMode = state.settings.devMode ?? false;
+
+		if (needsLearnCard(adaptiveId, stats, devMode)) {
+			isLearnPhase = true;
+			isGlitching = false;
+			learnItem = {
+				kind: 'chord',
+				id: adaptiveId,
+				defId: nextQ.chord.id,
+				variant: voicing,
+				tier: nextQ.chord.tier,
+				category: nextQ.chord.category,
+			};
+			const allItems = buildAllItems(state);
+			learnNeighbor = findNeighbor(learnItem, allItems, stats);
+			question = nextQ;
+			inResultMode = false;
+			hasPlayed = false;
+			selectedId = null;
+			return;
+		}
+
+		isLearnPhase = false;
+		isGlitching = true;
+
 		requestAnimationFrame(() => {
 			inResultMode = false;
-			question = generateChordQuestion(state!);
+			question = nextQ;
 			hasPlayed = false;
 			selectedId = null;
 			countdownPct = 1.0;
@@ -167,6 +205,27 @@
 				play();
 			}, 600);
 		});
+	}
+
+	function handleLearnComplete(correct: boolean) {
+		if (!state || !learnItem || !question) return;
+
+		recordAdaptiveAnswer(state, learnItem.id, {
+			correct,
+			replays: 0,
+			responseTimeMs: 0,
+		});
+
+		if (state.adaptive?.stats[learnItem.id]) {
+			state.adaptive.stats[learnItem.id].nextReview = Date.now() + 5 * 60 * 1000;
+		}
+
+		state = checkTierUnlock(state);
+		state.stats.totalQuestions++;
+		saveState(state);
+
+		isLearnPhase = false;
+		nextQuestion();
 	}
 
 	function play() {
@@ -473,25 +532,39 @@
 		</div>
 	</div>
 
-	{#if question}
-		<VizQuizLayout
-			superchargeViz={state?.settings?.superchargeViz}
-			mode="chord"
-			phase={vizPhase}
-			chordIntervals={question.chord.intervals}
-			countdownPct={hasPlayed && inResultMode ? countdownPct : -1}
-			ontransitionend={handleTransitionEnd}
-			{playingNotes}
-		>
-			<button bind:this={playBtnEl} class="play-tap" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} onclick={hasPlayed && inResultMode ? replayInResult : play}>
-				<div class="orbit-track"><div class="orbit-dot"></div></div>
-				<span class="q-text" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} class:glitch-text={showGlitch}>
-					{displayText}
-				</span>
-			</button>
-		</VizQuizLayout>
+	{#if question && isLearnPhase && learnItem}
+		<div class="learn-area">
+			{#key learnItem?.id}
+			<LearnCard
+				item={learnItem}
+				neighbor={learnNeighbor}
+				userState={state}
+				onComplete={handleLearnComplete}
+			/>
+			{/key}
+		</div>
+	{:else if question}
+		<div class="quiz-body">
+			<div class="quiz-viz">
+				<VizQuizLayout
+					superchargeViz={state?.settings?.superchargeViz}
+					mode="chord"
+					phase={vizPhase}
+					chordIntervals={question.chord.intervals}
+					countdownPct={hasPlayed && inResultMode ? countdownPct : -1}
+					ontransitionend={handleTransitionEnd}
+					{playingNotes}
+				>
+					<button bind:this={playBtnEl} class="play-tap" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} onclick={hasPlayed && inResultMode ? replayInResult : play}>
+						<div class="orbit-track"><div class="orbit-dot"></div></div>
+						<span class="q-text" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} class:glitch-text={showGlitch}>
+							{displayText}
+						</span>
+					</button>
+				</VizQuizLayout>
+			</div>
 
-		<div class="answer-area" class:hidden={!hasPlayed && !needsTap}>
+			<div class="answer-area" class:hidden={!hasPlayed && !needsTap}>
 			<AnswerGrid
 				choices={needsTap ? question.choices.map(c => ({ ...c, label: 'NA', name: 'UNAVAILABLE' })) : question.choices}
 				onselect={selectAnswer}
@@ -504,11 +577,21 @@
 				onWrongClick={inResultMode ? replayInResult : null}
 			/>
 		</div>
+		</div>
 	{/if}
 </div>
 {/if}
 
 <style>
+	.learn-area {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		flex: 1;
+		justify-content: center;
+		width: 100%;
+		padding: 0 1rem;
+	}
 	.quiz {
 		position: relative;
 		z-index: 1;
@@ -789,4 +872,45 @@
 		border-color: var(--accent);
 	}
 	.action-btn.primary:active { opacity: 0.85; }
+
+	/* Desktop: two-column quiz layout */
+	@media (min-width: 768px) {
+		.quiz { gap: 0.75rem; }
+		.quiz-body {
+			display: flex;
+			flex-direction: row;
+			gap: 2rem;
+			width: 100%;
+			flex: 1;
+			min-height: 0;
+			align-items: stretch;
+		}
+		.quiz-viz {
+			flex: 1 1 55%;
+			min-width: 0;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+		.quiz-viz :global(.canvas-frame) {
+			max-height: 100%;
+			aspect-ratio: 1;
+		}
+		.answer-area {
+			flex: 1 1 40%;
+			min-width: 0;
+			margin-top: 0;
+			display: flex;
+			align-items: center;
+		}
+		.heading { font-size: 3.5rem; }
+		.play-tap {
+			width: min(35vw, 200px);
+			height: min(35vw, 200px);
+		}
+		.summary {
+			max-width: 600px;
+			margin: 0 auto;
+		}
+	}
 </style>

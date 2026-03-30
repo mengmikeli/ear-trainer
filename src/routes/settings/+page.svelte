@@ -5,7 +5,7 @@
 	import type { UserState, ToneType, SessionLength, ThemeMode } from '$lib/types';
 	import { applyTheme, watchSystemTheme } from '$lib/theme';
 	import { playInterval } from '$lib/audio';
-	import { APP_VERSION, RELEASE_NOTES } from '$lib/version';
+	import { APP_VERSION, VERSION_STRING, RELEASE_NOTES } from '$lib/version';
 
 	let showReleaseNotes = $state(false);
 
@@ -324,6 +324,22 @@
 					<div class="lab-fill" style="transform: scaleX({labHoldProgress})"></div>
 					<span class="lab-text" class:glitching={labHoldActive}>{labGlitchText}</span>
 				</button>
+
+				<button
+					class="dev-btn reset-learn"
+					onclick={() => {
+						if (!state?.adaptive?.stats) return;
+						for (const key of Object.keys(state.adaptive.stats)) {
+							state.adaptive.stats[key].attempts = 0;
+							state.adaptive.stats[key].correct = 0;
+							state.adaptive.stats[key].streak = 0;
+							state.adaptive.stats[key].lastSeen = 0;
+							state.adaptive.stats[key].nextReview = 0;
+						}
+						saveState(state!);
+					}}>
+					RESET LEARN CARDS
+				</button>
 			{/if}
 
 			<button
@@ -343,7 +359,7 @@
 		<div class="section version-section">
 			<label class="field-label">ABOUT</label>
 			<button class="version-btn" onclick={() => showReleaseNotes = !showReleaseNotes}>
-				<span class="version-label">v{APP_VERSION}</span>
+				<span class="version-label">{VERSION_STRING}</span>
 				<span class="version-toggle" class:open={showReleaseNotes}>{showReleaseNotes ? '^' : '>'}</span>
 			</button>
 
@@ -506,6 +522,16 @@
 		background: transparent;
 		color: var(--hot);
 		cursor: pointer;
+	}
+	.dev-btn.reset-learn {
+		border-color: var(--marathon-blue);
+		color: var(--marathon-blue);
+		margin-top: 0.5rem;
+		padding: 0.4rem 0.8rem;
+	}
+	.dev-btn.reset-learn:active {
+		background: var(--marathon-blue);
+		color: var(--base);
 	}
 	.dev-btn.active {
 		background: var(--hot);
@@ -673,4 +699,15 @@
 		border-top: 1px solid var(--border);
 	}
 	.credits-accent { color: var(--marathon-blue); }
+
+	/* Desktop: constrained width, larger type */
+	@media (min-width: 768px) {
+		.settings-page { max-width: 600px; margin: 0 auto; }
+		.heading { font-size: 3.5rem; }
+		.credits-grid {
+			display: grid;
+			grid-template-columns: repeat(2, 1fr);
+			gap: 0.5rem;
+		}
+	}
 </style>

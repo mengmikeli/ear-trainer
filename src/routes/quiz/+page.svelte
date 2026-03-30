@@ -6,11 +6,18 @@
 	import { generateQuestion } from '$lib/engine';
 	import { playInterval, playFeedbackChime, suspendAudio, warmUpAudio, isAudioReady, stopAudio } from '$lib/audio';
 	import { responseQuality, calculateSm2 } from '$lib/sm2';
+	import {
+		needsLearnCard, findNeighbor, buildAllItems, recordAdaptiveAnswer,
+		defaultContentStats, getItemDisplayName,
+		type ContentItem, type ContentStats,
+	} from '$lib/adaptive';
+	import { INTERVALS } from '$lib/intervals';
 	import type { UserState, Question, IntervalDef, PlayMode } from '$lib/types';
 	import AnswerGrid from '../../components/AnswerGrid.svelte';
 	import ProgressBar from '../../components/ProgressBar.svelte';
 	import TelemetryBar from '../../components/TelemetryBar.svelte';
 	import VizQuizLayout from '../../components/VizQuizLayout.svelte';
+	import LearnCard from '../../components/LearnCard.svelte';
 
 	interface QuestionResult {
 		interval: IntervalDef;
@@ -39,6 +46,12 @@
 	let rafId: number | null = null;
 	let isGlitching = $state(false);
 	let correctTimeout: ReturnType<typeof setTimeout> | null = null;
+
+	// Learn card state
+	let isLearnPhase = $state(false);
+	let learnItem: ContentItem | null = $state(null);
+	let learnNeighbor: ContentItem | null = $state(null);
+	let learnItemsCompleted = $state(0);
 
 	// Viz phase — maps quiz state to VizQuizLayout phase
 	const vizPhase = $derived.by((): 'rest' | 'playing' | 'correct' | 'wrong' | 'transition' => {
@@ -159,15 +172,43 @@
 
 		isPlaying = false;
 		playingNotes = [];
-		// Start glitch BEFORE clearing state — covers the visual transition
-		isGlitching = true;
-		feedbackState = null; // clear feedback immediately so glitch style takes over
+		feedbackState = null;
 		questionNum++;
 
-		// Clear remaining state on next frame
+		// Generate the question first to check if it needs a learn card
+		const nextQ = generateQuestion(state);
+		const stats = state.adaptive?.stats ?? {};
+		const mode = nextQ.playMode;
+		const adaptiveId = `interval:${nextQ.interval.id}:${mode}`;
+		const devMode = state.settings.devMode ?? false;
+
+		if (needsLearnCard(adaptiveId, stats, devMode)) {
+			// Show learn card instead of quiz
+			isLearnPhase = true;
+			isGlitching = false;
+			learnItem = {
+				kind: 'interval',
+				id: adaptiveId,
+				defId: nextQ.interval.id,
+				variant: mode,
+				tier: nextQ.interval.tier,
+			};
+			const allItems = buildAllItems(state);
+			learnNeighbor = findNeighbor(learnItem, allItems, stats);
+			question = nextQ;
+			inResultMode = false;
+			hasPlayed = false;
+			selectedId = null;
+			return;
+		}
+
+		// Normal quiz flow
+		isLearnPhase = false;
+		isGlitching = true;
+
 		requestAnimationFrame(() => {
 			inResultMode = false;
-			question = generateQuestion(state!);
+			question = nextQ;
 			hasPlayed = false;
 			selectedId = null;
 			countdownPct = 1.0;
@@ -177,6 +218,53 @@
 				play();
 			}, 600);
 		});
+	}
+
+	function handleLearnComplete(correct: boolean) {
+		if (!state || !learnItem || !question) return;
+
+		learnItemsCompleted++;
+
+		// Record in adaptive engine
+		recordAdaptiveAnswer(state, learnItem.id, {
+			correct,
+			replays: 0,
+			responseTimeMs: 0,
+		});
+
+		// Set near-future review
+		if (state.adaptive?.stats[learnItem.id]) {
+			state.adaptive.stats[learnItem.id].nextReview = Date.now() + 5 * 60 * 1000;
+		}
+
+		// Also update legacy interval state
+		const s = state.intervals[question.interval.id];
+		if (s) {
+			s.attempts++;
+			if (correct) { s.correct++; s.streak++; } else { s.streak = 0; }
+			s.lastSeen = Date.now();
+			const modeStats = s.modes[question.playMode];
+			if (modeStats) {
+				modeStats.attempts++;
+				if (correct) { modeStats.correct++; modeStats.streak++; } else { modeStats.streak = 0; }
+				modeStats.lastSeen = Date.now();
+			}
+		}
+
+		state = checkTierUnlock(state);
+		state.stats.totalQuestions++;
+		if (correct) sessionCorrect++;
+		saveState(state);
+
+		results.push({
+			interval: question.interval,
+			mode: question.playMode,
+			correct,
+			selectedId: correct ? question.interval.id : 'learn-retry-exhausted',
+		});
+
+		isLearnPhase = false;
+		nextQuestion();
 	}
 
 	function play() {
@@ -483,8 +571,21 @@
 		</div>
 	</div>
 
-	{#if question}
-		<VizQuizLayout
+	{#if question && isLearnPhase && learnItem}
+		<div class="learn-area">
+			{#key learnItem?.id}
+			<LearnCard
+				item={learnItem}
+				neighbor={learnNeighbor}
+				userState={state}
+				onComplete={handleLearnComplete}
+			/>
+			{/key}
+		</div>
+	{:else if question}
+		<div class="quiz-body">
+			<div class="quiz-viz">
+				<VizQuizLayout
 			superchargeViz={state?.settings?.superchargeViz}
 			mode="interval"
 			phase={vizPhase}
@@ -499,9 +600,10 @@
 					{displayText}
 				</span>
 			</button>
-		</VizQuizLayout>
+			</VizQuizLayout>
+			</div>
 
-		<div class="answer-area" class:hidden={!hasPlayed && !needsTap}>
+			<div class="answer-area" class:hidden={!hasPlayed && !needsTap}>
 			<AnswerGrid
 				choices={needsTap ? question.choices.map(c => ({ ...c, label: 'NA', name: 'UNAVAILABLE' })) : question.choices}
 				onselect={selectAnswer}
@@ -514,11 +616,21 @@
 				onWrongClick={inResultMode ? replayInResult : null}
 			/>
 		</div>
+		</div>
 	{/if}
 </div>
 {/if}
 
 <style>
+	.learn-area {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		flex: 1;
+		justify-content: center;
+		width: 100%;
+		padding: 0 1rem;
+	}
 	.quiz {
 		position: relative;
 		z-index: 1;
@@ -775,4 +887,50 @@
 		border-color: var(--accent);
 	}
 	.action-btn.primary:active { opacity: 0.85; }
+
+	/* Desktop: two-column quiz layout */
+	@media (min-width: 768px) {
+		.quiz { gap: 0.75rem; }
+		.quiz-body {
+			display: flex;
+			flex-direction: row;
+			gap: 2rem;
+			width: 100%;
+			flex: 1;
+			min-height: 0;
+			align-items: stretch;
+		}
+		.quiz-viz {
+			flex: 1 1 55%;
+			min-width: 0;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+		.quiz-viz :global(.canvas-frame) {
+			max-height: 100%;
+			aspect-ratio: 1;
+		}
+		.answer-area {
+			flex: 1 1 40%;
+			min-width: 0;
+			margin-top: 0;
+			display: flex;
+			align-items: center;
+			width: 100%;
+		}
+		.answer-area :global(.answer-grid) {
+			width: 100%;
+		}
+		.heading { font-size: 3.5rem; }
+		.play-tap {
+			width: min(30vw, 180px);
+			height: min(30vw, 180px);
+		}
+		.q-text { font-size: 1.8rem; }
+		.summary {
+			max-width: 600px;
+			margin: 0 auto;
+		}
+	}
 </style>
