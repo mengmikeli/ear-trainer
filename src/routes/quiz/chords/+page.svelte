@@ -534,12 +534,14 @@
 
 	{#if question && isLearnPhase && learnItem}
 		<div class="learn-area">
+			{#key learnItem?.id}
 			<LearnCard
 				item={learnItem}
 				neighbor={learnNeighbor}
 				userState={state}
 				onComplete={handleLearnComplete}
 			/>
+			{/key}
 		</div>
 	{:else if question}
 		<div class="quiz-body">

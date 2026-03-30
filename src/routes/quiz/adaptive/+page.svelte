@@ -577,12 +577,14 @@
 
 	{#if currentItem && isLearnPhase}
 		<div class="learn-area">
+			{#key learnItem?.id}
 			<LearnCard
 				item={currentItem}
 				neighbor={learnNeighbor}
 				userState={state}
 				onComplete={handleLearnComplete}
 			/>
+			{/key}
 		</div>
 	{:else if currentItem}
 		<div class="play-area">
