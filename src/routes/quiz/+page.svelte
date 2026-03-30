@@ -4,7 +4,7 @@
 	import { base } from '$app/paths';
 	import { loadState, saveState, checkTierUnlock } from '$lib/state';
 	import { generateQuestion } from '$lib/engine';
-	import { playInterval, playFeedbackChime, suspendAudio, warmUpAudio, isAudioReady, stopAudio } from '$lib/audio';
+	import { playInterval, playFeedbackChime, suspendAudio, ensureResumed, isAudioReady, stopAudio } from '$lib/audio';
 	import { responseQuality, calculateSm2 } from '$lib/sm2';
 	import {
 		needsLearnCard, findNeighbor, buildAllItems, recordAdaptiveAnswer,
@@ -267,9 +267,11 @@
 		nextQuestion();
 	}
 
-	function play() {
+	async function play() {
 		if (!question || !state) return;
-		warmUpAudio();
+		// Await AudioContext resume — fixes race where sync isAudioReady()
+		// returned false because ctx.resume() hadn't completed yet
+		try { await ensureResumed(); } catch { /* fall through to gate */ }
 		// iOS: only gate on cold start (no prior user gesture in this session).
 		// Once audioUnlocked, skip the gate — ensureResumed() in playInterval handles resume.
 		if (!audioUnlocked && !isAudioReady() && !needsTap) {

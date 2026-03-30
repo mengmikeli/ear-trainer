@@ -4,7 +4,7 @@
 	import { base } from '$app/paths';
 	import { loadState, saveState, checkTierUnlock } from '$lib/state';
 	import { generateModeQuestion } from '$lib/engine';
-	import { playScale, playFeedbackChime, startDrone, stopDrone, warmUpAudio, isAudioReady, stopAudio, suspendAudio, type DroneHandle } from '$lib/audio';
+	import { playScale, playFeedbackChime, startDrone, stopDrone, ensureResumed, isAudioReady, stopAudio, suspendAudio, type DroneHandle } from '$lib/audio';
 	import { responseQuality, calculateSm2 } from '$lib/sm2';
 	import {
 		needsLearnCard, findNeighbor, buildAllItems, recordAdaptiveAnswer,
@@ -250,9 +250,11 @@
 		nextQuestion();
 	}
 
-	function play() {
+	async function play() {
 		if (!question || !state) return;
-		warmUpAudio();
+		// Await AudioContext resume — fixes race where sync isAudioReady()
+		// returned false because ctx.resume() hadn't completed yet
+		try { await ensureResumed(); } catch { /* fall through to gate */ }
 		// iOS audio gate — block until user gesture unlocks AudioContext
 		if (!audioUnlocked && !isAudioReady() && !needsTap) {
 			needsTap = true;
@@ -277,6 +279,10 @@
 		}
 
 		// Start a fresh drone for this playback (time-bounded)
+		// Drone leads in before notes, sustains through, fades out after
+		const droneLeadIn = 400; // ms — let drone build up before first note
+		const droneTail = 800;   // ms — drone sustains after last note ends
+
 		stopDrone();
 		drone = null;
 		if (question) {
@@ -286,12 +292,17 @@
 			});
 		}
 
-		playScale(
-			question.rootNote,
-			question.mode.intervals,
-			state.settings.toneType,
-			TEMPO,
-		);
+		// Delay scale notes so drone has time to ease in
+		noteTimeouts.push(setTimeout(() => {
+			if (!question || !state) return;
+			playScale(
+				question.rootNote,
+				question.mode.intervals,
+				state.settings.toneType,
+				TEMPO,
+			);
+		}, droneLeadIn));
+
 		if (!hasPlayed) {
 			hasPlayed = true;
 			startTime = Date.now();
@@ -299,18 +310,17 @@
 			question.replays++;
 		}
 		isPlaying = true;
-		const dur = question.mode.intervals.length * TEMPO + 400;
-		const droneTail = 800; // drone fades out after notes finish
+		const notesDur = question.mode.intervals.length * TEMPO + 400;
 
-		// Sync Chladni with mode notes
+		// Sync Chladni with mode notes (offset by lead-in)
 		question.mode.intervals.forEach((semitone: number, i: number) => {
 			noteTimeouts.push(setTimeout(() => {
 				playingNotes = [question!.rootNote + semitone]; triggerBounce();
-			}, i * TEMPO));
+			}, droneLeadIn + i * TEMPO));
 		});
-		noteTimeouts.push(setTimeout(() => { isPlaying = false; playingNotes = []; }, dur));
-		// Stop drone after notes + tail
-		noteTimeouts.push(setTimeout(() => { stopDrone(); drone = null; }, dur + droneTail));
+		noteTimeouts.push(setTimeout(() => { isPlaying = false; playingNotes = []; }, droneLeadIn + notesDur));
+		// Stop drone after notes + tail (total = leadIn + notesDur + tail)
+		noteTimeouts.push(setTimeout(() => { stopDrone(); drone = null; }, droneLeadIn + notesDur + droneTail));
 	}
 
 	function toggleDroneMute() {

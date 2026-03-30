@@ -4,7 +4,7 @@
 	import { base } from '$app/paths';
 	import { loadState, saveState, checkTierUnlock } from '$lib/state';
 	import { generateScaleQuestion } from '$lib/engine';
-	import { playScale, playFeedbackChime, suspendAudio, warmUpAudio, isAudioReady, stopAudio } from '$lib/audio';
+	import { playScale, playFeedbackChime, suspendAudio, ensureResumed, isAudioReady, stopAudio } from '$lib/audio';
 	import { responseQuality, calculateSm2 } from '$lib/sm2';
 	import {
 		needsLearnCard, findNeighbor, buildAllItems, recordAdaptiveAnswer,
@@ -233,9 +233,11 @@
 		nextQuestion();
 	}
 
-	function play() {
+	async function play() {
 		if (!question || !state) return;
-		warmUpAudio();
+		// Await AudioContext resume — fixes race where sync isAudioReady()
+		// returned false because ctx.resume() hadn't completed yet
+		try { await ensureResumed(); } catch { /* fall through to gate */ }
 		if (!audioUnlocked && !isAudioReady() && !needsTap) {
 			needsTap = true;
 			return;

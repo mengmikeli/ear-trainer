@@ -89,7 +89,7 @@ function getContext(): AudioContext {
  * Unlike getContext(), this awaits the resume() promise so oscillators
  * scheduled immediately after won't hit a still-suspended context.
  */
-async function ensureResumed(): Promise<AudioContext> {
+export async function ensureResumed(): Promise<AudioContext> {
 	const audioCtx = getContext();
 	if (audioCtx.state === 'suspended' || (audioCtx.state as string) === 'interrupted') {
 		await audioCtx.resume();
@@ -909,11 +909,11 @@ export async function startDrone(midi: number): Promise<DroneHandle> {
 	filter.connect(droneGain);
 	droneGain.connect(master);
 
-	// Fade in: gain over 150ms, filter opens over 400ms (removes initial buzz)
+	// Fade in: gain over 350ms, filter opens over 400ms (smooth ease-in)
 	const now = audioCtx.currentTime;
 	droneGain.gain.setValueAtTime(0.001, now);
-	droneGain.gain.exponentialRampToValueAtTime(1, now + 0.15);
-	filter.frequency.setValueAtTime(200, now);
+	droneGain.gain.exponentialRampToValueAtTime(1, now + 0.35);
+	filter.frequency.setValueAtTime(150, now);
 	filter.frequency.exponentialRampToValueAtTime(800, now + 0.4);
 
 	osc1.start(now);
@@ -928,13 +928,13 @@ export async function startDrone(midi: number): Promise<DroneHandle> {
 			if (stopped) return;
 			stopped = true;
 			const t = audioCtx.currentTime;
-			// Fade out: close filter first, then gain (no abrupt cutoff)
+			// Fade out: close filter over 300ms, gain over 500ms (smooth ease-out)
 			filter.frequency.cancelScheduledValues(t);
 			filter.frequency.setValueAtTime(filter.frequency.value, t);
-			filter.frequency.exponentialRampToValueAtTime(100, t + 0.15);
+			filter.frequency.exponentialRampToValueAtTime(100, t + 0.3);
 			droneGain.gain.cancelScheduledValues(t);
 			droneGain.gain.setValueAtTime(droneGain.gain.value, t);
-			droneGain.gain.linearRampToValueAtTime(0, t + 0.3);
+			droneGain.gain.linearRampToValueAtTime(0, t + 0.5);
 			setTimeout(() => {
 				try {
 					osc1.stop();
@@ -947,7 +947,7 @@ export async function startDrone(midi: number): Promise<DroneHandle> {
 				} catch {
 					// already stopped
 				}
-			}, 400);
+			}, 600);
 			if (activeDrone === handle) activeDrone = null;
 			// Schedule audio suspend now that drone is done
 			scheduleSuspend(1000);
