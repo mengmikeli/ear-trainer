@@ -17,21 +17,18 @@
 	// Grid dimensions — computed on mount from container size
 	let COLS = $state(80);
 	let ROWS = $state(40);
-	let cellAspect = 0.48; // updated dynamically from measured char cell
+	let cellAspect = 0.48;
 	const MAX_COLS = 120;
 	const MAX_ROWS = 80;
 
 	const PHASE_DELTA = Math.PI / 2;
-
-	// ASCII brightness ramp — dark to bright (monospace)
 	const RAMP = ' .`-_:,;^=+/|)\\!?0oOQ#%@';
 
-	// Trail settings
 	const TRAIL_POINTS = 1200;
 	const TARGET_LOOPS = 2;
 	const BASE_SPEED = 0.006;
 
-	// Viz source
+	// Viz source (mono only)
 	type VizMode = 'lissajous' | 'chladni';
 	let vizMode = $state<VizMode>('lissajous');
 
@@ -42,8 +39,7 @@
 	let selected = $state('P5');
 	let isPlaying = $state(false);
 	let playGeneration = 0;
-	let gridText = $state('');     // monospace mode
-	let gridHtml = $state('');     // typo mode (raw HTML)
+	let gridText = $state('');
 	let frameRef: HTMLDivElement | undefined = $state();
 
 	let ratioLabel = $derived(`${RATIOS[selected][0]} : ${RATIOS[selected][1]}`);
@@ -80,34 +76,90 @@
 	let chladniM = 1;
 	let chladniTimer: ReturnType<typeof setTimeout> | null = null;
 
-	// Current field
 	let field = new Float32Array(COLS * ROWS);
 
-	// --- Pretext palette ---
-	const PROP_FONT_FAMILY = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-	const PROP_FONT_SIZE = 14;
-	const CHARSET = ' .,:;!+-=*#@%&abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<>()[]{}|/\\~^';
-	const WEIGHTS = [300, 500, 800] as const;
-	const STYLES = ['normal', 'italic'] as const;
+	// --- Poem Spotlight (TYPO mode) ---
+	const POEM = `Do you know how the air trembles
+when a string is touched? How the room
+fills with a shape you cannot see
+but feel behind your ribs, a curve
+that bends the silence into something
+almost like a name? Listen—
+the interval between two notes
+is not emptiness. It is the distance
+a wave must travel to become
+its own reflection, the breath held
+between recognition and surprise.
+Every fifth is a cathedral door
+swung wide. Every minor second,
+a whisper pressed against the ear.
+The octave is the self returned,
+older, knowing what it knew before
+but hearing it as if for the first time.
+And the tritone—restless, unstable—
+is the question music asks
+when it has forgotten how to end.
+So when you listen, do not count
+the semitones. Feel the geometry—
+the spirals and the intersections,
+the places where two frequencies
+agree to build a momentary room
+and then, just as gently, let it go.`;
 
-	type PaletteEntry = {
-		char: string;
-		weight: number;
-		style: string;
-		font: string;
-		width: number;
-		brightness: number;
-	};
-
-	type BrightnessEntry = {
-		monoChar: string;
-		propSpan: string; // pre-built HTML span
-	};
-
+	// Poem character grid for spotlight — built on mount
+	let poemChars: { char: string; col: number; row: number }[] = [];
+	let poemSpanIds: number[] = []; // flat array COLS*ROWS → poemChars index (-1 = empty)
+	let poemHtmlBase = ''; // static poem spans, opacity set per-frame
+	let poemLineCount = 0;
 	let pretextReady = false;
-	let palette: PaletteEntry[] = [];
-	let brightnessLookup: BrightnessEntry[] = [];
-	let targetCellW = 8; // will be recalculated
+
+	function buildPoemGrid(prepareWithSegments: Function, containerW: number) {
+		const fontSpec = `400 ${POEM_FONT_SIZE} ${PROP_FONT_FAMILY}`;
+		const prepared = prepareWithSegments(POEM, fontSpec);
+
+		// Use pretext to get lines at the container width
+		const { layoutWithLines } = prepareWithSegments === undefined ? { layoutWithLines: null } : { layoutWithLines: null };
+
+		// Fallback: manually wrap the poem into COLS-width lines
+		// Each character maps to a grid cell
+		poemChars = [];
+		poemSpanIds = new Array(COLS * ROWS).fill(-1);
+
+		const words = POEM.split(/(\s+)/);
+		let col = 0;
+		let row = 0;
+		let charIdx = 0;
+
+		for (const segment of words) {
+			for (const ch of segment) {
+				if (ch === '\n') {
+					col = 0;
+					row++;
+					if (row >= ROWS) break;
+					continue;
+				}
+
+				if (col >= COLS) {
+					col = 0;
+					row++;
+					if (row >= ROWS) break;
+				}
+
+				const idx = charIdx;
+				poemChars.push({ char: ch, col, row });
+				poemSpanIds[row * COLS + col] = idx;
+				col++;
+				charIdx++;
+			}
+			if (row >= ROWS) break;
+		}
+		poemLineCount = row + 1;
+	}
+
+	const PROP_FONT_FAMILY = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+	const POEM_FONT_SIZE = 'clamp(0.4rem, 1.3vw, 0.65rem)';
+	const POEM_DIM_OPACITY = 0.06;
+	const POEM_MAX_OPACITY = 1.0;
 
 	// --- Chladni math ---
 	function midiToChladniMode(midi: number): [number, number] {
@@ -186,7 +238,6 @@
 		container.appendChild(probe);
 		const rect = probe.getBoundingClientRect();
 		container.removeChild(probe);
-		// Update aspect ratio from actual measured cell
 		if (rect.width > 0 && rect.height > 0) {
 			cellAspect = rect.width / rect.height;
 		}
@@ -205,105 +256,12 @@
 		return { cols, rows };
 	}
 
-	// --- Pretext palette builder ---
 	function esc(ch: string): string {
 		if (ch === '<') return '&lt;';
 		if (ch === '>') return '&gt;';
 		if (ch === '&') return '&amp;';
 		if (ch === '"') return '&quot;';
 		return ch;
-	}
-
-	function buildPalette(prepareWithSegments: Function) {
-		const bc = document.createElement('canvas');
-		bc.width = 28; bc.height = 28;
-		const bctx = bc.getContext('2d', { willReadFrequently: true })!;
-
-		palette = [];
-		for (const style of STYLES) {
-			for (const weight of WEIGHTS) {
-				const font = `${style === 'italic' ? 'italic ' : ''}${weight} ${PROP_FONT_SIZE}px ${PROP_FONT_FAMILY}`;
-				for (const ch of CHARSET) {
-					if (ch === ' ') continue;
-					// Measure width with pretext
-					const prepared = prepareWithSegments(ch, font);
-					const width = prepared.widths.length > 0 ? prepared.widths[0] : 0;
-					if (width <= 0) continue;
-
-					// Measure brightness via canvas alpha
-					bctx.clearRect(0, 0, 28, 28);
-					bctx.font = font;
-					bctx.fillStyle = '#fff';
-					bctx.textBaseline = 'middle';
-					bctx.fillText(ch, 1, 14);
-					const data = bctx.getImageData(0, 0, 28, 28).data;
-					let sum = 0;
-					for (let i = 3; i < data.length; i += 4) sum += data[i];
-					const brightness = sum / (255 * 28 * 28);
-
-					palette.push({ char: ch, weight, style, font, width, brightness });
-				}
-			}
-		}
-
-		// Normalize brightness
-		const maxB = Math.max(...palette.map(e => e.brightness));
-		if (maxB > 0) palette.forEach(e => e.brightness /= maxB);
-		palette.sort((a, b) => a.brightness - b.brightness);
-	}
-
-	function buildBrightnessLookup(containerWidth: number) {
-		targetCellW = containerWidth / COLS;
-
-		brightnessLookup = [];
-		for (let b = 0; b < 256; b++) {
-			const brightness = b / 255;
-			const monoIdx = Math.min(RAMP.length - 1, Math.floor(brightness * RAMP.length));
-			const monoChar = RAMP[monoIdx];
-
-			if (brightness < 0.02 || palette.length === 0) {
-				// Thin space for empty cells — preserves proportional row width
-				brightnessLookup.push({
-					monoChar,
-					propSpan: `<span class="tc" style="display:inline-block;width:${targetCellW.toFixed(2)}px"> </span>`,
-				});
-				continue;
-			}
-
-			// Binary search nearest brightness
-			let lo = 0, hi = palette.length - 1;
-			while (lo < hi) {
-				const mid = (lo + hi) >> 1;
-				if (palette[mid].brightness < brightness) lo = mid + 1;
-				else hi = mid;
-			}
-
-			// Score nearby entries: brightness match + width match
-			let best = palette[lo];
-			let bestScore = Infinity;
-			const start = Math.max(0, lo - 15);
-			const end = Math.min(palette.length, lo + 15);
-			for (let i = start; i < end; i++) {
-				const e = palette[i];
-				const bErr = Math.abs(e.brightness - brightness) * 2.5;
-				const wErr = Math.abs(e.width - targetCellW) / targetCellW;
-				const score = bErr + wErr;
-				if (score < bestScore) { bestScore = score; best = e; }
-			}
-
-			const wClass = best.weight === 300 ? 'w3' : best.weight === 500 ? 'w5' : 'w8';
-			const sClass = best.style === 'italic' ? ' it' : '';
-			const alpha = Math.max(0.15, Math.min(1, brightness));
-			// Pad character into target cell width for consistent row width
-			const pad = Math.max(0, targetCellW - best.width);
-			const padL = pad / 2;
-			const padR = pad - padL;
-
-			brightnessLookup.push({
-				monoChar,
-				propSpan: `<span class="tc ${wClass}${sClass}" style="opacity:${alpha.toFixed(2)};padding-left:${padL.toFixed(1)}px;padding-right:${padR.toFixed(1)}px">${esc(best.char)}</span>`,
-			});
-		}
 	}
 
 	let firstRun = true;
@@ -332,7 +290,6 @@
 
 		initParticles();
 
-		// Initial grid size
 		if (frameRef) {
 			const size = computeGridSize(frameRef);
 			COLS = size.cols;
@@ -340,20 +297,15 @@
 			field = new Float32Array(COLS * ROWS);
 		}
 
-		// Load pretext
+		// Load pretext and build poem grid
 		try {
 			const pretext = await import('@chenglou/pretext');
-			buildPalette(pretext.prepareWithSegments);
-			if (frameRef) {
-				const padPx = parseFloat(getComputedStyle(frameRef).fontSize) || 16;
-				buildBrightnessLookup(frameRef.clientWidth - padPx * 2);
-			}
+			buildPoemGrid(pretext.prepareWithSegments, frameRef?.clientWidth ?? 600);
 			pretextReady = true;
 		} catch (e) {
 			console.warn('pretext not available', e);
 		}
 
-		// Resize observer
 		let ro: ResizeObserver | null = null;
 		if (frameRef) {
 			ro = new ResizeObserver(() => {
@@ -363,19 +315,21 @@
 					COLS = size.cols;
 					ROWS = size.rows;
 					field = new Float32Array(COLS * ROWS);
-				}
-				// Rebuild proportional lookup for new container width
-				if (pretextReady) {
-					const padPx = parseFloat(getComputedStyle(frameRef).fontSize) || 16;
-					buildBrightnessLookup(frameRef.clientWidth - padPx * 2);
+					if (pretextReady) {
+						const pretext = (globalThis as any).__pretextModule;
+						if (pretext) buildPoemGrid(pretext.prepareWithSegments, frameRef.clientWidth);
+					}
 				}
 			});
 			ro.observe(frameRef);
 		}
 
-		// Throttle typo rendering (DOM-heavy) — skip frames
+		// Cache pretext module for resize rebuilds
+		try {
+			(globalThis as any).__pretextModule = await import('@chenglou/pretext');
+		} catch {}
+
 		let typoFrameCount = 0;
-		const TYPO_FRAME_SKIP = 2; // render every 3rd frame in typo mode
 
 		function draw() {
 			const fx = RATIOS[selected][0];
@@ -392,12 +346,13 @@
 				field = new Float32Array(COLS * ROWS);
 			}
 
-			if (vizMode === 'lissajous') {
-				for (let i = 0; i < field.length; i++) field[i] *= LISSAJOUS_DECAY;
-				drawLissajous(field, fx, fy, phase, amp);
-			} else {
+			// Always compute Lissajous field (used by both mono lissajous and typo spotlight)
+			if (renderMode === 'mono' && vizMode === 'chladni') {
 				for (let i = 0; i < field.length; i++) field[i] = 0;
 				drawChladni(field, amp);
+			} else {
+				for (let i = 0; i < field.length; i++) field[i] *= LISSAJOUS_DECAY;
+				drawLissajous(field, fx, fy, phase, amp);
 			}
 
 			if (amp > 0.05) {
@@ -408,8 +363,8 @@
 
 			if (renderMode === 'typo' && pretextReady) {
 				typoFrameCount++;
-				if (typoFrameCount % (TYPO_FRAME_SKIP + 1) === 0) {
-					gridHtml = renderTypographic(field);
+				if (typoFrameCount % 3 === 0) {
+					gridText = renderPoemSpotlight(field);
 				}
 			} else {
 				gridText = renderMonospace(field);
@@ -490,8 +445,7 @@
 			if (migrateTimer > 0) {
 				migrateTimer--;
 				if (migrateTimer < 30) {
-					const t = migrateTimer / 30;
-					settleSpeed = SETTLE_SPEED_BASE + (SETTLE_SPEED_BOOST - SETTLE_SPEED_BASE) * t;
+					settleSpeed = SETTLE_SPEED_BASE + (SETTLE_SPEED_BOOST - SETTLE_SPEED_BASE) * (migrateTimer / 30);
 				}
 				if (migrateTimer === 0) settleSpeed = SETTLE_SPEED_BASE;
 			}
@@ -510,18 +464,14 @@
 				p.x += (Math.random() - 0.5) * JITTER;
 				p.y += (Math.random() - 0.5) * JITTER;
 
-				if (p.x < 0) p.x += TAU;
-				if (p.x > TAU) p.x -= TAU;
-				if (p.y < 0) p.y += TAU;
-				if (p.y > TAU) p.y -= TAU;
+				if (p.x < 0) p.x += TAU; if (p.x > TAU) p.x -= TAU;
+				if (p.y < 0) p.y += TAU; if (p.y > TAU) p.y -= TAU;
 
 				const col = Math.floor((p.x / TAU) * COLS);
 				const row = Math.floor((p.y / TAU) * ROWS);
 				if (col >= 0 && col < COLS && row >= 0 && row < ROWS) {
 					const idx = row * COLS + col;
-					const dist = Math.abs(val);
-					const migrating = migrateTimer > 0;
-					const glow = migrating ? 0.12 + dist * 0.1 : 0.08;
+					const glow = migrateTimer > 0 ? 0.12 + Math.abs(val) * 0.1 : 0.08;
 					field[idx] = Math.min(1, field[idx] + glow);
 				}
 			}
@@ -531,13 +481,8 @@
 
 		let paused = false;
 		function handleVis() {
-			if (document.hidden) {
-				paused = true;
-				cancelAnimationFrame(animId);
-			} else if (paused) {
-				paused = false;
-				animId = requestAnimationFrame(draw);
-			}
+			if (document.hidden) { paused = true; cancelAnimationFrame(animId); }
+			else if (paused) { paused = false; animId = requestAnimationFrame(draw); }
 		}
 		document.addEventListener('visibilitychange', handleVis);
 
@@ -564,14 +509,26 @@
 		return out;
 	}
 
-	function renderTypographic(field: Float32Array): string {
+	function renderPoemSpotlight(field: Float32Array): string {
+		// Build HTML: each row is a div, each char is a span with brightness-driven opacity
 		let html = '';
 		for (let y = 0; y < ROWS; y++) {
-			html += '<div class="tr">';
+			html += '<div class="pr">';
 			for (let x = 0; x < COLS; x++) {
-				const v = field[y * COLS + x];
-				const byte = Math.min(255, Math.floor(v * 255));
-				html += brightnessLookup[byte].propSpan;
+				const cellIdx = y * COLS + x;
+				const charInfo = poemSpanIds[cellIdx];
+				const brightness = field[cellIdx];
+
+				if (charInfo === -1 || charInfo === undefined || !poemChars[charInfo]) {
+					html += '<span class="pc"> </span>';
+					continue;
+				}
+
+				const ch = poemChars[charInfo].char;
+				// Map brightness: dim background → full glow
+				const opacity = POEM_DIM_OPACITY + brightness * (POEM_MAX_OPACITY - POEM_DIM_OPACITY);
+				const glow = brightness > 0.3 ? `text-shadow:0 0 ${(brightness * 8).toFixed(0)}px rgba(194,254,12,${(brightness * 0.6).toFixed(2)})` : '';
+				html += `<span class="pc" style="opacity:${opacity.toFixed(3)}${glow ? ';' + glow : ''}">${esc(ch)}</span>`;
 			}
 			html += '</div>';
 		}
@@ -602,7 +559,7 @@
 		{#if renderMode === 'mono'}
 			<pre class="ascii-grid">{gridText}</pre>
 		{:else}
-			<div class="ascii-grid typo-grid">{@html gridHtml}</div>
+			<div class="ascii-grid poem-grid">{@html gridText}</div>
 		{/if}
 
 		<button class="play-btn" class:playing={isPlaying} onclick={handlePlay} aria-label="Play interval">
@@ -634,20 +591,22 @@
 
 	<footer class="lab-footer">
 		<div class="footer-tags">
-			<button
-				class="hud-tag"
-				class:dimmed={vizMode !== 'lissajous'}
-				onclick={() => vizMode = 'lissajous'}
-			>
-				<span class="toggle-dot" class:on={vizMode === 'lissajous'}></span>LISSAJOUS
-			</button>
-			<button
-				class="hud-tag hud-tag--blue"
-				class:dimmed={vizMode !== 'chladni'}
-				onclick={() => vizMode = 'chladni'}
-			>
-				<span class="toggle-dot" class:on={vizMode === 'chladni'}></span>CHLADNI
-			</button>
+			{#if renderMode === 'mono'}
+				<button
+					class="hud-tag"
+					class:dimmed={vizMode !== 'lissajous'}
+					onclick={() => vizMode = 'lissajous'}
+				>
+					<span class="toggle-dot" class:on={vizMode === 'lissajous'}></span>LISSAJOUS
+				</button>
+				<button
+					class="hud-tag hud-tag--blue"
+					class:dimmed={vizMode !== 'chladni'}
+					onclick={() => vizMode = 'chladni'}
+				>
+					<span class="toggle-dot" class:on={vizMode === 'chladni'}></span>CHLADNI
+				</button>
+			{/if}
 			<span class="footer-sep">·</span>
 			<button
 				class="hud-tag"
@@ -662,10 +621,10 @@
 				onclick={() => { if (pretextReady) renderMode = 'typo'; }}
 				class:unavailable={!pretextReady}
 			>
-				<span class="toggle-dot" class:on={renderMode === 'typo'}></span>TYPO
+				<span class="toggle-dot" class:on={renderMode === 'typo'}></span>POEM
 			</button>
 		</div>
-		<span class="grid-info">{COLS}×{ROWS}{renderMode === 'typo' ? ' · pretext' : ''}</span>
+		<span class="grid-info">{COLS}×{ROWS}{renderMode === 'typo' ? ' · pretext spotlight' : ''}</span>
 	</footer>
 </div>
 
@@ -683,10 +642,7 @@
 		align-items: center;
 	}
 
-	.lab-nav {
-		display: flex;
-		gap: 0.25rem;
-	}
+	.lab-nav { display: flex; gap: 0.25rem; }
 
 	.lab-nav-link {
 		font-family: var(--mono);
@@ -699,23 +655,10 @@
 		transition: all 0.15s ease;
 	}
 
-	.lab-nav-link:hover {
-		border-color: var(--accent);
-		color: var(--text-primary);
-	}
+	.lab-nav-link:hover { border-color: var(--accent); color: var(--text-primary); }
+	.lab-nav-link.active { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
 
-	.lab-nav-link.active {
-		border-color: var(--accent);
-		color: var(--accent);
-		background: var(--accent-dim);
-	}
-
-	.lab-title {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-	}
-
+	.lab-title { display: flex; align-items: center; gap: 0.75rem; }
 	.lab-title h1 {
 		font-family: var(--font-display);
 		font-size: 1.2rem;
@@ -724,40 +667,18 @@
 	}
 
 	.interval-info {
-		position: absolute;
-		top: 0.5rem;
-		left: 0.5rem;
-		z-index: 2;
-		display: flex;
-		flex-direction: column;
-		gap: 0.1rem;
+		position: absolute; top: 0.5rem; left: 0.5rem; z-index: 2;
+		display: flex; flex-direction: column; gap: 0.1rem;
 	}
-
-	.interval-name {
-		font-family: var(--mono);
-		font-size: 0.8rem;
-		color: var(--accent);
-		letter-spacing: 0.05em;
-	}
-
-	.interval-ratio {
-		font-family: var(--mono);
-		font-size: 0.6rem;
-		color: var(--text-secondary);
-		letter-spacing: 0.08em;
-		opacity: 0.7;
-	}
+	.interval-name { font-family: var(--mono); font-size: 0.8rem; color: var(--accent); letter-spacing: 0.05em; }
+	.interval-ratio { font-family: var(--mono); font-size: 0.6rem; color: var(--text-secondary); letter-spacing: 0.08em; opacity: 0.7; }
 
 	.canvas-frame {
-		position: relative;
-		flex: 1;
-		min-height: 0;
+		position: relative; flex: 1; min-height: 0;
 		border: 1px solid var(--border-heavy);
 		background: var(--surface, #000);
 		overflow: hidden;
-		display: flex;
-		align-items: center;
-		justify-content: center;
+		display: flex; align-items: center; justify-content: center;
 	}
 
 	/* Monospace mode */
@@ -767,10 +688,8 @@
 		line-height: 1.15;
 		color: var(--accent);
 		letter-spacing: 0.02em;
-		margin: 0;
-		padding: 1rem;
-		white-space: pre;
-		overflow: hidden;
+		margin: 0; padding: 1rem;
+		white-space: pre; overflow: hidden;
 		text-shadow: 0 0 4px rgba(194, 254, 12, 0.3);
 		background: repeating-linear-gradient(
 			0deg, transparent, transparent 2px,
@@ -778,47 +697,33 @@
 		);
 	}
 
-	/* Typographic / pretext mode */
-	.typo-grid {
+	/* Poem spotlight mode */
+	.poem-grid {
 		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-		font-size: clamp(0.3rem, 1.2vw, 0.55rem);
-		line-height: 1.1;
+		font-size: clamp(0.4rem, 1.3vw, 0.65rem);
+		line-height: 1.35;
 		color: var(--accent);
-		margin: 0;
-		padding: 1rem;
+		margin: 0; padding: 1rem 1.5rem;
 		overflow: hidden;
-		text-shadow: 0 0 5px rgba(194, 254, 12, 0.35);
 		background: repeating-linear-gradient(
 			0deg, transparent, transparent 2px,
-			rgba(0, 0, 0, 0.06) 2px, rgba(0, 0, 0, 0.06) 4px
+			rgba(0, 0, 0, 0.04) 2px, rgba(0, 0, 0, 0.04) 4px
 		);
 	}
 
-	/* Typographic row + cell (rendered via @html) */
-	.typo-grid :global(.tr) {
+	.poem-grid :global(.pr) {
 		white-space: nowrap;
-		height: 1.1em;
 		overflow: hidden;
 	}
 
-	.typo-grid :global(.tc) {
+	.poem-grid :global(.pc) {
 		display: inline;
-		font-size: inherit;
-		line-height: inherit;
+		transition: none;
 	}
 
-	.typo-grid :global(.w3) { font-weight: 300; }
-	.typo-grid :global(.w5) { font-weight: 500; }
-	.typo-grid :global(.w8) { font-weight: 800; }
-	.typo-grid :global(.it) { font-style: italic; }
-
 	.frame-corner {
-		position: absolute;
-		width: 12px;
-		height: 12px;
-		border-color: var(--accent);
-		border-style: solid;
-		opacity: 0.4;
+		position: absolute; width: 12px; height: 12px;
+		border-color: var(--accent); border-style: solid; opacity: 0.4;
 	}
 	.frame-corner.tl { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
 	.frame-corner.tr { top: -1px; right: -1px; border-width: 2px 2px 0 0; }
@@ -826,143 +731,66 @@
 	.frame-corner.br { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
 
 	.selector {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 4px;
-		justify-content: center;
-		margin-top: auto;
+		display: flex; flex-wrap: wrap; gap: 4px;
+		justify-content: center; margin-top: auto;
 	}
 
 	.interval-btn {
 		font-family: 'BPdots', var(--mono);
-		font-size: 1.3rem;
-		font-weight: 900;
-		letter-spacing: 0.03em;
-		text-transform: none;
+		font-size: 1.3rem; font-weight: 900;
+		letter-spacing: 0.03em; text-transform: none;
 		padding: 0.15rem 0.4rem 0.35rem 0.5rem;
 		border: 1px solid var(--border-heavy);
 		color: var(--text-secondary);
 		background: var(--surface);
 		transition: all 0.15s ease;
 		width: calc((100% - 16px) / 5);
-		text-align: center;
-		line-height: 1;
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
+		text-align: center; line-height: 1;
+		display: inline-flex; align-items: center; justify-content: center;
 	}
 
-	.interval-btn:hover {
-		border-color: var(--accent);
-		color: var(--text-primary);
-	}
-
-	.interval-btn.active {
-		border-color: var(--accent);
-		color: var(--accent);
-		background: var(--accent-dim);
-	}
+	.interval-btn:hover { border-color: var(--accent); color: var(--text-primary); }
+	.interval-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
 
 	.lab-footer {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		gap: 0.75rem;
-		margin-bottom: -0.75rem;
-		flex-direction: column;
+		display: flex; align-items: center; justify-content: center;
+		gap: 0.75rem; margin-bottom: -0.75rem; flex-direction: column;
 	}
 
-	.footer-tags {
-		display: flex;
-		gap: 0.35rem;
-		align-items: center;
-	}
+	.footer-tags { display: flex; gap: 0.35rem; align-items: center; }
+	.footer-sep { color: var(--text-secondary); opacity: 0.3; font-size: 0.6rem; }
 
-	.footer-sep {
-		color: var(--text-secondary);
-		opacity: 0.3;
-		font-size: 0.6rem;
-	}
-
-	.footer-tags .hud-tag {
-		cursor: pointer;
-		transition: opacity 0.15s ease;
-	}
-
-	.footer-tags .hud-tag.dimmed {
-		opacity: 0.3;
-	}
-
-	.footer-tags .hud-tag.unavailable {
-		opacity: 0.15;
-		cursor: not-allowed;
-	}
+	.footer-tags .hud-tag { cursor: pointer; transition: opacity 0.15s ease; }
+	.footer-tags .hud-tag.dimmed { opacity: 0.3; }
+	.footer-tags .hud-tag.unavailable { opacity: 0.15; cursor: not-allowed; }
 
 	.toggle-dot {
-		display: inline-block;
-		width: 6px;
-		height: 6px;
-		border-radius: 50%;
-		border: 1px solid currentColor;
-		margin-right: 0.3rem;
-		vertical-align: middle;
+		display: inline-block; width: 6px; height: 6px;
+		border-radius: 50%; border: 1px solid currentColor;
+		margin-right: 0.3rem; vertical-align: middle;
 		transition: all 0.15s ease;
 	}
-
-	.toggle-dot.on {
-		background: currentColor;
-		box-shadow: 0 0 4px currentColor;
-	}
+	.toggle-dot.on { background: currentColor; box-shadow: 0 0 4px currentColor; }
 
 	.grid-info {
-		font-family: var(--mono);
-		font-size: 0.5rem;
-		color: var(--text-secondary);
-		letter-spacing: 0.08em;
-		opacity: 0.4;
+		font-family: var(--mono); font-size: 0.5rem;
+		color: var(--text-secondary); letter-spacing: 0.08em; opacity: 0.4;
 	}
 
-	/* Play button */
 	.play-btn {
-		position: absolute;
-		bottom: 0.75rem;
-		right: 0.75rem;
-		z-index: 2;
-		width: 2.5rem;
-		height: 2.5rem;
-		border-radius: 50%;
+		position: absolute; bottom: 0.75rem; right: 0.75rem; z-index: 2;
+		width: 2.5rem; height: 2.5rem; border-radius: 50%;
 		border: 1px solid var(--accent);
-		background: rgba(0, 0, 0, 0.6);
-		color: var(--accent);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		transition: all 0.15s ease;
-		backdrop-filter: blur(4px);
+		background: rgba(0, 0, 0, 0.6); color: var(--accent);
+		display: flex; align-items: center; justify-content: center;
+		transition: all 0.15s ease; backdrop-filter: blur(4px);
 	}
+	.play-btn:hover { background: rgba(194, 254, 12, 0.15); box-shadow: 0 0 12px rgba(194, 254, 12, 0.3); }
+	.play-btn.playing { border-color: var(--accent); box-shadow: 0 0 16px rgba(194, 254, 12, 0.4); }
 
-	.play-btn:hover {
-		background: rgba(194, 254, 12, 0.15);
-		box-shadow: 0 0 12px rgba(194, 254, 12, 0.3);
-	}
-
-	.play-btn.playing {
-		border-color: var(--accent);
-		box-shadow: 0 0 16px rgba(194, 254, 12, 0.4);
-	}
-
-	.play-icon {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		line-height: 0;
-	}
-
+	.play-icon { display: flex; align-items: center; justify-content: center; line-height: 0; }
 	.play-icon svg { display: block; }
-
-	.play-icon.pulse {
-		animation: pulse-glow 0.6s ease-in-out infinite alternate;
-	}
+	.play-icon.pulse { animation: pulse-glow 0.6s ease-in-out infinite alternate; }
 
 	@keyframes pulse-glow {
 		from { filter: drop-shadow(0 0 4px var(--accent)); }
