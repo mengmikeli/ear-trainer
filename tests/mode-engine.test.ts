@@ -29,22 +29,24 @@ describe('getEnabledModes', () => {
 		expect(getEnabledModes(undefined)).toEqual([]);
 	});
 
-	it('returns empty when all modes are locked', () => {
+	it('returns tier 1 modes on fresh state (Ionian + Aeolian)', () => {
 		const state = createDefaultState();
-		expect(getEnabledModes(state.modes)).toEqual([]);
+		const enabled = getEnabledModes(state.modes);
+		expect(enabled.length).toBe(2);
+		expect(enabled.map(m => m.id).sort()).toEqual(['aeolian', 'ionian']);
 	});
 
-	it('returns unlocked and enabled modes', () => {
+	it('returns all modes when all unlocked', () => {
 		const state = unlockAllModes(createDefaultState());
 		const enabled = getEnabledModes(state.modes);
-		expect(enabled.length).toBe(4);
+		expect(enabled.length).toBe(7);
 	});
 
 	it('excludes disabled modes', () => {
 		const state = unlockAllModes(createDefaultState());
 		state.modes!['dorian'].enabled = false;
 		const enabled = getEnabledModes(state.modes);
-		expect(enabled.length).toBe(3);
+		expect(enabled.length).toBe(6);
 		expect(enabled.find(m => m.id === 'dorian')).toBeUndefined();
 	});
 });
@@ -54,12 +56,6 @@ describe('generateModeDistractors', () => {
 		const distractors = generateModeDistractors('dorian');
 		expect(distractors.length).toBe(3);
 		expect(distractors.every(d => d.id !== 'dorian')).toBe(true);
-	});
-
-	it('returns all other modes when only 3 exist', () => {
-		// 4 modes total - 1 correct = 3 distractors (exactly fills)
-		const distractors = generateModeDistractors('dorian');
-		expect(distractors.length).toBe(3);
 	});
 
 	it('does not include the correct mode', () => {
@@ -83,6 +79,13 @@ describe('generateModeQuestion', () => {
 		expect(question.replays).toBe(0);
 	});
 
+	it('works on fresh state (tier 1 modes only)', () => {
+		const state = createDefaultState();
+		const question = generateModeQuestion(state);
+		expect(question.mode).toBeDefined();
+		expect(['ionian', 'aeolian']).toContain(question.mode.id);
+	});
+
 	it('includes the correct mode in choices', () => {
 		const state = unlockAllModes(createDefaultState());
 		for (let i = 0; i < 20; i++) {
@@ -94,6 +97,9 @@ describe('generateModeQuestion', () => {
 
 	it('throws when no modes are enabled', () => {
 		const state = createDefaultState();
+		// Disable the two tier 1 modes
+		state.modes!['ionian'].enabled = false;
+		state.modes!['aeolian'].enabled = false;
 		expect(() => generateModeQuestion(state)).toThrow('No enabled modes');
 	});
 
@@ -103,7 +109,7 @@ describe('generateModeQuestion', () => {
 		state.modes!['dorian'].attempts = 100;
 		state.modes!['dorian'].correct = 20; // 20% accuracy
 		// Make others strong
-		for (const id of ['mixolydian', 'phrygian', 'lydian']) {
+		for (const id of ['ionian', 'aeolian', 'mixolydian', 'phrygian', 'lydian', 'locrian']) {
 			state.modes![id].attempts = 100;
 			state.modes![id].correct = 95;
 		}
@@ -113,7 +119,7 @@ describe('generateModeQuestion', () => {
 			const q = generateModeQuestion(state);
 			if (q.mode.id === 'dorian') dorianCount++;
 		}
-		// Dorian should appear more than 25% (uniform) of the time
-		expect(dorianCount).toBeGreaterThan(60);
+		// Dorian should appear more than ~14% (uniform 1/7)
+		expect(dorianCount).toBeGreaterThan(40);
 	});
 });

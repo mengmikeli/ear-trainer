@@ -125,10 +125,12 @@ export function createDefaultState(): UserState {
 		scales[def.id] = createDefaultScaleState(def.id, def.tier);
 	}
 
-	// Mode states — all locked initially (unlocked via scale mastery)
+	// Mode states — tier 1 unlocked by default
 	const modes: Record<string, ModeState> = {};
 	for (const def of MODES) {
-		modes[def.id] = createDefaultModeState(def.id);
+		const ms = createDefaultModeState(def.id);
+		ms.unlocked = def.tier === 1;
+		modes[def.id] = ms;
 	}
 
 	return { intervals, chords, scales, modes, settings, stats };
@@ -219,8 +221,13 @@ export function loadState(storage: Storage = localStorage): UserState {
 		// Migrate v3.4 → v3.5: add mode state if missing
 		if (!parsed.modes) {
 			parsed.modes = {};
-			for (const def of MODES) {
-				parsed.modes[def.id] = createDefaultModeState(def.id);
+		}
+		// Ensure all defined modes exist (handles new modes added in updates)
+		for (const def of MODES) {
+			if (!parsed.modes[def.id]) {
+				const ms = createDefaultModeState(def.id);
+				ms.unlocked = def.tier === 1;
+				parsed.modes[def.id] = ms;
 			}
 		}
 

@@ -207,6 +207,7 @@ describe('planSession', () => {
 		for (const s of Object.values(state.intervals)) s.unlocked = false;
 		for (const s of Object.values(state.chords)) s.unlocked = false;
 		for (const s of Object.values(state.scales)) s.unlocked = false;
+		if (state.modes) for (const s of Object.values(state.modes)) s.unlocked = false;
 
 		const config: SessionConfig = {
 			length: 20,
