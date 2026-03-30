@@ -33,6 +33,7 @@
 	let totalQuestions = $state(20);
 	let hasPlayed = $state(false);
 	let needsTap = $state(false);
+	let answerFallback = $state(false);
 	let audioUnlocked = false;
 	let selectedId: string | null = $state(null);
 	let feedbackState: 'correct' | 'wrong' | null = $state(null);
@@ -140,6 +141,8 @@
 		state = loadState();
 		totalQuestions = state.settings.sessionLength;
 		nextQuestion();
+		// Fallback: ensure answer buttons visible even if audio init fails
+		setTimeout(() => { answerFallback = true; }, 1500);
 
 		// Re-check audio on background resume (iOS suspends AudioContext)
 		const onVisible = () => {
@@ -587,7 +590,7 @@
 			</button>
 		</VizQuizLayout>
 
-		<div class="answer-area" class:hidden={!hasPlayed && !needsTap}>
+		<div class="answer-area" class:hidden={!hasPlayed && !needsTap && !answerFallback}>
 			<AnswerGrid
 				choices={needsTap ? question.choices.map(c => ({ ...c, label: 'NA', name: 'UNAVAILABLE' })) : question.choices.map(c => ({ id: c.id, name: c.name, label: c.label }))}
 				onselect={selectAnswer}
