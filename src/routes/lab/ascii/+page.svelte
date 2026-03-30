@@ -72,11 +72,13 @@
 	let field = new Float32Array(COLS * ROWS);
 
 	// --- Poem reflow state ---
-	const POEM = `Do you know how the air trembles when a string is touched? How the room fills with a shape you cannot see but feel behind your ribs, a curve that bends the silence into something almost like a name? Listen — the interval between two notes is not emptiness. It is the distance a wave must travel to become its own reflection, the breath held between recognition and surprise. Every fifth is a cathedral door swung wide. Every minor second, a whisper pressed against the ear. The octave is the self returned, older, knowing what it knew before but hearing it as if for the first time. And the tritone — restless, unstable — is the question music asks when it has forgotten how to end. So when you listen, do not count the semitones. Feel the geometry — the spirals and the intersections, the places where two frequencies agree to build a momentary room and then, just as gently, let it go.`;
+	const POEM_BASE = `Do you know how the air trembles when a string is touched? How the room fills with a shape you cannot see but feel behind your ribs, a curve that bends the silence into something almost like a name? Listen — the interval between two notes is not emptiness. It is the distance a wave must travel to become its own reflection, the breath held between recognition and surprise. Every fifth is a cathedral door swung wide. Every minor second, a whisper pressed against the ear. The octave is the self returned, older, knowing what it knew before but hearing it as if for the first time. And the tritone — restless, unstable — is the question music asks when it has forgotten how to end. So when you listen, do not count the semitones. Feel the geometry — the spirals and the intersections, the places where two frequencies agree to build a momentary room and then, just as gently, let it go.`;
+	// Repeat poem to fill dense grid
+	const POEM = (POEM_BASE + ' · ').repeat(6);
 
-	const PROP_FONT = '400 16px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-	const LINE_HEIGHT = 24; // px
-	const CURVE_MARGIN = 14; // px gap between curve and text
+	const PROP_FONT = '400 9px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+	const LINE_HEIGHT = 12; // px
+	const CURVE_MARGIN = 8; // px gap between curve and text
 	let poemHtml = $state('');
 	let pretextModule: any = null;
 	let preparedPoem: any = null;
@@ -339,7 +341,7 @@
 			if (!frameRef || !curveCanvas || !preparedPoem || !pretextModule) return;
 
 			const container = frameRef;
-			const pad = 24; // match CSS padding
+			const pad = 12; // match CSS padding
 			const w = container.clientWidth - pad * 2;
 			const h = container.clientHeight - pad * 2;
 			if (w <= 0 || h <= 0) return;
@@ -640,13 +642,13 @@
 	/* Poem reflow text layer */
 	.poem-reflow {
 		position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-		padding: 24px;
+		padding: 12px;
 		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-		font-size: 16px;
-		line-height: 24px;
+		font-size: 9px;
+		line-height: 12px;
 		color: var(--accent);
 		overflow: hidden;
-		opacity: 0.85;
+		opacity: 0.9;
 	}
 
 	.poem-reflow :global(.pl) {
