@@ -1,4 +1,6 @@
 export const APP_VERSION = '3.5';
+export const __BUILD_HASH__ = (globalThis as any).__BUILD_HASH__ ?? '';
+export const VERSION_STRING = __BUILD_HASH__ ? `${APP_VERSION} (${__BUILD_HASH__})` : APP_VERSION;
 
 export interface ReleaseNote {
 	version: string;
