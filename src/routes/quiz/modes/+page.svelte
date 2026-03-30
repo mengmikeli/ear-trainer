@@ -143,12 +143,18 @@
 
 		// Re-check audio on background resume (iOS suspends AudioContext)
 		const onVisible = () => {
-			if (document.visibilityState === 'visible' && !isAudioReady()) {
+			if (document.visibilityState === 'hidden') {
+				// Stop drone immediately when app goes to background
+				stopDrone();
+				drone = null;
+				isPlaying = false;
+				playingNotes = [];
+				noteTimeouts.forEach(clearTimeout);
+				noteTimeouts = [];
+			} else if (document.visibilityState === 'visible' && !isAudioReady()) {
 				audioUnlocked = false;
 				needsTap = true;
 				stopAudio();
-				stopDrone();
-				drone = null;
 				isPlaying = false;
 				playingNotes = [];
 			}
@@ -330,9 +336,8 @@
 	}
 
 	function toggleDroneMute() {
-		if (!drone) return;
 		droneMuted = !droneMuted;
-		drone.setMuted(droneMuted);
+		if (drone) drone.setMuted(droneMuted);
 	}
 
 	function selectAnswer(choice: { id: string; name: string }) {
@@ -554,10 +559,9 @@
 		</div>
 		<div class="top-controls">
 			<button class="close exit" onclick={endEarly}>EXIT</button>
-			<span class="mode-icon">MODE</span>
 			<div class="top-right">
 				<button class="drone-toggle" class:active={!droneMuted} onclick={toggleDroneMute}>
-					{droneMuted ? 'DRN' : 'DRN'}
+					{droneMuted ? 'DRN ✕' : 'DRN ✓'}
 				</button>
 				<span class="counter">{String(questionNum).padStart(2, '0')}/{String(totalQuestions).padStart(2, '0')}</span>
 			</div>
