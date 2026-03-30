@@ -61,9 +61,10 @@
 		return 60;
 	});
 
-	const itemName = $derived(getItemDisplayName(item));
+	const sameDefId = $derived(neighbor?.defId === item.defId);
+	const itemName = $derived(getItemDisplayName(item) + (sameDefId && item.variant ? ` (${item.variant})` : ''));
 	const itemLabel = $derived(getItemLabel(item));
-	const neighborName = $derived(neighbor ? getItemDisplayName(neighbor) : '');
+	const neighborName = $derived(neighbor ? getItemDisplayName(neighbor) + (sameDefId && neighbor.variant ? ` (${neighbor.variant})` : '') : '');
 	const neighborLabel = $derived(neighbor ? getItemLabel(neighbor) : '');
 
 	// Connection description between item and neighbor
