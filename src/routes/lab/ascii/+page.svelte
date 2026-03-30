@@ -77,6 +77,9 @@
 	let chladniM = 1;
 	let chladniTimer: ReturnType<typeof setTimeout> | null = null;
 
+	// Current field — reallocated on resize
+	let field = new Float32Array(COLS * ROWS);
+
 	function midiToChladniMode(midi: number): [number, number] {
 		const note = midi % 12;
 		const modes: [number, number][] = [
@@ -145,6 +148,34 @@
 		setTimeout(() => { if (thisGen === playGeneration) isPlaying = false; }, 2000);
 	}
 
+	// --- Grid measurement ---
+	function measureCharCell(container: HTMLElement): { charW: number; charH: number } {
+		const probe = document.createElement('pre');
+		probe.style.cssText = `
+			position: absolute; visibility: hidden; white-space: pre;
+			font-family: 'Matrix Mono', 'JetBrains Mono', 'Fira Code', monospace;
+			font-size: ${getComputedStyle(container).fontSize || '10px'};
+			line-height: 1.15; letter-spacing: 0.02em; padding: 0; margin: 0;
+		`;
+		probe.textContent = 'M';
+		container.appendChild(probe);
+		const rect = probe.getBoundingClientRect();
+		container.removeChild(probe);
+		return { charW: rect.width, charH: rect.height };
+	}
+
+	function computeGridSize(container: HTMLElement): { cols: number; rows: number } {
+		const { charW, charH } = measureCharCell(container);
+		if (charW <= 0 || charH <= 0) return { cols: 80, rows: 40 };
+		const style = getComputedStyle(container);
+		const padPx = parseFloat(style.fontSize) || 16;
+		const availW = container.clientWidth - padPx * 2;
+		const availH = container.clientHeight - padPx * 2;
+		const cols = Math.min(MAX_COLS, Math.max(20, Math.floor(availW / charW)));
+		const rows = Math.min(MAX_ROWS, Math.max(10, Math.floor(availH / charH)));
+		return { cols, rows };
+	}
+
 	let firstRun = true;
 	$effect(() => {
 		const _ = selected;
@@ -168,12 +199,32 @@
 	onMount(() => {
 		let phase = 0;
 		let animId: number;
-
-		// Brightness field
-		const field = new Float32Array(COLS * ROWS);
 		const LISSAJOUS_DECAY = 0.88;
 
 		initParticles();
+
+		// Initial grid size from container
+		if (frameRef) {
+			const size = computeGridSize(frameRef);
+			COLS = size.cols;
+			ROWS = size.rows;
+			field = new Float32Array(COLS * ROWS);
+		}
+
+		// Resize observer — recompute grid on container size change
+		let ro: ResizeObserver | null = null;
+		if (frameRef) {
+			ro = new ResizeObserver(() => {
+				if (!frameRef) return;
+				const size = computeGridSize(frameRef);
+				if (size.cols !== COLS || size.rows !== ROWS) {
+					COLS = size.cols;
+					ROWS = size.rows;
+					field = new Float32Array(COLS * ROWS);
+				}
+			});
+			ro.observe(frameRef);
+		}
 
 		function draw() {
 			const fx = RATIOS[selected][0];
@@ -186,6 +237,11 @@
 				amplitude *= 0.95;
 			}
 			const amp = Math.min(1, amplitude * 3);
+
+			// Ensure field matches current grid
+			if (field.length !== COLS * ROWS) {
+				field = new Float32Array(COLS * ROWS);
+			}
 
 			// Clear field
 			if (vizMode === 'lissajous') {
@@ -346,6 +402,7 @@
 		return () => {
 			cancelAnimationFrame(animId);
 			document.removeEventListener('visibilitychange', handleVis);
+			if (ro) ro.disconnect();
 			analyserRef = null;
 			dataArrayRef = null;
 			stopAudio();
@@ -380,7 +437,7 @@
 		</nav>
 	</header>
 
-	<div class="canvas-frame">
+	<div class="canvas-frame" bind:this={frameRef}>
 		<div class="interval-info">
 			<span class="interval-name">{intervalName}</span>
 			<span class="interval-ratio">{ratioLabel}</span>
