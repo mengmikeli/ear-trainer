@@ -6,6 +6,10 @@
 	import { generateModeQuestion } from '$lib/engine';
 	import { playScale, playFeedbackChime, startDrone, stopDrone, type DroneHandle } from '$lib/audio';
 	import { responseQuality, calculateSm2 } from '$lib/sm2';
+	import {
+		needsLearnCard, findNeighbor, buildAllItems, recordAdaptiveAnswer,
+		type ContentItem,
+	} from '$lib/adaptive';
 	import type { UserState, ModeQuestion } from '$lib/types';
 	import type { ModeDef } from '$lib/modes';
 	import { MODES } from '$lib/modes';
@@ -13,6 +17,7 @@
 	import AnswerGrid from '../../../components/AnswerGrid.svelte';
 	import ProgressBar from '../../../components/ProgressBar.svelte';
 	import TelemetryBar from '../../../components/TelemetryBar.svelte';
+	import LearnCard from '../../../components/LearnCard.svelte';
 
 	const TEMPO = 180; // ms per note — slightly slower than scales for clarity over drone
 
@@ -40,6 +45,11 @@
 	let rafId: number | null = null;
 	let isGlitching = $state(false);
 	let correctTimeout: ReturnType<typeof setTimeout> | null = null;
+
+	// Learn card state
+	let isLearnPhase = $state(false);
+	let learnItem: ContentItem | null = $state(null);
+	let learnNeighbor: ContentItem | null = $state(null);
 
 	let showSummary = $state(false);
 	let results: QuestionResult[] = $state([]);
@@ -71,14 +81,43 @@
 			return;
 		}
 
-		isGlitching = true;
 		feedbackState = null;
 		abPlaying = null;
 		questionNum++;
 
+		const nextQ = generateModeQuestion(state);
+		const stats = state.adaptive?.stats ?? {};
+		const adaptiveId = `mode:${nextQ.mode.id}`;
+		const devMode = state.settings.devMode ?? false;
+
+		if (needsLearnCard(adaptiveId, stats, devMode)) {
+			isLearnPhase = true;
+			isGlitching = false;
+			learnItem = {
+				kind: 'mode',
+				id: adaptiveId,
+				defId: nextQ.mode.id,
+				tier: nextQ.mode.tier,
+				category: 'mode',
+			};
+			const allItems = buildAllItems(state);
+			learnNeighbor = findNeighbor(learnItem, allItems, stats);
+			question = nextQ;
+			inResultMode = false;
+			hasPlayed = false;
+			selectedId = null;
+			// Stop drone — LearnCard manages its own
+			stopDrone();
+			drone = null;
+			return;
+		}
+
+		isLearnPhase = false;
+		isGlitching = true;
+
 		requestAnimationFrame(() => {
 			inResultMode = false;
-			question = generateModeQuestion(state!);
+			question = nextQ;
 			hasPlayed = false;
 			selectedId = null;
 			countdownPct = 1.0;
@@ -94,7 +133,28 @@
 		setTimeout(() => {
 			isGlitching = false;
 			play();
-		}, 1200); // longer delay — let drone establish before playing mode
+		}, 1200);
+	}
+
+	function handleLearnComplete(correct: boolean) {
+		if (!state || !learnItem) return;
+
+		recordAdaptiveAnswer(state, learnItem.id, {
+			correct,
+			replays: 0,
+			responseTimeMs: 0,
+		});
+
+		if (state.adaptive?.stats[learnItem.id]) {
+			state.adaptive.stats[learnItem.id].nextReview = Date.now() + 5 * 60 * 1000;
+		}
+
+		state = checkTierUnlock(state);
+		state.stats.totalQuestions++;
+		saveState(state);
+
+		isLearnPhase = false;
+		nextQuestion();
 	}
 
 	function play() {
@@ -357,7 +417,16 @@
 		</div>
 	</div>
 
-	{#if question}
+	{#if question && isLearnPhase && learnItem}
+		<div class="learn-area">
+			<LearnCard
+				item={learnItem}
+				neighbor={learnNeighbor}
+				{state}
+				onComplete={handleLearnComplete}
+			/>
+		</div>
+	{:else if question}
 		<div class="play-area">
 			<PlayButton
 				onplay={hasPlayed && inResultMode ? replayInResult : play}
@@ -408,6 +477,15 @@
 {/if}
 
 <style>
+	.learn-area {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		flex: 1;
+		justify-content: center;
+		width: 100%;
+		padding: 0 1rem;
+	}
 	.quiz {
 		display: flex;
 		flex-direction: column;

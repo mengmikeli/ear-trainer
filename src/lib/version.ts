@@ -1,4 +1,4 @@
-export const APP_VERSION = '3.6.0';
+export const APP_VERSION = '3.7.0';
 
 /**
  * Git commit hash injected at build time via vite.config.ts define.
@@ -20,6 +20,20 @@ export interface ReleaseNote {
 }
 
 export const RELEASE_NOTES: ReleaseNote[] = [
+	{
+		version: '3.7.0',
+		date: '2026-03-30',
+		title: 'LEARN LAYER',
+		changes: [
+			'Learn cards — 4-step micro-lesson for every new content item (Hear → Compare → Quiz → Done)',
+			'A/B comparison with closest practiced neighbor item',
+			'Connection text during Compare step — surfaces interval/chord/scale relationships',
+			'Cold start intro sequence — P1 → P8 → P5 for brand-new users',
+			'Smart session planner integrates learn phase (max 3 per session)',
+			'Learn cards in all quiz routes — intervals, chords, scales, modes, adaptive',
+			'Debrief shows count of new items learned',
+		],
+	},
 	{
 		version: '3.6.0',
 		date: '2026-03-30',
