@@ -13,11 +13,11 @@
 	import type { UserState, ModeQuestion } from '$lib/types';
 	import type { ModeDef } from '$lib/modes';
 	import { MODES } from '$lib/modes';
-	import PlayButton from '../../../components/PlayButton.svelte';
 	import AnswerGrid from '../../../components/AnswerGrid.svelte';
 	import ProgressBar from '../../../components/ProgressBar.svelte';
 	import TelemetryBar from '../../../components/TelemetryBar.svelte';
 	import LearnCard from '../../../components/LearnCard.svelte';
+	import VizQuizLayout from '../../../components/VizQuizLayout.svelte';
 
 	const TEMPO = 180; // ms per note — slightly slower than scales for clarity over drone
 
@@ -62,6 +62,74 @@
 	// A/B comparison state (for wrong answers)
 	let abPlaying: string | null = $state(null);
 
+	// Viz phase — maps quiz state to VizQuizLayout phase
+	const vizPhase = $derived.by((): 'rest' | 'playing' | 'correct' | 'wrong' | 'transition' => {
+		if (isGlitching) return 'transition';
+		if (feedbackState === 'correct') return 'correct';
+		if (feedbackState === 'wrong') return 'wrong';
+		if (isPlaying) return 'playing';
+		return 'rest';
+	});
+
+	function handleTransitionEnd() {}
+
+	let playingNotes: number[] = $state([]);
+	let noteTimeouts: ReturnType<typeof setTimeout>[] = [];
+
+	// Per-note bounce
+	let bounceStartTime = 0;
+	let bounceDuration = 0;
+	let bounceAnimId = 0;
+	let playBtnEl: HTMLButtonElement | undefined = $state();
+	function triggerBounce(sustained = false) {
+		bounceStartTime = performance.now();
+		bounceDuration = sustained ? 1200 : 300;
+		if (!bounceAnimId) bounceLoop();
+	}
+	function bounceLoop() {
+		const elapsed = performance.now() - bounceStartTime;
+		if (elapsed < bounceDuration && playBtnEl) {
+			const t = elapsed / bounceDuration;
+			const scale = 1 + 0.06 * Math.cos(40 * t) * Math.exp(-4 * t);
+			playBtnEl.style.transform = `scale(${scale})`;
+			bounceAnimId = requestAnimationFrame(bounceLoop);
+		} else {
+			if (playBtnEl) playBtnEl.style.transform = '';
+			bounceAnimId = 0;
+		}
+	}
+
+	// Glitch text
+	const glitchChars = ['\uE000', '\uE001', '\uE002', '\uE003', '\uE004', '\uE005', '\uE006', '\uE007', '\uE008', '\uE010', '\uE017'];
+	let glitchText = $state('');
+	let glitchStartTime = 0;
+	$effect(() => {
+		const shouldGlitch = isGlitching || feedbackState === 'wrong' || feedbackState === 'correct';
+		if (shouldGlitch) {
+			glitchStartTime = Date.now();
+			const realText = `Q${questionNum}`;
+			const id = setInterval(() => {
+				const elapsed = Date.now() - glitchStartTime;
+				const settleBias = Math.min(1, elapsed / 600);
+				if (Math.random() < settleBias * 0.7) {
+					glitchText = realText;
+				} else {
+					const len = 1 + Math.floor(Math.random() * 3);
+					let t = '';
+					for (let i = 0; i < len; i++) {
+						t += Math.random() < 0.3 ? realText[Math.floor(Math.random() * realText.length)] : glitchChars[Math.floor(Math.random() * glitchChars.length)];
+					}
+					glitchText = t;
+				}
+			}, 50);
+			return () => { clearInterval(id); glitchText = ''; };
+		} else {
+			glitchText = '';
+		}
+	});
+	const showGlitch = $derived(isGlitching || feedbackState === 'wrong' || feedbackState === 'correct');
+	const displayText = $derived(glitchText || `Q${questionNum}`);
+
 	onMount(() => {
 		state = loadState();
 		totalQuestions = state.settings.sessionLength;
@@ -71,10 +139,13 @@
 	onDestroy(() => {
 		stopDrone();
 		if (rafId) cancelAnimationFrame(rafId);
+		noteTimeouts.forEach(clearTimeout);
 	});
 
 	function nextQuestion() {
 		if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+		noteTimeouts.forEach(clearTimeout);
+		noteTimeouts = [];
 		if (!state) return;
 		if (questionNum >= totalQuestions) {
 			finishSession();
@@ -83,6 +154,8 @@
 
 		feedbackState = null;
 		abPlaying = null;
+		isPlaying = false;
+		playingNotes = [];
 		questionNum++;
 
 		const nextQ = generateModeQuestion(state);
@@ -159,6 +232,10 @@
 
 	function play() {
 		if (!question || !state) return;
+		// Clear pending note timeouts
+		noteTimeouts.forEach(clearTimeout);
+		noteTimeouts = [];
+
 		playScale(
 			question.rootNote,
 			question.mode.intervals,
@@ -173,7 +250,14 @@
 		}
 		isPlaying = true;
 		const dur = question.mode.intervals.length * TEMPO + 400;
-		setTimeout(() => { isPlaying = false; }, dur);
+
+		// Sync Chladni with mode notes
+		question.mode.intervals.forEach((semitone: number, i: number) => {
+			noteTimeouts.push(setTimeout(() => {
+				playingNotes = [question!.rootNote + semitone]; triggerBounce();
+			}, i * TEMPO));
+		});
+		noteTimeouts.push(setTimeout(() => { isPlaying = false; playingNotes = []; }, dur));
 	}
 
 	function playAB(modeId: string) {
@@ -429,19 +513,22 @@
 			{/key}
 		</div>
 	{:else if question}
-		<div class="play-area">
-			<PlayButton
-				onplay={hasPlayed && inResultMode ? replayInResult : play}
-				replaying={hasPlayed}
-				playing={isPlaying}
-				noBorder={hasPlayed && inResultMode}
-				questionNum={questionNum}
-				countdownPct={hasPlayed && inResultMode ? countdownPct : -1}
-				glitching={isGlitching}
-				feedback={feedbackState}
-				semitones={0}
-			/>
-		</div>
+		<VizQuizLayout
+			superchargeViz={state?.settings?.superchargeViz}
+			mode="scale"
+			phase={vizPhase}
+			scaleIntervals={question.mode.intervals}
+			countdownPct={hasPlayed && inResultMode ? countdownPct : -1}
+			ontransitionend={handleTransitionEnd}
+			{playingNotes}
+		>
+			<button bind:this={playBtnEl} class="play-tap" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} onclick={hasPlayed && inResultMode ? replayInResult : play}>
+				<div class="orbit-track"><div class="orbit-dot"></div></div>
+				<span class="q-text" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} class:glitch-text={showGlitch}>
+					{displayText}
+				</span>
+			</button>
+		</VizQuizLayout>
 
 		<div class="answer-area" class:hidden={!hasPlayed}>
 			{#if inResultMode && selectedId}
@@ -573,14 +660,37 @@
 		color: var(--hot);
 		border-color: var(--hot);
 	}
-	.play-area {
+	.play-tap {
+		position: relative;
+		width: min(40vw, 160px);
+		height: min(40vw, 160px);
+		border-radius: 50%;
+		background: transparent;
+		border: 1.5px solid var(--accent);
+		box-shadow: 0 0 8px rgba(194, 254, 12, 0.3);
 		display: flex;
-		flex-direction: column;
 		align-items: center;
-		gap: 1rem;
-		flex: 1;
 		justify-content: center;
+		cursor: pointer;
+		-webkit-tap-highlight-color: transparent;
 	}
+	.play-tap.feedback-correct { background: var(--correct); border-color: var(--correct); box-shadow: 0 0 12px var(--correct); }
+	.play-tap.feedback-wrong { background: var(--hot); border-color: var(--hot); box-shadow: 0 0 12px var(--hot); transition: none; }
+	.play-tap:active { transform: scale(0.95); }
+	.orbit-track { position: absolute; inset: 0; border-radius: 50%; animation: orbit 7s linear infinite; pointer-events: none; }
+	.orbit-dot { position: absolute; top: -3px; left: 50%; transform: translateX(-50%); width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+	.play-tap.feedback-wrong .orbit-dot { background: var(--hot); box-shadow: 0 0 6px var(--hot); }
+	@keyframes orbit { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+	.q-text {
+		font-family: var(--mono);
+		font-size: 2rem;
+		font-weight: 700;
+		letter-spacing: 0.05em;
+		color: var(--accent);
+	}
+	.q-text.feedback-correct { color: var(--base); transition: none; }
+	.q-text.feedback-wrong { color: var(--base); transition: none; }
+	.q-text.glitch-text { /* clean glyph cycling */ }
 	.answer-area {
 		width: 100%;
 	}
