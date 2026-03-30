@@ -4,7 +4,7 @@
 	import { base } from '$app/paths';
 	import { loadState, saveState, checkTierUnlock } from '$lib/state';
 	import { generateModeQuestion } from '$lib/engine';
-	import { playScale, playFeedbackChime, startDrone, stopDrone, ensureResumed, isAudioReady, stopAudio, suspendAudio, type DroneHandle } from '$lib/audio';
+	import { playScale, playFeedbackChime, startDrone, stopDrone, forceStopDrone, ensureResumed, isAudioReady, stopAudio, suspendAudio, type DroneHandle } from '$lib/audio';
 	import { responseQuality, calculateSm2 } from '$lib/sm2';
 	import {
 		needsLearnCard, findNeighbor, buildAllItems, recordAdaptiveAnswer,
@@ -144,8 +144,8 @@
 		// Re-check audio on background resume (iOS suspends AudioContext)
 		const onVisible = () => {
 			if (document.visibilityState === 'hidden') {
-				// Stop drone immediately when app goes to background
-				stopDrone();
+				// Force-kill drone immediately when app goes to background
+				forceStopDrone();
 				drone = null;
 				isPlaying = false;
 				playingNotes = [];
@@ -171,15 +171,17 @@
 	});
 
 	onDestroy(() => {
-		stopDrone();
+		forceStopDrone();
 		if (rafId) cancelAnimationFrame(rafId);
 		noteTimeouts.forEach(clearTimeout);
 	});
 
 	// Ensure drone stops on client-side navigation (onDestroy alone isn't reliable in SvelteKit)
 	beforeNavigate(() => {
-		stopDrone();
+		forceStopDrone();
 		noteTimeouts.forEach(clearTimeout);
+		noteTimeouts = [];
+		stopAudio(); // Kill ALL audio — drone + any scheduled mode notes
 	});
 
 	function nextQuestion() {
