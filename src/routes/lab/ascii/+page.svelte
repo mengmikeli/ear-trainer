@@ -17,7 +17,7 @@
 	// Grid dimensions — computed on mount from container size
 	let COLS = $state(80);
 	let ROWS = $state(40);
-	const CELL_ASPECT = 0.48;
+	let cellAspect = 0.48; // updated dynamically from measured char cell
 	const MAX_COLS = 120;
 	const MAX_ROWS = 80;
 
@@ -179,13 +179,17 @@
 		probe.style.cssText = `
 			position: absolute; visibility: hidden; white-space: pre;
 			font-family: 'Matrix Mono', 'JetBrains Mono', 'Fira Code', monospace;
-			font-size: ${getComputedStyle(container).fontSize || '10px'};
+			font-size: clamp(0.35rem, 1.4vw, 0.7rem);
 			line-height: 1.15; letter-spacing: 0.02em; padding: 0; margin: 0;
 		`;
 		probe.textContent = 'M';
 		container.appendChild(probe);
 		const rect = probe.getBoundingClientRect();
 		container.removeChild(probe);
+		// Update aspect ratio from actual measured cell
+		if (rect.width > 0 && rect.height > 0) {
+			cellAspect = rect.width / rect.height;
+		}
 		return { charW: rect.width, charH: rect.height };
 	}
 
@@ -420,9 +424,9 @@
 			const drawFx = 1 + (fx - 1) * morphT;
 			const drawFy = 1 + (fy - 1) * morphT;
 
-			const maxR = Math.min(COLS, ROWS / CELL_ASPECT) / 2 - 1;
+			const maxR = Math.min(COLS, ROWS / cellAspect) / 2 - 1;
 			const radiusX = maxR;
-			const radiusY = maxR * CELL_ASPECT;
+			const radiusY = maxR * cellAspect;
 			const cx = COLS / 2;
 			const cy = ROWS / 2;
 
@@ -777,7 +781,7 @@
 	/* Typographic / pretext mode */
 	.typo-grid {
 		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-		font-size: 14px;
+		font-size: clamp(0.3rem, 1.2vw, 0.55rem);
 		line-height: 1.1;
 		color: var(--accent);
 		margin: 0;
