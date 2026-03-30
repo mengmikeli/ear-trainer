@@ -92,6 +92,39 @@ describe('findNeighbor', () => {
 		expect(neighbor).toBeNull();
 	});
 
+	it('prefers different defId over same defId with different variant', () => {
+		const newItem = makeItem('interval', 'P5', 'descending');
+		const allItems = [
+			newItem,
+			makeItem('interval', 'P5', 'ascending'),  // same defId, different variant
+			makeItem('interval', 'P4', 'ascending'),   // different defId, close distance
+		];
+		const stats: Record<string, ContentStats> = {
+			'interval:P5:ascending': makeStats(10, 8),
+			'interval:P4:ascending': makeStats(5, 4),
+		};
+
+		const neighbor = findNeighbor(newItem, allItems, stats);
+		expect(neighbor).not.toBeNull();
+		// Should pick P4 (different defId) over P5 ascending (same defId)
+		expect(neighbor!.defId).toBe('P4');
+	});
+
+	it('falls back to same defId if no different defId neighbor exists', () => {
+		const newItem = makeItem('interval', 'P5', 'descending');
+		const allItems = [
+			newItem,
+			makeItem('interval', 'P5', 'ascending'),
+		];
+		const stats: Record<string, ContentStats> = {
+			'interval:P5:ascending': makeStats(10, 8),
+		};
+
+		const neighbor = findNeighbor(newItem, allItems, stats);
+		expect(neighbor).not.toBeNull();
+		expect(neighbor!.defId).toBe('P5'); // only option
+	});
+
 	it('finds chord neighbors by shared intervals', () => {
 		const newItem = makeItem('chord', 'min', 'root');
 		const allItems = [

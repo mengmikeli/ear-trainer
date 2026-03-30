@@ -225,12 +225,18 @@ export function findNeighbor(
 	if (practiced.length === 0) return null;
 
 	// Score by musical similarity (lower distance = more similar)
+	// Prefer different defId — comparing P5 vs P4 is more useful than P5 ascending vs P5 descending
 	const scored = practiced.map(item => ({
 		item,
 		distance: getMusicalDistance(newItem, item),
+		sameDefId: item.defId === newItem.defId,
 	}));
 
-	scored.sort((a, b) => a.distance - b.distance);
+	scored.sort((a, b) => {
+		// Different defId always wins over same defId at equal distance
+		if (a.sameDefId !== b.sameDefId) return a.sameDefId ? 1 : -1;
+		return a.distance - b.distance;
+	});
 	return scored[0].item;
 }
 
