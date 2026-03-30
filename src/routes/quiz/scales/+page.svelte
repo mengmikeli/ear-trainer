@@ -31,7 +31,6 @@
 	let totalQuestions = $state(20);
 	let hasPlayed = $state(false);
 	let needsTap = $state(false);
-	let answerFallback = $state(false);
 	let audioUnlocked = false;
 	let selectedId: string | null = $state(null);
 	let feedbackState: 'correct' | 'wrong' | null = $state(null);
@@ -524,7 +523,7 @@
 			</button>
 		</VizQuizLayout>
 
-		<div class="answer-area" class:hidden={!hasPlayed && !needsTap && !answerFallback}>
+		<div class="answer-area" class:hidden={!hasPlayed && !needsTap}>
 			<AnswerGrid
 				choices={needsTap ? question.choices.map(c => ({ ...c, label: 'NA', name: 'UNAVAILABLE' })) : question.choices}
 				onselect={selectAnswer}
