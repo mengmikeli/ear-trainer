@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import { goto } from '$app/navigation';
+	import { goto, beforeNavigate } from '$app/navigation';
 	import { base } from '$app/paths';
 	import { loadState, saveState, checkTierUnlock } from '$lib/state';
 	import { generateModeQuestion } from '$lib/engine';
@@ -167,6 +167,12 @@
 	onDestroy(() => {
 		stopDrone();
 		if (rafId) cancelAnimationFrame(rafId);
+		noteTimeouts.forEach(clearTimeout);
+	});
+
+	// Ensure drone stops on client-side navigation (onDestroy alone isn't reliable in SvelteKit)
+	beforeNavigate(() => {
+		stopDrone();
 		noteTimeouts.forEach(clearTimeout);
 	});
 
