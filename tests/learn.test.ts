@@ -167,13 +167,22 @@ describe('findNeighbor', () => {
 });
 
 describe('needsLearnCard', () => {
-	it('returns true for items with no attempts', () => {
-		expect(needsLearnCard('interval:P5:ascending', {})).toBe(true);
+	const practicedStats = {
+		'interval:P1:ascending': makeStats(5, 4),
+		'interval:P5:ascending': makeStats(5, 3),
+		'interval:P8:ascending': makeStats(5, 4),
+	};
+
+	it('always returns false (learn cards disabled)', () => {
+		expect(needsLearnCard('interval:M3:ascending', practicedStats)).toBe(false);
+		const stats = { ...practicedStats, 'interval:M3:ascending': makeStats(0, 0) };
+		expect(needsLearnCard('interval:M3:ascending', stats)).toBe(false);
 	});
 
-	it('returns true for items with explicit zero attempts', () => {
-		const stats = { 'interval:P5:ascending': makeStats(0, 0) };
-		expect(needsLearnCard('interval:P5:ascending', stats)).toBe(true);
+	it('returns false on cold start (fewer than 3 practiced items)', () => {
+		expect(needsLearnCard('interval:P5:ascending', {})).toBe(false);
+		const fewStats = { 'interval:P1:ascending': makeStats(5, 4) };
+		expect(needsLearnCard('interval:P5:ascending', fewStats)).toBe(false);
 	});
 
 	it('returns false for items with attempts > 0', () => {
