@@ -4,11 +4,13 @@
 	import { INTERVALS } from '$lib/intervals';
 	import { CHORDS } from '$lib/chords';
 	import { SCALES } from '$lib/scales';
+	import { MODES } from '$lib/modes';
 	import { playInterval, playChord, playScale } from '$lib/audio';
 	import { isModeMastered } from '$lib/mastery';
 	import IntervalCard from '../../components/IntervalCard.svelte';
 	import ChordCard from '../../components/ChordCard.svelte';
 	import ScaleCard from '../../components/ScaleCard.svelte';
+	import ModeCard from '../../components/ModeCard.svelte';
 	import TelemetryBar from '../../components/TelemetryBar.svelte';
 	import type { UserState, PlayMode, ChordVoicing } from '$lib/types';
 
@@ -17,7 +19,7 @@
 	let activeTab: PlayMode | null = $state(null);
 	let chordVoicingTab: ChordVoicing | null = $state(null);
 	let playingId: string | null = $state(null);
-	let contentView: 'intervals' | 'chords' | 'scales' = $state('intervals');
+	let contentView: 'intervals' | 'chords' | 'scales' | 'modes' = $state('intervals');
 
 	const modes: PlayMode[] = ['ascending', 'descending', 'harmonic'];
 
@@ -61,6 +63,13 @@
 			if (mastered >= 1) bronzeCount++;
 		}
 		return bronzeCount >= 3;
+	});
+
+	const modesUnlocked = $derived(() => {
+		if (!state) return false;
+		if (state.settings.devMode) return true;
+		// Modes unlock when scales are unlocked (same gate)
+		return scalesUnlocked();
 	});
 
 	onMount(() => {
@@ -148,6 +157,33 @@
 		setTimeout(() => { playingId = null; }, dur);
 	}
 
+	function toggleMode(id: string) {
+		if (!state || !state.modes) return;
+		const m = state.modes[id];
+		if (!m || !m.unlocked) return;
+		if (m.enabled) {
+			const enabledCount = Object.values(state.modes).filter(md => md.unlocked && md.enabled).length;
+			if (enabledCount <= 2) {
+				minWarning = true;
+				setTimeout(() => { minWarning = false; }, 2000);
+				return;
+			}
+		}
+		state.modes[id].enabled = !m.enabled;
+		state = { ...state };
+		saveState(state);
+	}
+
+	function playModePreview(id: string) {
+		if (!state || playingId) return;
+		const def = MODES.find(d => d.id === id);
+		if (!def) return;
+		playingId = id;
+		playScale(60, def.intervals, state.settings.toneType, 150);
+		const dur = def.intervals.length * 150 + 200;
+		setTimeout(() => { playingId = null; }, dur);
+	}
+
 	const telemetrySegments = $derived(() => {
 		if (!state) return [];
 		if (contentView === 'chords') {
@@ -190,6 +226,20 @@
 				{ label: 'ACC', value: acc + '%' },
 			];
 		}
+		if (contentView === 'modes') {
+			if (!state.modes) return [];
+			let attempts = 0, correct = 0;
+			for (const m of Object.values(state.modes)) {
+				if (!m.unlocked) continue;
+				attempts += m.attempts;
+				correct += m.correct;
+			}
+			const acc = attempts > 0 ? Math.round((correct / attempts) * 100) : 0;
+			return [
+				{ label: 'Q', value: attempts },
+				{ label: 'ACC', value: acc + '%' },
+			];
+		}
 		if (!activeTab) {
 			return [
 				{ label: 'SES', value: state.stats.totalSessions },
@@ -215,7 +265,7 @@
 <div class="progress-page">
 	<h2 class="heading">PROGRESS</h2>
 
-	{#if chordsUnlocked() || scalesUnlocked()}
+	{#if chordsUnlocked() || scalesUnlocked() || modesUnlocked()}
 		<div class="content-toggle">
 			<button class="ct-btn" class:active={contentView === 'intervals'} onclick={() => contentView = 'intervals'}>INTERVALS</button>
 			{#if chordsUnlocked()}
@@ -223,6 +273,9 @@
 			{/if}
 			{#if scalesUnlocked()}
 			<button class="ct-btn" class:active={contentView === 'scales'} onclick={() => contentView = 'scales'}>SCALES</button>
+			{/if}
+			{#if modesUnlocked()}
+			<button class="ct-btn" class:active={contentView === 'modes'} onclick={() => contentView = 'modes'}>MODES</button>
 			{/if}
 		</div>
 	{/if}
@@ -247,7 +300,7 @@
 		<TelemetryBar segments={telemetrySegments()} />
 
 		{#if minWarning}
-			<div class="min-warn">⚠ MINIMUM {contentView === 'chords' ? '2 CHORDS' : contentView === 'scales' ? '2 SCALES' : '3 INTERVALS'} REQUIRED</div>
+			<div class="min-warn">⚠ MINIMUM {contentView === 'chords' ? '2 CHORDS' : contentView === 'scales' ? '2 SCALES' : contentView === 'modes' ? '2 MODES' : '3 INTERVALS'} REQUIRED</div>
 		{/if}
 
 		{#if contentView === 'intervals'}
@@ -266,6 +319,14 @@
 			<div class="interval-list">
 				{#each SCALES as def}
 					<ScaleCard {def} state={state.scales[def.id]} ontoggle={toggleScale} onplay={playScalePreview} playing={playingId === def.id} />
+				{/each}
+			</div>
+		{:else if contentView === 'modes'}
+			<div class="interval-list">
+				{#each MODES as def}
+					{#if state.modes?.[def.id]}
+						<ModeCard {def} state={state.modes[def.id]} ontoggle={toggleMode} onplay={playModePreview} playing={playingId === def.id} />
+					{/if}
 				{/each}
 			</div>
 		{/if}
