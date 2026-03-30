@@ -165,9 +165,10 @@ describe('planSession', () => {
 		expect(warmups.length).toBeGreaterThanOrEqual(1);
 		expect(warmups.length).toBeLessThanOrEqual(3);
 
-		// Warmups should be at the start
+		// Warmups should come after any learn items
+		const learnCount = plan.questions.filter(q => q.phase === 'learn').length;
 		for (let i = 0; i < warmups.length; i++) {
-			expect(plan.questions[i].phase).toBe('warmup');
+			expect(plan.questions[learnCount + i].phase).toBe('warmup');
 		}
 	});
 

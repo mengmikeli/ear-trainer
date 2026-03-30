@@ -6,11 +6,16 @@
 	import { generateChordQuestion } from '$lib/engine';
 	import { playChord, playFeedbackChime, suspendAudio, warmUpAudio, isAudioReady, stopAudio } from '$lib/audio';
 	import { responseQuality, calculateSm2 } from '$lib/sm2';
+	import {
+		needsLearnCard, findNeighbor, buildAllItems, recordAdaptiveAnswer,
+		type ContentItem,
+	} from '$lib/adaptive';
 	import type { UserState, ChordQuestion, ChordDef, ChordVoicing } from '$lib/types';
 	import AnswerGrid from '../../../components/AnswerGrid.svelte';
 	import ProgressBar from '../../../components/ProgressBar.svelte';
 	import TelemetryBar from '../../../components/TelemetryBar.svelte';
 	import VizQuizLayout from '../../../components/VizQuizLayout.svelte';
+	import LearnCard from '../../../components/LearnCard.svelte';
 
 	interface QuestionResult {
 		chord: ChordDef;
@@ -40,6 +45,11 @@
 	let isGlitching = $state(false);
 	let correctTimeout: ReturnType<typeof setTimeout> | null = null;
 	let isArpeggiated = $state(false);
+
+	// Learn card state
+	let isLearnPhase = $state(false);
+	let learnItem: ContentItem | null = $state(null);
+	let learnNeighbor: ContentItem | null = $state(null);
 
 	const vizPhase = $derived.by((): 'rest' | 'playing' | 'correct' | 'wrong' | 'transition' => {
 		if (isGlitching) return 'transition';
@@ -151,13 +161,41 @@
 
 		isPlaying = false;
 		playingNotes = [];
-		isGlitching = true;
 		feedbackState = null;
 		questionNum++;
 
+		const nextQ = generateChordQuestion(state);
+		const stats = state.adaptive?.stats ?? {};
+		const voicing = nextQ.voicing;
+		const adaptiveId = `chord:${nextQ.chord.id}:${voicing}`;
+		const devMode = state.settings.devMode ?? false;
+
+		if (needsLearnCard(adaptiveId, stats, devMode)) {
+			isLearnPhase = true;
+			isGlitching = false;
+			learnItem = {
+				kind: 'chord',
+				id: adaptiveId,
+				defId: nextQ.chord.id,
+				variant: voicing,
+				tier: nextQ.chord.tier,
+				category: nextQ.chord.category,
+			};
+			const allItems = buildAllItems(state);
+			learnNeighbor = findNeighbor(learnItem, allItems, stats);
+			question = nextQ;
+			inResultMode = false;
+			hasPlayed = false;
+			selectedId = null;
+			return;
+		}
+
+		isLearnPhase = false;
+		isGlitching = true;
+
 		requestAnimationFrame(() => {
 			inResultMode = false;
-			question = generateChordQuestion(state!);
+			question = nextQ;
 			hasPlayed = false;
 			selectedId = null;
 			countdownPct = 1.0;
@@ -167,6 +205,27 @@
 				play();
 			}, 600);
 		});
+	}
+
+	function handleLearnComplete(correct: boolean) {
+		if (!state || !learnItem || !question) return;
+
+		recordAdaptiveAnswer(state, learnItem.id, {
+			correct,
+			replays: 0,
+			responseTimeMs: 0,
+		});
+
+		if (state.adaptive?.stats[learnItem.id]) {
+			state.adaptive.stats[learnItem.id].nextReview = Date.now() + 5 * 60 * 1000;
+		}
+
+		state = checkTierUnlock(state);
+		state.stats.totalQuestions++;
+		saveState(state);
+
+		isLearnPhase = false;
+		nextQuestion();
 	}
 
 	function play() {
@@ -473,7 +532,18 @@
 		</div>
 	</div>
 
-	{#if question}
+	{#if question && isLearnPhase && learnItem}
+		<div class="learn-area">
+			{#key learnItem?.id}
+			<LearnCard
+				item={learnItem}
+				neighbor={learnNeighbor}
+				userState={state}
+				onComplete={handleLearnComplete}
+			/>
+			{/key}
+		</div>
+	{:else if question}
 		<div class="quiz-body">
 			<div class="quiz-viz">
 				<VizQuizLayout
@@ -513,6 +583,15 @@
 {/if}
 
 <style>
+	.learn-area {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		flex: 1;
+		justify-content: center;
+		width: 100%;
+		padding: 0 1rem;
+	}
 	.quiz {
 		position: relative;
 		z-index: 1;

@@ -52,14 +52,17 @@ export interface SessionConfig {
 	mixStrategy: 'adaptive' | 'focused';
 }
 
+export type SessionPhase = 'learn' | 'warmup' | 'focus' | 'review';
+
 export interface PlannedQuestion {
 	item: ContentItem;
-	phase: 'warmup' | 'focus' | 'review';
+	phase: SessionPhase;
 }
 
 export interface SessionPlan {
 	questions: PlannedQuestion[];
 	summary: string;
+	learnCount: number;
 }
 
 // --- Default stats ---
@@ -190,6 +193,180 @@ function weightedPick<T>(items: { item: T; weight: number }[]): T {
 	return items[items.length - 1].item;
 }
 
+// --- Learn phase: neighbor finding + cold start ---
+
+/** Max learn cards per session */
+export const MAX_LEARN_PER_SESSION = 3;
+
+/** Hard-coded intro order for cold start (Tier 1 intervals) */
+const COLD_START_INTRO: readonly string[] = ['P1', 'P8', 'P5'];
+
+/**
+ * Find the best neighbor for A/B comparison during a learn card.
+ * Returns the closest same-kind item that the user has already practiced (attempts > 0).
+ * Returns null if no practiced neighbor exists (cold start, first item ever).
+ */
+export function findNeighbor(
+	newItem: ContentItem,
+	allItems: ContentItem[],
+	stats: Record<string, ContentStats>,
+): ContentItem | null {
+	// Only compare with same kind
+	const sameKind = allItems.filter(
+		item => item.kind === newItem.kind && item.id !== newItem.id,
+	);
+
+	// Filter to items the user has actually practiced
+	const practiced = sameKind.filter(item => {
+		const s = stats[item.id];
+		return s && s.attempts > 0;
+	});
+
+	if (practiced.length === 0) return null;
+
+	// Score by musical similarity (lower distance = more similar)
+	// Prefer different defId — comparing P5 vs P4 is more useful than P5 ascending vs P5 descending
+	const scored = practiced.map(item => ({
+		item,
+		distance: getMusicalDistance(newItem, item),
+		sameDefId: item.defId === newItem.defId,
+	}));
+
+	scored.sort((a, b) => {
+		// Different defId always wins over same defId at equal distance
+		if (a.sameDefId !== b.sameDefId) return a.sameDefId ? 1 : -1;
+		return a.distance - b.distance;
+	});
+	return scored[0].item;
+}
+
+/**
+ * Compute musical distance between two ContentItems.
+ * Lower = more similar (better for A/B comparison).
+ */
+function getMusicalDistance(a: ContentItem, b: ContentItem): number {
+	if (a.kind !== b.kind) return Infinity;
+
+	if (a.kind === 'interval') {
+		const aDef = INTERVALS.find(i => i.id === a.defId);
+		const bDef = INTERVALS.find(i => i.id === b.defId);
+		if (aDef && bDef) return Math.abs(aDef.semitones - bDef.semitones);
+	}
+
+	if (a.kind === 'chord') {
+		const aDef = CHORDS.find(c => c.id === a.defId);
+		const bDef = CHORDS.find(c => c.id === b.defId);
+		if (aDef && bDef) {
+			// Count shared intervals
+			const aSet = new Set(aDef.intervals);
+			const shared = bDef.intervals.filter(i => aSet.has(i)).length;
+			return Math.max(aDef.intervals.length, bDef.intervals.length) - shared;
+		}
+	}
+
+	if (a.kind === 'scale') {
+		const aDef = SCALES.find(s => s.id === a.defId);
+		const bDef = SCALES.find(s => s.id === b.defId);
+		if (aDef && bDef) {
+			const aSet = new Set(aDef.intervals);
+			const shared = bDef.intervals.filter(i => aSet.has(i)).length;
+			return Math.max(aDef.intervals.length, bDef.intervals.length) - shared;
+		}
+	}
+
+	if (a.kind === 'mode') {
+		const aDef = MODES.find(m => m.id === a.defId);
+		const bDef = MODES.find(m => m.id === b.defId);
+		if (aDef && bDef) {
+			// Same parent scale = closer
+			if (aDef.parent === bDef.parent) return 1;
+			return 3;
+		}
+	}
+
+	return 10; // fallback
+}
+
+/**
+ * Check if this is a cold start (no items have been practiced at all).
+ */
+export function isColdStart(stats: Record<string, ContentStats>): boolean {
+	return Object.values(stats).every(s => s.attempts === 0);
+}
+
+/**
+ * Build the cold start intro sequence for the first 3 Tier 1 intervals.
+ * Returns ContentItems in the fixed order: P1 → P8 → P5.
+ */
+export function buildColdStartIntro(): ContentItem[] {
+	return COLD_START_INTRO.map(defId => {
+		const def = INTERVALS.find(i => i.id === defId)!;
+		return {
+			kind: 'interval' as ContentKind,
+			id: `interval:${defId}:ascending`,
+			defId,
+			variant: 'ascending',
+			tier: def.tier,
+		};
+	});
+}
+
+/**
+ * Check if a specific content item needs a learn card (never practiced).
+ */
+export function needsLearnCard(
+	itemId: string,
+	stats: Record<string, ContentStats>,
+	devMode?: boolean,
+): boolean {
+	if (devMode) return false;
+	const s = stats[itemId];
+	return !s || s.attempts === 0;
+}
+
+/**
+ * Get human-readable name for a ContentItem.
+ */
+export function getItemDisplayName(item: ContentItem): string {
+	if (item.kind === 'interval') {
+		const def = INTERVALS.find(i => i.id === item.defId);
+		return def?.name ?? item.defId;
+	}
+	if (item.kind === 'chord') {
+		const def = CHORDS.find(c => c.id === item.defId);
+		return def?.name ?? item.defId;
+	}
+	if (item.kind === 'scale') {
+		const def = SCALES.find(s => s.id === item.defId);
+		return def?.name ?? item.defId;
+	}
+	if (item.kind === 'mode') {
+		const def = MODES.find(m => m.id === item.defId);
+		return def?.name ?? item.defId;
+	}
+	return item.defId;
+}
+
+/**
+ * Get the short label for a ContentItem.
+ */
+export function getItemLabel(item: ContentItem): string {
+	if (item.kind === 'interval') return item.defId;
+	if (item.kind === 'chord') {
+		const def = CHORDS.find(c => c.id === item.defId);
+		return def?.label ?? item.defId.toUpperCase();
+	}
+	if (item.kind === 'scale') {
+		const def = SCALES.find(s => s.id === item.defId);
+		return def?.label ?? item.defId.toUpperCase();
+	}
+	if (item.kind === 'mode') {
+		const def = MODES.find(m => m.id === item.defId);
+		return def?.label ?? item.defId;
+	}
+	return item.defId;
+}
+
 // --- Smart session planner ---
 
 export function planSession(
@@ -205,13 +382,41 @@ export function planSession(
 		: allItems;
 
 	if (eligible.length === 0) {
-		return { questions: [], summary: 'No content unlocked yet' };
+		return { questions: [], summary: 'No content unlocked yet', learnCount: 0 };
 	}
 
 	const now = Date.now();
+	const devMode = state.settings.devMode ?? false;
+
+	// --- Learn phase: items with attempts === 0 ---
+	let learnItems: PlannedQuestion[] = [];
+
+	if (!devMode) {
+		// Cold start: use hard-coded intro sequence
+		if (isColdStart(stats)) {
+			const introItems = buildColdStartIntro();
+			learnItems = introItems
+				.slice(0, MAX_LEARN_PER_SESSION)
+				.map(item => ({ item, phase: 'learn' as SessionPhase }));
+		} else {
+			// Normal: find new items sorted by tier (lowest first)
+			const newItems = eligible
+				.filter(item => needsLearnCard(item.id, stats))
+				.sort((a, b) => a.tier - b.tier)
+				.slice(0, MAX_LEARN_PER_SESSION);
+			learnItems = newItems.map(item => ({ item, phase: 'learn' as SessionPhase }));
+		}
+	}
+
+	const learnCount = learnItems.length;
+	const remainingLength = config.length - learnCount;
+
+	// Filter out learn items from the quiz pool
+	const learnIds = new Set(learnItems.map(q => q.item.id));
+	const quizEligible = eligible.filter(item => !learnIds.has(item.id));
 
 	// Score each item by urgency
-	const scored = eligible.map(item => {
+	const scored = quizEligible.map(item => {
 		const s = stats[item.id] ?? defaultContentStats();
 		const accuracy = s.attempts > 0 ? s.correct / s.attempts : 0.5;
 		const overdue = s.nextReview > 0 ? Math.max(0, now - s.nextReview) / (24 * 60 * 60 * 1000) : 0;
@@ -225,12 +430,11 @@ export function planSession(
 	// Sort by urgency descending
 	scored.sort((a, b) => b.urgency - a.urgency);
 
-	const { length } = config;
-	const warmupCount = Math.min(Math.ceil(length * 0.15), 3);
-	const reviewCount = Math.min(Math.ceil(length * 0.2), 5);
-	const focusCount = length - warmupCount - reviewCount;
+	const warmupCount = Math.min(Math.ceil(remainingLength * 0.15), 3);
+	const reviewCount = Math.min(Math.ceil(remainingLength * 0.2), 5);
+	const focusCount = Math.max(0, remainingLength - warmupCount - reviewCount);
 
-	const questions: PlannedQuestion[] = [];
+	const questions: PlannedQuestion[] = [...learnItems];
 
 	// Warm-up: items the user is good at (high accuracy, recently seen)
 	const warmupPool = [...scored].sort((a, b) => b.accuracy - a.accuracy);
@@ -256,18 +460,23 @@ export function planSession(
 	for (let i = 0; i < reviewCount; i++) {
 		const item = reviewPool.length > i
 			? reviewPool[i].item
-			: scored[i % scored.length].item;  // repeat if needed
+			: scored.length > 0
+				? scored[i % scored.length].item
+				: learnItems.length > 0
+					? learnItems[i % learnItems.length].item
+					: eligible[0];
 		questions.push({ item, phase: 'review' });
 	}
 
 	// Build summary
 	const kinds = [...new Set(questions.map(q => q.item.kind))];
 	const weakest = scored.length > 0 ? scored[0].item : null;
+	const learnSuffix = learnCount > 0 ? `${learnCount} new + ` : '';
 	const summary = weakest
-		? `${kinds.join(' + ')} • focus: ${weakest.defId}`
-		: kinds.join(' + ');
+		? `${learnSuffix}${kinds.join(' + ')} • focus: ${weakest.defId}`
+		: `${learnSuffix}${kinds.join(' + ')}`;
 
-	return { questions, summary };
+	return { questions, summary, learnCount };
 }
 
 /**

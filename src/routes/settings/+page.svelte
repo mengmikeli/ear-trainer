@@ -324,6 +324,22 @@
 					<div class="lab-fill" style="transform: scaleX({labHoldProgress})"></div>
 					<span class="lab-text" class:glitching={labHoldActive}>{labGlitchText}</span>
 				</button>
+
+				<button
+					class="dev-btn reset-learn"
+					onclick={() => {
+						if (!state?.adaptive?.stats) return;
+						for (const key of Object.keys(state.adaptive.stats)) {
+							state.adaptive.stats[key].attempts = 0;
+							state.adaptive.stats[key].correct = 0;
+							state.adaptive.stats[key].streak = 0;
+							state.adaptive.stats[key].lastSeen = 0;
+							state.adaptive.stats[key].nextReview = 0;
+						}
+						saveState(state!);
+					}}>
+					RESET LEARN CARDS
+				</button>
 			{/if}
 
 			<button
@@ -506,6 +522,16 @@
 		background: transparent;
 		color: var(--hot);
 		cursor: pointer;
+	}
+	.dev-btn.reset-learn {
+		border-color: var(--marathon-blue);
+		color: var(--marathon-blue);
+		margin-top: 0.5rem;
+		padding: 0.4rem 0.8rem;
+	}
+	.dev-btn.reset-learn:active {
+		background: var(--marathon-blue);
+		color: var(--base);
 	}
 	.dev-btn.active {
 		background: var(--hot);

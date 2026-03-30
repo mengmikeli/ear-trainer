@@ -5,7 +5,11 @@
 	import { loadState, saveState, checkTierUnlock } from '$lib/state';
 	import { playInterval, playChord, playScale, playFeedbackChime, startDrone, stopDrone, type DroneHandle } from '$lib/audio';
 	import { generateDistractors, generateChordDistractors, generateScaleDistractors, generateModeDistractors } from '$lib/engine';
-	import { planSession, recordAdaptiveAnswer, type ContentItem, type PlannedQuestion, type SessionPlan, type SessionConfig } from '$lib/adaptive';
+	import {
+		planSession, recordAdaptiveAnswer, buildAllItems, findNeighbor,
+		needsLearnCard, defaultContentStats,
+		type ContentItem, type PlannedQuestion, type SessionPlan, type SessionConfig,
+	} from '$lib/adaptive';
 	import { INTERVALS } from '$lib/intervals';
 	import { CHORDS, applyInversion } from '$lib/chords';
 	import { SCALES } from '$lib/scales';
@@ -15,6 +19,7 @@
 	import AnswerGrid from '../../../components/AnswerGrid.svelte';
 	import ProgressBar from '../../../components/ProgressBar.svelte';
 	import TelemetryBar from '../../../components/TelemetryBar.svelte';
+	import LearnCard from '../../../components/LearnCard.svelte';
 
 	const SCALE_TEMPO = 150;
 	const MODE_TEMPO = 180;
@@ -46,6 +51,11 @@
 	let rafId: number | null = null;
 	let isGlitching = $state(false);
 	let correctTimeout: ReturnType<typeof setTimeout> | null = null;
+
+	// Learn card state
+	let isLearnPhase = $state(false);
+	let learnNeighbor: ContentItem | null = $state(null);
+	let learnItemsCompleted = $state(0);
 
 	// Current question data
 	let currentItem: ContentItem | null = $state(null);
@@ -101,9 +111,26 @@
 		// Stop drone from previous mode question (if any)
 		if (drone) { stopDrone(); drone = null; droneMuted = false; }
 
-		isGlitching = true;
 		feedbackState = null;
 		questionIdx++;
+
+		const planned = plan.questions[questionIdx - 1];
+		currentItem = planned.item;
+
+		// Check if this is a learn card
+		if (planned.phase === 'learn') {
+			isLearnPhase = true;
+			const allItems = buildAllItems(state);
+			const stats = state.adaptive?.stats ?? {};
+			learnNeighbor = findNeighbor(planned.item, allItems, stats);
+			inResultMode = false;
+			isGlitching = false;
+			return;
+		}
+
+		// Normal quiz question
+		isLearnPhase = false;
+		isGlitching = true;
 
 		requestAnimationFrame(() => {
 			inResultMode = false;
@@ -190,7 +217,7 @@
 			// Root note C3-C4 for comfortable drone register
 			rootNote = 48 + Math.floor(Math.random() * 13);
 
-			const distractors = generateModeDistractors(def.id, state.modes);
+			const distractors = generateModeDistractors(def.id, state.modes, state.settings.devMode);
 			const seen = new Set<string>();
 			const raw = [def, ...distractors].filter(c => {
 				if (seen.has(c.id)) return false;
@@ -248,6 +275,41 @@
 		} else {
 			replays++;
 		}
+	}
+
+	function handleLearnComplete(correct: boolean) {
+		if (!state || !currentItem) return;
+
+		learnItemsCompleted++;
+
+		// Record learn card result in adaptive engine
+		recordAdaptiveAnswer(state, currentItem.id, {
+			correct,
+			replays: 0,
+			responseTimeMs: 0,
+		});
+
+		// Set next review to 5 minutes from now (review soon while fresh)
+		if (state.adaptive?.stats[currentItem.id]) {
+			state.adaptive.stats[currentItem.id].nextReview = Date.now() + 5 * 60 * 1000;
+		}
+
+		state = checkTierUnlock(state);
+		state.stats.totalQuestions++;
+		if (correct) sessionCorrect++;
+		saveState(state);
+
+		const correctDef = choices.find(c => c.id === currentItem!.defId);
+		results.push({
+			item: currentItem,
+			correct,
+			selectedId: correct ? currentItem.defId : 'learn-retry-exhausted',
+			correctId: currentItem.defId,
+			correctName: correctDef?.name ?? currentItem.defId,
+		});
+
+		isLearnPhase = false;
+		nextQuestion();
 	}
 
 	function selectAnswer(choice: { id: string; name: string }) {
@@ -447,6 +509,13 @@
 		{ label: 'SES', value: state?.stats.totalSessions ?? 0 },
 	]} />
 
+	{#if learnItemsCompleted > 0}
+		<div class="learn-summary">
+			<span class="learn-summary-count">{learnItemsCompleted}</span>
+			<span class="learn-summary-text">NEW ITEM{learnItemsCompleted > 1 ? 'S' : ''} LEARNED</span>
+		</div>
+	{/if}
+
 	{#if Object.keys(kindBreakdown()).length > 1}
 		<div class="section-label">PER TYPE</div>
 		<div class="mode-rows">
@@ -488,7 +557,7 @@
 </div>
 {:else}
 <div class="quiz">
-	<h2 class="heading">TRAIN</h2>
+	<h2 class="heading">{isLearnPhase ? 'LEARN' : 'TRAIN'}</h2>
 	<div class="top">
 		<div class="bar-track-full">
 			<ProgressBar current={questionIdx} total={plan?.questions.length ?? totalQuestions} />
@@ -506,7 +575,18 @@
 		</div>
 	</div>
 
-	{#if currentItem}
+	{#if currentItem && isLearnPhase}
+		<div class="learn-area">
+			{#key learnItem?.id}
+			<LearnCard
+				item={currentItem}
+				neighbor={learnNeighbor}
+				userState={state}
+				onComplete={handleLearnComplete}
+			/>
+			{/key}
+		</div>
+	{:else if currentItem}
 		<div class="play-area">
 			<PlayButton
 				onplay={hasPlayed && inResultMode ? replayInResult : play}
@@ -633,6 +713,15 @@
 		color: var(--hot);
 		border-color: var(--hot);
 	}
+	.learn-area {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		flex: 1;
+		justify-content: center;
+		width: 100%;
+		padding: 0 1rem;
+	}
 	.play-area {
 		display: flex;
 		flex-direction: column;
@@ -664,6 +753,28 @@
 		font-size: 4rem; font-weight: 900;
 		font-family: var(--mono); color: var(--accent);
 		letter-spacing: -0.02em; line-height: 1;
+	}
+	.learn-summary {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.5rem 0.75rem;
+		border-left: 2px solid var(--marathon-blue);
+		margin: 0.5rem 0;
+		width: 100%;
+	}
+	.learn-summary-count {
+		font-family: 'BPdots', var(--mono);
+		font-size: 1.2rem;
+		font-weight: 900;
+		color: var(--marathon-blue);
+	}
+	.learn-summary-text {
+		font-family: var(--mono);
+		font-size: 0.55rem;
+		font-weight: 700;
+		letter-spacing: 0.2em;
+		color: var(--marathon-blue);
 	}
 	.section-label {
 		font-size: 0.45rem; font-weight: 900;

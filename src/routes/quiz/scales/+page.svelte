@@ -6,10 +6,15 @@
 	import { generateScaleQuestion } from '$lib/engine';
 	import { playScale, playFeedbackChime, suspendAudio, warmUpAudio, isAudioReady, stopAudio } from '$lib/audio';
 	import { responseQuality, calculateSm2 } from '$lib/sm2';
+	import {
+		needsLearnCard, findNeighbor, buildAllItems, recordAdaptiveAnswer,
+		type ContentItem,
+	} from '$lib/adaptive';
 	import type { UserState, ScaleQuestion, ScaleDef } from '$lib/types';
 	import AnswerGrid from '../../../components/AnswerGrid.svelte';
 	import ProgressBar from '../../../components/ProgressBar.svelte';
 	import TelemetryBar from '../../../components/TelemetryBar.svelte';
+	import LearnCard from '../../../components/LearnCard.svelte';
 	import VizQuizLayout from '../../../components/VizQuizLayout.svelte';
 
 	const TEMPO = 150; // ms per note
@@ -41,6 +46,11 @@
 	let isGlitching = $state(false);
 	let correctTimeout: ReturnType<typeof setTimeout> | null = null;
 	let abTimeouts: ReturnType<typeof setTimeout>[] = [];
+
+	// Learn card state
+	let isLearnPhase = $state(false);
+	let learnItem: ContentItem | null = $state(null);
+	let learnNeighbor: ContentItem | null = $state(null);
 
 	const vizPhase = $derived.by((): 'rest' | 'playing' | 'correct' | 'wrong' | 'transition' => {
 		if (isGlitching) return 'transition';
@@ -153,30 +163,74 @@
 		}
 
 		// Stop any currently-playing audio (Web Audio scheduled notes)
-		// Suspend (not destroy) audio — keeps AudioContext alive for next auto-play
 		suspendAudio();
-		// Kill any lingering A/B replay timeouts
 		for (const t of abTimeouts) clearTimeout(t);
 		abTimeouts = [];
 		playingNotes = [];
 
-		isGlitching = true;
 		feedbackState = null;
 		questionNum++;
 
+		const nextQ = generateScaleQuestion(state);
+		const stats = state.adaptive?.stats ?? {};
+		const adaptiveId = `scale:${nextQ.scale.id}`;
+		const devMode = state.settings.devMode ?? false;
+
+		if (needsLearnCard(adaptiveId, stats, devMode)) {
+			isLearnPhase = true;
+			isGlitching = false;
+			learnItem = {
+				kind: 'scale',
+				id: adaptiveId,
+				defId: nextQ.scale.id,
+				tier: nextQ.scale.tier,
+				category: nextQ.scale.category,
+			};
+			const allItems = buildAllItems(state);
+			learnNeighbor = findNeighbor(learnItem, allItems, stats);
+			question = nextQ;
+			inResultMode = false;
+			hasPlayed = false;
+			selectedId = null;
+			return;
+		}
+
+		isLearnPhase = false;
+		isGlitching = true;
+
 		requestAnimationFrame(() => {
 			inResultMode = false;
-			question = generateScaleQuestion(state!);
+			question = nextQ;
 			hasPlayed = false;
 			selectedId = null;
 			countdownPct = 1.0;
 
-			// Play after question is guaranteed to exist
 			setTimeout(() => {
 				isGlitching = false;
 				play();
 			}, 600);
 		});
+	}
+
+	function handleLearnComplete(correct: boolean) {
+		if (!state || !learnItem || !question) return;
+
+		recordAdaptiveAnswer(state, learnItem.id, {
+			correct,
+			replays: 0,
+			responseTimeMs: 0,
+		});
+
+		if (state.adaptive?.stats[learnItem.id]) {
+			state.adaptive.stats[learnItem.id].nextReview = Date.now() + 5 * 60 * 1000;
+		}
+
+		state = checkTierUnlock(state);
+		state.stats.totalQuestions++;
+		saveState(state);
+
+		isLearnPhase = false;
+		nextQuestion();
 	}
 
 	function play() {
@@ -438,7 +492,18 @@
 		</div>
 	</div>
 
-	{#if question}
+	{#if question && isLearnPhase && learnItem}
+		<div class="learn-area">
+			{#key learnItem?.id}
+			<LearnCard
+				item={learnItem}
+				neighbor={learnNeighbor}
+				userState={state}
+				onComplete={handleLearnComplete}
+			/>
+			{/key}
+		</div>
+	{:else if question}
 		<div class="quiz-body">
 			<div class="quiz-viz">
 				<VizQuizLayout
@@ -478,6 +543,15 @@
 {/if}
 
 <style>
+	.learn-area {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		flex: 1;
+		justify-content: center;
+		width: 100%;
+		padding: 0 1rem;
+	}
 	.quiz {
 		position: relative;
 		z-index: 1;
