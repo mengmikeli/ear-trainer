@@ -891,11 +891,12 @@ export async function startDrone(midi: number): Promise<DroneHandle> {
 	const osc2Gain = audioCtx.createGain();
 	osc2Gain.gain.value = 0.03; // quieter fifth — less harmonic buzz
 
-	// Low-pass filter for warmth — start very dark, open gradually
+	// Low-pass filter for warmth — FIXED frequency, no sweep
+	// (Sweeping filter caused audible resonance/"buzz" even at low Q)
 	const filter = audioCtx.createBiquadFilter();
 	filter.type = 'lowpass';
-	filter.frequency.value = 80; // start below most fundamentals
-	filter.Q.value = 0.3; // low Q — no resonant bump during sweep
+	filter.frequency.value = 700; // warm fixed cutoff — removes harsh harmonics
+	filter.Q.value = 0.1; // nearly flat — zero resonance
 
 	// Master drone gain (for fade in/out + mute)
 	const droneGain = audioCtx.createGain();
@@ -910,12 +911,10 @@ export async function startDrone(midi: number): Promise<DroneHandle> {
 	filter.connect(droneGain);
 	droneGain.connect(master);
 
-	// Fade in: linear gain (can start from true 0), filter opens smoothly
+	// Fade in: pure gain ramp from silence (no filter sweep — avoids buzz)
 	const now = audioCtx.currentTime;
 	droneGain.gain.setValueAtTime(0, now);
 	droneGain.gain.linearRampToValueAtTime(1, now + 0.5);
-	filter.frequency.setValueAtTime(80, now);
-	filter.frequency.exponentialRampToValueAtTime(900, now + 0.6);
 	// LFO fades in after attack completes (avoids wobble during ramp)
 	lfoGain.gain.setValueAtTime(0, now);
 	lfoGain.gain.linearRampToValueAtTime(0, now + 0.5);
@@ -933,15 +932,11 @@ export async function startDrone(midi: number): Promise<DroneHandle> {
 			if (stopped) return;
 			stopped = true;
 			const t = audioCtx.currentTime;
-			// Fade out: kill LFO wobble, close filter, then fade gain
-			// LFO off immediately to prevent modulation artifacts during fade
+			// Fade out: pure gain ramp to silence (no filter sweep — avoids buzz)
+			// Kill LFO immediately to prevent modulation during fade
 			lfoGain.gain.cancelScheduledValues(t);
 			lfoGain.gain.setValueAtTime(0, t);
-			// Close filter smoothly (no resonant sweep — Q is already low)
-			filter.frequency.cancelScheduledValues(t);
-			filter.frequency.setValueAtTime(filter.frequency.value, t);
-			filter.frequency.exponentialRampToValueAtTime(60, t + 0.4);
-			// Gain fade — linear to true 0
+			// Smooth gain to zero
 			droneGain.gain.cancelScheduledValues(t);
 			droneGain.gain.setValueAtTime(droneGain.gain.value, t);
 			droneGain.gain.linearRampToValueAtTime(0, t + 0.6);
