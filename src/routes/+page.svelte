@@ -16,6 +16,7 @@
 	let state: UserState | null = $state(null);
 	let goGlitching = $state(false);
 	let goText = $state('GO');
+	let versionCopied = $state(false);
 
 	const glitchChars = ['\uE000', '\uE001', '\uE002', '\uE003', '\uE004', '\uE005', '\uE006', '\uE007', '\uE008', '\uE010', '\uE013', '\uE014', '\uE017'];
 
@@ -188,7 +189,11 @@
 		</div>
 		<div class="version-tag">
 			<span class="hazard-bar"></span>
-			<span class="version">SYS {VERSION_STRING}</span>
+			<span class="version" role="button" tabindex="0" onclick={() => {
+				navigator.clipboard.writeText(VERSION_STRING);
+				versionCopied = true;
+				setTimeout(() => { versionCopied = false; }, 1500);
+			}}>SYS {versionCopied ? 'COPIED' : VERSION_STRING}</span>
 			<span class="hazard-bar"></span>
 		</div>
 	</header>
@@ -276,7 +281,10 @@
 		background: var(--marathon-blue); padding: 0.3rem 0.75rem;
 		display: inline-flex; align-items: center;
 		line-height: 1;
+		cursor: pointer;
+		transition: opacity 0.15s;
 	}
+	.version:active { opacity: 0.7; }
 	.center-area {
 		position: relative;
 		display: flex;
