@@ -14,11 +14,12 @@
 
 	const sortedIntervals = [...INTERVALS].sort((a, b) => a.semitones - b.semitones);
 
-	// Grid dimensions
-	const COLS = 80;
-	const ROWS = 40;
-	// Monospace character aspect ratio correction (cells ~2× taller than wide)
+	// Grid dimensions — computed on mount from container size
+	let COLS = $state(80);
+	let ROWS = $state(40);
 	const CELL_ASPECT = 0.48;
+	const MAX_COLS = 120;
+	const MAX_ROWS = 80;
 
 	const PHASE_DELTA = Math.PI / 2;
 
@@ -38,6 +39,7 @@
 	let isPlaying = $state(false);
 	let playGeneration = 0;
 	let gridText = $state('');
+	let frameRef: HTMLDivElement | undefined = $state();
 
 	let freqX = $derived(RATIOS[selected][0]);
 	let freqY = $derived(RATIOS[selected][1]);
