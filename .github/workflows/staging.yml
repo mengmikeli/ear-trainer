@@ -3,7 +3,6 @@ name: Deploy Staging to GitHub Pages
 on:
   push:
     branches:
-      - feat/visualization
       - main
 
 permissions:
@@ -29,6 +28,15 @@ jobs:
       - run: npm run build
         env:
           BASE_PATH: '/ear-trainer'
+
+      # Preserve PR preview directories during staging deploy
+      - name: Fetch existing PR previews
+        run: |
+          git fetch origin gh-pages --depth=1 || true
+          if git show origin/gh-pages:pr 2>/dev/null; then
+            git checkout origin/gh-pages -- pr/
+            cp -r pr build/pr
+          fi
 
       - uses: peaceiris/actions-gh-pages@v4
         with:
