@@ -157,7 +157,7 @@ and then, just as gently, let it go.`;
 	}
 
 	const PROP_FONT_FAMILY = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-	const POEM_FONT_SIZE = 'clamp(0.4rem, 1.3vw, 0.65rem)';
+	const POEM_FONT_SIZE = 'clamp(0.75rem, 1.8vw, 1rem)';
 	const POEM_DIM_OPACITY = 0.06;
 	const POEM_MAX_OPACITY = 1.0;
 
@@ -700,8 +700,8 @@ and then, just as gently, let it go.`;
 	/* Poem spotlight mode */
 	.poem-grid {
 		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-		font-size: clamp(0.4rem, 1.3vw, 0.65rem);
-		line-height: 1.35;
+		font-size: clamp(0.75rem, 1.8vw, 1rem);
+		line-height: 1.5;
 		color: var(--accent);
 		margin: 0; padding: 1rem 1.5rem;
 		overflow: hidden;
