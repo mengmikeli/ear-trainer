@@ -319,9 +319,9 @@ export function needsLearnCard(
 	stats: Record<string, ContentStats>,
 	devMode?: boolean,
 ): boolean {
-	if (devMode) return false;
-	const s = stats[itemId];
-	return !s || s.attempts === 0;
+	// Disabled — learn cards need redesign before re-enabling.
+	// See DESIGN-ONBOARDING.md for the planned approach.
+	return false;
 }
 
 /**
