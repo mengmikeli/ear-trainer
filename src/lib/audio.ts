@@ -533,7 +533,11 @@ export function cancelScheduledSuspend(): void {
  * iOS Safari has unlocked audio before the user reaches the quiz.
  */
 export function warmUpAudio(): void {
-	getContext();
+	const audioCtx = getContext();
+	// Resume during user gesture — iOS requires this to transition from suspended → running
+	if (audioCtx.state === 'suspended') {
+		audioCtx.resume();
+	}
 }
 
 /** Returns true if AudioContext is running (not suspended/blocked by browser policy) */

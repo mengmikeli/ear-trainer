@@ -283,11 +283,13 @@
 			}, 1350);
 		}
 
-		// Start drone if not active
-		if (!drone) {
+		// Ensure drone is running (starts on first play after audio gate clears)
+		if (!drone && question) {
 			stopDrone();
-			startDrone(question.droneNote).then(h => { drone = h; });
-			droneMuted = false;
+			startDrone(question.droneNote).then(h => {
+				drone = h;
+				if (droneMuted) h.setMuted(true);
+			});
 		}
 
 		playScale(
@@ -580,9 +582,10 @@
 
 		<div class="answer-area" class:hidden={!hasPlayed && !needsTap}>
 			<AnswerGrid
-				choices={question.choices.map(c => ({ id: c.id, name: c.name, label: c.label }))}
+				choices={needsTap ? question.choices.map(c => ({ ...c, label: 'NA', name: 'UNAVAILABLE' })) : question.choices.map(c => ({ id: c.id, name: c.name, label: c.label }))}
 				onselect={selectAnswer}
-				disabled={!hasPlayed || !!selectedId}
+				disabled={needsTap || !hasPlayed || !!selectedId}
+				offline={needsTap}
 				correctId={selectedId ? question.mode.id : null}
 				{selectedId}
 				onCorrectClick={selectedId ? (inResultMode ? () => { stopDrone(); drone = null; nextQuestion(); } : skipCorrect) : null}
