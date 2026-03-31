@@ -59,4 +59,9 @@ export {
 	clearMediaSession,
 	setIOSAudioSessionPlayback,
 	clearIOSAudioSession,
+	claimAudioSession,
+	releaseAudioSession,
+	scheduleRelease,
+	cancelScheduledRelease,
+	isSessionClaimed,
 } from './session';

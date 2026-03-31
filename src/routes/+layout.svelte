@@ -4,7 +4,8 @@
 	import BottomNav from '../components/BottomNav.svelte';
 	import { initTheme } from '$lib/theme';
 	import { loadStateV4 } from '$lib/state/storage';
-	import { warmUpAudio, resumeAudio } from '$lib/audio/context';
+	import { warmUpAudio } from '$lib/audio/context';
+	import { releaseAudioSession } from '$lib/audio/session';
 
 	let { children } = $props();
 
@@ -39,10 +40,10 @@
 		document.addEventListener('touchend', unlock, { once: true });
 		document.addEventListener('click', unlock, { once: true });
 
-		// Resume audio context when returning from background
+		// Release audio session when going to background; next play() will reclaim
 		function handleVisibility() {
-			if (!document.hidden) {
-				resumeAudio();
+			if (document.hidden) {
+				releaseAudioSession();
 			}
 		}
 		document.addEventListener('visibilitychange', handleVisibility);

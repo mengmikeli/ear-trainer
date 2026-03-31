@@ -18,7 +18,7 @@
 
 import { ensureResumed, getMasterOutput, midiToFreq } from './context';
 import { playEpianoToneToNode, playSineToneToNode, playPianoToneToNode } from './synths';
-import { setMediaSessionMetadata } from './session';
+import { setMediaSessionMetadata, claimAudioSession, scheduleRelease, cancelScheduledRelease } from './session';
 import type { ToneType, ChordVoicing } from '$lib/state/schema';
 import { applyInversion } from '$lib/definitions/chords';
 
@@ -32,6 +32,10 @@ let currentPlaybackGain: GainNode | null = null;
  * then creates and returns a new gain node connected to master output.
  */
 function beginPlayback(audioCtx: AudioContext, master: GainNode): GainNode {
+	// Claim audio session on actual playback
+	cancelScheduledRelease();
+	claimAudioSession();
+
 	// Crossfade out previous generation
 	if (currentPlaybackGain) {
 		const now = audioCtx.currentTime;
@@ -101,6 +105,7 @@ export async function playInterval(
 	}
 
 	setMediaSessionMetadata('Interval Practice');
+	scheduleRelease();
 }
 
 /**
@@ -144,6 +149,7 @@ export async function playChord(
 	});
 
 	setMediaSessionMetadata('Chord Practice');
+	scheduleRelease();
 }
 
 /**
@@ -169,6 +175,8 @@ export async function playNote(
 
 	const playToNode = getTonePlayer(toneType);
 	playToNode(freq, now, duration, audioCtx, noteGain);
+
+	scheduleRelease();
 }
 
 /**
@@ -213,6 +221,7 @@ export async function playScale(
 	});
 
 	setMediaSessionMetadata('Scale Practice');
+	scheduleRelease();
 }
 
 /**
@@ -227,6 +236,10 @@ export async function playFeedbackChime(correct: boolean): Promise<void> {
 	const audioCtx = await ensureResumed();
 	const master = getMasterOutput();
 	const now = audioCtx.currentTime;
+
+	// Claim audio session for feedback chime too
+	cancelScheduledRelease();
+	claimAudioSession();
 
 	// Separate gain node for feedback — independent of playback generations
 	const feedbackGain = audioCtx.createGain();
@@ -293,4 +306,6 @@ export async function playFeedbackChime(correct: boolean): Promise<void> {
 			/* ok */
 		}
 	}, 600);
+
+	scheduleRelease();
 }

@@ -10,6 +10,7 @@
  */
 
 import { ensureResumed, getMasterOutput, midiToFreq } from './context';
+import { claimAudioSession, cancelScheduledRelease, scheduleRelease } from './session';
 
 export interface DroneHandle {
 	stop: () => void;
@@ -29,6 +30,10 @@ let activeDrone: DroneHandle | null = null;
  * stops the previous drone first.
  */
 export async function startDrone(midi: number): Promise<DroneHandle> {
+	// Claim audio session for drone playback
+	cancelScheduledRelease();
+	claimAudioSession();
+
 	// Stop any existing drone
 	if (activeDrone) {
 		activeDrone.stop();
@@ -163,6 +168,7 @@ export async function startDrone(midi: number): Promise<DroneHandle> {
 			}, 700);
 			if (activeDrone === handle) activeDrone = null;
 			// NOTE: No scheduleSuspend() — AudioContext stays alive
+			scheduleRelease();
 		},
 		forceStop() {
 			// Instant kill — no fade, no timeout. For page teardown / navigation.
@@ -195,6 +201,7 @@ export async function startDrone(midi: number): Promise<DroneHandle> {
 			}
 			if (activeDrone === handle) activeDrone = null;
 			// NOTE: No scheduleSuspend() — AudioContext stays alive
+			scheduleRelease();
 		},
 		setMuted(m: boolean) {
 			if (stopped) return;

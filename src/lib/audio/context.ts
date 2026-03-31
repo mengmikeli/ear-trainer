@@ -26,10 +26,6 @@ if (typeof window !== 'undefined') {
 						if (ctx.state === 'suspended' || (ctx.state as string) === 'interrupted') {
 							await ctx.resume();
 						}
-						// Restore iOS audio session type
-						if ('audioSession' in navigator && 'type' in (navigator as any).audioSession) {
-							(navigator as any).audioSession.type = 'playback';
-						}
 						// Play silent buffer to flush the native audio pipeline
 						const silent = ctx.createBuffer(1, 1, ctx.sampleRate);
 						const source = ctx.createBufferSource();
@@ -61,10 +57,6 @@ export function getContext(): AudioContext {
 	if (!ctx) {
 		const AC = window.AudioContext || (window as any).webkitAudioContext;
 		ctx = new AC();
-		// iOS 17+: override audio session so sound plays even in silent mode
-		if ('audioSession' in navigator && 'type' in (navigator as any).audioSession) {
-			(navigator as any).audioSession.type = 'playback';
-		}
 		// Play a silent buffer to fully unlock iOS audio pipeline
 		const silent = ctx.createBuffer(1, 1, ctx.sampleRate);
 		const source = ctx.createBufferSource();
@@ -73,10 +65,6 @@ export function getContext(): AudioContext {
 		source.start();
 	}
 	if (ctx.state === 'suspended' || (ctx.state as string) === 'interrupted') {
-		// Restore iOS audio session type
-		if ('audioSession' in navigator && 'type' in (navigator as any).audioSession) {
-			(navigator as any).audioSession.type = 'playback';
-		}
 		ctx.resume();
 	}
 	return ctx;
