@@ -41,6 +41,15 @@
 	let trainGlitchText = $state('ENTER TRAINING');
 	let trainGlitchInterval: ReturnType<typeof setInterval> | null = null;
 
+	// Long-press onboarding
+	let onboardHoldProgress = $state(0);
+	let onboardHoldActive = $state(false);
+	let onboardHoldStart = 0;
+	let onboardHoldRaf: number | null = null;
+	let onboardDone = $state(false);
+	let onboardGlitchText = $state('ENTER ONBOARDING');
+	let onboardGlitchInterval: ReturnType<typeof setInterval> | null = null;
+
 	const holdDuration = 3500; // 3.5s hold to confirm
 	const baseText = 'RESET PROGRESS';
 	const glyphs = ['\uE000', '\uE001', '\uE002', '\uE003', '\uE004', '\uE005', '\uE006', '\uE007', '\uE008', '\uE010', '\uE011', '\uE012', '\uE013', '\uE014', '\uE015', '\uE016', '\uE017', '\uE018', '\uE019'];
@@ -67,6 +76,7 @@
 		cancelHold();
 		cancelLabHold();
 		cancelTrainHold();
+		cancelOnboardHold();
 		systemThemeCleanup?.();
 	});
 
@@ -248,6 +258,64 @@
 			window.location.href = `${base}/quiz/adaptive`;
 		}, 500);
 	}
+
+	// Onboarding long-press functions
+	const onboardHoldDuration = 2000;
+
+	function onboardRandomGlitchText(): string {
+		const txt = 'ENTER ONBOARDING';
+		const chars = [...txt];
+		const maxGlitch = Math.max(1, Math.ceil(onboardHoldProgress * chars.length * 0.6));
+		const count = 1 + Math.floor(Math.random() * Math.min(maxGlitch, chars.length));
+		for (let i = 0; i < count; i++) {
+			const idx = Math.floor(Math.random() * chars.length);
+			chars[idx] = glyphs[Math.floor(Math.random() * glyphs.length)];
+		}
+		return chars.join('');
+	}
+
+	function startOnboardHold() {
+		if (onboardDone) return;
+		onboardHoldActive = true;
+		onboardHoldStart = performance.now();
+		onboardHoldProgress = 0;
+		onboardGlitchInterval = setInterval(() => {
+			onboardGlitchText = onboardRandomGlitchText();
+		}, 60);
+		onboardHoldRaf = requestAnimationFrame(tickOnboardHold);
+	}
+
+	function tickOnboardHold(now: number) {
+		const elapsed = now - onboardHoldStart;
+		const linear = Math.min(1, elapsed / onboardHoldDuration);
+		onboardHoldProgress = 1 - Math.pow(1 - linear, 3);
+		if (linear >= 1) {
+			executeOnboardEnter();
+			return;
+		}
+		onboardHoldRaf = requestAnimationFrame(tickOnboardHold);
+	}
+
+	function cancelOnboardHold() {
+		onboardHoldActive = false;
+		onboardHoldProgress = 0;
+		onboardGlitchText = 'ENTER ONBOARDING';
+		if (onboardHoldRaf) { cancelAnimationFrame(onboardHoldRaf); onboardHoldRaf = null; }
+		if (onboardGlitchInterval) { clearInterval(onboardGlitchInterval); onboardGlitchInterval = null; }
+	}
+
+	function executeOnboardEnter() {
+		onboardHoldActive = false;
+		if (onboardHoldRaf) { cancelAnimationFrame(onboardHoldRaf); onboardHoldRaf = null; }
+		if (onboardGlitchInterval) { clearInterval(onboardGlitchInterval); onboardGlitchInterval = null; }
+
+		onboardDone = true;
+		onboardGlitchText = '\uE018 ONBOARD \uE018';
+		onboardHoldProgress = 1;
+		setTimeout(() => {
+			window.location.href = `${base}/quiz/adaptive?onboard=1`;
+		}, 500);
+	}
 </script>
 
 <div class="settings-page">
@@ -405,6 +473,19 @@
 				>
 					<div class="train-fill" style="transform: scaleX({trainHoldProgress})"></div>
 					<span class="train-text" class:glitching={trainHoldActive}>{trainGlitchText}</span>
+				</button>
+
+				<button
+					class="onboard-btn"
+					class:holding={onboardHoldActive}
+					class:done={onboardDone}
+					onpointerdown={startOnboardHold}
+					onpointerup={cancelOnboardHold}
+					onpointerleave={cancelOnboardHold}
+					oncontextmenu={(e) => e.preventDefault()}
+				>
+					<div class="onboard-fill" style="transform: scaleX({onboardHoldProgress})"></div>
+					<span class="onboard-text" class:glitching={onboardHoldActive}>{onboardGlitchText}</span>
 				</button>
 
 				<button
@@ -716,6 +797,42 @@
 		color: var(--marathon-blue);
 	}
 	.train-btn.done .train-fill {
+		background: var(--marathon-blue);
+		opacity: 0.35;
+	}
+	.onboard-btn {
+		position: relative;
+		overflow: hidden;
+		padding: 0.85rem; background: var(--surface);
+		border: 1px solid var(--marathon-blue); border-radius: 0;
+		color: var(--marathon-blue); font-size: 0.45rem;
+		font-weight: 400; letter-spacing: 0.08em;
+		font-family: var(--mono);
+		width: 100%;
+		touch-action: none;
+		user-select: none;
+		-webkit-user-select: none;
+		margin-bottom: 0.5rem;
+	}
+	.onboard-fill {
+		position: absolute;
+		inset: 0;
+		background: var(--marathon-blue);
+		transform-origin: left;
+		transform: scaleX(0);
+		transition: none;
+		pointer-events: none;
+		opacity: 0.35;
+	}
+	.onboard-text {
+		position: relative;
+		z-index: 1;
+	}
+	.onboard-btn.done {
+		border-color: var(--marathon-blue);
+		color: var(--marathon-blue);
+	}
+	.onboard-btn.done .onboard-fill {
 		background: var(--marathon-blue);
 		opacity: 0.35;
 	}
