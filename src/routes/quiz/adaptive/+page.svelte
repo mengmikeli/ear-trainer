@@ -97,7 +97,9 @@
 		};
 
 		plan = planSession(state, config);
-		nextQuestion();
+		// Use queueMicrotask to ensure Svelte processes the plan state change
+		// before nextQuestion reads it
+		queueMicrotask(() => nextQuestion());
 	});
 
 	onDestroy(() => {
@@ -106,8 +108,9 @@
 
 	function nextQuestion() {
 		if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
-		if (!state || !plan) return;
+		if (!state || !plan) { console.warn('[onboard] nextQuestion bail: state=', !!state, 'plan=', !!plan); return; }
 		if (questionIdx >= plan.questions.length) {
+			console.warn('[onboard] nextQuestion: all done, finishing. idx=', questionIdx, 'total=', plan.questions.length);
 			finishSession();
 			return;
 		}
@@ -124,6 +127,7 @@
 		// Check if this is a learn card
 		if (planned.phase === 'learn') {
 			isLearnPhase = true;
+			console.log('[onboard] Learn phase for:', planned.item.id, 'currentItem:', currentItem?.id);
 			const allItems = buildAllItems(state);
 			const stats = state.adaptive?.stats ?? {};
 			learnNeighbor = findNeighbor(planned.item, allItems, stats);
@@ -581,7 +585,7 @@
 
 	{#if currentItem && isLearnPhase}
 		<div class="learn-area">
-			{#key learnItem?.id}
+			{#key currentItem?.id}
 			<LearnCard
 				item={currentItem}
 				neighbor={learnNeighbor}
