@@ -26,3 +26,23 @@ vite.config.ts.timestamp-*
 ios/App/App/public/
 ios/App/Pods/
 ios/capacitor-cordova-ios-plugins/
+ios/DerivedData/
+
+# Workspace files (never commit to public repo)
+memory/
+MEMORY.md
+AGENTS.md
+SOUL.md
+USER.md
+IDENTITY.md
+TOOLS.md
+HEARTBEAT.md
+TASKBOARD.md
+LESSONS.md
+TEAM.md
+BOOTSTRAP.md
+docs/
+neon-console/
+*.qr.png
+openclaw-pair-qr.png
+ios-sim-*.png
