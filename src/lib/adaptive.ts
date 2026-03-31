@@ -404,7 +404,7 @@ export function planSession(
 		} else {
 			// Normal: find new items sorted by tier (lowest first)
 			const newItems = eligible
-				.filter(item => needsLearnCard(item.id, stats))
+				.filter(item => needsLearnCard(item.id, stats, devMode, config.onboardMode))
 				.sort((a, b) => a.tier - b.tier)
 				.slice(0, MAX_LEARN_PER_SESSION);
 			learnItems = newItems.map(item => ({ item, phase: 'learn' as SessionPhase }));
