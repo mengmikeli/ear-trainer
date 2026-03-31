@@ -236,7 +236,7 @@
 			{/if}
 			<div class="learn-actions">
 				<button class="learn-btn primary" onclick={handleHearIt} disabled={isPlaying}>
-					{isPlaying ? '···' : '▶ HEAR IT'}
+					{isPlaying ? '···' : 'HEAR IT'}
 				</button>
 			</div>
 			<button class="learn-btn advance" onclick={advanceStep}>
@@ -292,7 +292,7 @@
 
 			<div class="learn-actions">
 				<button class="learn-btn secondary" onclick={playQuizAudio} disabled={isPlaying}>
-					{quizPlayed ? '↻ REPLAY' : '▶ PLAY'}
+					{quizPlayed ? 'REPLAY' : 'PLAY'}
 				</button>
 			</div>
 
