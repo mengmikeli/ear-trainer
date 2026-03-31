@@ -563,7 +563,7 @@
 			<button class="close exit" onclick={endEarly}>EXIT</button>
 			<div class="top-right">
 				<button class="drone-toggle" class:active={!droneMuted} onclick={toggleDroneMute}>
-					{droneMuted ? 'DRN ✕' : 'DRN ✓'}
+					{droneMuted ? 'DRN' : 'DRN'}
 				</button>
 				<span class="counter">{String(questionNum).padStart(2, '0')}/{String(totalQuestions).padStart(2, '0')}</span>
 			</div>
