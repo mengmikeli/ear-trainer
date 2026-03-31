@@ -16,10 +16,10 @@ import type {
 	ContentKind,
 } from './schema';
 import { STATE_VERSION, defaultContentStats, defaultDefinitionState } from './schema';
-import { INTERVALS } from '$lib/intervals';
-import { CHORDS } from '$lib/chords';
-import { SCALES } from '$lib/scales';
-import { MODES } from '$lib/modes';
+import { INTERVALS } from '$lib/definitions/intervals';
+import { CHORDS } from '$lib/definitions/chords';
+import { SCALES } from '$lib/definitions/scales';
+import { MODES } from '$lib/definitions/modes';
 
 // ─── Public API ─────────────────────────────────────────────────────────────
 

@@ -11,3 +11,4 @@ export * from './storage';
 export * from './migration';
 export * from './progression';
 export * from './stats';
+export * from './compat';

@@ -10,9 +10,8 @@ import type { UserStateV4, ContentStats, PlayMode } from '$lib/state/schema';
 import { defaultContentStats } from '$lib/state/schema';
 import { getStats, getStatsForDef, aggregateStats } from '$lib/state/stats';
 import { playInterval } from '$lib/audio/playback';
-import { responseQuality, calculateSm2 } from '$lib/sm2';
-import { INTERVALS } from '$lib/intervals';
-import type { IntervalDef } from '$lib/types';
+import { responseQuality, calculateSm2 } from '$lib/learning/sm2';
+import { INTERVALS, type IntervalDef } from '$lib/definitions/intervals';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 

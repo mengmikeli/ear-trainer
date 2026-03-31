@@ -3,8 +3,8 @@
 	import '../app.css';
 	import BottomNav from '../components/BottomNav.svelte';
 	import { initTheme } from '$lib/theme';
-	import { loadState } from '$lib/state';
-	import { warmUpAudio, suspendAudio, resumeAudio, cancelScheduledSuspend } from '$lib/audio';
+	import { loadStateV4 } from '$lib/state/storage';
+	import { warmUpAudio, resumeAudio } from '$lib/audio/context';
 
 	let { children } = $props();
 
@@ -27,7 +27,7 @@
 	}
 
 	onMount(() => {
-		const state = loadState();
+		const state = loadStateV4();
 		initTheme(state.settings.theme);
 
 		// Unlock iOS audio on first user interaction (touch or click)
@@ -39,15 +39,9 @@
 		document.addEventListener('touchend', unlock, { once: true });
 		document.addEventListener('click', unlock, { once: true });
 
-		// Suspend audio when page goes to background (saves battery, clears Dynamic Island)
-		// Resume audio context when returning — iOS kills suspended contexts
+		// Resume audio context when returning from background
 		function handleVisibility() {
-			if (document.hidden) {
-				cancelScheduledSuspend();
-				suspendAudio();
-			} else {
-				// Try to resume the AudioContext; if iOS blocks it (no gesture),
-				// the next user tap → play → getContext() will handle it
+			if (!document.hidden) {
 				resumeAudio();
 			}
 		}

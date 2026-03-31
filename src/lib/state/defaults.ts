@@ -7,10 +7,10 @@
 
 import type { UserStateV4, DefinitionState } from './schema';
 import { STATE_VERSION, defaultDefinitionState } from './schema';
-import { INTERVALS } from '$lib/intervals';
-import { CHORDS } from '$lib/chords';
-import { SCALES } from '$lib/scales';
-import { MODES } from '$lib/modes';
+import { INTERVALS } from '$lib/definitions/intervals';
+import { CHORDS } from '$lib/definitions/chords';
+import { SCALES } from '$lib/definitions/scales';
+import { MODES } from '$lib/definitions/modes';
 
 /** Create a fresh v4 state with tier-1 items unlocked and sensible defaults. */
 export function createDefaultStateV4(): UserStateV4 {

@@ -1,10 +1,10 @@
 <script lang="ts">
-	import type { ModeState } from '$lib/types';
-	import type { ModeDef } from '$lib/modes';
+	import type { LegacyModeState } from '$lib/state/compat';
+	import type { ModeDef } from '$lib/definitions/modes';
 
 	interface Props {
 		def: ModeDef;
-		state: ModeState;
+		state: LegacyModeState;
 		ontoggle?: (id: string) => void;
 		onplay?: (id: string) => void;
 		playing?: boolean;

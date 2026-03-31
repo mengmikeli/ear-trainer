@@ -156,3 +156,37 @@ export function isAudioReady(): boolean {
 export function midiToFreq(midi: number): number {
 	return 440 * Math.pow(2, (midi - 69) / 12);
 }
+
+/**
+ * Legacy no-op. In the v4 persistent-context model, audio context is never closed.
+ * Kept for backward compatibility with pages that call stopAudio() in onDestroy.
+ */
+export function stopAudio(): void {
+	// no-op — context is persistent
+}
+
+/**
+ * Legacy no-op. Suspend/resume is handled automatically by the persistent context.
+ */
+export function suspendAudio(): void {
+	// no-op
+}
+
+/**
+ * Legacy no-op.
+ */
+export function cancelScheduledSuspend(): void {
+	// no-op
+}
+
+/**
+ * Try to resume the AudioContext (e.g. on visibility change).
+ * Returns true if context exists and is running or successfully resumed.
+ */
+export function resumeAudio(): boolean {
+	if (!ctx) return false;
+	if (ctx.state === 'suspended') {
+		ctx.resume().catch(() => {});
+	}
+	return ctx.state === 'running';
+}

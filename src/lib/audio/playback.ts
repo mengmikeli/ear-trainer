@@ -20,7 +20,7 @@ import { ensureResumed, getMasterOutput, midiToFreq } from './context';
 import { playEpianoToneToNode, playSineToneToNode, playPianoToneToNode } from './synths';
 import { setMediaSessionMetadata } from './session';
 import type { ToneType, ChordVoicing } from '$lib/state/schema';
-import { applyInversion } from '$lib/chords';
+import { applyInversion } from '$lib/definitions/chords';
 
 // ─── Generation-based cancellation ─────────────────────────────────────────
 

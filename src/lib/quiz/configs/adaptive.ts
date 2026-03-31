@@ -16,12 +16,12 @@ import { playInterval } from '$lib/audio/playback';
 import { playChord } from '$lib/audio/playback';
 import { playScale } from '$lib/audio/playback';
 import { startDrone, stopDrone, type DroneHandle } from '$lib/audio/drone';
-import { responseQuality, calculateSm2 } from '$lib/sm2';
-import { INTERVALS } from '$lib/intervals';
-import { CHORDS } from '$lib/chords';
-import { SCALES } from '$lib/scales';
-import { MODES, type ModeDef } from '$lib/modes';
-import type { IntervalDef, ChordDef, ScaleDef, PlayMode } from '$lib/types';
+import { responseQuality, calculateSm2 } from '$lib/learning/sm2';
+import { INTERVALS, type IntervalDef } from '$lib/definitions/intervals';
+import { CHORDS, type ChordDef } from '$lib/definitions/chords';
+import { SCALES, type ScaleDef } from '$lib/definitions/scales';
+import { MODES, type ModeDef } from '$lib/definitions/modes';
+import type { PlayMode } from '$lib/state/schema';
 
 const SCALE_TEMPO = 150;
 const MODE_TEMPO = 180;

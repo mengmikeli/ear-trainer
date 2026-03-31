@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { base } from '$app/paths';
-	import { INTERVALS } from '$lib/intervals';
+	import { INTERVALS } from '$lib/definitions/intervals';
 	import { playInterval, getAnalyser, getAmplitude, stopAudio } from '$lib/audio';
-	import { loadState } from '$lib/state';
+	import { loadStateV4 } from '$lib/state/storage';
 
 	// Just intonation ratios — [numerator, denominator]
 	const RATIOS: Record<string, [number, number]> = {
@@ -80,7 +80,7 @@
 		playGeneration++;
 		const thisGen = playGeneration;
 
-		const state = loadState();
+		const state = loadStateV4();
 		const rootMidi = 60;
 		const secondMidi = rootMidi + intervalSemitones;
 		isPlaying = true;

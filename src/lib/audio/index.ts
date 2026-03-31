@@ -22,6 +22,10 @@ export {
 	warmUpAudio,
 	isAudioReady,
 	midiToFreq,
+	stopAudio,
+	suspendAudio,
+	cancelScheduledSuspend,
+	resumeAudio,
 } from './context';
 
 // synths.ts — pure tone generators

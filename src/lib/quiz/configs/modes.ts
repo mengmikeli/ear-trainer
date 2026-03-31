@@ -11,8 +11,8 @@ import { defaultContentStats } from '$lib/state/schema';
 import { getStats } from '$lib/state/stats';
 import { playScale } from '$lib/audio/playback';
 import { startDrone, stopDrone, forceStopDrone, type DroneHandle } from '$lib/audio/drone';
-import { responseQuality, calculateSm2 } from '$lib/sm2';
-import { MODES, type ModeDef } from '$lib/modes';
+import { responseQuality, calculateSm2 } from '$lib/learning/sm2';
+import { MODES, type ModeDef } from '$lib/definitions/modes';
 
 const TEMPO = 180;
 

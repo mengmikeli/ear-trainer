@@ -1,20 +1,21 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { loadState, saveState } from '$lib/state';
-	import { INTERVALS } from '$lib/intervals';
-	import { CHORDS } from '$lib/chords';
-	import { SCALES } from '$lib/scales';
-	import { MODES } from '$lib/modes';
-	import { playInterval, playChord, playScale } from '$lib/audio';
-	import { isModeMastered } from '$lib/mastery';
+	import { loadStateV4, saveStateV4 } from '$lib/state/storage';
+	import { INTERVALS } from '$lib/definitions/intervals';
+	import { CHORDS } from '$lib/definitions/chords';
+	import { SCALES } from '$lib/definitions/scales';
+	import { MODES } from '$lib/definitions/modes';
+	import { playInterval, playChord, playScale } from '$lib/audio/playback';
+	import { isModeMastered, buildIntervalState, buildChordState, buildScaleState, buildModeState } from '$lib/state/compat';
+	import { getStats, getStatsByKind, aggregateStats, getStatsForDef } from '$lib/state/stats';
 	import IntervalCard from '../../components/IntervalCard.svelte';
 	import ChordCard from '../../components/ChordCard.svelte';
 	import ScaleCard from '../../components/ScaleCard.svelte';
 	import ModeCard from '../../components/ModeCard.svelte';
 	import TelemetryBar from '../../components/TelemetryBar.svelte';
-	import type { UserState, PlayMode, ChordVoicing } from '$lib/types';
+	import type { UserStateV4, PlayMode, ChordVoicing } from '$lib/state/schema';
 
-	let state: UserState | null = $state(null);
+	let state: UserStateV4 | null = $state(null);
 	let minWarning = $state(false);
 	let activeTab: PlayMode | null = $state(null);
 	let chordVoicingTab: ChordVoicing | null = $state(null);
@@ -42,9 +43,11 @@
 		if (!state) return false;
 		if (state.settings.devMode) return true;
 		let bronzeCount = 0;
-		for (const s of Object.values(state.intervals)) {
-			if (!s.unlocked) continue;
-			const mastered = [s.modes.ascending, s.modes.descending, s.modes.harmonic]
+		for (const def of INTERVALS) {
+			const ds = state.definitions.intervals[def.id];
+			if (!ds?.unlocked) continue;
+			const istate = buildIntervalState(state, def.id);
+			const mastered = [istate.modes.ascending, istate.modes.descending, istate.modes.harmonic]
 				.filter(m => isModeMastered(m)).length;
 			if (mastered >= 1) bronzeCount++;
 		}
@@ -56,9 +59,11 @@
 		if (!state) return false;
 		if (state.settings.devMode) return true;
 		let bronzeCount = 0;
-		for (const s of Object.values(state.intervals)) {
-			if (!s.unlocked) continue;
-			const mastered = [s.modes.ascending, s.modes.descending, s.modes.harmonic]
+		for (const def of INTERVALS) {
+			const ds = state.definitions.intervals[def.id];
+			if (!ds?.unlocked) continue;
+			const istate = buildIntervalState(state, def.id);
+			const mastered = [istate.modes.ascending, istate.modes.descending, istate.modes.harmonic]
 				.filter(m => isModeMastered(m)).length;
 			if (mastered >= 1) bronzeCount++;
 		}
@@ -68,46 +73,45 @@
 	const modesUnlocked = $derived(() => {
 		if (!state) return false;
 		if (state.settings.devMode) return true;
-		// Modes unlock when scales are unlocked (same gate)
 		return scalesUnlocked();
 	});
 
 	onMount(() => {
-		state = loadState();
+		state = loadStateV4();
 	});
 
 	function toggleInterval(id: string) {
 		if (!state) return;
-		const s = state.intervals[id];
-		if (!s.unlocked) return;
-		if (s.enabled) {
-			const enabledCount = Object.values(state.intervals).filter(i => i.unlocked && i.enabled).length;
+		const ds = state.definitions.intervals[id];
+		if (!ds.unlocked) return;
+		if (ds.enabled) {
+			const enabledCount = Object.values(state.definitions.intervals).filter(i => i.unlocked && i.enabled).length;
 			if (enabledCount <= 3) {
 				minWarning = true;
 				setTimeout(() => { minWarning = false; }, 2000);
 				return;
 			}
 		}
-		state.intervals[id].enabled = !s.enabled;
+		state.definitions.intervals[id].enabled = !ds.enabled;
 		state = { ...state };
-		saveState(state);
+		saveStateV4(state);
 	}
 
 	function toggleChord(id: string) {
 		if (!state) return;
-		const s = state.chords[id];
-		if (!s.unlocked) return;
-		if (s.enabled) {
-			const enabledCount = Object.values(state.chords).filter(c => c.unlocked && c.enabled).length;
+		const ds = state.definitions.chords[id];
+		if (!ds.unlocked) return;
+		if (ds.enabled) {
+			const enabledCount = Object.values(state.definitions.chords).filter(c => c.unlocked && c.enabled).length;
 			if (enabledCount <= 2) {
 				minWarning = true;
 				setTimeout(() => { minWarning = false; }, 2000);
 				return;
 			}
 		}
-		state.chords[id].enabled = !s.enabled;
+		state.definitions.chords[id].enabled = !ds.enabled;
 		state = { ...state };
-		saveState(state);
+		saveStateV4(state);
 	}
 
 	function playIntervalPreview(id: string) {
@@ -132,19 +136,19 @@
 
 	function toggleScale(id: string) {
 		if (!state) return;
-		const s = state.scales[id];
-		if (!s.unlocked) return;
-		if (s.enabled) {
-			const enabledCount = Object.values(state.scales).filter(sc => sc.unlocked && sc.enabled).length;
+		const ds = state.definitions.scales[id];
+		if (!ds.unlocked) return;
+		if (ds.enabled) {
+			const enabledCount = Object.values(state.definitions.scales).filter(sc => sc.unlocked && sc.enabled).length;
 			if (enabledCount <= 2) {
 				minWarning = true;
 				setTimeout(() => { minWarning = false; }, 2000);
 				return;
 			}
 		}
-		state.scales[id].enabled = !s.enabled;
+		state.definitions.scales[id].enabled = !ds.enabled;
 		state = { ...state };
-		saveState(state);
+		saveStateV4(state);
 	}
 
 	function playScalePreview(id: string) {
@@ -158,20 +162,20 @@
 	}
 
 	function toggleMode(id: string) {
-		if (!state || !state.modes) return;
-		const m = state.modes[id];
-		if (!m || !m.unlocked) return;
-		if (m.enabled) {
-			const enabledCount = Object.values(state.modes).filter(md => md.unlocked && md.enabled).length;
+		if (!state) return;
+		const ds = state.definitions.modes[id];
+		if (!ds || !ds.unlocked) return;
+		if (ds.enabled) {
+			const enabledCount = Object.values(state.definitions.modes).filter(md => md.unlocked && md.enabled).length;
 			if (enabledCount <= 2) {
 				minWarning = true;
 				setTimeout(() => { minWarning = false; }, 2000);
 				return;
 			}
 		}
-		state.modes[id].enabled = !m.enabled;
+		state.definitions.modes[id].enabled = !ds.enabled;
 		state = { ...state };
-		saveState(state);
+		saveStateV4(state);
 	}
 
 	function playModePreview(id: string) {
@@ -188,24 +192,21 @@
 		if (!state) return [];
 		if (contentView === 'chords') {
 			if (!chordVoicingTab) {
-				let attempts = 0, correct = 0;
-				for (const s of Object.values(state.chords)) {
-					if (!s.unlocked) continue;
-					attempts += s.attempts;
-					correct += s.correct;
-				}
-				const acc = attempts > 0 ? Math.round((correct / attempts) * 100) : 0;
+				const entries = getStatsByKind(state.stats, 'chord');
+				const agg = aggregateStats(entries);
+				const acc = agg.attempts > 0 ? Math.round(agg.accuracy * 100) : 0;
 				return [
-					{ label: 'Q', value: attempts },
+					{ label: 'Q', value: agg.attempts },
 					{ label: 'ACC', value: acc + '%' },
 				];
 			}
+			// Filter by voicing
 			let attempts = 0, correct = 0;
-			for (const s of Object.values(state.chords)) {
-				if (!s.unlocked) continue;
-				const v = s.voicings[chordVoicingTab];
-				attempts += v.attempts;
-				correct += v.correct;
+			for (const def of CHORDS) {
+				if (!state.definitions.chords[def.id]?.unlocked) continue;
+				const cs = getStats(state.stats, `chord:${def.id}:${chordVoicingTab}`);
+				attempts += cs.attempts;
+				correct += cs.correct;
 			}
 			const acc = attempts > 0 ? Math.round((correct / attempts) * 100) : 0;
 			return [
@@ -214,45 +215,38 @@
 			];
 		}
 		if (contentView === 'scales') {
-			let attempts = 0, correct = 0;
-			for (const s of Object.values(state.scales)) {
-				if (!s.unlocked) continue;
-				attempts += s.attempts;
-				correct += s.correct;
-			}
-			const acc = attempts > 0 ? Math.round((correct / attempts) * 100) : 0;
+			const entries = getStatsByKind(state.stats, 'scale');
+			const agg = aggregateStats(entries);
+			const acc = agg.attempts > 0 ? Math.round(agg.accuracy * 100) : 0;
 			return [
-				{ label: 'Q', value: attempts },
+				{ label: 'Q', value: agg.attempts },
 				{ label: 'ACC', value: acc + '%' },
 			];
 		}
 		if (contentView === 'modes') {
-			if (!state.modes) return [];
-			let attempts = 0, correct = 0;
-			for (const m of Object.values(state.modes)) {
-				if (!m.unlocked) continue;
-				attempts += m.attempts;
-				correct += m.correct;
-			}
-			const acc = attempts > 0 ? Math.round((correct / attempts) * 100) : 0;
+			const entries = getStatsByKind(state.stats, 'mode');
+			const agg = aggregateStats(entries);
+			const acc = agg.attempts > 0 ? Math.round(agg.accuracy * 100) : 0;
 			return [
-				{ label: 'Q', value: attempts },
+				{ label: 'Q', value: agg.attempts },
 				{ label: 'ACC', value: acc + '%' },
 			];
 		}
+		// Intervals
 		if (!activeTab) {
 			return [
-				{ label: 'SES', value: state.stats.totalSessions },
-				{ label: 'Q', value: state.stats.totalQuestions },
-				{ label: 'STK', value: state.stats.currentStreak },
+				{ label: 'SES', value: state.globalStats.totalSessions },
+				{ label: 'Q', value: state.globalStats.totalQuestions },
+				{ label: 'STK', value: state.globalStats.currentStreak },
 			];
 		}
+		// Filter by mode
 		let attempts = 0, correct = 0;
-		for (const s of Object.values(state.intervals)) {
-			if (!s.unlocked) continue;
-			const m = s.modes[activeTab];
-			attempts += m.attempts;
-			correct += m.correct;
+		for (const def of INTERVALS) {
+			if (!state.definitions.intervals[def.id]?.unlocked) continue;
+			const cs = getStats(state.stats, `interval:${def.id}:${activeTab}`);
+			attempts += cs.attempts;
+			correct += cs.correct;
 		}
 		const acc = attempts > 0 ? Math.round((correct / attempts) * 100) : 0;
 		return [
@@ -306,26 +300,26 @@
 		{#if contentView === 'intervals'}
 			<div class="interval-list">
 				{#each INTERVALS as def}
-					<IntervalCard {def} state={state.intervals[def.id]} modeFilter={activeTab} ontoggle={toggleInterval} onplay={playIntervalPreview} playing={playingId === def.id} />
+					<IntervalCard {def} state={buildIntervalState(state, def.id)} modeFilter={activeTab} ontoggle={toggleInterval} onplay={playIntervalPreview} playing={playingId === def.id} />
 				{/each}
 			</div>
 		{:else if contentView === 'chords'}
 			<div class="interval-list">
 				{#each CHORDS as def}
-					<ChordCard {def} state={state.chords[def.id]} voicingFilter={chordVoicingTab} ontoggle={toggleChord} onplay={playChordPreview} playing={playingId === def.id} />
+					<ChordCard {def} state={buildChordState(state, def.id)} voicingFilter={chordVoicingTab} ontoggle={toggleChord} onplay={playChordPreview} playing={playingId === def.id} />
 				{/each}
 			</div>
 		{:else if contentView === 'scales'}
 			<div class="interval-list">
 				{#each SCALES as def}
-					<ScaleCard {def} state={state.scales[def.id]} ontoggle={toggleScale} onplay={playScalePreview} playing={playingId === def.id} />
+					<ScaleCard {def} state={buildScaleState(state, def.id)} ontoggle={toggleScale} onplay={playScalePreview} playing={playingId === def.id} />
 				{/each}
 			</div>
 		{:else if contentView === 'modes'}
 			<div class="interval-list">
 				{#each MODES as def}
-					{#if state.modes?.[def.id]}
-						<ModeCard {def} state={state.modes[def.id]} ontoggle={toggleMode} onplay={playModePreview} playing={playingId === def.id} />
+					{#if state.definitions.modes[def.id]?.unlocked || state.settings.devMode}
+						<ModeCard {def} state={buildModeState(state, def.id)} ontoggle={toggleMode} onplay={playModePreview} playing={playingId === def.id} />
 					{/if}
 				{/each}
 			</div>

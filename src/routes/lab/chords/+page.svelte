@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { base } from '$app/paths';
-	import { CHORDS } from '$lib/chords';
+	import { CHORDS } from '$lib/definitions/chords';
 	import { chladniSuper, chladniGradSuper, chordToModes, harmonograph3D } from '$lib/viz';
 	import type { ChladniMode } from '$lib/viz';
 	import { playChord, getAnalyser, getAmplitude, stopAudio } from '$lib/audio';

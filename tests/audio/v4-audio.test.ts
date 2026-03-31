@@ -237,13 +237,14 @@ describe('audio module exports', () => {
 		expect(typeof mod.clearIOSAudioSession).toBe('function');
 	});
 
-	it('does NOT export removed functions (stopAudio, suspendAudio, scheduleSuspend, etc.)', async () => {
+	it('exports legacy compat functions (stopAudio, suspendAudio, cancelScheduledSuspend, resumeAudio)', async () => {
 		const mod = await import('$lib/audio/index') as any;
-		expect(mod.stopAudio).toBeUndefined();
-		expect(mod.suspendAudio).toBeUndefined();
+		expect(typeof mod.stopAudio).toBe('function');
+		expect(typeof mod.suspendAudio).toBe('function');
+		expect(typeof mod.cancelScheduledSuspend).toBe('function');
+		expect(typeof mod.resumeAudio).toBe('function');
+		// scheduleSuspend is NOT exported (fully removed)
 		expect(mod.scheduleSuspend).toBeUndefined();
-		expect(mod.cancelScheduledSuspend).toBeUndefined();
-		expect(mod.resumeAudio).toBeUndefined();
 	});
 });
 

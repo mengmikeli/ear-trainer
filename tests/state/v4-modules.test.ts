@@ -2,10 +2,10 @@
  * Tests for v4 state modules: defaults, storage, progression, stats.
  */
 import { describe, it, expect, beforeEach } from 'vitest';
-import { INTERVALS } from '$lib/intervals';
-import { CHORDS } from '$lib/chords';
-import { SCALES } from '$lib/scales';
-import { MODES } from '$lib/modes';
+import { INTERVALS } from '$lib/definitions/intervals';
+import { CHORDS } from '$lib/definitions/chords';
+import { SCALES } from '$lib/definitions/scales';
+import { MODES } from '$lib/definitions/modes';
 import { STATE_VERSION } from '$lib/state/schema';
 import type { UserStateV4, ContentStats } from '$lib/state/schema';
 import { defaultContentStats } from '$lib/state/schema';

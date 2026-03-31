@@ -2,18 +2,20 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { base } from '$app/paths';
-	import { loadState, saveState } from '$lib/state';
-	import { warmUpAudio } from '$lib/audio';
-	import { INTERVALS } from '$lib/intervals';
-	import { CHORDS } from '$lib/chords';
-	import { SCALES } from '$lib/scales';
+	import { loadStateV4, saveStateV4 } from '$lib/state/storage';
+	import { checkTierUnlockV4 } from '$lib/state/progression';
+	import { getStatsForDef, aggregateStats, getStatsByKind } from '$lib/state/stats';
+	import { isModeMastered, buildIntervalState } from '$lib/state/compat';
+	import { warmUpAudio } from '$lib/audio/context';
+	import { INTERVALS } from '$lib/definitions/intervals';
+	import { CHORDS } from '$lib/definitions/chords';
+	import { SCALES } from '$lib/definitions/scales';
 	import { VERSION_STRING } from '$lib/version';
-	import { isModeMastered } from '$lib/mastery';
-	import type { UserState } from '$lib/types';
+	import type { UserStateV4 } from '$lib/state/schema';
 	import RadarGrid from '../components/RadarGrid.svelte';
 	import TelemetryBar from '../components/TelemetryBar.svelte';
 
-	let state: UserState | null = $state(null);
+	let state: UserStateV4 | null = $state(null);
 	let goGlitching = $state(false);
 	let goText = $state('GO');
 	let versionCopied = $state(false);
@@ -21,7 +23,7 @@
 	const glitchChars = ['\uE000', '\uE001', '\uE002', '\uE003', '\uE004', '\uE005', '\uE006', '\uE007', '\uE008', '\uE010', '\uE013', '\uE014', '\uE017'];
 
 	onMount(() => {
-		state = loadState();
+		state = loadStateV4();
 	});
 
 	// Chord system unlock: Bronze mastery on 5+ intervals
@@ -29,9 +31,11 @@
 		if (!state) return false;
 		if (state.settings.devMode) return true;
 		let bronzeCount = 0;
-		for (const s of Object.values(state.intervals)) {
-			if (!s.unlocked) continue;
-			const mastered = [s.modes.ascending, s.modes.descending, s.modes.harmonic]
+		for (const def of INTERVALS) {
+			const ds = state.definitions.intervals[def.id];
+			if (!ds?.unlocked) continue;
+			const istate = buildIntervalState(state, def.id);
+			const mastered = [istate.modes.ascending, istate.modes.descending, istate.modes.harmonic]
 				.filter(m => isModeMastered(m)).length;
 			if (mastered >= 1) bronzeCount++;
 		}
@@ -43,21 +47,22 @@
 		if (!state) return false;
 		if (state.settings.devMode) return true;
 		let bronzeCount = 0;
-		for (const s of Object.values(state.intervals)) {
-			if (!s.unlocked) continue;
-			const mastered = [s.modes.ascending, s.modes.descending, s.modes.harmonic]
+		for (const def of INTERVALS) {
+			const ds = state.definitions.intervals[def.id];
+			if (!ds?.unlocked) continue;
+			const istate = buildIntervalState(state, def.id);
+			const mastered = [istate.modes.ascending, istate.modes.descending, istate.modes.harmonic]
 				.filter(m => isModeMastered(m)).length;
 			if (mastered >= 1) bronzeCount++;
 		}
 		return bronzeCount >= 3;
 	});
 
-	// Modes unlock: all tier 3 scales unlocked + 60 scale questions at 70%
+	// Modes unlock: any mode is unlocked
 	const modesUnlocked = $derived(() => {
 		if (!state) return false;
 		if (state.settings.devMode) return true;
-		if (!state.modes) return false;
-		return Object.values(state.modes).some(m => m.unlocked);
+		return Object.values(state.definitions.modes).some(m => m.unlocked);
 	});
 
 	const activeContent = $derived(() => {
@@ -69,7 +74,7 @@
 	function setActiveContent(mode: 'intervals' | 'chords' | 'scales' | 'modes') {
 		if (!state) return;
 		state.settings.activeContent = mode;
-		saveState(state);
+		saveStateV4(state);
 	}
 
 	function handleGo(e: Event) {
@@ -100,28 +105,13 @@
 
 	const overallAccuracy = $derived(() => {
 		if (!state) return 0;
-		if (activeContent() === 'chords') {
-			let attempts = 0, correct = 0;
-			for (const s of Object.values(state.chords)) {
-				attempts += s.attempts;
-				correct += s.correct;
-			}
-			return attempts > 0 ? Math.round((correct / attempts) * 100) : 0;
-		}
-		if (activeContent() === 'scales') {
-			let attempts = 0, correct = 0;
-			for (const s of Object.values(state.scales)) {
-				attempts += s.attempts;
-				correct += s.correct;
-			}
-			return attempts > 0 ? Math.round((correct / attempts) * 100) : 0;
-		}
-		let attempts = 0, correct = 0;
-		for (const s of Object.values(state.intervals)) {
-			attempts += s.attempts;
-			correct += s.correct;
-		}
-		return attempts > 0 ? Math.round((correct / attempts) * 100) : 0;
+		const content = activeContent();
+		const kind = content === 'chords' ? 'chord' as const
+			: content === 'scales' ? 'scale' as const
+			: 'interval' as const;
+		const entries = getStatsByKind(state.stats, kind);
+		const agg = aggregateStats(entries);
+		return agg.attempts > 0 ? Math.round(agg.accuracy * 100) : 0;
 	});
 
 	const currentTier = $derived(() => {
@@ -129,23 +119,20 @@
 		if (activeContent() === 'chords') {
 			let highest = 1;
 			for (const def of CHORDS) {
-				const s = state.chords[def.id];
-				if (s?.unlocked && def.tier > highest) highest = def.tier;
+				if (state.definitions.chords[def.id]?.unlocked && def.tier > highest) highest = def.tier;
 			}
 			return highest;
 		}
 		if (activeContent() === 'scales') {
 			let highest = 1;
 			for (const def of SCALES) {
-				const s = state.scales[def.id];
-				if (s?.unlocked && def.tier > highest) highest = def.tier;
+				if (state.definitions.scales[def.id]?.unlocked && def.tier > highest) highest = def.tier;
 			}
 			return highest;
 		}
 		let highest = 1;
 		for (const def of INTERVALS) {
-			const s = state.intervals[def.id];
-			if (s?.unlocked && def.tier > highest) highest = def.tier;
+			if (state.definitions.intervals[def.id]?.unlocked && def.tier > highest) highest = def.tier;
 		}
 		return highest;
 	});
@@ -153,14 +140,14 @@
 	const contentCount = $derived(() => {
 		if (!state) return '0/13';
 		if (activeContent() === 'chords') {
-			const unlocked = Object.values(state.chords).filter(s => s.unlocked).length;
+			const unlocked = Object.values(state.definitions.chords).filter(s => s.unlocked).length;
 			return `${unlocked}/${CHORDS.length}`;
 		}
 		if (activeContent() === 'scales') {
-			const unlocked = Object.values(state.scales).filter(s => s.unlocked).length;
+			const unlocked = Object.values(state.definitions.scales).filter(s => s.unlocked).length;
 			return `${unlocked}/${SCALES.length}`;
 		}
-		const unlocked = Object.values(state.intervals).filter(s => s.unlocked).length;
+		const unlocked = Object.values(state.definitions.intervals).filter(s => s.unlocked).length;
 		return `${unlocked}/${INTERVALS.length}`;
 	});
 
@@ -173,12 +160,14 @@
 	const totalQuestions = $derived(() => {
 		if (!state) return 0;
 		if (activeContent() === 'chords') {
-			return Object.values(state.chords).reduce((sum, s) => sum + s.attempts, 0);
+			const entries = getStatsByKind(state.stats, 'chord');
+			return aggregateStats(entries).attempts;
 		}
 		if (activeContent() === 'scales') {
-			return Object.values(state.scales).reduce((sum, s) => sum + s.attempts, 0);
+			const entries = getStatsByKind(state.stats, 'scale');
+			return aggregateStats(entries).attempts;
 		}
-		return state.stats.totalQuestions;
+		return state.globalStats.totalQuestions;
 	});
 </script>
 
@@ -243,7 +232,7 @@
 
 			<div class="telemetry-row">
 				<TelemetryBar segments={[
-					{ label: 'STK', value: state.stats.currentStreak },
+					{ label: 'STK', value: state.globalStats.currentStreak },
 					{ label: 'ACC', value: overallAccuracy() + '%' },
 					{ label: 'Q', value: totalQuestions() },
 				]} />

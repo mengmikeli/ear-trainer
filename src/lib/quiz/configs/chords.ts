@@ -9,9 +9,8 @@ import type { UserStateV4, ContentStats, ChordVoicing } from '$lib/state/schema'
 import { defaultContentStats } from '$lib/state/schema';
 import { getStats, getStatsForDef, aggregateStats } from '$lib/state/stats';
 import { playChord } from '$lib/audio/playback';
-import { responseQuality, calculateSm2 } from '$lib/sm2';
-import { CHORDS } from '$lib/chords';
-import type { ChordDef } from '$lib/types';
+import { responseQuality, calculateSm2 } from '$lib/learning/sm2';
+import { CHORDS, type ChordDef } from '$lib/definitions/chords';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { responseQuality, calculateSm2 } from '$lib/sm2';
+import { responseQuality, calculateSm2 } from '$lib/learning/sm2';
 
 describe('responseQuality — snapshot of current behavior', () => {
 	it('correct, no replays, fast response (<5s) → 5', () => {

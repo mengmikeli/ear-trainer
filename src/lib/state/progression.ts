@@ -11,10 +11,10 @@
  */
 
 import type { UserStateV4 } from './schema';
-import { INTERVALS } from '$lib/intervals';
-import { CHORDS } from '$lib/chords';
-import { SCALES } from '$lib/scales';
-import { MODES } from '$lib/modes';
+import { INTERVALS } from '$lib/definitions/intervals';
+import { CHORDS } from '$lib/definitions/chords';
+import { SCALES } from '$lib/definitions/scales';
+import { MODES } from '$lib/definitions/modes';
 import { getStatsForDef, aggregateStats } from './stats';
 
 // ─── Threshold tables ───────────────────────────────────────────────────────

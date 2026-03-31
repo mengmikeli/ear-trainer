@@ -9,9 +9,8 @@ import type { UserStateV4 } from '$lib/state/schema';
 import { defaultContentStats } from '$lib/state/schema';
 import { getStats, getStatsForDef, aggregateStats } from '$lib/state/stats';
 import { playScale } from '$lib/audio/playback';
-import { responseQuality, calculateSm2 } from '$lib/sm2';
-import { SCALES } from '$lib/scales';
-import type { ScaleDef } from '$lib/types';
+import { responseQuality, calculateSm2 } from '$lib/learning/sm2';
+import { SCALES, type ScaleDef } from '$lib/definitions/scales';
 
 const TEMPO = 150;
 

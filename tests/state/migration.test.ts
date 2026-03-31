@@ -2,10 +2,10 @@ import { describe, it, expect } from 'vitest';
 import { migrateToV4, freshV4State } from '$lib/state/migration';
 import { STATE_VERSION, defaultContentStats, defaultDefinitionState } from '$lib/state/schema';
 import type { UserStateV4 } from '$lib/state/schema';
-import { INTERVALS } from '$lib/intervals';
-import { CHORDS } from '$lib/chords';
-import { SCALES } from '$lib/scales';
-import { MODES } from '$lib/modes';
+import { INTERVALS } from '$lib/definitions/intervals';
+import { CHORDS } from '$lib/definitions/chords';
+import { SCALES } from '$lib/definitions/scales';
+import { MODES } from '$lib/definitions/modes';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
