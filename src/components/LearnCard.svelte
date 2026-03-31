@@ -236,11 +236,11 @@
 			{/if}
 			<div class="learn-actions">
 				<button class="learn-btn primary" onclick={handleHearIt} disabled={isPlaying}>
-					{isPlaying ? '···' : '▶ HEAR IT'}
+					{isPlaying ? '···' : 'HEAR IT'}
 				</button>
 			</div>
 			<button class="learn-btn advance" onclick={advanceStep}>
-				NEXT →
+				NEXT
 			</button>
 		</div>
 
@@ -279,20 +279,18 @@
 				</button>
 			</div>
 			<button class="learn-btn advance" onclick={advanceStep}>
-				NEXT →
+				NEXT
 			</button>
 		</div>
 
 	{:else if step === 3}
-		<!-- Step 3: Quick Quiz -->
+		<!-- Step 3: Quick Quiz — "Which one did you just hear?" -->
 		<div class="learn-body">
-			<div class="quiz-prompt">WHICH ONE IS</div>
-			<div class="quiz-target-label">{itemLabel}</div>
-			<div class="quiz-target-name">{itemName}?</div>
+			<div class="quiz-prompt">WHICH ONE DID YOU JUST HEAR?</div>
 
 			<div class="learn-actions">
 				<button class="learn-btn secondary" onclick={playQuizAudio} disabled={isPlaying}>
-					{quizPlayed ? '↻ REPLAY' : '▶ PLAY'}
+					{quizPlayed ? 'REPLAY' : 'PLAY'}
 				</button>
 			</div>
 
@@ -300,8 +298,8 @@
 				<div class="quiz-choices">
 					<button
 						class="quiz-choice"
-						class:quiz-correct={quizAnswer === 'correct' && true}
-						class:quiz-wrong={quizAnswer === 'wrong' && true}
+						class:quiz-correct={quizAnswer === 'correct' && quizTarget === 'item'}
+						class:quiz-wrong={quizAnswer === 'wrong' && quizTarget !== 'item'}
 						onclick={() => submitQuizAnswer('item')}
 						disabled={quizAnswer !== null}
 					>
@@ -310,8 +308,8 @@
 					</button>
 					<button
 						class="quiz-choice"
-						class:quiz-correct={quizAnswer === 'correct' && false}
-						class:quiz-wrong={quizAnswer === 'wrong' && false}
+						class:quiz-correct={quizAnswer === 'correct' && quizTarget === 'neighbor'}
+						class:quiz-wrong={quizAnswer === 'wrong' && quizTarget !== 'neighbor'}
 						onclick={() => submitQuizAnswer('neighbor')}
 						disabled={quizAnswer !== null}
 					>
@@ -332,7 +330,7 @@
 			<div class="done-check">{'\uE018'}</div>
 			<div class="item-label">{itemLabel}</div>
 			<div class="done-text">UNLOCKED</div>
-			<div class="done-subtext">Now entering quiz rotation</div>
+			<div class="done-subtext">Continue to next lesson</div>
 		</div>
 	{/if}
 </div>
@@ -653,9 +651,9 @@
 	}
 
 	.done-subtext {
-		font-family: var(--font);
-		font-size: 0.65rem;
+		font-family: var(--mono);
+		font-size: 0.45rem;
 		color: var(--text-secondary);
-		letter-spacing: 0.05em;
+		letter-spacing: 0.1em;
 	}
 </style>
