@@ -488,21 +488,6 @@
 					<span class="onboard-text" class:glitching={onboardHoldActive}>{onboardGlitchText}</span>
 				</button>
 
-				<button
-					class="dev-btn reset-learn"
-					onclick={() => {
-						if (!state?.adaptive?.stats) return;
-						for (const key of Object.keys(state.adaptive.stats)) {
-							state.adaptive.stats[key].attempts = 0;
-							state.adaptive.stats[key].correct = 0;
-							state.adaptive.stats[key].streak = 0;
-							state.adaptive.stats[key].lastSeen = 0;
-							state.adaptive.stats[key].nextReview = 0;
-						}
-						saveState(state!);
-					}}>
-					RESET LEARN CARDS
-				</button>
 			{/if}
 
 			<button
