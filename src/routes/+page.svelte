@@ -193,7 +193,7 @@
 				navigator.clipboard.writeText(VERSION_STRING);
 				versionCopied = true;
 				setTimeout(() => { versionCopied = false; }, 1500);
-			}}>SYS {versionCopied ? 'COPIED' : VERSION_STRING}</span>
+			}} class:copied={versionCopied}>SYS {VERSION_STRING}</span>
 			<span class="hazard-bar"></span>
 		</div>
 	</header>
@@ -285,6 +285,7 @@
 		transition: opacity 0.15s;
 	}
 	.version:active { opacity: 0.7; }
+	.version.copied { background: var(--correct); }
 	.center-area {
 		position: relative;
 		display: flex;

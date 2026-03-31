@@ -29,7 +29,7 @@
 	let labHoldStart = 0;
 	let labHoldRaf: number | null = null;
 	let labDone = $state(false);
-	let labGlitchText = $state('ENTER LAB');
+	let labGlitchText = $state('ENTER VIZ LAB');
 	let labGlitchInterval: ReturnType<typeof setInterval> | null = null;
 
 	// Long-press training
@@ -137,7 +137,7 @@
 	const labHoldDuration = 2000;
 
 	function labRandomGlitchText(): string {
-		const base = 'ENTER LAB';
+		const base = 'ENTER VIZ LAB';
 		const chars = [...base];
 		const maxGlitch = Math.max(1, Math.ceil(labHoldProgress * chars.length * 0.6));
 		const count = 1 + Math.floor(Math.random() * Math.min(maxGlitch, chars.length));
@@ -173,7 +173,7 @@
 	function cancelLabHold() {
 		labHoldActive = false;
 		labHoldProgress = 0;
-		labGlitchText = 'ENTER LAB';
+		labGlitchText = 'ENTER VIZ LAB';
 		if (labHoldRaf) { cancelAnimationFrame(labHoldRaf); labHoldRaf = null; }
 		if (labGlitchInterval) { clearInterval(labGlitchInterval); labGlitchInterval = null; }
 	}
@@ -184,7 +184,7 @@
 		if (labGlitchInterval) { clearInterval(labGlitchInterval); labGlitchInterval = null; }
 
 		labDone = true;
-		labGlitchText = '\uE018 LAB \uE018';
+		labGlitchText = '\uE018 VIZ LAB \uE018';
 		labHoldProgress = 1;
 		setTimeout(() => {
 			window.location.href = `${base}/lab`;
@@ -447,7 +447,7 @@
 					versionCopied = true;
 					setTimeout(() => { versionCopied = false; }, 1500);
 				}}>
-					<span class="version-label">{versionCopied ? 'COPIED' : VERSION_STRING}</span>
+					<span class="version-label" class:copied={versionCopied}>{VERSION_STRING}</span>
 				</button>
 				<button class="version-btn" onclick={() => showReleaseNotes = !showReleaseNotes}>
 					<span class="version-toggle" class:open={showReleaseNotes}>{showReleaseNotes ? '^' : '>'}</span>
@@ -752,7 +752,8 @@
 		font-family: var(--mono); letter-spacing: 0.08em;
 		cursor: pointer;
 	}
-	.version-label { color: var(--marathon-blue); }
+	.version-label { color: var(--marathon-blue); transition: color 0.15s; }
+	.version-label.copied { color: var(--correct); }
 	.version-toggle { font-size: 0.45rem; display: inline-block; transition: transform 0.15s; }
 	.version-toggle.open { transform: rotate(180deg); }
 	.release-notes {
