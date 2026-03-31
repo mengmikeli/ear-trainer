@@ -562,8 +562,8 @@
 		<div class="top-controls">
 			<button class="close exit" onclick={endEarly}>EXIT</button>
 			<div class="top-right">
-				<button class="drone-toggle" class:active={!droneMuted} onclick={toggleDroneMute}>
-					{droneMuted ? 'DRN' : 'DRN'}
+				<button class="drone-toggle" class:active={!droneMuted} class:muted={droneMuted} onclick={toggleDroneMute}>
+					{droneMuted ? 'DRN OFF' : 'DRN ON'}
 				</button>
 				<span class="counter">{String(questionNum).padStart(2, '0')}/{String(totalQuestions).padStart(2, '0')}</span>
 			</div>
@@ -730,6 +730,11 @@
 	.drone-toggle.active {
 		color: var(--accent);
 		border-color: var(--accent);
+	}
+	.drone-toggle.muted {
+		color: var(--hot);
+		border-color: var(--hot);
+		opacity: 0.6;
 	}
 	.close {
 		font-size: 0.4rem;
