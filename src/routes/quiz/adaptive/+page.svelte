@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
+	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import { base } from '$app/paths';
 	import { loadState, saveState, checkTierUnlock } from '$lib/state';
@@ -86,10 +87,13 @@
 		state = loadState();
 		totalQuestions = state.settings.sessionLength;
 
+		const onboardMode = page.url.searchParams.get('onboard') === '1';
+
 		const config: SessionConfig = {
 			length: totalQuestions,
 			allowedKinds: ['interval', 'chord', 'scale', 'mode'],
 			mixStrategy: 'adaptive',
+			onboardMode,
 		};
 
 		plan = planSession(state, config);

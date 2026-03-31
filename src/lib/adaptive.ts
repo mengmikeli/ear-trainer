@@ -50,6 +50,7 @@ export interface SessionConfig {
 	length: number;
 	allowedKinds: ContentKind[];
 	mixStrategy: 'adaptive' | 'focused';
+	onboardMode?: boolean;
 }
 
 export type SessionPhase = 'learn' | 'warmup' | 'focus' | 'review';
@@ -318,10 +319,12 @@ export function needsLearnCard(
 	itemId: string,
 	stats: Record<string, ContentStats>,
 	devMode?: boolean,
+	onboardMode?: boolean,
 ): boolean {
-	// Disabled — learn cards need redesign before re-enabling.
-	// See DESIGN-ONBOARDING.md for the planned approach.
-	return false;
+	// Learn cards disabled by default — re-enabled only via ?onboard=1 query param
+	if (!onboardMode) return false;
+	const s = stats[itemId];
+	return !s || s.attempts === 0;
 }
 
 /**
@@ -391,7 +394,7 @@ export function planSession(
 	// --- Learn phase: items with attempts === 0 ---
 	let learnItems: PlannedQuestion[] = [];
 
-	if (!devMode) {
+	if (!devMode || config.onboardMode) {
 		// Cold start: use hard-coded intro sequence
 		if (isColdStart(stats)) {
 			const introItems = buildColdStartIntro();
