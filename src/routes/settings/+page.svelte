@@ -32,6 +32,15 @@
 	let labGlitchText = $state('ENTER LAB');
 	let labGlitchInterval: ReturnType<typeof setInterval> | null = null;
 
+	// Long-press training
+	let trainHoldProgress = $state(0);
+	let trainHoldActive = $state(false);
+	let trainHoldStart = 0;
+	let trainHoldRaf: number | null = null;
+	let trainDone = $state(false);
+	let trainGlitchText = $state('ENTER TRAINING');
+	let trainGlitchInterval: ReturnType<typeof setInterval> | null = null;
+
 	const holdDuration = 3500; // 3.5s hold to confirm
 	const baseText = 'RESET PROGRESS';
 	const glyphs = ['\uE000', '\uE001', '\uE002', '\uE003', '\uE004', '\uE005', '\uE006', '\uE007', '\uE008', '\uE010', '\uE011', '\uE012', '\uE013', '\uE014', '\uE015', '\uE016', '\uE017', '\uE018', '\uE019'];
@@ -57,6 +66,7 @@
 	onDestroy(() => {
 		cancelHold();
 		cancelLabHold();
+		cancelTrainHold();
 		systemThemeCleanup?.();
 	});
 
@@ -178,6 +188,64 @@
 		labHoldProgress = 1;
 		setTimeout(() => {
 			window.location.href = `${base}/lab`;
+		}, 500);
+	}
+
+	// Training long-press functions
+	const trainHoldDuration = 2000;
+
+	function trainRandomGlitchText(): string {
+		const txt = 'ENTER TRAINING';
+		const chars = [...txt];
+		const maxGlitch = Math.max(1, Math.ceil(trainHoldProgress * chars.length * 0.6));
+		const count = 1 + Math.floor(Math.random() * Math.min(maxGlitch, chars.length));
+		for (let i = 0; i < count; i++) {
+			const idx = Math.floor(Math.random() * chars.length);
+			chars[idx] = glyphs[Math.floor(Math.random() * glyphs.length)];
+		}
+		return chars.join('');
+	}
+
+	function startTrainHold() {
+		if (trainDone) return;
+		trainHoldActive = true;
+		trainHoldStart = performance.now();
+		trainHoldProgress = 0;
+		trainGlitchInterval = setInterval(() => {
+			trainGlitchText = trainRandomGlitchText();
+		}, 60);
+		trainHoldRaf = requestAnimationFrame(tickTrainHold);
+	}
+
+	function tickTrainHold(now: number) {
+		const elapsed = now - trainHoldStart;
+		const linear = Math.min(1, elapsed / trainHoldDuration);
+		trainHoldProgress = 1 - Math.pow(1 - linear, 3);
+		if (linear >= 1) {
+			executeTrainEnter();
+			return;
+		}
+		trainHoldRaf = requestAnimationFrame(tickTrainHold);
+	}
+
+	function cancelTrainHold() {
+		trainHoldActive = false;
+		trainHoldProgress = 0;
+		trainGlitchText = 'ENTER TRAINING';
+		if (trainHoldRaf) { cancelAnimationFrame(trainHoldRaf); trainHoldRaf = null; }
+		if (trainGlitchInterval) { clearInterval(trainGlitchInterval); trainGlitchInterval = null; }
+	}
+
+	function executeTrainEnter() {
+		trainHoldActive = false;
+		if (trainHoldRaf) { cancelAnimationFrame(trainHoldRaf); trainHoldRaf = null; }
+		if (trainGlitchInterval) { clearInterval(trainGlitchInterval); trainGlitchInterval = null; }
+
+		trainDone = true;
+		trainGlitchText = '\uE018 TRAIN \uE018';
+		trainHoldProgress = 1;
+		setTimeout(() => {
+			window.location.href = `${base}/quiz/adaptive`;
 		}, 500);
 	}
 </script>
@@ -326,7 +394,18 @@
 					<span class="lab-text" class:glitching={labHoldActive}>{labGlitchText}</span>
 				</button>
 
-				<a href="{base}/quiz/adaptive" class="dev-link">→ TRAINING (ADAPTIVE QUIZ)</a>
+				<button
+					class="train-btn"
+					class:holding={trainHoldActive}
+					class:done={trainDone}
+					onpointerdown={startTrainHold}
+					onpointerup={cancelTrainHold}
+					onpointerleave={cancelTrainHold}
+					oncontextmenu={(e) => e.preventDefault()}
+				>
+					<div class="train-fill" style="transform: scaleX({trainHoldProgress})"></div>
+					<span class="train-text" class:glitching={trainHoldActive}>{trainGlitchText}</span>
+				</button>
 
 				<button
 					class="dev-btn reset-learn"
@@ -602,6 +681,42 @@
 	}
 	.lab-btn.done .lab-fill {
 		background: var(--correct);
+		opacity: 0.35;
+	}
+	.train-btn {
+		position: relative;
+		overflow: hidden;
+		padding: 0.85rem; background: var(--surface);
+		border: 1px solid var(--marathon-blue); border-radius: 0;
+		color: var(--marathon-blue); font-size: 0.45rem;
+		font-weight: 400; letter-spacing: 0.08em;
+		font-family: var(--mono);
+		width: 100%;
+		touch-action: none;
+		user-select: none;
+		-webkit-user-select: none;
+		margin-bottom: 0.5rem;
+	}
+	.train-fill {
+		position: absolute;
+		inset: 0;
+		background: var(--marathon-blue);
+		transform-origin: left;
+		transform: scaleX(0);
+		transition: none;
+		pointer-events: none;
+		opacity: 0.35;
+	}
+	.train-text {
+		position: relative;
+		z-index: 1;
+	}
+	.train-btn.done {
+		border-color: var(--marathon-blue);
+		color: var(--marathon-blue);
+	}
+	.train-btn.done .train-fill {
+		background: var(--marathon-blue);
 		opacity: 0.35;
 	}
 	@keyframes reset-shake {
