@@ -3,13 +3,14 @@
 	import { goto } from '$app/navigation';
 	import { base } from '$app/paths';
 	import { loadStateV4, saveStateV4 } from '$lib/state/storage';
-	import { checkTierUnlockV4 } from '$lib/state/progression';
+	import { checkTierUnlockV4, getNextUnlockProgress } from '$lib/state/progression';
 	import { getStatsForDef, aggregateStats, getStatsByKind } from '$lib/state/stats';
 	import { isModeMastered, buildIntervalState } from '$lib/state/compat';
 	import { warmUpAudio } from '$lib/audio/context';
 	import { INTERVALS } from '$lib/definitions/intervals';
 	import { CHORDS } from '$lib/definitions/chords';
 	import { SCALES } from '$lib/definitions/scales';
+	import { MODES } from '$lib/definitions/modes';
 	import { VERSION_STRING } from '$lib/version';
 	import { canAccess, getUserTier } from '$lib/features/gate';
 	import type { UserStateV4 } from '$lib/state/schema';
@@ -174,6 +175,29 @@
 		}
 		return state.globalStats.totalQuestions;
 	});
+
+	const unlockHint = $derived(() => {
+		if (!state) return null;
+		const content = activeContent();
+		if (content === 'adaptive') return null;
+		const info = getNextUnlockProgress(state, content as 'intervals' | 'chords' | 'scales' | 'modes');
+		if (!info) return null;
+		const { prerequisiteMastery: pm, threshold, pooledAttempts } = info;
+		const remaining = pm.totalItems - pm.masteredCount;
+		const needAttempts = pm.items.filter(i => i.attempts < 5);
+		if (needAttempts.length > 0 && needAttempts.length <= 3) {
+			const names = needAttempts.map(i => i.id).join(', ');
+			return `Practice ${names} more — need 5+ attempts each`;
+		}
+		if (remaining > 0) {
+			const label = content === 'chords' ? 'chords' : content === 'scales' ? 'scales' : content === 'modes' ? 'modes' : 'intervals';
+			return `Master ${remaining} more ${label} to unlock T${info.nextTier}`;
+		}
+		if (pooledAttempts < threshold.questions) {
+			return `${pooledAttempts}/${threshold.questions} questions for T${info.nextTier}`;
+		}
+		return `${pm.masteredCount}/${pm.totalItems} mastered ✓`;
+	});
 </script>
 
 <div class="home">
@@ -242,6 +266,10 @@
 					{ label: 'Q', value: totalQuestions() },
 				]} />
 			</div>
+
+			{#if unlockHint()}
+				<div class="unlock-hint">{unlockHint()}</div>
+			{/if}
 		</div>
 	{/if}
 </div>
@@ -341,6 +369,16 @@
 		position: relative;
 		z-index: 1;
 		margin-top: 0.75rem;
+	}
+	.unlock-hint {
+		font-family: var(--mono);
+		font-size: 0.35rem;
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		color: var(--text-secondary);
+		text-align: center;
+		margin-top: 0.5rem;
+		opacity: 0.7;
 	}
 	.content-switcher {
 		display: flex;

@@ -11,7 +11,7 @@
  *              then tiers: 2=10/70%  3=30/70%
  */
 
-import type { UserStateV4 } from './schema';
+import type { UserStateV4, ContentKind } from './schema';
 import { INTERVALS } from '$lib/definitions/intervals';
 import { CHORDS } from '$lib/definitions/chords';
 import { SCALES } from '$lib/definitions/scales';
@@ -46,6 +46,203 @@ const MODE_THRESHOLDS: Record<number, { questions: number; accuracy: number }> =
 	2: { questions: 10, accuracy: 0.7 },
 	3: { questions: 30, accuracy: 0.7 },
 };
+
+// ─── Per-item mastery constants ─────────────────────────────────────────────
+
+export const PER_ITEM_MIN_ATTEMPTS = 5;
+export const PER_ITEM_MIN_ACCURACY = 0.7;
+export const PER_ITEM_MIN_MASTERED_RATIO = 0.7;
+
+// ─── Per-item mastery types ────────────────────────────────────────────────
+
+export type MasteryStatus = 'mastered' | 'in-progress' | 'untouched';
+
+export interface ItemMasteryInfo {
+	id: string;
+	attempts: number;
+	accuracy: number;
+	mastered: boolean;
+}
+
+export interface TierMasteryProgress {
+	tier: number;
+	items: ItemMasteryInfo[];
+	totalItems: number;
+	masteredCount: number;
+	allHaveMinAttempts: boolean;
+	isMastered: boolean;
+}
+
+export interface NextTierUnlockProgress {
+	nextTier: number;
+	prerequisiteMastery: TierMasteryProgress;
+	threshold: { questions: number; accuracy: number };
+	pooledAttempts: number;
+	pooledAccuracy: number;
+}
+
+// ─── Per-item mastery functions ─────────────────────────────────────────────
+
+/** Get mastery status for a single content item. */
+export function getItemMasteryStatus(
+	state: UserStateV4,
+	kind: ContentKind,
+	defId: string,
+): MasteryStatus {
+	const entries = getStatsForDef(state.stats, kind, defId);
+	const agg = aggregateStats(entries);
+	if (agg.attempts === 0) return 'untouched';
+	if (agg.attempts >= PER_ITEM_MIN_ATTEMPTS && agg.accuracy >= PER_ITEM_MIN_ACCURACY) return 'mastered';
+	return 'in-progress';
+}
+
+/** Get per-item mastery progress for a specific tier. */
+export function getPerItemMasteryProgress(
+	state: UserStateV4,
+	kind: ContentKind,
+	tier: number,
+	definitions: { id: string; tier: number }[],
+): TierMasteryProgress {
+	const tierItems = definitions.filter((d) => d.tier === tier);
+	if (tierItems.length === 0) {
+		return {
+			tier,
+			items: [],
+			totalItems: 0,
+			masteredCount: 0,
+			allHaveMinAttempts: true,
+			isMastered: true,
+		};
+	}
+
+	let masteredCount = 0;
+	let allHaveMinAttempts = true;
+	const items: ItemMasteryInfo[] = [];
+
+	for (const item of tierItems) {
+		const entries = getStatsForDef(state.stats, kind, item.id);
+		const agg = aggregateStats(entries);
+
+		const hasMin = agg.attempts >= PER_ITEM_MIN_ATTEMPTS;
+		if (!hasMin) allHaveMinAttempts = false;
+
+		const mastered = hasMin && agg.accuracy >= PER_ITEM_MIN_ACCURACY;
+		if (mastered) masteredCount++;
+
+		items.push({ id: item.id, attempts: agg.attempts, accuracy: agg.accuracy, mastered });
+	}
+
+	const isMastered =
+		allHaveMinAttempts && masteredCount / tierItems.length >= PER_ITEM_MIN_MASTERED_RATIO;
+
+	return { tier, items, totalItems: tierItems.length, masteredCount, allHaveMinAttempts, isMastered };
+}
+
+/** Check if per-item mastery requirements are met for a tier. */
+export function checkPerItemMastery(
+	state: UserStateV4,
+	kind: ContentKind,
+	tier: number,
+	definitions: { id: string; tier: number }[],
+): boolean {
+	return getPerItemMasteryProgress(state, kind, tier, definitions).isMastered;
+}
+
+/**
+ * Get progress toward unlocking the next tier for a content type.
+ * Returns null if all tiers are unlocked or next tier is pro-gated.
+ */
+export function getNextUnlockProgress(
+	state: UserStateV4,
+	contentType: 'intervals' | 'chords' | 'scales' | 'modes',
+): NextTierUnlockProgress | null {
+	const config: Record<
+		string,
+		{
+			kind: ContentKind;
+			defs: { id: string; tier: number }[];
+			thresholds: Record<number, { questions: number; accuracy: number }>;
+			defKey: 'intervals' | 'chords' | 'scales' | 'modes';
+		}
+	> = {
+		intervals: {
+			kind: 'interval',
+			defs: INTERVALS,
+			thresholds: INTERVAL_THRESHOLDS,
+			defKey: 'intervals',
+		},
+		chords: {
+			kind: 'chord',
+			defs: CHORDS,
+			thresholds: CHORD_THRESHOLDS,
+			defKey: 'chords',
+		},
+		scales: {
+			kind: 'scale',
+			defs: SCALES,
+			thresholds: SCALE_THRESHOLDS,
+			defKey: 'scales',
+		},
+		modes: { kind: 'mode', defs: MODES, thresholds: MODE_THRESHOLDS, defKey: 'modes' },
+	};
+
+	const c = config[contentType];
+	if (!c) return null;
+
+	const maxTier = Math.max(...c.defs.map((d) => d.tier));
+
+	// Find the next tier that isn't fully unlocked
+	let nextTier: number | null = null;
+	for (let t = 2; t <= maxTier; t++) {
+		const tierDefs = c.defs.filter((d) => d.tier === t);
+		const allUnlocked = tierDefs.every(
+			(d) => state.definitions[c.defKey][d.id]?.unlocked,
+		);
+		if (!allUnlocked) {
+			nextTier = t;
+			break;
+		}
+	}
+
+	if (nextTier === null) return null;
+
+	const threshold = c.thresholds[nextTier];
+	if (!threshold) return null;
+
+	// Pro gate check — don't show progress if tier is inaccessible
+	const userTier = getUserTier(state.settings);
+	const devMode = state.settings.devMode ?? false;
+	const gateId =
+		contentType === 'modes'
+			? 'content:modes'
+			: `content:${contentType}:tier${nextTier}`;
+	if (!canAccess(gateId, userTier, devMode)) return null;
+
+	// Pooled stats across all unlocked items
+	let totalAttempts = 0;
+	let totalCorrect = 0;
+	for (const def of c.defs) {
+		if (state.definitions[c.defKey][def.id]?.unlocked) {
+			const entries = getStatsForDef(state.stats, c.kind, def.id);
+			const agg = aggregateStats(entries);
+			totalAttempts += agg.attempts;
+			totalCorrect += agg.correct;
+		}
+	}
+	const pooledAccuracy = totalAttempts > 0 ? totalCorrect / totalAttempts : 0;
+
+	// Per-item mastery on the prerequisite tier
+	const prereqTier = nextTier - 1;
+	const prerequisiteMastery = getPerItemMasteryProgress(state, c.kind, prereqTier, c.defs);
+
+	return {
+		nextTier,
+		prerequisiteMastery,
+		threshold,
+		pooledAttempts: totalAttempts,
+		pooledAccuracy,
+	};
+}
 
 // ─── Public API ─────────────────────────────────────────────────────────────
 
@@ -100,8 +297,11 @@ function unlockIntervalTiers(state: UserStateV4): void {
 		if (!prevUnlocked) continue;
 
 		if (totalAttempts >= threshold.questions && overallAccuracy >= threshold.accuracy) {
-			for (const def of tierDefs) {
-				state.definitions.intervals[def.id].unlocked = true;
+			// Per-item mastery on prerequisite tier
+			if (checkPerItemMastery(state, 'interval', tier - 1, INTERVALS)) {
+				for (const def of tierDefs) {
+					state.definitions.intervals[def.id].unlocked = true;
+				}
 			}
 		}
 	}
@@ -140,8 +340,11 @@ function unlockChordTiers(state: UserStateV4): void {
 		if (!prevUnlocked) continue;
 
 		if (totalAttempts >= threshold.questions && overallAccuracy >= threshold.accuracy) {
-			for (const def of tierDefs) {
-				state.definitions.chords[def.id].unlocked = true;
+			// Per-item mastery on prerequisite tier
+			if (checkPerItemMastery(state, 'chord', tier - 1, CHORDS)) {
+				for (const def of tierDefs) {
+					state.definitions.chords[def.id].unlocked = true;
+				}
 			}
 		}
 	}
@@ -180,8 +383,11 @@ function unlockScaleTiers(state: UserStateV4): void {
 		if (!prevUnlocked) continue;
 
 		if (totalAttempts >= threshold.questions && overallAccuracy >= threshold.accuracy) {
-			for (const def of tierDefs) {
-				state.definitions.scales[def.id].unlocked = true;
+			// Per-item mastery on prerequisite tier
+			if (checkPerItemMastery(state, 'scale', tier - 1, SCALES)) {
+				for (const def of tierDefs) {
+					state.definitions.scales[def.id].unlocked = true;
+				}
 			}
 		}
 	}
@@ -220,6 +426,9 @@ function unlockModes(state: UserStateV4): void {
 		return;
 	}
 
+	// Per-item mastery on max scale tier before unlocking modes
+	if (!checkPerItemMastery(state, 'scale', maxScaleTier, SCALES)) return;
+
 	// Prerequisite met → ensure tier 1 modes are unlocked
 	for (const def of MODES.filter((m) => m.tier === 1)) {
 		if (state.definitions.modes[def.id]) {
@@ -252,9 +461,12 @@ function unlockModes(state: UserStateV4): void {
 		if (!prevUnlocked) continue;
 
 		if (modeAttempts >= threshold.questions && modeAccuracy >= threshold.accuracy) {
-			for (const def of tierDefs) {
-				if (state.definitions.modes[def.id]) {
-					state.definitions.modes[def.id].unlocked = true;
+			// Per-item mastery on prerequisite tier
+			if (checkPerItemMastery(state, 'mode', tier - 1, MODES)) {
+				for (const def of tierDefs) {
+					if (state.definitions.modes[def.id]) {
+						state.definitions.modes[def.id].unlocked = true;
+					}
 				}
 			}
 		}

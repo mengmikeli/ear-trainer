@@ -8,6 +8,7 @@
 	import { playInterval, playChord, playScale } from '$lib/audio/playback';
 	import { isModeMastered, buildIntervalState, buildChordState, buildScaleState, buildModeState } from '$lib/state/compat';
 	import { getStats, getStatsByKind, aggregateStats, getStatsForDef } from '$lib/state/stats';
+	import { getItemMasteryStatus, getNextUnlockProgress, type MasteryStatus } from '$lib/state/progression';
 	import IntervalCard from '../../components/IntervalCard.svelte';
 	import ChordCard from '../../components/ChordCard.svelte';
 	import ScaleCard from '../../components/ScaleCard.svelte';
@@ -25,6 +26,19 @@
 	let contentView: 'intervals' | 'chords' | 'scales' | 'modes' = $state('intervals');
 
 	const modes: PlayMode[] = ['ascending', 'descending', 'harmonic'];
+
+	function masteryBadge(kind: 'interval' | 'chord' | 'scale' | 'mode', defId: string): { symbol: string; cls: string } {
+		if (!state) return { symbol: '—', cls: 'untouched' };
+		const status = getItemMasteryStatus(state, kind, defId);
+		if (status === 'mastered') return { symbol: '✓', cls: 'mastered' };
+		if (status === 'in-progress') return { symbol: '⟳', cls: 'in-progress' };
+		return { symbol: '—', cls: 'untouched' };
+	}
+
+	const tierProgress = $derived(() => {
+		if (!state) return null;
+		return getNextUnlockProgress(state, contentView);
+	});
 
 	const intervalTabs: { label: string; value: PlayMode | null }[] = [
 		{ label: 'ALL', value: null },
@@ -309,6 +323,14 @@
 	{#if state}
 		<TelemetryBar segments={telemetrySegments()} />
 
+		{#if tierProgress()}
+			{@const tp = tierProgress()}
+			<div class="tier-progress">
+				<span class="tp-label">T{tp.nextTier}</span>
+				<span class="tp-detail">{tp.prerequisiteMastery.masteredCount}/{tp.prerequisiteMastery.totalItems} mastered · {tp.pooledAttempts}/{tp.threshold.questions} questions</span>
+			</div>
+		{/if}
+
 		{#if minWarning}
 			<div class="min-warn">⚠ MINIMUM {contentView === 'chords' ? '2 CHORDS' : contentView === 'scales' ? '2 SCALES' : contentView === 'modes' ? '2 MODES' : '3 INTERVALS'} REQUIRED</div>
 		{/if}
@@ -319,7 +341,11 @@
 					{#if !canAccess(`content:intervals:tier${def.tier}`, userTier(), devMode())}
 						<LockedCard feature={def.name} onUnlock={handleProUnlock} />
 					{:else}
-						<IntervalCard {def} state={buildIntervalState(state, def.id)} modeFilter={activeTab} ontoggle={toggleInterval} onplay={playIntervalPreview} playing={playingId === def.id} />
+						{@const badge = masteryBadge('interval', def.id)}
+						<div class="card-wrap">
+							<span class="mastery-badge {badge.cls}">{badge.symbol}</span>
+							<IntervalCard {def} state={buildIntervalState(state, def.id)} modeFilter={activeTab} ontoggle={toggleInterval} onplay={playIntervalPreview} playing={playingId === def.id} />
+						</div>
 					{/if}
 				{/each}
 			</div>
@@ -329,7 +355,11 @@
 					{#if !canAccess(`content:chords:tier${def.tier}`, userTier(), devMode())}
 						<LockedCard feature={def.name} onUnlock={handleProUnlock} />
 					{:else}
-						<ChordCard {def} state={buildChordState(state, def.id)} voicingFilter={chordVoicingTab} ontoggle={toggleChord} onplay={playChordPreview} playing={playingId === def.id} />
+						{@const badge = masteryBadge('chord', def.id)}
+						<div class="card-wrap">
+							<span class="mastery-badge {badge.cls}">{badge.symbol}</span>
+							<ChordCard {def} state={buildChordState(state, def.id)} voicingFilter={chordVoicingTab} ontoggle={toggleChord} onplay={playChordPreview} playing={playingId === def.id} />
+						</div>
 					{/if}
 				{/each}
 			</div>
@@ -339,7 +369,11 @@
 					{#if !canAccess(`content:scales:tier${def.tier}`, userTier(), devMode())}
 						<LockedCard feature={def.name} onUnlock={handleProUnlock} />
 					{:else}
-						<ScaleCard {def} state={buildScaleState(state, def.id)} ontoggle={toggleScale} onplay={playScalePreview} playing={playingId === def.id} />
+						{@const badge = masteryBadge('scale', def.id)}
+						<div class="card-wrap">
+							<span class="mastery-badge {badge.cls}">{badge.symbol}</span>
+							<ScaleCard {def} state={buildScaleState(state, def.id)} ontoggle={toggleScale} onplay={playScalePreview} playing={playingId === def.id} />
+						</div>
 					{/if}
 				{/each}
 			</div>
@@ -349,7 +383,11 @@
 					{#if !canAccess('content:modes', userTier(), devMode())}
 						<LockedCard feature={def.name} onUnlock={handleProUnlock} />
 					{:else if state.definitions.modes[def.id]?.unlocked || state.settings.devMode}
-						<ModeCard {def} state={buildModeState(state, def.id)} ontoggle={toggleMode} onplay={playModePreview} playing={playingId === def.id} />
+						{@const badge = masteryBadge('mode', def.id)}
+						<div class="card-wrap">
+							<span class="mastery-badge {badge.cls}">{badge.symbol}</span>
+							<ModeCard {def} state={buildModeState(state, def.id)} ontoggle={toggleMode} onplay={playModePreview} playing={playingId === def.id} />
+						</div>
 					{/if}
 				{/each}
 			</div>
@@ -397,6 +435,54 @@
 	}
 	.tab.active + .tab { border-left-color: var(--marathon-blue); }
 	.interval-list { display: flex; flex-direction: column; gap: 0.5rem; }
+	.card-wrap {
+		position: relative;
+	}
+	.mastery-badge {
+		position: absolute;
+		top: 0.35rem;
+		right: 0.35rem;
+		z-index: 2;
+		font-size: 0.4rem;
+		font-weight: 900;
+		font-family: var(--mono);
+		width: 1.2rem;
+		height: 1.2rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: 50%;
+		pointer-events: none;
+	}
+	.mastery-badge.mastered {
+		color: var(--correct);
+		background: rgba(0, 255, 100, 0.08);
+	}
+	.mastery-badge.in-progress {
+		color: var(--warm);
+		background: rgba(255, 200, 0, 0.08);
+	}
+	.mastery-badge.untouched {
+		color: var(--text-secondary);
+		opacity: 0.3;
+	}
+	.tier-progress {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.35rem 0.5rem;
+		border: 1px solid var(--border-heavy);
+		font-family: var(--mono);
+		font-size: 0.35rem;
+		letter-spacing: 0.08em;
+	}
+	.tp-label {
+		font-weight: 900;
+		color: var(--accent);
+	}
+	.tp-detail {
+		color: var(--text-secondary);
+	}
 	.min-warn {
 		font-family: var(--mono); font-size: 0.45rem; font-weight: 900;
 		color: var(--hot); letter-spacing: 0.15em; text-align: center;
