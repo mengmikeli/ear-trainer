@@ -5,6 +5,7 @@
 	import { createQuizController } from '$lib/quiz/controller.svelte';
 	import type { QuizSessionConfig, QuestionResult } from '$lib/quiz/types';
 	import type { UserStateV4 } from '$lib/state/schema';
+	import { isAudioReady, resetContext } from '$lib/audio/context';
 	import AnswerGrid from './AnswerGrid.svelte';
 	import ProgressBar from './ProgressBar.svelte';
 	import TelemetryBar from './TelemetryBar.svelte';
@@ -206,9 +207,19 @@
 	onMount(() => {
 		ctrl.nextQuestion();
 
+		// On foreground return: check if iOS killed the audio context
 		const onVisible = () => {
-			if (document.visibilityState === 'visible' && !ctrl.hasPlayed) {
-				// Audio resume handled by controller
+			if (document.visibilityState === 'visible') {
+				// Give ensureResumed() a moment to try recovery (called from layout)
+				setTimeout(() => {
+					if (!isAudioReady()) {
+						// Context is dead — nuke it so next gesture creates a fresh one
+						resetContext();
+						ctrl.forceNeedsTap();
+						// Force re-render for the banner
+						extraControlTick++;
+					}
+				}, 200);
 			}
 		};
 		document.addEventListener('visibilitychange', onVisible);

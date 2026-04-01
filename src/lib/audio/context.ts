@@ -140,6 +140,21 @@ export function isAudioReady(): boolean {
 	return !!ctx && ctx.state === 'running';
 }
 
+/**
+ * Destroy and null out the AudioContext + master chain.
+ * Used as a recovery mechanism when iOS kills the context in background
+ * and resume() silently fails. The next getContext() call will create a fresh one.
+ * This is NOT called during normal page navigation — only on background recovery failure.
+ */
+export function resetContext(): void {
+	if (ctx) {
+		try { ctx.close(); } catch { /* already dead */ }
+		ctx = null;
+		masterGain = null;
+		analyserNode = null;
+	}
+}
+
 /** Convert MIDI note number to frequency in Hz. */
 export function midiToFreq(midi: number): number {
 	return 440 * Math.pow(2, (midi - 69) / 12);

@@ -355,6 +355,16 @@ export class QuizController {
 		this.config.onPageExit?.();
 	}
 
+	/**
+	 * Force the "tap to reconnect" banner — used when the component detects
+	 * that iOS killed the AudioContext during background and resume() failed.
+	 */
+	forceNeedsTap(): void {
+		this.audioUnlocked = false;
+		this.needsTap = true;
+		this.isPlaying = false;
+	}
+
 	// ── Private helpers ────────────────────────────────────────────────────
 
 	private _applyNextQuestion(q: UnifiedQuestion): void {
