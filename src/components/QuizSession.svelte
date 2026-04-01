@@ -68,15 +68,14 @@
 
 		} else if (pb.type === 'scale') {
 			const tempo = pb.tempo ?? 150;
-			// Mode questions have a drone lead-in delay
-			const offset = q.kind === 'mode' && pb.drone ? 400 : 0;
+			// No offset needed — playAudio already handles drone lead-in internally
 			pb.intervals.forEach((semitone: number, i: number) => {
 				noteTimeouts.push(setTimeout(() => {
 					playingNotes = [root + semitone];
 					triggerBounce();
-				}, offset + i * tempo));
+				}, i * tempo));
 			});
-			const totalMs = offset + pb.intervals.length * tempo + 200;
+			const totalMs = pb.intervals.length * tempo + 200;
 			noteTimeouts.push(setTimeout(() => { playingNotes = []; }, totalMs));
 		}
 	}
