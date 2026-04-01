@@ -8,6 +8,7 @@
 	import { playInterval, playChord, playScale } from '$lib/audio/playback';
 	import { isModeMastered, buildIntervalState, buildChordState, buildScaleState, buildModeState } from '$lib/state/compat';
 	import { getStats, getStatsByKind, aggregateStats, getStatsForDef } from '$lib/state/stats';
+	import { LISTENING_TIPS } from '$lib/definitions/tips';
 	import { getItemMasteryStatus, getNextUnlockProgress, type MasteryStatus } from '$lib/state/progression';
 	import IntervalCard from '../../components/IntervalCard.svelte';
 	import ChordCard from '../../components/ChordCard.svelte';
@@ -33,6 +34,13 @@
 		if (status === 'mastered') return { symbol: '✓', cls: 'mastered' };
 		if (status === 'in-progress') return { symbol: '⟳', cls: 'in-progress' };
 		return { symbol: '—', cls: 'untouched' };
+	}
+
+	function hasAttempts(kind: 'interval' | 'chord' | 'scale' | 'mode', defId: string): boolean {
+		if (!state) return false;
+		const entries = getStatsForDef(state.stats, kind, defId);
+		const agg = aggregateStats(entries);
+		return agg.attempts > 0;
 	}
 
 	const tierProgress = $derived(() => {
@@ -345,6 +353,9 @@
 						<div class="card-wrap">
 							<span class="mastery-badge {badge.cls}">{badge.symbol}</span>
 							<IntervalCard {def} state={buildIntervalState(state, def.id)} modeFilter={activeTab} ontoggle={toggleInterval} onplay={playIntervalPreview} playing={playingId === def.id} />
+							{#if LISTENING_TIPS[def.id] && hasAttempts('interval', def.id)}
+								<p class="listening-tip">{LISTENING_TIPS[def.id]}</p>
+							{/if}
 						</div>
 					{/if}
 				{/each}
@@ -359,6 +370,9 @@
 						<div class="card-wrap">
 							<span class="mastery-badge {badge.cls}">{badge.symbol}</span>
 							<ChordCard {def} state={buildChordState(state, def.id)} voicingFilter={chordVoicingTab} ontoggle={toggleChord} onplay={playChordPreview} playing={playingId === def.id} />
+							{#if LISTENING_TIPS[def.id] && hasAttempts('chord', def.id)}
+								<p class="listening-tip">{LISTENING_TIPS[def.id]}</p>
+							{/if}
 						</div>
 					{/if}
 				{/each}
@@ -373,6 +387,9 @@
 						<div class="card-wrap">
 							<span class="mastery-badge {badge.cls}">{badge.symbol}</span>
 							<ScaleCard {def} state={buildScaleState(state, def.id)} ontoggle={toggleScale} onplay={playScalePreview} playing={playingId === def.id} />
+							{#if LISTENING_TIPS[def.id] && hasAttempts('scale', def.id)}
+								<p class="listening-tip">{LISTENING_TIPS[def.id]}</p>
+							{/if}
 						</div>
 					{/if}
 				{/each}
@@ -387,6 +404,9 @@
 						<div class="card-wrap">
 							<span class="mastery-badge {badge.cls}">{badge.symbol}</span>
 							<ModeCard {def} state={buildModeState(state, def.id)} ontoggle={toggleMode} onplay={playModePreview} playing={playingId === def.id} />
+							{#if LISTENING_TIPS[def.id] && hasAttempts('mode', def.id)}
+								<p class="listening-tip">{LISTENING_TIPS[def.id]}</p>
+							{/if}
 						</div>
 					{/if}
 				{/each}
@@ -465,6 +485,16 @@
 	.mastery-badge.untouched {
 		color: var(--text-secondary);
 		opacity: 0.3;
+	}
+	.listening-tip {
+		margin: 0.15rem 0.25rem 0;
+		font-family: var(--mono);
+		font-size: 0.32rem;
+		font-style: italic;
+		color: var(--text-secondary);
+		opacity: 0.65;
+		line-height: 1.4;
+		letter-spacing: 0.02em;
 	}
 	.tier-progress {
 		display: flex;

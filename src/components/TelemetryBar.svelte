@@ -4,11 +4,33 @@
   }
 
   let { segments }: Props = $props();
+
+  const FULL_LABELS: Record<string, string> = {
+    'STK': 'Streak',
+    'ACC': 'Accuracy',
+    'Q': 'Questions',
+    'SES': 'Sessions',
+  };
+
+  let expanded: Record<string, boolean> = $state({});
+  let timers: Record<string, ReturnType<typeof setTimeout>> = {};
+
+  function tapSegment(label: string) {
+    if (!FULL_LABELS[label]) return;
+    // Clear existing timer for this label
+    if (timers[label]) clearTimeout(timers[label]);
+    expanded[label] = true;
+    timers[label] = setTimeout(() => {
+      expanded[label] = false;
+    }, 2000);
+  }
 </script>
 
 <div class="telemetry-bar">
   {#each segments as seg}
-    <span class="tag">{seg.label}</span><span class="val">{seg.value}</span>
+    <button class="segment" onclick={() => tapSegment(seg.label)} aria-label={FULL_LABELS[seg.label] ?? seg.label}>
+      <span class="tag">{#if expanded[seg.label]}{FULL_LABELS[seg.label]}{:else}{seg.label}{/if}</span><span class="val">{seg.value}</span>
+    </button>
   {/each}
 </div>
 
@@ -22,6 +44,16 @@
     opacity: 0.7;
   }
 
+  .segment {
+    display: inline-flex;
+    align-items: center;
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
   .tag {
     display: inline-flex;
     align-items: center;
@@ -33,6 +65,7 @@
     color: var(--accent, #C2FE0C);
     white-space: nowrap;
     line-height: 1.6;
+    transition: padding 0.15s ease;
   }
 
   .val {
