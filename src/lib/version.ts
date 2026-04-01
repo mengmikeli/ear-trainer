@@ -14,6 +14,24 @@ export interface ReleaseNote {
 
 export const RELEASE_NOTES: ReleaseNote[] = [
 	{
+		version: '4.0',
+		date: '2026-04-01',
+		title: 'ARCHITECTURE REDESIGN',
+		changes: [
+			'Unified quiz engine — one shared controller for all content types',
+			'Persistent audio — no more audio drops between pages',
+			'Smart audio session — claims on play, releases after silence',
+			'Tap to reconnect after long background',
+			'Practice mode as default — mixed content based on mastery',
+			'Mastery gates — earn chords, scales, modes through intervals',
+			'Route cleanup — /quiz/intervals, /quiz/chords, /quiz/scales, /quiz/modes',
+			'Feature gate system — plumbing for future Pro/Free split',
+			'Scale tempo aligned with modes',
+			'Ticker-style update + reconnect banners',
+			'New ring+dot app icon across all platforms',
+		],
+	},
+	{
 		version: '3.6',
 		date: '2026-03-30',
 		title: 'BUG BASH + MODES',
