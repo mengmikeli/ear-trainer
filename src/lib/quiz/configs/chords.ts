@@ -117,7 +117,7 @@ export function createChordConfig(state: UserStateV4): QuizSessionConfig {
 		extraControls: [
 			{
 				id: 'arp',
-				getLabel: () => isArpeggiated ? 'ARP' : 'BLK',
+				getLabel: () => 'ARP',
 				getState: () => isArpeggiated,
 				toggle: () => {
 					isArpeggiated = !isArpeggiated;
