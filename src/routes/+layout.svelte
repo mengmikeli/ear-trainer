@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import '../app.css';
 	import BottomNav from '../components/BottomNav.svelte';
+	import TickerBanner from '../components/TickerBanner.svelte';
 	import { initTheme } from '$lib/theme';
 	import { loadStateV4 } from '$lib/state/storage';
 	import { warmUpAudio } from '$lib/audio/context';
@@ -79,9 +80,7 @@
 
 <div class="app scanlines">
 	{#if showUpdate}
-		<button class="update-bar" onclick={applyUpdate}>
-			<span class="ticker-text">UPDATE AVAILABLE — TAP TO RELOAD &nbsp;&nbsp;&nbsp; UPDATE AVAILABLE — TAP TO RELOAD &nbsp;&nbsp;&nbsp; UPDATE AVAILABLE — TAP TO RELOAD &nbsp;&nbsp;&nbsp;</span>
-		</button>
+		<TickerBanner message="UPDATE AVAILABLE — TAP TO RELOAD" onclick={applyUpdate} />
 	{/if}
 	<main class="content">
 		{@render children()}

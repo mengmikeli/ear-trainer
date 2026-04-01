@@ -10,6 +10,7 @@
 	import ProgressBar from './ProgressBar.svelte';
 	import TelemetryBar from './TelemetryBar.svelte';
 	import VizQuizLayout from './VizQuizLayout.svelte';
+	import TickerBanner from './TickerBanner.svelte';
 
 	let { config, initialState }: { config: QuizSessionConfig; initialState?: UserStateV4 } = $props();
 
@@ -343,9 +344,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="quiz" onclick={() => { if (ctrl.needsTap) handlePlay(); }}>
 	{#if ctrl.needsTap}
-		<button class="audio-banner" onclick={() => handlePlay()}>
-			<span class="ticker-text">NEURAL LINK OFFLINE — TAP TO RECONNECT &nbsp;&nbsp;&nbsp; NEURAL LINK OFFLINE — TAP TO RECONNECT &nbsp;&nbsp;&nbsp; NEURAL LINK OFFLINE — TAP TO RECONNECT &nbsp;&nbsp;&nbsp;</span>
-		</button>
+		<TickerBanner message="NEURAL LINK OFFLINE — TAP TO RECONNECT" onclick={() => handlePlay()} />
 	{/if}
 	<h2 class="heading">{sessionConfig.heading}</h2>
 	<div class="top">
