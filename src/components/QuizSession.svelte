@@ -292,47 +292,53 @@
 <div class="summary">
 	<h2 class="heading">DEBRIEF</h2>
 
-	<div class="score-block">
-		<span class="score-big">{ctrl.sessionCorrect}/{ctrl.results.length}</span>
-	</div>
+	<div class="debrief-panels">
+		<div class="debrief-stats">
+			<div class="score-block">
+				<span class="score-big">{ctrl.sessionCorrect}/{ctrl.results.length}</span>
+			</div>
 
-	<TelemetryBar segments={[
-		{ label: 'ACC', value: ctrl.summaryAccuracy + '%' },
-		{ label: 'STK', value: ctrl.userState.globalStats.currentStreak },
-		{ label: 'SES', value: ctrl.userState.globalStats.totalSessions },
-	]} />
+			<TelemetryBar segments={[
+				{ label: 'ACC', value: ctrl.summaryAccuracy + '%' },
+				{ label: 'STK', value: ctrl.userState.globalStats.currentStreak },
+				{ label: 'SES', value: ctrl.userState.globalStats.totalSessions },
+			]} />
 
-	{#each debriefSections as section}
-		<div class="section-label">{section.label}</div>
-		<div class="mode-rows">
-			{#each section.items as row}
-				<div class="mode-row">
-					<span class="mode-glyph">{row.label}</span>
-					<span class="mode-stat">{row.value}</span>
+			{#each debriefSections as section}
+				<div class="section-label">{section.label}</div>
+				<div class="mode-rows">
+					{#each section.items as row}
+						<div class="mode-row">
+							<span class="mode-glyph">{row.label}</span>
+							<span class="mode-stat">{row.value}</span>
+						</div>
+					{/each}
 				</div>
 			{/each}
 		</div>
-	{/each}
 
-	{#if ctrl.wrongAnswers.length > 0}
-		<div class="section-label missed-label">MISSED</div>
-		<div class="missed-list">
-			{#each ctrl.wrongAnswers as r, i}
-				<button class="missed-card" class:replaying={replayingIndex === i} onclick={() => replayMissed(r, i)}>
-					<div class="missed-card-fill" style="width: 0%"></div>
-					<div class="missed-card-content">
-						<span class="missed-id">{r.question.correctAnswer.label}</span>
-						<div class="missed-info">
-							<span class="missed-name">{r.question.correctAnswer.name}</span>
-							<span class="missed-detail">answered {r.selectedId}</span>
-						</div>
-					</div>
-				</button>
-			{/each}
+		<div class="debrief-missed">
+			{#if ctrl.wrongAnswers.length > 0}
+				<div class="section-label missed-label">MISSED</div>
+				<div class="missed-list">
+					{#each ctrl.wrongAnswers as r, i}
+						<button class="missed-card" class:replaying={replayingIndex === i} onclick={() => replayMissed(r, i)}>
+							<div class="missed-card-fill" style="width: 0%"></div>
+							<div class="missed-card-content">
+								<span class="missed-id">{r.question.correctAnswer.label}</span>
+								<div class="missed-info">
+									<span class="missed-name">{r.question.correctAnswer.name}</span>
+									<span class="missed-detail">answered {r.selectedId}</span>
+								</div>
+							</div>
+						</button>
+					{/each}
+				</div>
+			{:else}
+				<div class="perfect">PERFECT SESSION</div>
+			{/if}
 		</div>
-	{:else}
-		<div class="perfect">PERFECT SESSION</div>
-	{/if}
+	</div>
 
 	<div class="summary-actions">
 		<button class="action-btn primary" onclick={handleRestart}>AGAIN</button>
@@ -366,36 +372,40 @@
 	</div>
 
 	{#if ctrl.question}
-		<VizQuizLayout
-			mode={vizMode}
-			phase={ctrl.vizPhase}
-			semitones={vizSemitones}
-			chordIntervals={vizChordIntervals}
-			scaleIntervals={vizScaleIntervals}
-			countdownPct={ctrl.hasPlayed && inResultMode ? ctrl.countdownPct : -1}
-			ontransitionend={handleTransitionEnd}
-			{playingNotes}
-		>
-			<button bind:this={playBtnEl} class="play-tap" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} onclick={ctrl.hasPlayed && inResultMode ? handleReplayInResult : handlePlay}>
-				<div class="orbit-track"><div class="orbit-dot"></div></div>
-				<span class="q-text" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} class:glitch-text={showGlitch}>
-					{displayText}
-				</span>
-			</button>
-		</VizQuizLayout>
+		<div class="quiz-panels">
+			<div class="panel-viz">
+				<VizQuizLayout
+					mode={vizMode}
+					phase={ctrl.vizPhase}
+					semitones={vizSemitones}
+					chordIntervals={vizChordIntervals}
+					scaleIntervals={vizScaleIntervals}
+					countdownPct={ctrl.hasPlayed && inResultMode ? ctrl.countdownPct : -1}
+					ontransitionend={handleTransitionEnd}
+					{playingNotes}
+				>
+					<button bind:this={playBtnEl} class="play-tap" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} onclick={ctrl.hasPlayed && inResultMode ? handleReplayInResult : handlePlay}>
+						<div class="orbit-track"><div class="orbit-dot"></div></div>
+						<span class="q-text" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} class:glitch-text={showGlitch}>
+							{displayText}
+						</span>
+					</button>
+				</VizQuizLayout>
+			</div>
 
-		<div class="answer-area" class:hidden={!ctrl.question}>
-			<AnswerGrid
-				choices={ctrl.needsTap ? ctrl.question.choices.map(c => ({ ...c, label: 'NA', name: 'UNAVAILABLE' })) : ctrl.question.choices}
-				onselect={handleSelectAnswer}
-				disabled={ctrl.needsTap || !ctrl.hasPlayed || !!ctrl.selectedId}
-				offline={ctrl.needsTap}
-				correctId={ctrl.selectedId ? ctrl.question.correctAnswer.id : null}
-				selectedId={ctrl.selectedId}
-				onCorrectClick={ctrl.selectedId ? (inResultMode ? handleNextQuestion : handleSkipCorrect) : null}
-				countdownPct={inResultMode ? ctrl.countdownPct : -1}
-				onWrongClick={inResultMode ? handleReplayInResult : null}
-			/>
+			<div class="panel-answers" class:hidden={!ctrl.question}>
+				<AnswerGrid
+					choices={ctrl.needsTap ? ctrl.question.choices.map(c => ({ ...c, label: 'NA', name: 'UNAVAILABLE' })) : ctrl.question.choices}
+					onselect={handleSelectAnswer}
+					disabled={ctrl.needsTap || !ctrl.hasPlayed || !!ctrl.selectedId}
+					offline={ctrl.needsTap}
+					correctId={ctrl.selectedId ? ctrl.question.correctAnswer.id : null}
+					selectedId={ctrl.selectedId}
+					onCorrectClick={ctrl.selectedId ? (inResultMode ? handleNextQuestion : handleSkipCorrect) : null}
+					countdownPct={inResultMode ? ctrl.countdownPct : -1}
+					onWrongClick={inResultMode ? handleReplayInResult : null}
+				/>
+			</div>
 		</div>
 	{/if}
 </div>
@@ -560,11 +570,22 @@
 	.q-text.feedback-correct { color: var(--base); transition: none; }
 	.q-text.feedback-wrong { color: var(--base); transition: none; }
 	.q-text.glitch-text { /* clean glyph cycling, no effects */ }
-	.answer-area {
+	/* ── Quiz panels: stacked mobile, side-by-side desktop ── */
+	.quiz-panels {
+		display: flex;
+		flex-direction: column;
+		width: 100%;
+		flex: 1;
+		min-height: 0;
+	}
+	.panel-viz {
+		width: 100%;
+	}
+	.panel-answers {
 		width: 100%;
 		margin-top: auto;
 	}
-	.answer-area.hidden {
+	.panel-answers.hidden {
 		visibility: hidden;
 	}
 
@@ -572,6 +593,16 @@
 	.summary {
 		display: flex; flex-direction: column; align-items: center;
 		gap: 1.25rem; width: 100%; min-height: 100%;
+	}
+	.debrief-panels {
+		display: contents; /* On mobile: acts like the elements are directly in .summary */
+	}
+	.debrief-stats {
+		display: flex; flex-direction: column; align-items: center;
+		gap: 1.25rem; width: 100%;
+	}
+	.debrief-missed {
+		width: 100%;
 	}
 	.summary .heading {
 		border-bottom: 2px solid var(--border-heavy);
@@ -680,9 +711,34 @@
 	/* Desktop: wider layout */
 	@media (min-width: 768px) {
 		.heading { font-size: 3.5rem; }
+
+		/* ── Two-column quiz: viz left, answers right ── */
+		.quiz-panels {
+			flex-direction: row;
+			align-items: center;
+			gap: 2rem;
+		}
+		.panel-viz {
+			flex: 1;
+			min-width: 0;
+		}
+		.panel-answers {
+			flex: 1;
+			min-width: 0;
+			margin-top: 0;
+		}
+
+		/* ── Two-column debrief: stats left, missed right ── */
 		.summary {
-			max-width: 600px;
-			margin: 0 auto;
+			max-width: none;
+			margin: 0;
+		}
+		.debrief-panels {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 2rem;
+			width: 100%;
+			align-items: start;
 		}
 	}
 </style>

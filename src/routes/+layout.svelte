@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import '../app.css';
 	import BottomNav from '../components/BottomNav.svelte';
+	import SideNav from '../components/SideNav.svelte';
 	import TickerBanner from '../components/TickerBanner.svelte';
 	import { initTheme } from '$lib/theme';
 	import { loadStateV4 } from '$lib/state/storage';
@@ -78,59 +79,90 @@
 	});
 </script>
 
-<div class="app scanlines">
-	{#if showUpdate}
-		<TickerBanner message="UPDATE AVAILABLE — TAP TO RELOAD" onclick={applyUpdate} />
-	{/if}
-	<main class="content">
-		{@render children()}
-	</main>
-	<BottomNav />
+<div class="app-shell">
+	<!-- Desktop sidebar — hidden on mobile via CSS -->
+	<div class="sidebar-slot">
+		<SideNav />
+	</div>
+
+	<div class="app-main scanlines">
+		{#if showUpdate}
+			<TickerBanner message="UPDATE AVAILABLE — TAP TO RELOAD" onclick={applyUpdate} />
+		{/if}
+		<main class="content">
+			{@render children()}
+		</main>
+		<!-- Mobile bottom nav — hidden on desktop via CSS -->
+		<div class="bottomnav-slot">
+			<BottomNav />
+		</div>
+	</div>
 </div>
 
 <style>
-	.app {
+	/* ── Shell: sidebar + main ── */
+	.app-shell {
+		display: flex;
+		height: 100dvh;
+	}
+
+	/* Sidebar hidden on mobile */
+	.sidebar-slot {
+		display: none;
+	}
+
+	/* ── Main column (mobile-first) ── */
+	.app-main {
 		position: relative;
-		display: flex; flex-direction: column; height: 100dvh;
-		max-width: 480px; margin: 0 auto;
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+		min-width: 0;
+		height: 100dvh;
+		max-width: 480px;
+		margin: 0 auto;
 		padding-top: env(safe-area-inset-top);
 	}
-	.content {
-		flex: 1; overflow-y: auto; padding: 1.5rem 1.25rem;
-	}
-	.update-bar {
-		position: fixed;
-		top: env(safe-area-inset-top, 0px);
-		left: 0;
-		right: 0;
-		z-index: 100;
-		height: 24px;
-		background: var(--accent);
-		color: var(--base);
-		font-family: var(--mono);
-		font-size: 0.4rem;
-		font-weight: 900;
-		letter-spacing: 0.15em;
-		border: none;
-		cursor: pointer;
-		overflow: hidden;
-		white-space: nowrap;
-		display: flex;
-		align-items: center;
-	}
-	.ticker-text {
-		display: inline-block;
-		animation: ticker 12s linear infinite;
-	}
-	@keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-33.33%); } }
 
-	/* Desktop: wider container, more breathing room */
+	.content {
+		flex: 1;
+		overflow-y: auto;
+		padding: 1.5rem 1.25rem;
+	}
+
+	.bottomnav-slot {
+		display: block;
+	}
+
+	/* ── Desktop (≥768px): sidebar visible, bottom nav hidden ── */
 	@media (min-width: 768px) {
-		.app {
-			max-width: 960px;
+		.sidebar-slot {
+			display: block;
 		}
+
+		.bottomnav-slot {
+			display: none;
+		}
+
+		.app-main {
+			max-width: none;
+			/* Content centered within the main area, with breathing room */
+			margin: 0;
+		}
+
 		.content {
+			max-width: 720px;
+			margin: 0 auto;
+			width: 100%;
 			padding: 2rem 2.5rem;
+		}
+	}
+
+	/* ── Wide desktop (≥1200px): more space ── */
+	@media (min-width: 1200px) {
+		.content {
+			max-width: 880px;
+			padding: 2rem 3rem;
 		}
 	}
 </style>
