@@ -72,7 +72,7 @@ function unlockIntervalTiers(state: UserStateV4): void {
 	}
 	const overallAccuracy = totalAttempts > 0 ? totalCorrect / totalAttempts : 0;
 
-	for (let tier = 2; tier <= 5; tier++) {
+	for (let tier = 2; tier <= 4; tier++) {
 		const threshold = INTERVAL_THRESHOLDS[tier];
 		const tierDefs = INTERVALS.filter((i) => i.tier === tier);
 
