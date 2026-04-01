@@ -207,19 +207,15 @@
 	onMount(() => {
 		ctrl.nextQuestion();
 
-		// On foreground return: check if iOS killed the audio context
+		// On foreground return: always reset audio and show reconnect banner.
+		// iOS reports AudioContext as 'running' even when audio output is
+		// disconnected after background — we can't trust isAudioReady().
+		// The old quiz pages always showed the banner; this matches that behavior.
 		const onVisible = () => {
 			if (document.visibilityState === 'visible') {
-				// Give ensureResumed() a moment to try recovery (called from layout)
-				setTimeout(() => {
-					if (!isAudioReady()) {
-						// Context is dead — nuke it so next gesture creates a fresh one
-						resetContext();
-						ctrl.forceNeedsTap();
-						// Force re-render for the banner
-						extraControlTick++;
-					}
-				}, 200);
+				resetContext();
+				ctrl.forceNeedsTap();
+				extraControlTick++;
 			}
 		};
 		document.addEventListener('visibilitychange', onVisible);

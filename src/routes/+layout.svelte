@@ -4,7 +4,7 @@
 	import BottomNav from '../components/BottomNav.svelte';
 	import { initTheme } from '$lib/theme';
 	import { loadStateV4 } from '$lib/state/storage';
-	import { warmUpAudio, ensureResumed } from '$lib/audio/context';
+	import { warmUpAudio } from '$lib/audio/context';
 	import { releaseAudioSession } from '$lib/audio/session';
 
 	let { children } = $props();
@@ -40,17 +40,12 @@
 		document.addEventListener('touchend', unlock, { once: true });
 		document.addEventListener('click', unlock, { once: true });
 
-		// Release audio session when going to background;
-		// attempt optimistic resume on foreground (doesn't claim audio session)
+		// Release audio session when going to background.
+		// Recovery on foreground is handled by individual pages (QuizSession
+		// resets context + shows reconnect banner on every resume).
 		function handleVisibility() {
 			if (document.hidden) {
 				releaseAudioSession();
-			} else {
-				// Try to resume AudioContext — if iOS blocked it, the quiz
-				// controller's play() will catch it via needsTap fallback
-				ensureResumed().catch(() => {
-					// Expected on iOS when gesture is required — controller handles it
-				});
 			}
 		}
 		document.addEventListener('visibilitychange', handleVisibility);
