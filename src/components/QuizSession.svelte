@@ -111,6 +111,9 @@
 			: undefined
 	);
 
+	// ── Extra controls reactivity ─────────────────────────────────────
+	let extraControlTick = $state(0);
+
 	// ── Mode icon for top controls ────────────────────────────────────
 	const modeGlyph: Record<string, string> = {
 		ascending: '\uE007',
@@ -339,8 +342,8 @@
 			<span class="mode-icon">{modeIcon}</span>
 			<div class="top-right">
 				{#each sessionConfig.extraControls ?? [] as ec}
-					<button class="extra-toggle" class:active={ec.getState()} onclick={ec.toggle}>
-						{ec.getState() ? ec.label : ec.label}
+					<button class="extra-toggle" class:active={ec.getState()} onclick={() => { ec.toggle(); extraControlTick++; }}>
+						{void extraControlTick, ec.getLabel()}
 					</button>
 				{/each}
 				<span class="counter">{String(ctrl.questionNum).padStart(2, '0')}/{String(ctrl.totalQuestions).padStart(2, '0')}</span>
@@ -491,11 +494,11 @@
 		border-color: var(--hot);
 	}
 	.extra-toggle {
-		font-size: 0.35rem;
-		font-weight: 900;
+		font-size: 0.4rem;
+		font-weight: 800;
 		font-family: var(--mono);
-		letter-spacing: 0.08em;
-		padding: 0 5px;
+		letter-spacing: 0.05em;
+		padding: 0 6px;
 		line-height: 1.6;
 		background: transparent;
 		color: var(--text-secondary);

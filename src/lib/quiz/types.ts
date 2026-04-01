@@ -74,7 +74,7 @@ export interface DebriefSection {
 
 export interface ExtraControl {
 	id: string;
-	label: string;
+	getLabel: () => string;
 	getState: () => boolean;
 	toggle: () => void;
 }

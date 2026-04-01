@@ -75,7 +75,7 @@ export function createModeConfig(state: UserStateV4): QuizSessionConfig {
 		extraControls: [
 			{
 				id: 'drone',
-				label: 'DRN',
+				getLabel: () => 'DRN',
 				getState: () => !droneMuted,
 				toggle: () => {
 					droneMuted = !droneMuted;
