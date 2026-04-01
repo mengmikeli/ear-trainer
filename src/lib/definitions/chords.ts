@@ -84,18 +84,45 @@ export function getChordsByTier(tier: number): ChordDef[] {
 }
 
 /**
+ * Maximum inversion level supported for a given number of notes.
+ * 2-note chords only support root + first; 3+ support all three.
+ */
+export function maxInversionForNoteCount(n: number): ChordVoicing {
+	if (n <= 1) return 'root';
+	if (n <= 2) return 'first';
+	return 'second';
+}
+
+/**
+ * Return the voicings available for a chord with the given number of notes.
+ */
+export function availableVoicings(noteCount: number): ChordVoicing[] {
+	if (noteCount <= 1) return ['root'];
+	if (noteCount <= 2) return ['root', 'first'];
+	return ['root', 'first', 'second'];
+}
+
+/**
  * Apply inversion to a set of intervals (semitones from root).
  * - root: intervals as-is
  * - first: move lowest note up an octave
  * - second: move two lowest notes up an octave
+ *
+ * For chords with fewer than 3 notes, 'second' inversion is capped
+ * to the maximum supported level (e.g. 'first' for 2-note chords).
  */
 export function applyInversion(
 	intervals: number[],
 	voicing: 'root' | 'first' | 'second',
 ): number[] {
 	const sorted = [...intervals].sort((a, b) => a - b);
-	if (voicing === 'root') return sorted;
-	if (voicing === 'first') {
+
+	// Cap inversion for chords with fewer notes than the voicing requires
+	const allowed = availableVoicings(sorted.length);
+	const effective = allowed.includes(voicing) ? voicing : allowed[allowed.length - 1];
+
+	if (effective === 'root') return sorted;
+	if (effective === 'first') {
 		// Move bottom note up 12
 		const [bottom, ...rest] = sorted;
 		return [...rest, bottom + 12].sort((a, b) => a - b);

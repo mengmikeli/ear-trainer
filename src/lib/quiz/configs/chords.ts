@@ -10,7 +10,7 @@ import { defaultContentStats } from '$lib/state/schema';
 import { getStats, getStatsForDef, aggregateStats } from '$lib/state/stats';
 import { playChord } from '$lib/audio/playback';
 import { responseQuality, calculateSm2 } from '$lib/learning/sm2';
-import { CHORDS, type ChordDef } from '$lib/definitions/chords';
+import { CHORDS, type ChordDef, availableVoicings } from '$lib/definitions/chords';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -60,7 +60,10 @@ function pickChordV4(state: UserStateV4): ChordDef {
 
 function pickVoicingV4(state: UserStateV4, chord: ChordDef): ChordVoicing {
 	const ev = state.settings.enabledVoicings;
-	const voicings = (['root', 'first', 'second'] as ChordVoicing[]).filter((v) => ev[v]);
+	const supported = availableVoicings(chord.intervals.length);
+	const voicings = (['root', 'first', 'second'] as ChordVoicing[]).filter(
+		(v) => ev[v] && supported.includes(v),
+	);
 	if (voicings.length === 0) throw new Error('No enabled voicings');
 	if (voicings.length === 1) return voicings[0];
 
