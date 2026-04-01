@@ -8,10 +8,10 @@
 		{ href: `${base}/settings`, label: 'SETTINGS', icon: '\uE015' },
 	];
 
-	const isQuiz = $derived(page.url.pathname === `${base}/quiz`);
+	const isQuiz = $derived(page.url.pathname.startsWith(`${base}/quiz`));
 
 	function isActive(href: string): boolean {
-		if (href === `${base}/`) return page.url.pathname === `${base}/` || page.url.pathname === `${base}/quiz`;
+		if (href === `${base}/`) return page.url.pathname === `${base}/` || page.url.pathname.startsWith(`${base}/quiz`);
 		return page.url.pathname === href;
 	}
 </script>

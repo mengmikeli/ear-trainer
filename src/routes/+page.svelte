@@ -89,8 +89,8 @@
 				? `${base}/quiz/scales`
 				: content === 'modes'
 					? `${base}/quiz/modes`
-					: content === 'adaptive'
-						? `${base}/quiz/adaptive`
+					: content === 'intervals'
+						? `${base}/quiz/intervals`
 						: `${base}/quiz`;
 		let tick = 0;
 		const iv = setInterval(() => {
@@ -222,7 +222,7 @@
 
 			<div class="radar-zone">
 				<RadarGrid size="280px" />
-				<a href={activeContent() === 'chords' ? `${base}/quiz/chords` : activeContent() === 'scales' ? `${base}/quiz/scales` : activeContent() === 'modes' ? `${base}/quiz/modes` : `${base}/quiz`} class="start-btn" class:glitching={goGlitching} onclick={handleGo}>
+				<a href={activeContent() === 'chords' ? `${base}/quiz/chords` : activeContent() === 'scales' ? `${base}/quiz/scales` : activeContent() === 'modes' ? `${base}/quiz/modes` : activeContent() === 'intervals' ? `${base}/quiz/intervals` : `${base}/quiz`} class="start-btn" class:glitching={goGlitching} onclick={handleGo}>
 					<span class="btn-text">{goText}</span>
 				</a>
 			</div>

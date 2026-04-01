@@ -21,12 +21,40 @@ import { INTERVALS, type IntervalDef } from '$lib/definitions/intervals';
 import { CHORDS, type ChordDef } from '$lib/definitions/chords';
 import { SCALES, type ScaleDef } from '$lib/definitions/scales';
 import { MODES, type ModeDef } from '$lib/definitions/modes';
+import { buildIntervalState, isModeMastered } from '$lib/state/compat';
 import type { PlayMode } from '$lib/state/schema';
 
 const SCALE_TEMPO = 150;
 const MODE_TEMPO = 180;
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
+
+/** Determine which content kinds the user has earned access to (matches home page gates). */
+function getUnlockedKinds(state: UserStateV4): ContentKind[] {
+	if (state.settings.devMode) return ['interval', 'chord', 'scale', 'mode'];
+
+	const kinds: ContentKind[] = ['interval']; // always available
+
+	// Bronze mastery = at least 1 play-mode mastered per interval
+	let bronzeCount = 0;
+	for (const def of INTERVALS) {
+		const ds = state.definitions.intervals[def.id];
+		if (!ds?.unlocked) continue;
+		const istate = buildIntervalState(state, def.id);
+		const mastered = [istate.modes.ascending, istate.modes.descending, istate.modes.harmonic]
+			.filter(m => isModeMastered(m)).length;
+		if (mastered >= 1) bronzeCount++;
+	}
+
+	if (bronzeCount >= 5) kinds.push('chord');
+	if (bronzeCount >= 3) kinds.push('scale');
+
+	// Mode gate: any mode unlocked + chord-level mastery
+	const anyModeUnlocked = Object.values(state.definitions.modes).some(m => m.unlocked);
+	if (anyModeUnlocked && bronzeCount >= 5) kinds.push('mode');
+
+	return kinds;
+}
 
 interface Weighted<T> { item: T; weight: number }
 
@@ -47,10 +75,12 @@ interface ContentCandidate {
 	statsKey: string;
 }
 
-function buildCandidates(state: UserStateV4): ContentCandidate[] {
+function buildCandidates(state: UserStateV4, unlockedKinds: ContentKind[]): ContentCandidate[] {
 	const candidates: ContentCandidate[] = [];
+	const kindSet = new Set(unlockedKinds);
 
 	// Intervals
+	if (kindSet.has('interval')) {
 	for (const def of INTERVALS) {
 		const d = state.definitions.intervals[def.id];
 		if (!d?.unlocked || !d?.enabled) continue;
@@ -64,8 +94,10 @@ function buildCandidates(state: UserStateV4): ContentCandidate[] {
 			});
 		}
 	}
+	}
 
 	// Chords
+	if (kindSet.has('chord')) {
 	for (const def of CHORDS) {
 		const d = state.definitions.chords[def.id];
 		if (!d?.unlocked || !d?.enabled) continue;
@@ -79,8 +111,10 @@ function buildCandidates(state: UserStateV4): ContentCandidate[] {
 			});
 		}
 	}
+	}
 
 	// Scales
+	if (kindSet.has('scale')) {
 	for (const def of SCALES) {
 		const d = state.definitions.scales[def.id];
 		if (!d?.unlocked || !d?.enabled) continue;
@@ -90,8 +124,10 @@ function buildCandidates(state: UserStateV4): ContentCandidate[] {
 			statsKey: `scale:${def.id}`,
 		});
 	}
+	}
 
 	// Modes
+	if (kindSet.has('mode')) {
 	const devMode = state.settings.devMode;
 	for (const def of MODES) {
 		const d = state.definitions.modes[def.id];
@@ -101,6 +137,7 @@ function buildCandidates(state: UserStateV4): ContentCandidate[] {
 			defId: def.id,
 			statsKey: `mode:${def.id}`,
 		});
+	}
 	}
 
 	return candidates;
@@ -255,7 +292,8 @@ export function createAdaptiveConfig(state: UserStateV4): QuizSessionConfig {
 		},
 
 		generateQuestion(s: UserStateV4): UnifiedQuestion {
-			const candidates = buildCandidates(s);
+			const unlockedKinds = getUnlockedKinds(s);
+			const candidates = buildCandidates(s, unlockedKinds);
 			if (candidates.length === 0) throw new Error('No content available');
 
 			// Prefer different kind from last question for variety

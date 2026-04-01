@@ -257,7 +257,7 @@
 		trainGlitchText = '\uE018 TRAIN \uE018';
 		trainHoldProgress = 1;
 		setTimeout(() => {
-			window.location.href = `${base}/quiz/adaptive`;
+			window.location.href = `${base}/quiz`;
 		}, 500);
 	}
 
@@ -315,7 +315,7 @@
 		onboardGlitchText = '\uE018 ONBOARD \uE018';
 		onboardHoldProgress = 1;
 		setTimeout(() => {
-			window.location.href = `${base}/quiz/adaptive?onboard=1`;
+			window.location.href = `${base}/quiz?onboard=1`;
 		}, 500);
 	}
 </script>
