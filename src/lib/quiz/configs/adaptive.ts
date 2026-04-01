@@ -280,7 +280,7 @@ export function createAdaptiveConfig(state: UserStateV4): QuizSessionConfig {
 	let lastKind: ContentKind | null = null;
 
 	return {
-		heading: 'ADAPTIVE',
+		heading: 'PRACTICE',
 		contentKinds: ['interval', 'chord', 'scale', 'mode'],
 		sessionLength: state.settings.sessionLength,
 
