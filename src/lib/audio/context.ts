@@ -46,6 +46,7 @@ if (typeof window !== 'undefined') {
 let ctx: AudioContext | null = null;
 let masterGain: GainNode | null = null;
 let analyserNode: AnalyserNode | null = null;
+let contextWasReset = false;
 
 /**
  * Get (or create) the singleton AudioContext.
@@ -57,6 +58,15 @@ export function getContext(): AudioContext {
 	if (!ctx) {
 		const AC = window.AudioContext || (window as any).webkitAudioContext;
 		ctx = new AC();
+		// After a reset (background recovery), reclaim iOS audio session
+		// BEFORE the silent buffer — iOS needs the session type set for correct routing.
+		// On first-ever creation (not a reset), skip this to avoid stealing from other apps.
+		if (contextWasReset) {
+			if ('audioSession' in navigator && 'type' in (navigator as any).audioSession) {
+				(navigator as any).audioSession.type = 'playback';
+			}
+			contextWasReset = false;
+		}
 		// Play a silent buffer to fully unlock iOS audio pipeline
 		const silent = ctx.createBuffer(1, 1, ctx.sampleRate);
 		const source = ctx.createBufferSource();
@@ -152,6 +162,7 @@ export function resetContext(): void {
 		ctx = null;
 		masterGain = null;
 		analyserNode = null;
+		contextWasReset = true;
 	}
 }
 
