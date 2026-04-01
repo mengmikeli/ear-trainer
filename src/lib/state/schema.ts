@@ -93,6 +93,8 @@ export interface Settings {
 	activeContent: 'intervals' | 'chords' | 'scales' | 'modes' | 'adaptive';
 	/** Bypass mastery gates and show lab link. */
 	devMode?: boolean;
+	/** True if user has purchased Pro (unlocks gated content tiers). */
+	proUnlocked?: boolean;
 	/** Enable experimental visualisation enhancements. */
 	superchargeViz?: boolean;
 }

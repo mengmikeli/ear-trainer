@@ -17,6 +17,7 @@ import { CHORDS } from '$lib/definitions/chords';
 import { SCALES } from '$lib/definitions/scales';
 import { MODES } from '$lib/definitions/modes';
 import { getStatsForDef, aggregateStats } from './stats';
+import { canAccess, getUserTier } from '$lib/features/gate';
 
 // ─── Threshold tables ───────────────────────────────────────────────────────
 
@@ -66,6 +67,9 @@ export function checkTierUnlockV4(state: UserStateV4): UserStateV4 {
 // ─── Intervals ──────────────────────────────────────────────────────────────
 
 function unlockIntervalTiers(state: UserStateV4): void {
+	const userTier = getUserTier(state.settings);
+	const devMode = state.settings.devMode ?? false;
+
 	// Aggregate attempts/correct across all unlocked intervals
 	let totalAttempts = 0;
 	let totalCorrect = 0;
@@ -86,6 +90,9 @@ function unlockIntervalTiers(state: UserStateV4): void {
 		// Already unlocked → skip
 		if (tierDefs.every((def) => state.definitions.intervals[def.id]?.unlocked)) continue;
 
+		// Pro gate check — don't unlock if tier is gated for this user
+		if (!canAccess(`content:intervals:tier${tier}`, userTier, devMode)) continue;
+
 		// Previous tier must be unlocked
 		const prevUnlocked = INTERVALS.filter((i) => i.tier === tier - 1).every(
 			(def) => state.definitions.intervals[def.id]?.unlocked,
@@ -103,6 +110,9 @@ function unlockIntervalTiers(state: UserStateV4): void {
 // ─── Chords ─────────────────────────────────────────────────────────────────
 
 function unlockChordTiers(state: UserStateV4): void {
+	const userTier = getUserTier(state.settings);
+	const devMode = state.settings.devMode ?? false;
+
 	let totalAttempts = 0;
 	let totalCorrect = 0;
 	for (const def of CHORDS) {
@@ -121,6 +131,9 @@ function unlockChordTiers(state: UserStateV4): void {
 
 		if (tierDefs.every((def) => state.definitions.chords[def.id]?.unlocked)) continue;
 
+		// Pro gate check
+		if (!canAccess(`content:chords:tier${tier}`, userTier, devMode)) continue;
+
 		const prevUnlocked = CHORDS.filter((c) => c.tier === tier - 1).every(
 			(def) => state.definitions.chords[def.id]?.unlocked,
 		);
@@ -137,6 +150,9 @@ function unlockChordTiers(state: UserStateV4): void {
 // ─── Scales ─────────────────────────────────────────────────────────────────
 
 function unlockScaleTiers(state: UserStateV4): void {
+	const userTier = getUserTier(state.settings);
+	const devMode = state.settings.devMode ?? false;
+
 	let totalAttempts = 0;
 	let totalCorrect = 0;
 	for (const def of SCALES) {
@@ -155,6 +171,9 @@ function unlockScaleTiers(state: UserStateV4): void {
 
 		if (tierDefs.every((def) => state.definitions.scales[def.id]?.unlocked)) continue;
 
+		// Pro gate check
+		if (!canAccess(`content:scales:tier${tier}`, userTier, devMode)) continue;
+
 		const prevUnlocked = SCALES.filter((s) => s.tier === tier - 1).every(
 			(def) => state.definitions.scales[def.id]?.unlocked,
 		);
@@ -171,6 +190,12 @@ function unlockScaleTiers(state: UserStateV4): void {
 // ─── Modes ──────────────────────────────────────────────────────────────────
 
 function unlockModes(state: UserStateV4): void {
+	const userTier = getUserTier(state.settings);
+	const devMode = state.settings.devMode ?? false;
+
+	// Pro gate check — all modes are gated behind Pro
+	if (!canAccess('content:modes', userTier, devMode)) return;
+
 	// Prerequisite: all scales must be unlocked (all tiers)
 	const maxScaleTier = Math.max(...SCALES.map((s) => s.tier));
 	const allMaxTierUnlocked = SCALES.filter((s) => s.tier === maxScaleTier).every(

@@ -22,6 +22,7 @@ import { CHORDS, type ChordDef } from '$lib/definitions/chords';
 import { SCALES, type ScaleDef } from '$lib/definitions/scales';
 import { MODES, type ModeDef } from '$lib/definitions/modes';
 import { buildIntervalState, isModeMastered } from '$lib/state/compat';
+import { canAccess, getUserTier } from '$lib/features/gate';
 import type { PlayMode } from '$lib/state/schema';
 
 const SCALE_TEMPO = 150;
@@ -33,6 +34,7 @@ const MODE_TEMPO = 180;
 function getUnlockedKinds(state: UserStateV4): ContentKind[] {
 	if (state.settings.devMode) return ['interval', 'chord', 'scale', 'mode'];
 
+	const userTier = getUserTier(state.settings);
 	const kinds: ContentKind[] = ['interval']; // always available
 
 	// Bronze mastery = at least 1 play-mode mastered per interval
@@ -49,9 +51,9 @@ function getUnlockedKinds(state: UserStateV4): ContentKind[] {
 	if (bronzeCount >= 5) kinds.push('chord');
 	if (bronzeCount >= 3) kinds.push('scale');
 
-	// Mode gate: any mode unlocked + chord-level mastery
+	// Mode gate: any mode unlocked + chord-level mastery + Pro gate
 	const anyModeUnlocked = Object.values(state.definitions.modes).some(m => m.unlocked);
-	if (anyModeUnlocked && bronzeCount >= 5) kinds.push('mode');
+	if (anyModeUnlocked && bronzeCount >= 5 && canAccess('content:modes', userTier, false)) kinds.push('mode');
 
 	return kinds;
 }

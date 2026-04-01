@@ -11,6 +11,7 @@
 	import { CHORDS } from '$lib/definitions/chords';
 	import { SCALES } from '$lib/definitions/scales';
 	import { VERSION_STRING } from '$lib/version';
+	import { canAccess, getUserTier } from '$lib/features/gate';
 	import type { UserStateV4 } from '$lib/state/schema';
 	import RadarGrid from '../components/RadarGrid.svelte';
 	import TelemetryBar from '../components/TelemetryBar.svelte';
@@ -58,10 +59,11 @@
 		return bronzeCount >= 3;
 	});
 
-	// Modes unlock: any mode is unlocked
+	// Modes unlock: any mode is unlocked + Pro gate
 	const modesUnlocked = $derived(() => {
 		if (!state) return false;
 		if (state.settings.devMode) return true;
+		if (!canAccess('content:modes', getUserTier(state.settings), false)) return false;
 		return Object.values(state.definitions.modes).some(m => m.unlocked);
 	});
 

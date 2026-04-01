@@ -463,6 +463,7 @@ describe('checkTierUnlockV4 — Intervals', () => {
 
 	it('chain unlocks multiple tiers at once', () => {
 		const state = createDefaultStateV4();
+		state.settings.proUnlocked = true; // Pro needed for tier 3-4
 		addV4IntervalStats(state, TIER1_INTERVALS, 100, 70);
 
 		const result = checkTierUnlockV4(state);
@@ -498,6 +499,7 @@ describe('checkTierUnlockV4 — Chords', () => {
 
 	it('unlocks chord tier 2 at threshold (aggregating across voicings)', () => {
 		const state = createDefaultStateV4();
+		state.settings.proUnlocked = true; // Pro needed for chord tier 2+
 		addV4ChordStats(state, TIER1_CHORDS, 5, 4, 'root');
 		addV4ChordStats(state, TIER1_CHORDS, 3, 2, 'first');
 		addV4ChordStats(state, TIER1_CHORDS, 2, 1, 'second');
@@ -540,6 +542,7 @@ describe('checkTierUnlockV4 — Scales', () => {
 
 	it('unlocks scale tier 2 at threshold', () => {
 		const state = createDefaultStateV4();
+		state.settings.proUnlocked = true; // Pro needed for scale tier 2+
 		addV4ScaleStats(state, TIER1_SCALES, 10, 7);
 
 		const result = checkTierUnlockV4(state);
@@ -553,6 +556,7 @@ describe('checkTierUnlockV4 — Scales', () => {
 describe('checkTierUnlockV4 — Modes', () => {
 	it('does not unlock modes when tier 4 scales are locked', () => {
 		const state = createDefaultStateV4();
+		state.settings.proUnlocked = true; // Pro needed for scale/mode gating
 		// Give scale stats but don't unlock all scale tiers
 		// With 20 attempts at 70%, tier 2 unlocks (20>=10), but not tier 3 (20<30)
 		addV4ScaleStats(state, TIER1_SCALES, 20, 14);
@@ -623,6 +627,7 @@ describe('checkTierUnlockV4 — Modes', () => {
 
 	it('unlocks tier 2 modes after 10 mode attempts at 70%', () => {
 		const state = createDefaultStateV4();
+		state.settings.proUnlocked = true; // Pro needed for modes
 		for (const id of ALL_SCALE_IDS) {
 			state.definitions.scales[id].unlocked = true;
 		}
@@ -645,6 +650,7 @@ describe('checkTierUnlockV4 — Modes', () => {
 
 	it('unlocks all mode tiers after 30 mode attempts at 70%', () => {
 		const state = createDefaultStateV4();
+		state.settings.proUnlocked = true; // Pro needed for modes
 		for (const id of ALL_SCALE_IDS) {
 			state.definitions.scales[id].unlocked = true;
 		}
