@@ -244,8 +244,7 @@
 <style>
 	.home {
 		display: flex; flex-direction: column; align-items: center;
-		justify-content: center; height: 100%; gap: 0.5rem; text-align: center;
-		padding-bottom: 0.5rem;
+		justify-content: center; height: 100%; gap: 0.75rem; text-align: center;
 	}
 	.title-block { position: relative; }
 	.title {
@@ -259,16 +258,16 @@
 	}
 	.version-tag {
 		display: flex; align-items: center; gap: 0;
-		margin-top: 0.5rem; justify-content: center;
+		margin-top: 0.75rem; justify-content: center;
 	}
 	.hazard-bar {
 		display: block; width: 20px; height: 100%;
 		background: var(--marathon-blue);
 	}
 	.version {
-		font-size: 0.5rem; color: #FFFFFF;
-		font-family: var(--mono); letter-spacing: 0.3em;
-		background: var(--marathon-blue); padding: 0.3rem 0.75rem;
+		font-size: 0.35rem; color: #FFFFFF;
+		font-family: var(--mono); letter-spacing: 0.25em;
+		background: var(--marathon-blue); padding: 0.2rem 0.6rem;
 		display: inline-flex; align-items: center;
 		line-height: 1;
 		cursor: pointer;
@@ -336,12 +335,12 @@
 	.telemetry-row {
 		position: relative;
 		z-index: 1;
-		margin-top: 0.5rem;
+		margin-top: 0.75rem;
 	}
 	.content-switcher {
 		display: flex;
 		gap: 0;
-		margin-bottom: 0.5rem;
+		margin-bottom: 0.75rem;
 	}
 	.switch-btn {
 		font-size: 0.4rem;
