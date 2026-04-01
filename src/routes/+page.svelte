@@ -26,6 +26,9 @@
 
 	onMount(() => {
 		state = loadStateV4();
+		if (state && !state.settings.hasCompletedFRE) {
+			goto(`${base}/welcome`);
+		}
 	});
 
 	// Chord system unlock: Bronze mastery on 5+ intervals

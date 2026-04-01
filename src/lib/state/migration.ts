@@ -44,6 +44,10 @@ function doMigrate(raw: any): UserStateV4 {
 	if (raw.version === STATE_VERSION) {
 		const state = raw as UserStateV4;
 		patchMissingDefinitions(state);
+		// Existing v4 user without FRE flag → skip FRE
+		if (state.settings.hasCompletedFRE === undefined) {
+			state.settings.hasCompletedFRE = true;
+		}
 		return state;
 	}
 
@@ -298,6 +302,7 @@ function migrateSettings(raw: any): Settings {
 		activeContent,
 		...(s.devMode !== undefined ? { devMode: s.devMode === true } : {}),
 		...(s.superchargeViz !== undefined ? { superchargeViz: s.superchargeViz === true } : {}),
+		hasCompletedFRE: true, // existing user migrating → skip FRE
 	};
 }
 
@@ -370,6 +375,7 @@ export function freshV4State(): UserStateV4 {
 			enabledModes: { ascending: true, descending: false, harmonic: false },
 			enabledVoicings: { root: true, first: false, second: false },
 			activeContent: 'intervals',
+			hasCompletedFRE: false,
 		},
 		globalStats: {
 			totalSessions: 0,

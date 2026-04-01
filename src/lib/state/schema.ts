@@ -97,6 +97,8 @@ export interface Settings {
 	proUnlocked?: boolean;
 	/** Enable experimental visualisation enhancements. */
 	superchargeViz?: boolean;
+	/** True after completing the first-run experience. */
+	hasCompletedFRE?: boolean;
 }
 
 // ─── Global stats ───────────────────────────────────────────────────────────
