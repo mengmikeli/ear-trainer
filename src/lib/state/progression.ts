@@ -2,12 +2,13 @@
  * Unified tier-progression logic for v4 schema.
  *
  * Reads from `state.stats` (flat composite-keyed ContentStats) and writes to
- * `state.definitions` (unlock flags). Thresholds match the existing v3 code:
+ * `state.definitions` (unlock flags). Thresholds:
  *
  *   Intervals  2=10/70%  3=30/70%  4=60/70%  5=100/70%
  *   Chords     2=10/70%  3=30/70%  4=60/70%
- *   Scales     2=10/70%  3=30/70%
- *   Modes      all tier-3 scales unlocked + 60 scale attempts at 70%
+ *   Scales     2=10/70%  3=30/70%  4=60/70%
+ *   Modes      prerequisite: all scales unlocked + 60 attempts at 70%
+ *              then tiers: 2=10/70%  3=30/70%
  */
 
 import type { UserStateV4 } from './schema';
@@ -35,9 +36,15 @@ const CHORD_THRESHOLDS: Record<number, { questions: number; accuracy: number }> 
 const SCALE_THRESHOLDS: Record<number, { questions: number; accuracy: number }> = {
 	2: { questions: 10, accuracy: 0.7 },
 	3: { questions: 30, accuracy: 0.7 },
+	4: { questions: 60, accuracy: 0.7 },
 };
 
-const MODE_THRESHOLD = { questions: 60, accuracy: 0.7 };
+const MODE_PREREQUISITE = { questions: 60, accuracy: 0.7 };
+
+const MODE_THRESHOLDS: Record<number, { questions: number; accuracy: number }> = {
+	2: { questions: 10, accuracy: 0.7 },
+	3: { questions: 30, accuracy: 0.7 },
+};
 
 // ─── Public API ─────────────────────────────────────────────────────────────
 
@@ -142,7 +149,7 @@ function unlockScaleTiers(state: UserStateV4): void {
 	}
 	const overallAccuracy = totalAttempts > 0 ? totalCorrect / totalAttempts : 0;
 
-	for (let tier = 2; tier <= 3; tier++) {
+	for (let tier = 2; tier <= 4; tier++) {
 		const threshold = SCALE_THRESHOLDS[tier];
 		const tierDefs = SCALES.filter((s) => s.tier === tier);
 
@@ -164,11 +171,12 @@ function unlockScaleTiers(state: UserStateV4): void {
 // ─── Modes ──────────────────────────────────────────────────────────────────
 
 function unlockModes(state: UserStateV4): void {
-	// Requires all tier 3 scales to be unlocked
-	const allTier3Unlocked = SCALES.filter((s) => s.tier === 3).every(
+	// Prerequisite: all scales must be unlocked (all tiers)
+	const maxScaleTier = Math.max(...SCALES.map((s) => s.tier));
+	const allMaxTierUnlocked = SCALES.filter((s) => s.tier === maxScaleTier).every(
 		(def) => state.definitions.scales[def.id]?.unlocked,
 	);
-	if (!allTier3Unlocked) return;
+	if (!allMaxTierUnlocked) return;
 
 	// Aggregate scale stats across all unlocked scales
 	let scaleAttempts = 0;
@@ -183,10 +191,46 @@ function unlockModes(state: UserStateV4): void {
 	}
 	const scaleAccuracy = scaleAttempts > 0 ? scaleCorrect / scaleAttempts : 0;
 
-	if (scaleAttempts >= MODE_THRESHOLD.questions && scaleAccuracy >= MODE_THRESHOLD.accuracy) {
-		for (const def of MODES) {
-			if (state.definitions.modes[def.id]) {
-				state.definitions.modes[def.id].unlocked = true;
+	if (scaleAttempts < MODE_PREREQUISITE.questions || scaleAccuracy < MODE_PREREQUISITE.accuracy) {
+		return;
+	}
+
+	// Prerequisite met → ensure tier 1 modes are unlocked
+	for (const def of MODES.filter((m) => m.tier === 1)) {
+		if (state.definitions.modes[def.id]) {
+			state.definitions.modes[def.id].unlocked = true;
+		}
+	}
+
+	// Tiered mode progression (tier 2, 3)
+	let modeAttempts = 0;
+	let modeCorrect = 0;
+	for (const def of MODES) {
+		if (state.definitions.modes[def.id]?.unlocked) {
+			const entries = getStatsForDef(state.stats, 'mode', def.id);
+			const agg = aggregateStats(entries);
+			modeAttempts += agg.attempts;
+			modeCorrect += agg.correct;
+		}
+	}
+	const modeAccuracy = modeAttempts > 0 ? modeCorrect / modeAttempts : 0;
+
+	for (let tier = 2; tier <= 3; tier++) {
+		const threshold = MODE_THRESHOLDS[tier];
+		const tierDefs = MODES.filter((m) => m.tier === tier);
+
+		if (tierDefs.every((def) => state.definitions.modes[def.id]?.unlocked)) continue;
+
+		const prevUnlocked = MODES.filter((m) => m.tier === tier - 1).every(
+			(def) => state.definitions.modes[def.id]?.unlocked,
+		);
+		if (!prevUnlocked) continue;
+
+		if (modeAttempts >= threshold.questions && modeAccuracy >= threshold.accuracy) {
+			for (const def of tierDefs) {
+				if (state.definitions.modes[def.id]) {
+					state.definitions.modes[def.id].unlocked = true;
+				}
 			}
 		}
 	}

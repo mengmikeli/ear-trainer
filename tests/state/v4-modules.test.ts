@@ -51,8 +51,12 @@ const TIER2_CHORDS = CHORDS.filter((c) => c.tier === 2).map((c) => c.id);
 const TIER1_SCALES = SCALES.filter((s) => s.tier === 1).map((s) => s.id);
 const TIER2_SCALES = SCALES.filter((s) => s.tier === 2).map((s) => s.id);
 const TIER3_SCALES = SCALES.filter((s) => s.tier === 3).map((s) => s.id);
+const TIER4_SCALES = SCALES.filter((s) => s.tier === 4).map((s) => s.id);
+const ALL_SCALE_IDS = SCALES.map((s) => s.id);
 
 const TIER1_MODES = MODES.filter((m) => m.tier === 1).map((m) => m.id);
+const TIER2_MODES = MODES.filter((m) => m.tier === 2).map((m) => m.id);
+const TIER3_MODES = MODES.filter((m) => m.tier === 3).map((m) => m.id);
 const ALL_MODE_IDS = MODES.map((m) => m.id);
 
 /** Add interval stats to a v4 state across the three play modes. */
@@ -134,6 +138,32 @@ function addV4ScaleStats(
 	const remC = totalCorrect - perCorrect * scaleIds.length;
 	if (remA > 0 || remC > 0) {
 		const key = `scale:${scaleIds[0]}`;
+		state.stats[key].attempts += remA;
+		state.stats[key].correct += remC;
+	}
+}
+
+function addV4ModeStats(
+	state: UserStateV4,
+	modeIds: string[],
+	totalAttempts: number,
+	totalCorrect: number,
+): void {
+	const perItem = Math.floor(totalAttempts / modeIds.length);
+	const perCorrect = Math.floor(totalCorrect / modeIds.length);
+	for (const id of modeIds) {
+		const key = `mode:${id}`;
+		const existing = state.stats[key] ?? defaultContentStats();
+		state.stats[key] = {
+			...existing,
+			attempts: existing.attempts + perItem,
+			correct: existing.correct + perCorrect,
+		};
+	}
+	const remA = totalAttempts - perItem * modeIds.length;
+	const remC = totalCorrect - perCorrect * modeIds.length;
+	if (remA > 0 || remC > 0) {
+		const key = `mode:${modeIds[0]}`;
 		state.stats[key].attempts += remA;
 		state.stats[key].correct += remC;
 	}
@@ -521,9 +551,9 @@ describe('checkTierUnlockV4 — Scales', () => {
 });
 
 describe('checkTierUnlockV4 — Modes', () => {
-	it('does not unlock modes when tier 3 scales are locked', () => {
+	it('does not unlock modes when tier 4 scales are locked', () => {
 		const state = createDefaultStateV4();
-		// Give scale stats but don't unlock tier 2/3 scales — only tier 1 unlocked
+		// Give scale stats but don't unlock all scale tiers
 		// With 20 attempts at 70%, tier 2 unlocks (20>=10), but not tier 3 (20<30)
 		addV4ScaleStats(state, TIER1_SCALES, 20, 14);
 
@@ -535,7 +565,10 @@ describe('checkTierUnlockV4 — Modes', () => {
 		for (const id of TIER3_SCALES) {
 			expect(result.definitions.scales[id].unlocked).toBe(false);
 		}
-		// Tier 2+ modes should stay locked
+		for (const id of TIER4_SCALES) {
+			expect(result.definitions.scales[id].unlocked).toBe(false);
+		}
+		// Tier 1 modes stay unlocked by default, higher tiers stay locked
 		for (const id of ALL_MODE_IDS) {
 			if (TIER1_MODES.includes(id)) {
 				expect(result.definitions.modes[id].unlocked).toBe(true);
@@ -545,16 +578,18 @@ describe('checkTierUnlockV4 — Modes', () => {
 		}
 	});
 
-	it('does not unlock modes with tier 3 scales but insufficient scale attempts', () => {
+	it('does not unlock modes with all scales but insufficient scale attempts', () => {
 		const state = createDefaultStateV4();
 		// Manually unlock all scales
-		for (const id of [...TIER1_SCALES, ...TIER2_SCALES, ...TIER3_SCALES]) {
+		for (const id of ALL_SCALE_IDS) {
 			state.definitions.scales[id].unlocked = true;
 		}
 		addV4ScaleStats(state, TIER1_SCALES, 50, 35);
 
 		const result = checkTierUnlockV4(state);
 
+		// Tier 1 modes are unlocked by default, but prerequisite not met (50 < 60)
+		// so no tier 2/3 mode unlocks
 		for (const id of ALL_MODE_IDS) {
 			if (TIER1_MODES.includes(id)) {
 				expect(result.definitions.modes[id].unlocked).toBe(true);
@@ -564,12 +599,57 @@ describe('checkTierUnlockV4 — Modes', () => {
 		}
 	});
 
-	it('unlocks all modes when tier 3 scales unlocked + 60 attempts at 70%', () => {
+	it('unlocks tier 1 modes when all scales unlocked + 60 attempts at 70%', () => {
 		const state = createDefaultStateV4();
-		for (const id of [...TIER1_SCALES, ...TIER2_SCALES, ...TIER3_SCALES]) {
+		for (const id of ALL_SCALE_IDS) {
 			state.definitions.scales[id].unlocked = true;
 		}
 		addV4ScaleStats(state, TIER1_SCALES, 60, 42);
+
+		const result = checkTierUnlockV4(state);
+
+		// Tier 1 modes unlocked
+		for (const id of TIER1_MODES) {
+			expect(result.definitions.modes[id].unlocked).toBe(true);
+		}
+		// Tier 2+ modes still locked (no mode practice yet)
+		for (const id of TIER2_MODES) {
+			expect(result.definitions.modes[id].unlocked).toBe(false);
+		}
+		for (const id of TIER3_MODES) {
+			expect(result.definitions.modes[id].unlocked).toBe(false);
+		}
+	});
+
+	it('unlocks tier 2 modes after 10 mode attempts at 70%', () => {
+		const state = createDefaultStateV4();
+		for (const id of ALL_SCALE_IDS) {
+			state.definitions.scales[id].unlocked = true;
+		}
+		addV4ScaleStats(state, TIER1_SCALES, 60, 42);
+		// Add mode practice stats
+		addV4ModeStats(state, TIER1_MODES, 10, 7);
+
+		const result = checkTierUnlockV4(state);
+
+		for (const id of TIER1_MODES) {
+			expect(result.definitions.modes[id].unlocked).toBe(true);
+		}
+		for (const id of TIER2_MODES) {
+			expect(result.definitions.modes[id].unlocked).toBe(true);
+		}
+		for (const id of TIER3_MODES) {
+			expect(result.definitions.modes[id].unlocked).toBe(false);
+		}
+	});
+
+	it('unlocks all mode tiers after 30 mode attempts at 70%', () => {
+		const state = createDefaultStateV4();
+		for (const id of ALL_SCALE_IDS) {
+			state.definitions.scales[id].unlocked = true;
+		}
+		addV4ScaleStats(state, TIER1_SCALES, 60, 42);
+		addV4ModeStats(state, TIER1_MODES, 30, 21);
 
 		const result = checkTierUnlockV4(state);
 
