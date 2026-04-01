@@ -72,6 +72,11 @@ export const CHORDS: ChordDef[] = [
 		tier: 4,
 		category: 'seventh',
 	},
+
+	// Tier 4 — Suspended & Power chords
+	{ id: 'sus2', name: 'Suspended 2nd', label: 'SUS2', intervals: [0, 2, 7], tier: 4, category: 'triad' },
+	{ id: 'sus4', name: 'Suspended 4th', label: 'SUS4', intervals: [0, 5, 7], tier: 4, category: 'triad' },
+	{ id: 'pow', name: 'Power Chord', label: 'PWR', intervals: [0, 7], tier: 4, category: 'triad' },
 ];
 
 export function getChordsByTier(tier: number): ChordDef[] {

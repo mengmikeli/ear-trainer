@@ -40,9 +40,11 @@ function doMigrate(raw: any): UserStateV4 {
 		return freshV4State();
 	}
 
-	// Already v4 — pass through
+	// Already v4 — patch in any missing definitions (handles new content added in updates)
 	if (raw.version === STATE_VERSION) {
-		return raw as UserStateV4;
+		const state = raw as UserStateV4;
+		patchMissingDefinitions(state);
+		return state;
 	}
 
 	// ── Definitions ──────────────────────────────────────────────────────
@@ -378,6 +380,36 @@ export function freshV4State(): UserStateV4 {
 		},
 		sessionHistory: [],
 	};
+}
+
+// ─── Patch missing definitions (v4 → v4 with new content) ──────────────────
+
+/**
+ * Ensure all currently-defined content exists in a v4 state.
+ * Handles new chords/intervals/scales/modes added in app updates
+ * for users who already have a v4 state in localStorage.
+ */
+function patchMissingDefinitions(state: UserStateV4): void {
+	for (const def of INTERVALS) {
+		if (!state.definitions.intervals[def.id]) {
+			state.definitions.intervals[def.id] = defaultDefinitionState(def.tier === 1);
+		}
+	}
+	for (const def of CHORDS) {
+		if (!state.definitions.chords[def.id]) {
+			state.definitions.chords[def.id] = defaultDefinitionState(def.tier === 1);
+		}
+	}
+	for (const def of SCALES) {
+		if (!state.definitions.scales[def.id]) {
+			state.definitions.scales[def.id] = defaultDefinitionState(def.tier === 1);
+		}
+	}
+	for (const def of MODES) {
+		if (!state.definitions.modes[def.id]) {
+			state.definitions.modes[def.id] = defaultDefinitionState(def.tier === 1);
+		}
+	}
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
