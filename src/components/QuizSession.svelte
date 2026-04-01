@@ -342,7 +342,7 @@
 			<span class="mode-icon">{modeIcon}</span>
 			<div class="top-right">
 				{#each sessionConfig.extraControls ?? [] as ec}
-					<button class="extra-toggle" class:active={ec.getState()} onclick={() => { ec.toggle(); extraControlTick++; }}>
+					<button class="extra-toggle" class:active={(void extraControlTick, ec.getState())} onclick={() => { ec.toggle(); extraControlTick++; }}>
 						{void extraControlTick, ec.getLabel()}
 					</button>
 				{/each}
@@ -507,8 +507,13 @@
 		transition: color 0.15s, border-color 0.15s;
 	}
 	.extra-toggle.active {
-		color: var(--accent);
-		border-color: var(--accent);
+		color: var(--correct, #00FF88);
+		border-color: var(--correct, #00FF88);
+	}
+	.extra-toggle:not(.active) {
+		color: var(--text-secondary, #666);
+		border-color: var(--border-heavy, #333);
+		opacity: 0.6;
 	}
 	.play-tap {
 		position: relative;
