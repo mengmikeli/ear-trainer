@@ -80,7 +80,7 @@
 <div class="app scanlines">
 	{#if showUpdate}
 		<button class="update-bar" onclick={applyUpdate}>
-			UPDATE AVAILABLE — TAP TO RELOAD
+			<span class="ticker-text">UPDATE AVAILABLE — TAP TO RELOAD &nbsp;&nbsp;&nbsp; UPDATE AVAILABLE — TAP TO RELOAD &nbsp;&nbsp;&nbsp; UPDATE AVAILABLE — TAP TO RELOAD &nbsp;&nbsp;&nbsp;</span>
 		</button>
 	{/if}
 	<main class="content">
@@ -100,18 +100,30 @@
 		flex: 1; overflow-y: auto; padding: 1.5rem 1.25rem;
 	}
 	.update-bar {
-		width: 100%;
-		padding: 0.5rem;
+		position: fixed;
+		top: env(safe-area-inset-top, 0px);
+		left: 0;
+		right: 0;
+		z-index: 100;
+		height: 24px;
 		background: var(--accent);
 		color: var(--base);
 		font-family: var(--mono);
 		font-size: 0.4rem;
 		font-weight: 900;
 		letter-spacing: 0.15em;
-		text-align: center;
 		border: none;
 		cursor: pointer;
+		overflow: hidden;
+		white-space: nowrap;
+		display: flex;
+		align-items: center;
 	}
+	.ticker-text {
+		display: inline-block;
+		animation: ticker 12s linear infinite;
+	}
+	@keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-33.33%); } }
 
 	/* Desktop: wider container, more breathing room */
 	@media (min-width: 768px) {
