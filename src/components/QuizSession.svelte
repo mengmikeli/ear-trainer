@@ -468,9 +468,11 @@
 		position: absolute;
 		left: 50%;
 		transform: translateX(-50%);
-		font-size: 0.7rem;
+		font-size: 0.4rem;
+		font-weight: 900;
 		font-family: var(--mono);
 		color: var(--marathon-blue);
+		letter-spacing: 0.08em;
 		line-height: 1;
 	}
 	.close {
