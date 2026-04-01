@@ -207,15 +207,24 @@
 	onMount(() => {
 		ctrl.nextQuestion();
 
-		// On foreground return: always reset audio and show reconnect banner.
-		// iOS reports AudioContext as 'running' even when audio output is
-		// disconnected after background — we can't trust isAudioReady().
-		// The old quiz pages always showed the banner; this matches that behavior.
+		// On foreground return: reset audio only after long background (≥15s).
+		// Short resumes (quick app switch) work fine — iOS keeps the context alive.
+		// Long resumes (≥30s) cause iOS to silently kill audio output even though
+		// ctx.state reports 'running'. 15s threshold is conservative.
+		let backgroundedAt = 0;
+		const BACKGROUND_THRESHOLD_MS = 15_000;
+
 		const onVisible = () => {
-			if (document.visibilityState === 'visible') {
-				resetContext();
-				ctrl.forceNeedsTap();
-				extraControlTick++;
+			if (document.hidden) {
+				backgroundedAt = Date.now();
+			} else if (backgroundedAt > 0) {
+				const elapsed = Date.now() - backgroundedAt;
+				backgroundedAt = 0;
+				if (elapsed >= BACKGROUND_THRESHOLD_MS) {
+					resetContext();
+					ctrl.forceNeedsTap();
+					extraControlTick++;
+				}
 			}
 		};
 		document.addEventListener('visibilitychange', onVisible);
