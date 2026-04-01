@@ -4,7 +4,7 @@
 	import { chladniSuper, chladniGradSuper, midiToChladniMode } from '$lib/viz';
 	import type { ChladniMode } from '$lib/viz';
 	import { getAnalyser, getAmplitude, playNote, stopAudio } from '$lib/audio';
-	import { loadState } from '$lib/state';
+	import { loadStateV4 } from '$lib/state/storage';
 
 	// ── Scale definitions ──
 	interface ScaleDef {
@@ -180,7 +180,7 @@
 			migrateTimer = 60;
 
 			// Play the note through shared audio (analyser-connected, respects tone setting)
-			const state = loadState();
+			const state = loadStateV4();
 			playNote(midi, state.settings.toneType, 0.45);
 
 			step++;

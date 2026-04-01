@@ -1,10 +1,11 @@
 <script lang="ts">
-	import type { ChordDef, ChordState, ChordVoicing } from '$lib/types';
-	import { isModeMastered } from '$lib/mastery';
+	import type { ChordDef, ChordVoicing } from '$lib/definitions/chords';
+	import type { LegacyChordState } from '$lib/state/compat';
+	import { isModeMastered } from '$lib/state/compat';
 
 	interface Props {
 		def: ChordDef;
-		state: ChordState;
+		state: LegacyChordState;
 		voicingFilter?: ChordVoicing | null;
 		ontoggle?: (id: string) => void;
 		onplay?: (id: string) => void;

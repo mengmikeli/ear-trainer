@@ -1,9 +1,10 @@
 <script lang="ts">
-	import type { ScaleDef, ScaleState } from '$lib/types';
+	import type { ScaleDef } from '$lib/definitions/scales';
+	import type { LegacyScaleState } from '$lib/state/compat';
 
 	interface Props {
 		def: ScaleDef;
-		state: ScaleState;
+		state: LegacyScaleState;
 		ontoggle?: (id: string) => void;
 		onplay?: (id: string) => void;
 		playing?: boolean;

@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { base } from '$app/paths';
-	import { INTERVALS } from '$lib/intervals';
+	import { INTERVALS } from '$lib/definitions/intervals';
 	import { playInterval, getAnalyser, getAmplitude, stopAudio } from '$lib/audio';
-	import { loadState } from '$lib/state';
+	import { loadStateV4 } from '$lib/state/storage';
 
 	const RATIOS: Record<string, [number, number]> = {
 		P1: [1, 1], m2: [16, 15], M2: [9, 8], m3: [6, 5], M3: [5, 4],
@@ -119,7 +119,7 @@
 		}
 		playGeneration++;
 		const thisGen = playGeneration;
-		const state = loadState();
+		const state = loadStateV4();
 		isPlaying = true;
 
 		morphTarget = 0; morphT = 0;

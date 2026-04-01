@@ -1,10 +1,12 @@
 <script lang="ts">
-	import type { IntervalDef, IntervalState, PlayMode } from '$lib/types';
-	import { getMasteryLevel, isModeMastered } from '$lib/mastery';
+	import type { IntervalDef } from '$lib/definitions/intervals';
+	import type { LegacyIntervalState, LegacyModeStats } from '$lib/state/compat';
+	import { getMasteryLevel, isModeMastered } from '$lib/state/compat';
+	import type { PlayMode } from '$lib/state/schema';
 
 	interface Props {
 		def: IntervalDef;
-		state: IntervalState;
+		state: LegacyIntervalState;
 		modeFilter?: PlayMode | null;
 		ontoggle?: (id: string) => void;
 		onplay?: (id: string) => void;

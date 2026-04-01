@@ -2,9 +2,11 @@
 	import { onMount } from 'svelte';
 	import '../app.css';
 	import BottomNav from '../components/BottomNav.svelte';
+	import TickerBanner from '../components/TickerBanner.svelte';
 	import { initTheme } from '$lib/theme';
-	import { loadState } from '$lib/state';
-	import { warmUpAudio, suspendAudio, resumeAudio, cancelScheduledSuspend } from '$lib/audio';
+	import { loadStateV4 } from '$lib/state/storage';
+	import { warmUpAudio } from '$lib/audio/context';
+	import { releaseAudioSession } from '$lib/audio/session';
 
 	let { children } = $props();
 
@@ -27,7 +29,7 @@
 	}
 
 	onMount(() => {
-		const state = loadState();
+		const state = loadStateV4();
 		initTheme(state.settings.theme);
 
 		// Unlock iOS audio on first user interaction (touch or click)
@@ -39,16 +41,12 @@
 		document.addEventListener('touchend', unlock, { once: true });
 		document.addEventListener('click', unlock, { once: true });
 
-		// Suspend audio when page goes to background (saves battery, clears Dynamic Island)
-		// Resume audio context when returning — iOS kills suspended contexts
+		// Release audio session when going to background.
+		// Recovery on foreground is handled by individual pages (QuizSession
+		// resets context + shows reconnect banner on every resume).
 		function handleVisibility() {
 			if (document.hidden) {
-				cancelScheduledSuspend();
-				suspendAudio();
-			} else {
-				// Try to resume the AudioContext; if iOS blocks it (no gesture),
-				// the next user tap → play → getContext() will handle it
-				resumeAudio();
+				releaseAudioSession();
 			}
 		}
 		document.addEventListener('visibilitychange', handleVisibility);
@@ -82,9 +80,7 @@
 
 <div class="app scanlines">
 	{#if showUpdate}
-		<button class="update-bar" onclick={applyUpdate}>
-			UPDATE AVAILABLE — TAP TO RELOAD
-		</button>
+		<TickerBanner message="UPDATE AVAILABLE — TAP TO RELOAD" onclick={applyUpdate} />
 	{/if}
 	<main class="content">
 		{@render children()}
@@ -103,18 +99,30 @@
 		flex: 1; overflow-y: auto; padding: 1.5rem 1.25rem;
 	}
 	.update-bar {
-		width: 100%;
-		padding: 0.5rem;
+		position: fixed;
+		top: env(safe-area-inset-top, 0px);
+		left: 0;
+		right: 0;
+		z-index: 100;
+		height: 24px;
 		background: var(--accent);
 		color: var(--base);
 		font-family: var(--mono);
 		font-size: 0.4rem;
 		font-weight: 900;
 		letter-spacing: 0.15em;
-		text-align: center;
 		border: none;
 		cursor: pointer;
+		overflow: hidden;
+		white-space: nowrap;
+		display: flex;
+		align-items: center;
 	}
+	.ticker-text {
+		display: inline-block;
+		animation: ticker 12s linear infinite;
+	}
+	@keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-33.33%); } }
 
 	/* Desktop: wider container, more breathing room */
 	@media (min-width: 768px) {

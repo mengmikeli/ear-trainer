@@ -1,16 +1,18 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 	import { base } from '$app/paths';
-	import { loadState, saveState, createDefaultState } from '$lib/state';
-	import type { UserState, ToneType, SessionLength, ThemeMode } from '$lib/types';
+	import { loadStateV4, saveStateV4 } from '$lib/state/storage';
+	import { createDefaultStateV4 } from '$lib/state/defaults';
+	import type { UserStateV4 } from '$lib/state/schema';
+	import type { ToneType, SessionLength, ThemeMode } from '$lib/state/schema';
 	import { applyTheme, watchSystemTheme } from '$lib/theme';
-	import { playInterval } from '$lib/audio';
+	import { playInterval } from '$lib/audio/playback';
 	import { APP_VERSION, VERSION_STRING, RELEASE_NOTES } from '$lib/version';
 
 	let showReleaseNotes = $state(false);
 	let versionCopied = $state(false);
 
-	let state: UserState | null = $state(null);
+	let state: UserStateV4 | null = $state(null);
 
 	// Long-press reset
 	let holdProgress = $state(0);
@@ -66,7 +68,7 @@
 	}
 
 	onMount(() => {
-		state = loadState();
+		state = loadStateV4();
 		if (state) {
 			systemThemeCleanup = watchSystemTheme(state.settings.theme, () => applyTheme('system'));
 		}
@@ -81,7 +83,7 @@
 	});
 
 	function update() {
-		if (state) saveState(state);
+		if (state) saveStateV4(state);
 	}
 
 	function previewTone(tone: ToneType) {
@@ -128,10 +130,10 @@
 		if (holdRaf) { cancelAnimationFrame(holdRaf); holdRaf = null; }
 		if (glitchInterval) { clearInterval(glitchInterval); glitchInterval = null; }
 
-		const fresh = createDefaultState();
+		const fresh = createDefaultStateV4();
 		if (state) fresh.settings = state.settings;
 		state = fresh;
-		saveState(state);
+		saveStateV4(state);
 
 		resetDone = true;
 		glitchText = '\uE018 RESET \uE018';
@@ -255,7 +257,7 @@
 		trainGlitchText = '\uE018 TRAIN \uE018';
 		trainHoldProgress = 1;
 		setTimeout(() => {
-			window.location.href = `${base}/quiz/adaptive`;
+			window.location.href = `${base}/quiz`;
 		}, 500);
 	}
 
@@ -313,7 +315,7 @@
 		onboardGlitchText = '\uE018 ONBOARD \uE018';
 		onboardHoldProgress = 1;
 		setTimeout(() => {
-			window.location.href = `${base}/quiz/adaptive?onboard=1`;
+			window.location.href = `${base}/quiz?onboard=1`;
 		}, 500);
 	}
 </script>
