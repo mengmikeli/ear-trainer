@@ -116,7 +116,7 @@ const modeGlyph: Record<string, string> = {
 
 export function createIntervalConfig(state: UserStateV4): QuizSessionConfig {
 	return {
-		heading: 'PRACTICE',
+		heading: 'INTERVALS',
 		contentKinds: ['interval'],
 		sessionLength: state.settings.sessionLength,
 
