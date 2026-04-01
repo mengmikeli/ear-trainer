@@ -244,7 +244,7 @@
 <style>
 	.home {
 		display: flex; flex-direction: column; align-items: center;
-		justify-content: center; height: 100%; gap: 1.5rem; text-align: center;
+		justify-content: center; height: 100%; gap: 0.75rem; text-align: center;
 	}
 	.title-block { position: relative; }
 	.title {
@@ -258,7 +258,7 @@
 	}
 	.version-tag {
 		display: flex; align-items: center; gap: 0;
-		margin-top: 1.5rem; justify-content: center;
+		margin-top: 0.75rem; justify-content: center;
 	}
 	.hazard-bar {
 		display: block; width: 20px; height: 100%;
@@ -335,7 +335,7 @@
 	.telemetry-row {
 		position: relative;
 		z-index: 1;
-		margin-top: 1.5rem;
+		margin-top: 0.75rem;
 	}
 	.content-switcher {
 		display: flex;
