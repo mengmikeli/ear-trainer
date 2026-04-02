@@ -983,19 +983,21 @@
 			width: 100%;
 			flex-shrink: 0;
 		}
-		/* VizQuizLayout root — left half */
+		/* VizQuizLayout root — left, takes more space */
 		.quiz :global(.canvas-frame) {
-			flex: 1;
+			flex: 3;
 			min-width: 0;
-			max-width: 50%;
 		}
-		/* Answer grid — right half */
+		/* Answer grid — right, stacked vertically, narrower */
 		.answer-area {
-			flex: 1;
+			flex: 2;
 			min-width: 0;
-			max-width: 50%;
 			margin-top: 0;
 			align-self: center;
+		}
+		/* Stack answer cards in a single column */
+		.answer-area :global(.grid) {
+			grid-template-columns: 1fr;
 		}
 		.debrief-panels {
 			display: grid;
