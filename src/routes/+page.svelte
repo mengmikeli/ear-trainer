@@ -16,7 +16,7 @@
 	import type { UserStateV4 } from '$lib/state/schema';
 	import LissajousRing from '../components/LissajousRing.svelte';
 	// import ChladniBackground from '../components/ChladniBackground.svelte'; // disabled — perf not optimized yet
-	import MiniLissajous from '../components/MiniLissajous.svelte';
+	// import MiniLissajous from '../components/MiniLissajous.svelte'; // disabled — repetitive, revisit later
 
 	let state: UserStateV4 | null = $state(null);
 	let goGlitching = $state(false);
@@ -441,21 +441,10 @@
 						{/if}
 					</div>
 					<div class="tile-body">
-						<div class="tile-viz">
-							<MiniLissajous
-								size={36}
-								semitones={ct.semitones ?? 7}
-								chordIntervals={'chordIntervals' in ct ? ct.chordIntervals : undefined}
-								scaleIntervals={'scaleIntervals' in ct ? ct.scaleIntervals : undefined}
-								color={active ? ct.color : 'var(--text-secondary)'}
-							/>
-						</div>
-						<div class="tile-info">
-							<span class="tile-full-label">{ct.fullLabel}</span>
-							{#if unlocked && stats.accuracy > 0}
-								<span class="tile-stat">{stats.accuracy}%</span>
-							{/if}
-						</div>
+						<span class="tile-full-label">{ct.fullLabel}</span>
+						{#if unlocked && stats.accuracy > 0}
+							<span class="tile-stat">{stats.accuracy}%</span>
+						{/if}
 					</div>
 					<div class="tile-footer">
 						<span class="tile-count">{stats.count}</span>
@@ -775,20 +764,9 @@
 	.tile-body {
 		flex: 1;
 		display: flex;
-		align-items: center;
-		gap: 0.2rem;
-		padding: 0.2rem 0.3rem;
-	}
-
-	.tile-viz {
-		flex-shrink: 0;
-	}
-
-	.tile-info {
-		display: flex;
 		flex-direction: column;
 		align-items: flex-start;
-		min-width: 0;
+		padding: 0.25rem 0.35rem;
 	}
 
 	.tile-full-label {
