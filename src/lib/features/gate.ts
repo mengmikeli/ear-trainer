@@ -53,7 +53,7 @@ export function getUserTier(settings: { proUnlocked?: boolean; devMode?: boolean
 
 export function isProFeature(id: FeatureId): boolean {
   const flag = findFlag(id);
-  return (flag?.tier === 'pro') ?? false;
+  return flag?.tier === 'pro';
 }
 
 export function getAvailableFeatures(userTier: Tier = 'free', devMode: boolean = false): FeatureId[] {
