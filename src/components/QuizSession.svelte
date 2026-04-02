@@ -973,8 +973,8 @@
 		}
 	}
 
-	/* Desktop + landscape phone: two-column quiz & debrief */
-	@media (min-width: 1024px), (orientation: landscape) and (min-width: 568px) and (max-width: 1023px) {
+	/* Desktop (≥1024px) + landscape phone (wide but short = real phone) */
+	@media (min-width: 1024px), (orientation: landscape) and (min-width: 568px) and (max-height: 500px) {
 		/* Quiz stays column — heading + top bar above, panels below */
 		.quiz {
 			flex-direction: column;
