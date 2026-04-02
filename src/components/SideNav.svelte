@@ -111,7 +111,7 @@
 		gap: 0.6rem;
 		padding: 0.65rem 0.5rem;
 		color: var(--text-secondary);
-		font-size: 0.6rem;
+		font-size: 0.85rem;
 		font-weight: 400;
 		letter-spacing: 0.15em;
 		text-transform: uppercase;
