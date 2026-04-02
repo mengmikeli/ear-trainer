@@ -14,6 +14,22 @@ export interface ReleaseNote {
 
 export const RELEASE_NOTES: ReleaseNote[] = [
 	{
+		version: '4.1',
+		date: '2026-04-03',
+		title: 'RELEASE POLISH',
+		changes: [
+			'Content hierarchy -- 4-tier intervals, new chords (Sus2, Sus4, Power), 4-tier scales, 3-tier modes',
+			'Pro/Free gating -- 10 free items, 33 Pro items, LockedCard on progress page',
+			'Unlock fairness -- per-item mastery thresholds, not just pooled accuracy',
+			'First-run experience -- terminal-style guided onboarding with 2 scripted questions',
+			'Desktop + landscape two-column quiz layout',
+			'Sidebar navigation on desktop',
+			'Content switcher toggle -- tap to deselect back to adaptive practice',
+			'Symbol sweep -- all Matrix Mono glyphs, zero emoji',
+			'Favicon with black background for Dynamic Island',
+		],
+	},
+	{
 		version: '4.0',
 		date: '2026-04-01',
 		title: 'ARCHITECTURE REDESIGN',
