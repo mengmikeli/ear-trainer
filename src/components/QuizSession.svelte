@@ -767,6 +767,9 @@
 	}
 	.debrief-missed {
 		width: 100%;
+		display: flex;
+		flex-direction: column;
+		gap: 1.25rem;
 	}
 	.summary .heading {
 		border-bottom: 2px solid var(--border-heavy);
