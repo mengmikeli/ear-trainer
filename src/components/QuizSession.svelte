@@ -1001,15 +1001,17 @@
 			margin-top: 0;
 			display: flex;
 			flex-direction: column;
+			justify-content: stretch;
 		}
 		.quiz-panels .answer-area.hidden {
 			visibility: hidden;
 		}
-		/* Stack answer cards single-column, distribute evenly */
+		/* Stack answer cards single-column, fill height, equal rows */
 		.quiz-panels .answer-area :global(.grid) {
 			grid-template-columns: 1fr;
+			grid-template-rows: repeat(4, 1fr);
 			flex: 1;
-			align-content: space-evenly;
+			height: 100%;
 		}
 		.debrief-panels {
 			display: grid;
