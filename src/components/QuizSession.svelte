@@ -212,6 +212,15 @@
 	});
 	const guidanceLines = $derived(guidanceMsg ? guidanceMsg.split('\n') : []);
 
+	// ── Guidance dismiss (tap terminal to continue) ──────────────────
+	let lastDismissedMsg = $state('');
+
+	function dismissGuidance() {
+		lastDismissedMsg = guidanceMsg ?? '';
+	}
+
+	const showTerminal = $derived(!!guidanceMsg && guidanceMsg !== lastDismissedMsg);
+
 	// ── Lifecycle ─────────────────────────────────────────────────────
 	onMount(() => {
 		ctrl.nextQuestion();
@@ -390,8 +399,10 @@
 			ontransitionend={handleTransitionEnd}
 			{playingNotes}
 		>
-			{#if guidanceMsg}
-				<div class="terminal-screen">
+			{#if showTerminal}
+				<!-- svelte-ignore a11y_click_events_have_key_events -->
+				<!-- svelte-ignore a11y_no_static_element_interactions -->
+				<div class="terminal-screen" onclick={dismissGuidance}>
 					{#each guidanceLines as line, i}
 						{#if line === ''}
 							<div class="terminal-line terminal-blank" style="animation-delay: {i * 150}ms"></div>
@@ -401,9 +412,12 @@
 							</div>
 						{/if}
 					{/each}
+					<div class="terminal-continue" style="animation-delay: {guidanceLines.length * 150 + 300}ms">
+						TAP TO CONTINUE
+					</div>
 				</div>
 			{/if}
-			<button bind:this={playBtnEl} class="play-tap" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} onclick={ctrl.hasPlayed && inResultMode ? handleReplayInResult : handlePlay}>
+			<button bind:this={playBtnEl} class="play-tap" class:hidden-by-terminal={showTerminal} class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} onclick={ctrl.hasPlayed && inResultMode ? handleReplayInResult : handlePlay}>
 				<div class="orbit-track"><div class="orbit-dot"></div></div>
 				<span class="q-text" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} class:glitch-text={showGlitch}>
 					{displayText}
@@ -570,6 +584,10 @@
 		cursor: pointer;
 		-webkit-tap-highlight-color: transparent;
 	}
+	.play-tap.hidden-by-terminal {
+		opacity: 0;
+		pointer-events: none;
+	}
 	.play-tap.feedback-correct { background: var(--correct); border-color: var(--correct); box-shadow: 0 0 12px var(--correct); }
 	.play-tap.feedback-wrong { background: var(--hot); border-color: var(--hot); box-shadow: 0 0 12px var(--hot); transition: none; }
 	.play-tap:active { transform: scale(0.95); }
@@ -618,6 +636,25 @@
 	@keyframes terminal-appear {
 		from { opacity: 0; transform: translateY(4px); }
 		to { opacity: 1; transform: translateY(0); }
+	}
+	.terminal-continue {
+		font-family: var(--mono);
+		font-size: 0.35rem;
+		font-weight: 900;
+		letter-spacing: 0.15em;
+		color: var(--text-secondary);
+		text-align: center;
+		margin-top: auto;
+		padding-top: 1rem;
+		opacity: 0;
+		animation: terminal-appear 0.3s ease-out forwards, terminal-blink 1.5s ease-in-out infinite 1s;
+	}
+	@keyframes terminal-blink {
+		0%, 100% { opacity: 1; }
+		50% { opacity: 0.3; }
+	}
+	.terminal-screen {
+		cursor: pointer;
 	}
 	.answer-area {
 		width: 100%;
