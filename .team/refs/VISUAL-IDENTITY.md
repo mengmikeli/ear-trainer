@@ -84,4 +84,5 @@ Private Use Area characters available:
 
 ### References to review
 - timeline.bumgie.org (Mike, 2026-04-01 — pending review)
+- tauceti.world/explorer — Marathon fan project, excellent terminal HUD aesthetic. Acid green on black, wireframe globe as hero, full-width coordinate readout bars, color-blocked nav strip. (Noki, 2026-04-02)
 - (add more as they come)
