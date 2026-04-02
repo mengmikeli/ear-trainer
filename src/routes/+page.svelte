@@ -72,9 +72,9 @@
 	});
 
 	const activeContent = $derived(() => {
-		const content = state?.settings?.activeContent ?? 'intervals';
+		const content = state?.settings?.activeContent ?? 'adaptive';
 		const devMode = state?.settings?.devMode;
-		if (devMode) return content;
+		if (devMode) return content; // dev mode: respect any selection including 'adaptive'
 		if (content === 'chords' && !chordsUnlocked()) return 'intervals';
 		if (content === 'scales' && !scalesUnlocked()) return 'intervals';
 		if (content === 'modes' && !modesUnlocked()) return 'intervals';
@@ -84,7 +84,12 @@
 
 	function setActiveContent(mode: 'intervals' | 'chords' | 'scales' | 'modes') {
 		if (!state) return;
-		state.settings.activeContent = mode;
+		// Toggle: tapping already-selected type deselects back to adaptive
+		if (state.settings.activeContent === mode) {
+			state.settings.activeContent = 'adaptive';
+		} else {
+			state.settings.activeContent = mode;
+		}
 		saveStateV4(state);
 	}
 

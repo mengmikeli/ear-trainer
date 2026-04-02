@@ -126,7 +126,9 @@ export class QuizController {
 				setTimeout(() => {
 					if (!this._disposed) {
 						this.isGlitching = false;
-						this.play();
+						if (this.config.autoPlay !== false) {
+							this.play();
+						}
 					}
 				}, 600);
 			});

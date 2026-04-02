@@ -114,4 +114,6 @@ export interface QuizSessionConfig {
 	skipDebrief?: boolean;
 	/** FRE mode: boot sequence, auto-play on dismiss, answer blocking during overlay. */
 	freMode?: boolean;
+	/** If false, nextQuestion() won't auto-play after glitch (default true). */
+	autoPlay?: boolean;
 }
