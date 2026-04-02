@@ -6,6 +6,10 @@ Adaptive interval/chord/scale/mode ear training web app with Marathon "Graphic R
 ## Stack
 SvelteKit 2 + TypeScript + Svelte 5 (runes) + Web Audio API + Vitest + localStorage
 
+## Visual Identity
+Marathon "Graphic Realism" — industrial, high-contrast, Matrix Mono glyphs only.
+All UI work MUST reference `.team/refs/VISUAL-IDENTITY.md`
+
 ## Repo
 github.com/mengmikeli/ear-trainer
 Local: ~/Projects/ear-trainer

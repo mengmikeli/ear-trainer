@@ -372,31 +372,28 @@
 	</div>
 
 	{#if ctrl.question}
-		<div class="quiz-panels">
-			<div class="panel-viz">
-				<VizQuizLayout
-					mode={vizMode}
-					phase={ctrl.vizPhase}
-					semitones={vizSemitones}
-					chordIntervals={vizChordIntervals}
-					scaleIntervals={vizScaleIntervals}
-					countdownPct={ctrl.hasPlayed && inResultMode ? ctrl.countdownPct : -1}
-					ontransitionend={handleTransitionEnd}
-					{playingNotes}
-				>
-					<button bind:this={playBtnEl} class="play-tap" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} onclick={ctrl.hasPlayed && inResultMode ? handleReplayInResult : handlePlay}>
-						<div class="orbit-track"><div class="orbit-dot"></div></div>
-						<span class="q-text" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} class:glitch-text={showGlitch}>
-							{displayText}
-						</span>
-					</button>
-				</VizQuizLayout>
-			</div>
+		<VizQuizLayout
+			mode={vizMode}
+			phase={ctrl.vizPhase}
+			semitones={vizSemitones}
+			chordIntervals={vizChordIntervals}
+			scaleIntervals={vizScaleIntervals}
+			countdownPct={ctrl.hasPlayed && inResultMode ? ctrl.countdownPct : -1}
+			ontransitionend={handleTransitionEnd}
+			{playingNotes}
+		>
+			<button bind:this={playBtnEl} class="play-tap" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} onclick={ctrl.hasPlayed && inResultMode ? handleReplayInResult : handlePlay}>
+				<div class="orbit-track"><div class="orbit-dot"></div></div>
+				<span class="q-text" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} class:glitch-text={showGlitch}>
+					{displayText}
+				</span>
+			</button>
+		</VizQuizLayout>
 
-			<div class="panel-answers" class:hidden={!ctrl.question}>
-				<AnswerGrid
-					choices={ctrl.needsTap ? ctrl.question.choices.map(c => ({ ...c, label: 'NA', name: 'UNAVAILABLE' })) : ctrl.question.choices}
-					onselect={handleSelectAnswer}
+		<div class="answer-area" class:hidden={!ctrl.question}>
+			<AnswerGrid
+				choices={ctrl.needsTap ? ctrl.question.choices.map(c => ({ ...c, label: 'NA', name: 'UNAVAILABLE' })) : ctrl.question.choices}
+				onselect={handleSelectAnswer}
 					disabled={ctrl.needsTap || !ctrl.hasPlayed || !!ctrl.selectedId}
 					offline={ctrl.needsTap}
 					correctId={ctrl.selectedId ? ctrl.question.correctAnswer.id : null}
@@ -406,7 +403,6 @@
 					onWrongClick={inResultMode ? handleReplayInResult : null}
 				/>
 			</div>
-		</div>
 	{/if}
 </div>
 {/if}
@@ -570,18 +566,11 @@
 	.q-text.feedback-correct { color: var(--base); transition: none; }
 	.q-text.feedback-wrong { color: var(--base); transition: none; }
 	.q-text.glitch-text { /* clean glyph cycling, no effects */ }
-	/* ── Quiz panels: invisible on mobile, side-by-side on desktop ── */
-	.quiz-panels {
-		display: contents; /* Mobile: panels disappear, children flow in .quiz column */
-	}
-	.panel-viz {
-		width: 100%;
-	}
-	.panel-answers {
+	.answer-area {
 		width: 100%;
 		margin-top: auto;
 	}
-	.panel-answers.hidden {
+	.answer-area.hidden {
 		visibility: hidden;
 	}
 
@@ -708,27 +697,6 @@
 	@media (min-width: 768px) {
 		.heading { font-size: 3.5rem; }
 
-		/* ── Two-column quiz: viz left, answers right ── */
-		.quiz-panels {
-			display: flex;
-			flex-direction: row;
-			align-items: center;
-			gap: 2rem;
-			width: 100%;
-			flex: 1;
-			min-height: 0;
-		}
-		.panel-viz {
-			flex: 1;
-			min-width: 0;
-		}
-		.panel-answers {
-			flex: 1;
-			min-width: 0;
-			margin-top: 0;
-		}
-
-		/* ── Two-column debrief: stats left, missed right ── */
 		.summary {
 			max-width: none;
 			margin: 0;
