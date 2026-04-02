@@ -965,6 +965,38 @@
 			max-width: none;
 			margin: 0;
 		}
+	}
+
+	/* Desktop + landscape phone: two-column quiz & debrief */
+	@media (min-width: 768px), (orientation: landscape) and (min-width: 568px) {
+		.quiz {
+			flex-direction: row;
+			flex-wrap: wrap;
+			align-items: flex-start;
+			gap: 1.5rem;
+		}
+		.heading {
+			width: 100%;
+			flex-shrink: 0;
+		}
+		.top {
+			width: 100%;
+			flex-shrink: 0;
+		}
+		/* VizQuizLayout root — left half */
+		.quiz :global(.canvas-frame) {
+			flex: 1;
+			min-width: 0;
+			max-width: 50%;
+		}
+		/* Answer grid — right half */
+		.answer-area {
+			flex: 1;
+			min-width: 0;
+			max-width: 50%;
+			margin-top: 0;
+			align-self: center;
+		}
 		.debrief-panels {
 			display: grid;
 			grid-template-columns: 1fr 1fr;
