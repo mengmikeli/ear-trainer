@@ -504,7 +504,7 @@
 	.frame-corner.br { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
 
 	/* Desktop: canvas can be taller in two-column layout */
-	@media (min-width: 768px) {
+	@media (min-width: 1200px) {
 		.canvas-frame {
 			max-height: 65vh;
 		}

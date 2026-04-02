@@ -51,8 +51,12 @@ const TIER2_CHORDS = CHORDS.filter((c) => c.tier === 2).map((c) => c.id);
 const TIER1_SCALES = SCALES.filter((s) => s.tier === 1).map((s) => s.id);
 const TIER2_SCALES = SCALES.filter((s) => s.tier === 2).map((s) => s.id);
 const TIER3_SCALES = SCALES.filter((s) => s.tier === 3).map((s) => s.id);
+const TIER4_SCALES = SCALES.filter((s) => s.tier === 4).map((s) => s.id);
+const ALL_SCALE_IDS = SCALES.map((s) => s.id);
 
 const TIER1_MODES = MODES.filter((m) => m.tier === 1).map((m) => m.id);
+const TIER2_MODES = MODES.filter((m) => m.tier === 2).map((m) => m.id);
+const TIER3_MODES = MODES.filter((m) => m.tier === 3).map((m) => m.id);
 const ALL_MODE_IDS = MODES.map((m) => m.id);
 
 /** Add interval stats to a v4 state across the three play modes. */
@@ -134,6 +138,32 @@ function addV4ScaleStats(
 	const remC = totalCorrect - perCorrect * scaleIds.length;
 	if (remA > 0 || remC > 0) {
 		const key = `scale:${scaleIds[0]}`;
+		state.stats[key].attempts += remA;
+		state.stats[key].correct += remC;
+	}
+}
+
+function addV4ModeStats(
+	state: UserStateV4,
+	modeIds: string[],
+	totalAttempts: number,
+	totalCorrect: number,
+): void {
+	const perItem = Math.floor(totalAttempts / modeIds.length);
+	const perCorrect = Math.floor(totalCorrect / modeIds.length);
+	for (const id of modeIds) {
+		const key = `mode:${id}`;
+		const existing = state.stats[key] ?? defaultContentStats();
+		state.stats[key] = {
+			...existing,
+			attempts: existing.attempts + perItem,
+			correct: existing.correct + perCorrect,
+		};
+	}
+	const remA = totalAttempts - perItem * modeIds.length;
+	const remC = totalCorrect - perCorrect * modeIds.length;
+	if (remA > 0 || remC > 0) {
+		const key = `mode:${modeIds[0]}`;
 		state.stats[key].attempts += remA;
 		state.stats[key].correct += remC;
 	}
@@ -402,9 +432,10 @@ describe('checkTierUnlockV4 — Intervals', () => {
 		}
 	});
 
-	it('unlocks tier 2 at exactly 10 attempts with ≥70% accuracy', () => {
+	it('unlocks tier 2 when pooled and per-item thresholds are both met', () => {
 		const state = createDefaultStateV4();
-		addV4IntervalStats(state, TIER1_INTERVALS, 10, 7);
+		// 15 attempts ÷ 3 items = 5 each, 12 correct ÷ 3 = 4 each (80%)
+		addV4IntervalStats(state, TIER1_INTERVALS, 15, 12);
 
 		const result = checkTierUnlockV4(state);
 
@@ -418,11 +449,10 @@ describe('checkTierUnlockV4 — Intervals', () => {
 
 	it('unlocks tier 2 when stats are aggregated across modes', () => {
 		const state = createDefaultStateV4();
-		// Split: 4 ascending + 3 descending + 3 harmonic = 10
-		// Correct: 3 + 2 + 2 = 7 → 70%
-		addV4IntervalStats(state, ['P1'], 4, 3, 'ascending');
-		addV4IntervalStats(state, ['P5'], 3, 2, 'descending');
-		addV4IntervalStats(state, ['P8'], 3, 2, 'harmonic');
+		// Each item ≥5 attempts at ≥70% — aggregated across play modes
+		addV4IntervalStats(state, ['P1'], 6, 5, 'ascending');
+		addV4IntervalStats(state, ['P5'], 5, 4, 'descending');
+		addV4IntervalStats(state, ['P8'], 5, 4, 'harmonic');
 
 		const result = checkTierUnlockV4(state);
 
@@ -431,9 +461,18 @@ describe('checkTierUnlockV4 — Intervals', () => {
 		}
 	});
 
-	it('chain unlocks multiple tiers at once', () => {
+	it('chain unlocks multiple tiers when per-item mastery is met for each', () => {
 		const state = createDefaultStateV4();
-		addV4IntervalStats(state, TIER1_INTERVALS, 100, 70);
+		state.settings.proUnlocked = true; // Pro needed for tier 3-4
+		// T1: 60 attempts ÷ 3 = 20 each, 42 correct ÷ 3 = 14 each (70%)
+		addV4IntervalStats(state, TIER1_INTERVALS, 60, 42);
+		// Pre-seed per-item stats for T2 and T3 so chain unlock can proceed
+		for (const id of TIER2_INTERVALS) {
+			state.stats[`interval:${id}:ascending`] = { ...defaultContentStats(), attempts: 5, correct: 4 };
+		}
+		for (const id of TIER3_INTERVALS) {
+			state.stats[`interval:${id}:ascending`] = { ...defaultContentStats(), attempts: 5, correct: 4 };
+		}
 
 		const result = checkTierUnlockV4(state);
 
@@ -444,7 +483,7 @@ describe('checkTierUnlockV4 — Intervals', () => {
 
 	it('returns a new object (no mutation)', () => {
 		const state = createDefaultStateV4();
-		addV4IntervalStats(state, TIER1_INTERVALS, 10, 7);
+		addV4IntervalStats(state, TIER1_INTERVALS, 15, 12);
 
 		const result = checkTierUnlockV4(state);
 
@@ -468,10 +507,12 @@ describe('checkTierUnlockV4 — Chords', () => {
 
 	it('unlocks chord tier 2 at threshold (aggregating across voicings)', () => {
 		const state = createDefaultStateV4();
-		addV4ChordStats(state, TIER1_CHORDS, 5, 4, 'root');
-		addV4ChordStats(state, TIER1_CHORDS, 3, 2, 'first');
-		addV4ChordStats(state, TIER1_CHORDS, 2, 1, 'second');
-		// Total: 10 attempts, 7 correct = 70%
+		state.settings.proUnlocked = true; // Pro needed for chord tier 2+
+		// Each chord item needs ≥5 attempts at ≥70%
+		addV4ChordStats(state, TIER1_CHORDS, 8, 6, 'root');
+		addV4ChordStats(state, TIER1_CHORDS, 6, 5, 'first');
+		// maj: root(4,3)+first(3,3)=7,6 (86%); min: root(4,3)+first(3,2)=7,5 (71%)
+		// Total: 14 attempts, 79% ≥ 10 at 70%
 
 		const result = checkTierUnlockV4(state);
 
@@ -482,7 +523,7 @@ describe('checkTierUnlockV4 — Chords', () => {
 
 	it('chord unlocks are independent of interval unlocks', () => {
 		const state = createDefaultStateV4();
-		addV4IntervalStats(state, TIER1_INTERVALS, 10, 7);
+		addV4IntervalStats(state, TIER1_INTERVALS, 15, 12);
 		// No chord stats
 
 		const result = checkTierUnlockV4(state);
@@ -510,7 +551,9 @@ describe('checkTierUnlockV4 — Scales', () => {
 
 	it('unlocks scale tier 2 at threshold', () => {
 		const state = createDefaultStateV4();
-		addV4ScaleStats(state, TIER1_SCALES, 10, 7);
+		state.settings.proUnlocked = true; // Pro needed for scale tier 2+
+		// 10 ÷ 2 = 5 each, 8 ÷ 2 = 4 each (80%) → both mastered
+		addV4ScaleStats(state, TIER1_SCALES, 10, 8);
 
 		const result = checkTierUnlockV4(state);
 
@@ -521,9 +564,10 @@ describe('checkTierUnlockV4 — Scales', () => {
 });
 
 describe('checkTierUnlockV4 — Modes', () => {
-	it('does not unlock modes when tier 3 scales are locked', () => {
+	it('does not unlock modes when tier 4 scales are locked', () => {
 		const state = createDefaultStateV4();
-		// Give scale stats but don't unlock tier 2/3 scales — only tier 1 unlocked
+		state.settings.proUnlocked = true; // Pro needed for scale/mode gating
+		// Give scale stats but don't unlock all scale tiers
 		// With 20 attempts at 70%, tier 2 unlocks (20>=10), but not tier 3 (20<30)
 		addV4ScaleStats(state, TIER1_SCALES, 20, 14);
 
@@ -535,7 +579,10 @@ describe('checkTierUnlockV4 — Modes', () => {
 		for (const id of TIER3_SCALES) {
 			expect(result.definitions.scales[id].unlocked).toBe(false);
 		}
-		// Tier 2+ modes should stay locked
+		for (const id of TIER4_SCALES) {
+			expect(result.definitions.scales[id].unlocked).toBe(false);
+		}
+		// Tier 1 modes stay unlocked by default, higher tiers stay locked
 		for (const id of ALL_MODE_IDS) {
 			if (TIER1_MODES.includes(id)) {
 				expect(result.definitions.modes[id].unlocked).toBe(true);
@@ -545,16 +592,18 @@ describe('checkTierUnlockV4 — Modes', () => {
 		}
 	});
 
-	it('does not unlock modes with tier 3 scales but insufficient scale attempts', () => {
+	it('does not unlock modes with all scales but insufficient scale attempts', () => {
 		const state = createDefaultStateV4();
 		// Manually unlock all scales
-		for (const id of [...TIER1_SCALES, ...TIER2_SCALES, ...TIER3_SCALES]) {
+		for (const id of ALL_SCALE_IDS) {
 			state.definitions.scales[id].unlocked = true;
 		}
 		addV4ScaleStats(state, TIER1_SCALES, 50, 35);
 
 		const result = checkTierUnlockV4(state);
 
+		// Tier 1 modes are unlocked by default, but prerequisite not met (50 < 60)
+		// so no tier 2/3 mode unlocks
 		for (const id of ALL_MODE_IDS) {
 			if (TIER1_MODES.includes(id)) {
 				expect(result.definitions.modes[id].unlocked).toBe(true);
@@ -564,12 +613,64 @@ describe('checkTierUnlockV4 — Modes', () => {
 		}
 	});
 
-	it('unlocks all modes when tier 3 scales unlocked + 60 attempts at 70%', () => {
+	it('unlocks tier 1 modes when all scales unlocked + 60 attempts at 70%', () => {
 		const state = createDefaultStateV4();
-		for (const id of [...TIER1_SCALES, ...TIER2_SCALES, ...TIER3_SCALES]) {
+		for (const id of ALL_SCALE_IDS) {
 			state.definitions.scales[id].unlocked = true;
 		}
 		addV4ScaleStats(state, TIER1_SCALES, 60, 42);
+
+		const result = checkTierUnlockV4(state);
+
+		// Tier 1 modes unlocked
+		for (const id of TIER1_MODES) {
+			expect(result.definitions.modes[id].unlocked).toBe(true);
+		}
+		// Tier 2+ modes still locked (no mode practice yet)
+		for (const id of TIER2_MODES) {
+			expect(result.definitions.modes[id].unlocked).toBe(false);
+		}
+		for (const id of TIER3_MODES) {
+			expect(result.definitions.modes[id].unlocked).toBe(false);
+		}
+	});
+
+	it('unlocks tier 2 modes after 10 mode attempts at 70%', () => {
+		const state = createDefaultStateV4();
+		state.settings.proUnlocked = true; // Pro needed for modes
+		for (const id of ALL_SCALE_IDS) {
+			state.definitions.scales[id].unlocked = true;
+		}
+		// Scale stats: 66 ÷ 11 = 6 each, 55 ÷ 11 = 5 each (83%) → all scale items mastered
+		addV4ScaleStats(state, ALL_SCALE_IDS, 66, 55);
+		// Mode stats: 10 ÷ 2 = 5 each, 8 ÷ 2 = 4 each (80%) → both mastered
+		addV4ModeStats(state, TIER1_MODES, 10, 8);
+
+		const result = checkTierUnlockV4(state);
+
+		for (const id of TIER1_MODES) {
+			expect(result.definitions.modes[id].unlocked).toBe(true);
+		}
+		for (const id of TIER2_MODES) {
+			expect(result.definitions.modes[id].unlocked).toBe(true);
+		}
+		for (const id of TIER3_MODES) {
+			expect(result.definitions.modes[id].unlocked).toBe(false);
+		}
+	});
+
+	it('unlocks all mode tiers after sufficient mode practice', () => {
+		const state = createDefaultStateV4();
+		state.settings.proUnlocked = true; // Pro needed for modes
+		for (const id of ALL_SCALE_IDS) {
+			state.definitions.scales[id].unlocked = true;
+		}
+		// Scale stats: all items mastered for mode prerequisite
+		addV4ScaleStats(state, ALL_SCALE_IDS, 66, 55);
+		// T1 modes: 30 ÷ 2 = 15 each, 22 ÷ 2 = 11 each (73%) → both mastered
+		addV4ModeStats(state, TIER1_MODES, 30, 22);
+		// Pre-seed T2 mode per-item stats for tier 3 chain unlock
+		addV4ModeStats(state, TIER2_MODES, 10, 8);
 
 		const result = checkTierUnlockV4(state);
 

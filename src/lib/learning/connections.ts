@@ -19,66 +19,66 @@ export interface Connection {
  * connection boost in the adaptive engine.
  */
 export const CURATED_CONNECTIONS: Connection[] = [
-	// Intervals → Chords
+	// Intervals > Chords
 	{ from: 'interval:M3', to: 'chord:maj', relationship: 'builds',
-		description: 'M3 → defines major chords' },
+		description: 'M3 > defines major chords' },
 	{ from: 'interval:m3', to: 'chord:min', relationship: 'builds',
-		description: 'm3 → defines minor chords' },
+		description: 'm3 > defines minor chords' },
 	{ from: 'interval:P5', to: 'chord:maj', relationship: 'builds',
-		description: 'P5 → completes major triad' },
+		description: 'P5 > completes major triad' },
 	{ from: 'interval:P5', to: 'chord:min', relationship: 'builds',
-		description: 'P5 → completes minor triad' },
+		description: 'P5 > completes minor triad' },
 	{ from: 'interval:TT', to: 'chord:dim', relationship: 'builds',
-		description: 'TT → defines diminished triad' },
+		description: 'TT > defines diminished triad' },
 	{ from: 'interval:M3', to: 'chord:aug', relationship: 'builds',
-		description: 'M3 → stacked thirds form augmented' },
+		description: 'M3 > stacked thirds form augmented' },
 	{ from: 'interval:m7', to: 'chord:dom7', relationship: 'builds',
-		description: 'm7 on major triad → dominant 7th' },
+		description: 'm7 on major triad > dominant 7th' },
 	{ from: 'interval:M7', to: 'chord:maj7', relationship: 'builds',
-		description: 'M7 on major triad → major 7th' },
+		description: 'M7 on major triad > major 7th' },
 	{ from: 'interval:m7', to: 'chord:min7', relationship: 'builds',
-		description: 'm7 on minor triad → minor 7th' },
+		description: 'm7 on minor triad > minor 7th' },
 	{ from: 'interval:m3', to: 'chord:dim7', relationship: 'builds',
-		description: 'stacked m3s → diminished 7th' },
+		description: 'stacked m3s > diminished 7th' },
 
-	// Intervals → Scales
+	// Intervals > Scales
 	{ from: 'interval:M2', to: 'scale:major', relationship: 'step',
 		description: 'M2 whole steps drive the major scale' },
 	{ from: 'interval:m3', to: 'scale:min_pent', relationship: 'character',
-		description: 'm3 → minor pentatonic color' },
+		description: 'm3 > minor pentatonic color' },
 	{ from: 'interval:TT', to: 'scale:blues', relationship: 'character',
-		description: 'TT → the blue note' },
+		description: 'TT > the blue note' },
 	{ from: 'interval:m2', to: 'scale:chromatic', relationship: 'step',
-		description: 'm2 half steps → chromatic scale' },
+		description: 'm2 half steps > chromatic scale' },
 	{ from: 'interval:M7', to: 'scale:harm_min', relationship: 'character',
-		description: 'M7 → harmonic minor leading tone' },
+		description: 'M7 > harmonic minor leading tone' },
 	{ from: 'interval:M6', to: 'scale:mel_min', relationship: 'character',
-		description: 'M6 → melodic minor raised 6th' },
+		description: 'M6 > melodic minor raised 6th' },
 
-	// Chords → Scales
+	// Chords > Scales
 	{ from: 'chord:maj', to: 'scale:major', relationship: 'harmonic',
-		description: 'major chord → I of major scale' },
+		description: 'major chord > I of major scale' },
 	{ from: 'chord:min', to: 'scale:nat_min', relationship: 'harmonic',
-		description: 'minor chord → i of natural minor' },
+		description: 'minor chord > i of natural minor' },
 	{ from: 'chord:dom7', to: 'scale:blues', relationship: 'harmonic',
-		description: 'dom7 over blues → classic blues' },
+		description: 'dom7 over blues > classic blues' },
 	{ from: 'chord:dim', to: 'scale:harm_min', relationship: 'harmonic',
-		description: 'dim triad → vii° of harmonic minor' },
+		description: 'dim triad > viio of harmonic minor' },
 
-	// Intervals → Modes
+	// Intervals > Modes
 	{ from: 'interval:m3', to: 'mode:dorian', relationship: 'character',
-		description: 'm3 + m7 → dorian color' },
+		description: 'm3 + m7 > dorian color' },
 	{ from: 'interval:m7', to: 'mode:mixolydian', relationship: 'character',
-		description: 'm7 on major → mixolydian' },
+		description: 'm7 on major > mixolydian' },
 	{ from: 'interval:m2', to: 'mode:phrygian', relationship: 'character',
-		description: 'm2 → phrygian Spanish sound' },
+		description: 'm2 > phrygian Spanish sound' },
 	{ from: 'interval:TT', to: 'mode:lydian', relationship: 'character',
-		description: 'TT (aug4) → lydian dreamy quality' },
+		description: 'TT (aug4) > lydian dreamy quality' },
 ];
 
 /**
  * Build the full connection index from curated list.
- * Returns a map from ContentItem id prefix → array of related id prefixes.
+ * Returns a map from ContentItem id prefix > array of related id prefixes.
  */
 function buildConnectionIndex(): Map<string, string[]> {
 	const index = new Map<string, string[]>();

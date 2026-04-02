@@ -6,6 +6,7 @@
 	import type { QuizSessionConfig, QuestionResult } from '$lib/quiz/types';
 	import type { UserStateV4 } from '$lib/state/schema';
 	import { isAudioReady, resetContext } from '$lib/audio/context';
+	import { saveStateV4 } from '$lib/state/storage';
 	import AnswerGrid from './AnswerGrid.svelte';
 	import ProgressBar from './ProgressBar.svelte';
 	import TelemetryBar from './TelemetryBar.svelte';
@@ -204,6 +205,71 @@
 	const showGlitch = $derived(ctrl.isGlitching || feedbackState === 'wrong' || feedbackState === 'correct' || ctrl.needsTap);
 	const displayText = $derived(glitchText || `Q${ctrl.questionNum}`);
 
+	// ── FRE guidance overlay (sticky capture system) ─────────────────
+	// The config's getGuidanceMessage is a pure function of controller state.
+	// We "capture" its output into $state so the terminal stays visible
+	// until the user explicitly taps to dismiss — even if the underlying
+	// controller state changes (e.g. auto-play changing phase).
+	const isFRE = $derived(!!sessionConfig.freMode);
+
+	// What the config wants to show right now (reactive, may flicker)
+	const rawGuidanceMsg = $derived.by((): string | null => {
+		if (!sessionConfig.getGuidanceMessage) return null;
+		const correct = feedbackState === 'correct' ? true : feedbackState === 'wrong' ? false : undefined;
+		return sessionConfig.getGuidanceMessage(ctrl.questionNum, ctrl.phase, correct);
+	});
+
+	// Sticky captured state — holds until dismissed
+	let capturedMsg: string | null = $state(null);
+	let capturedBoot = $state(false);
+	let capturedLines: string[] = $state([]);
+	let dismissedKey = ''; // prevents re-capture of same (questionNum:phase) after dismiss
+
+	// Capture new guidance messages when nothing is currently showing
+	$effect(() => {
+		const msg = rawGuidanceMsg;
+		const key = `${ctrl.questionNum}:${ctrl.phase}`;
+		if (isFRE && msg && !capturedMsg && key !== dismissedKey) {
+			capturedMsg = msg;
+			capturedBoot = msg.startsWith('BOOT:');
+			const text = capturedBoot ? msg.slice(5) : msg;
+			capturedLines = text.split('\n');
+
+			// Pause auto-advance for feedback phases
+			if (ctrl.phase === 'feedback_correct' || ctrl.phase === 'feedback_wrong' || ctrl.phase === 'result_mode') {
+				ctrl.pauseAutoAdvance();
+			}
+		}
+	});
+
+	const showTerminal = $derived(capturedMsg !== null);
+	// Block answer grid only during pre-play overlays (boot/idle), NOT during feedback
+	const isFeedbackOverlay = $derived(
+		ctrl.phase === 'feedback_correct' || ctrl.phase === 'feedback_wrong' || ctrl.phase === 'result_mode'
+	);
+	const answersBlocked = $derived(isFRE && showTerminal && !isFeedbackOverlay);
+
+	// Dismiss terminal → trigger the appropriate next action synchronously
+	// (synchronous so Svelte batches the state change with the controller
+	//  mutation, preventing the old message from being re-captured)
+	function dismissGuidance() {
+		const wasBoot = capturedBoot;
+		const phase = ctrl.phase;
+		dismissedKey = `${ctrl.questionNum}:${ctrl.phase}`;
+		capturedMsg = null;
+		capturedLines = [];
+		capturedBoot = false;
+
+		if (phase === 'idle' || wasBoot) {
+			// After boot/idle guidance: play the question
+			handlePlay();
+		} else if (phase === 'feedback_correct' || phase === 'feedback_wrong' || phase === 'result_mode') {
+			// After feedback guidance: advance to next question (or finish)
+			handleNextQuestion();
+		}
+	}
+
+
 	// ── Lifecycle ─────────────────────────────────────────────────────
 	onMount(() => {
 		ctrl.nextQuestion();
@@ -266,6 +332,12 @@
 
 	function handleEndEarly() {
 		clearNoteTimeouts();
+		// In FRE mode: "exit" means "skip onboarding" — mark complete so it doesn't restart
+		if (isFRE) {
+			const state = ctrl.userState;
+			state.settings.hasCompletedFRE = true;
+			saveStateV4(state);
+		}
 		ctrl.endEarly();
 		goto(`${base}/`);
 	}
@@ -289,62 +361,104 @@
 </script>
 
 {#if ctrl.phase === 'debrief'}
+{#if isFRE}
+<!-- FRE conclusion — terminal-style calibration complete screen -->
+<div class="summary fre-conclusion">
+	<div class="fre-terminal">
+		<span class="corner-mark tl">+</span>
+		<span class="corner-mark tr">+</span>
+		<span class="corner-mark bl">+</span>
+		<span class="corner-mark br">+</span>
+
+		<div class="fre-score">{ctrl.sessionCorrect}/{ctrl.results.length}</div>
+
+		<div class="terminal-line" style="animation-delay: 200ms">
+			<span class="terminal-prompt">&gt;</span> CALIBRATION COMPLETE
+		</div>
+		<div class="terminal-line terminal-blank" style="animation-delay: 350ms"></div>
+		<div class="terminal-line" style="animation-delay: 500ms">
+			<span class="terminal-prompt">&gt;</span> {ctrl.results.length} INTERVALS ANALYZED
+		</div>
+		<div class="terminal-line" style="animation-delay: 650ms">
+			<span class="terminal-prompt">&gt;</span> ACCURACY: {ctrl.summaryAccuracy}%
+		</div>
+		<div class="terminal-line terminal-blank" style="animation-delay: 800ms"></div>
+		<div class="terminal-line" style="animation-delay: 950ms">
+			<span class="terminal-prompt">&gt;</span> NEURAL LINK ESTABLISHED
+		</div>
+		<div class="terminal-line" style="animation-delay: 1100ms">
+			<span class="terminal-prompt">&gt;</span> ALL SYSTEMS OPERATIONAL
+		</div>
+	</div>
+
+	<div class="summary-actions fre-actions">
+		<button class="action-btn primary" onclick={() => goto(`${base}/`)}>BEGIN TRAINING</button>
+	</div>
+</div>
+{:else}
 <div class="summary">
 	<h2 class="heading">DEBRIEF</h2>
 
-	<div class="score-block">
-		<span class="score-big">{ctrl.sessionCorrect}/{ctrl.results.length}</span>
-	</div>
+	<div class="debrief-panels">
+		<div class="debrief-stats">
+			<div class="score-block">
+				<span class="score-big">{ctrl.sessionCorrect}/{ctrl.results.length}</span>
+			</div>
 
-	<TelemetryBar segments={[
-		{ label: 'ACC', value: ctrl.summaryAccuracy + '%' },
-		{ label: 'STK', value: ctrl.userState.globalStats.currentStreak },
-		{ label: 'SES', value: ctrl.userState.globalStats.totalSessions },
-	]} />
+			<TelemetryBar segments={[
+				{ label: 'ACC', value: ctrl.summaryAccuracy + '%' },
+				{ label: 'STK', value: ctrl.userState.globalStats.currentStreak },
+				{ label: 'SES', value: ctrl.userState.globalStats.totalSessions },
+			]} />
 
-	{#each debriefSections as section}
-		<div class="section-label">{section.label}</div>
-		<div class="mode-rows">
-			{#each section.items as row}
-				<div class="mode-row">
-					<span class="mode-glyph">{row.label}</span>
-					<span class="mode-stat">{row.value}</span>
+			{#each debriefSections as section}
+				<div class="section-label">{section.label}</div>
+				<div class="mode-rows">
+					{#each section.items as row}
+						<div class="mode-row">
+							<span class="mode-glyph">{row.label}</span>
+							<span class="mode-stat">{row.value}</span>
+						</div>
+					{/each}
 				</div>
 			{/each}
 		</div>
-	{/each}
 
-	{#if ctrl.wrongAnswers.length > 0}
-		<div class="section-label missed-label">MISSED</div>
-		<div class="missed-list">
-			{#each ctrl.wrongAnswers as r, i}
-				<button class="missed-card" class:replaying={replayingIndex === i} onclick={() => replayMissed(r, i)}>
-					<div class="missed-card-fill" style="width: 0%"></div>
-					<div class="missed-card-content">
-						<span class="missed-id">{r.question.correctAnswer.label}</span>
-						<div class="missed-info">
-							<span class="missed-name">{r.question.correctAnswer.name}</span>
-							<span class="missed-detail">answered {r.selectedId}</span>
-						</div>
-					</div>
-				</button>
-			{/each}
+		<div class="debrief-missed">
+			{#if ctrl.wrongAnswers.length > 0}
+				<div class="section-label missed-label">MISSED</div>
+				<div class="missed-list">
+					{#each ctrl.wrongAnswers as r, i}
+						<button class="missed-card" class:replaying={replayingIndex === i} onclick={() => replayMissed(r, i)}>
+							<div class="missed-card-fill" style="width: 0%"></div>
+							<div class="missed-card-content">
+								<span class="missed-id">{r.question.correctAnswer.label}</span>
+								<div class="missed-info">
+									<span class="missed-name">{r.question.correctAnswer.name}</span>
+									<span class="missed-detail">answered {r.selectedId}</span>
+								</div>
+							</div>
+						</button>
+					{/each}
+				</div>
+			{:else}
+				<div class="perfect">PERFECT SESSION</div>
+			{/if}
 		</div>
-	{:else}
-		<div class="perfect">PERFECT SESSION</div>
-	{/if}
+	</div>
 
 	<div class="summary-actions">
 		<button class="action-btn primary" onclick={handleRestart}>AGAIN</button>
 		<button class="action-btn" onclick={() => goto(`${base}/`)}>HOME</button>
 	</div>
 </div>
+{/if}
 {:else}
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="quiz" onclick={() => { if (ctrl.needsTap) handlePlay(); }}>
 	{#if ctrl.needsTap}
-		<TickerBanner message="NEURAL LINK OFFLINE — TAP TO RECONNECT" onclick={() => handlePlay()} />
+		<TickerBanner message="NEURAL LINK OFFLINE -- TAP TO RECONNECT" onclick={() => handlePlay()} />
 	{/if}
 	<h2 class="heading">{sessionConfig.heading}</h2>
 	<div class="top">
@@ -366,6 +480,7 @@
 	</div>
 
 	{#if ctrl.question}
+		<div class="quiz-panels">
 		<VizQuizLayout
 			mode={vizMode}
 			phase={ctrl.vizPhase}
@@ -376,7 +491,42 @@
 			ontransitionend={handleTransitionEnd}
 			{playingNotes}
 		>
-			<button bind:this={playBtnEl} class="play-tap" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} onclick={ctrl.hasPlayed && inResultMode ? handleReplayInResult : handlePlay}>
+			{#if showTerminal}
+				<!-- svelte-ignore a11y_click_events_have_key_events -->
+				<!-- svelte-ignore a11y_no_static_element_interactions -->
+				<div class="terminal-screen" onclick={dismissGuidance}>
+					<span class="corner-mark tl">+</span>
+					<span class="corner-mark tr">+</span>
+					<span class="corner-mark bl">+</span>
+					<span class="corner-mark br">+</span>
+					{#if capturedBoot}
+						<div class="boot-cursor" style="animation-delay: 0ms">█</div>
+						{#each capturedLines as line, i}
+							{#if line === ''}
+								<div class="terminal-line terminal-blank" style="animation-delay: {(i + 1) * 400 + 600}ms"></div>
+							{:else}
+								<div class="terminal-line boot-line" style="animation-delay: {(i + 1) * 400 + 600}ms">
+									<span class="terminal-prompt">&gt;</span> {line}
+								</div>
+							{/if}
+						{/each}
+					{:else}
+						{#each capturedLines as line, i}
+							{#if line === ''}
+								<div class="terminal-line terminal-blank" style="animation-delay: {i * 150}ms"></div>
+							{:else}
+								<div class="terminal-line" style="animation-delay: {i * 150}ms">
+									<span class="terminal-prompt">&gt;</span> {line}
+								</div>
+							{/if}
+						{/each}
+					{/if}
+					<div class="terminal-continue" style="animation-delay: {capturedBoot ? capturedLines.length * 400 + 1200 : capturedLines.length * 150 + 300}ms">
+						TAP TO CONTINUE
+					</div>
+				</div>
+			{/if}
+			<button bind:this={playBtnEl} class="play-tap" class:hidden-by-terminal={showTerminal} class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} onclick={ctrl.hasPlayed && inResultMode ? handleReplayInResult : handlePlay}>
 				<div class="orbit-track"><div class="orbit-dot"></div></div>
 				<span class="q-text" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} class:glitch-text={showGlitch}>
 					{displayText}
@@ -384,18 +534,19 @@
 			</button>
 		</VizQuizLayout>
 
-		<div class="answer-area" class:hidden={!ctrl.question}>
+		<div class="answer-area" class:hidden={!ctrl.question} class:blocked={answersBlocked}>
 			<AnswerGrid
-				choices={ctrl.needsTap ? ctrl.question.choices.map(c => ({ ...c, label: 'NA', name: 'UNAVAILABLE' })) : ctrl.question.choices}
+				choices={(ctrl.needsTap || answersBlocked) ? ctrl.question.choices.map(c => ({ ...c, label: 'NA', name: 'UNAVAILABLE' })) : ctrl.question.choices}
 				onselect={handleSelectAnswer}
-				disabled={ctrl.needsTap || !ctrl.hasPlayed || !!ctrl.selectedId}
-				offline={ctrl.needsTap}
-				correctId={ctrl.selectedId ? ctrl.question.correctAnswer.id : null}
-				selectedId={ctrl.selectedId}
-				onCorrectClick={ctrl.selectedId ? (inResultMode ? handleNextQuestion : handleSkipCorrect) : null}
-				countdownPct={inResultMode ? ctrl.countdownPct : -1}
-				onWrongClick={inResultMode ? handleReplayInResult : null}
-			/>
+					disabled={ctrl.needsTap || answersBlocked || !ctrl.hasPlayed || !!ctrl.selectedId}
+					offline={ctrl.needsTap || answersBlocked}
+					correctId={ctrl.selectedId ? ctrl.question.correctAnswer.id : null}
+					selectedId={ctrl.selectedId}
+					onCorrectClick={ctrl.selectedId ? (inResultMode ? handleNextQuestion : handleSkipCorrect) : null}
+					countdownPct={inResultMode ? ctrl.countdownPct : -1}
+					onWrongClick={inResultMode ? handleReplayInResult : null}
+				/>
+			</div>
 		</div>
 	{/if}
 </div>
@@ -543,6 +694,10 @@
 		cursor: pointer;
 		-webkit-tap-highlight-color: transparent;
 	}
+	.play-tap.hidden-by-terminal {
+		opacity: 0;
+		pointer-events: none;
+	}
 	.play-tap.feedback-correct { background: var(--correct); border-color: var(--correct); box-shadow: 0 0 12px var(--correct); }
 	.play-tap.feedback-wrong { background: var(--hot); border-color: var(--hot); box-shadow: 0 0 12px var(--hot); transition: none; }
 	.play-tap:active { transform: scale(0.95); }
@@ -560,6 +715,92 @@
 	.q-text.feedback-correct { color: var(--base); transition: none; }
 	.q-text.feedback-wrong { color: var(--base); transition: none; }
 	.q-text.glitch-text { /* clean glyph cycling, no effects */ }
+	.terminal-screen {
+		position: absolute;
+		inset: 0;
+		background: var(--base, #0A0A0A);
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		padding: 1.5rem;
+		z-index: 0;
+	}
+	.terminal-line {
+		font-family: var(--mono);
+		font-size: 0.45rem;
+		font-weight: 900;
+		letter-spacing: 0.12em;
+		color: var(--accent, #C2FE0C);
+		line-height: 1.8;
+		text-transform: uppercase;
+		opacity: 0;
+		animation: terminal-appear 0.3s ease-out forwards;
+	}
+	.terminal-blank {
+		height: 0.5rem;
+	}
+	.terminal-prompt {
+		color: var(--marathon-blue);
+		margin-right: 0.3rem;
+	}
+	@keyframes terminal-appear {
+		from { opacity: 0; transform: translateY(4px); }
+		to { opacity: 1; transform: translateY(0); }
+	}
+	.terminal-continue {
+		font-family: var(--mono);
+		font-size: 0.45rem;
+		font-weight: 900;
+		letter-spacing: 0.15em;
+		color: var(--text-secondary);
+		text-align: center;
+		margin-top: auto;
+		padding-top: 1rem;
+		opacity: 0;
+		animation: terminal-appear 0.3s ease-out forwards, terminal-blink 1.5s ease-in-out infinite 1s;
+	}
+	@keyframes terminal-blink {
+		0%, 100% { opacity: 1; }
+		50% { opacity: 0.3; }
+	}
+	.terminal-screen {
+		cursor: pointer;
+	}
+	/* ── Corner markers (Marathon aesthetic) ── */
+	.corner-mark {
+		position: absolute;
+		font-family: var(--mono);
+		font-size: 0.5rem;
+		font-weight: 400;
+		color: var(--accent);
+		opacity: 0.4;
+		line-height: 1;
+		pointer-events: none;
+	}
+	.corner-mark.tl { top: 0.6rem; left: 0.6rem; }
+	.corner-mark.tr { top: 0.6rem; right: 0.6rem; }
+	.corner-mark.bl { bottom: 0.6rem; left: 0.6rem; }
+	.corner-mark.br { bottom: 0.6rem; right: 0.6rem; }
+	/* ── Boot sequence cursor ── */
+	.boot-cursor {
+		font-family: var(--mono);
+		font-size: 0.5rem;
+		color: var(--accent);
+		line-height: 1.8;
+		animation: cursor-blink 0.6s step-end infinite;
+		margin-bottom: 0.25rem;
+	}
+	@keyframes cursor-blink {
+		0%, 100% { opacity: 1; }
+		50% { opacity: 0; }
+	}
+	.boot-line {
+		/* Slower typewriter appearance for boot lines */
+	}
+	/* On mobile: transparent wrapper, just passes through */
+	.quiz-panels {
+		display: contents;
+	}
 	.answer-area {
 		width: 100%;
 		margin-top: auto;
@@ -567,11 +808,28 @@
 	.answer-area.hidden {
 		visibility: hidden;
 	}
+	.answer-area.blocked {
+		opacity: 0.3;
+		pointer-events: none;
+	}
 
 	/* Summary screen */
 	.summary {
 		display: flex; flex-direction: column; align-items: center;
 		gap: 1.25rem; width: 100%; min-height: 100%;
+	}
+	.debrief-panels {
+		display: contents; /* On mobile: acts like the elements are directly in .summary */
+	}
+	.debrief-stats {
+		display: flex; flex-direction: column; align-items: center;
+		gap: 1.25rem; width: 100%;
+	}
+	.debrief-missed {
+		width: 100%;
+		display: flex;
+		flex-direction: column;
+		gap: 1.25rem;
 	}
 	.summary .heading {
 		border-bottom: 2px solid var(--border-heavy);
@@ -677,12 +935,79 @@
 	}
 	.action-btn.primary:active { opacity: 0.85; }
 
-	/* Desktop: wider layout */
-	@media (min-width: 768px) {
+	/* ── FRE conclusion screen ── */
+	.fre-conclusion {
+		justify-content: center;
+	}
+	.fre-terminal {
+		position: relative;
+		width: 100%;
+		background: var(--base);
+		border: 1px solid var(--border-heavy);
+		padding: 2rem 1.5rem;
+		display: flex;
+		flex-direction: column;
+	}
+	.fre-score {
+		font-size: 5rem;
+		font-weight: 900;
+		font-family: var(--mono);
+		color: var(--accent);
+		letter-spacing: -0.02em;
+		line-height: 1;
+		text-align: center;
+		margin-bottom: 1.5rem;
+	}
+	.fre-actions {
+		opacity: 0;
+		animation: terminal-appear 0.3s ease-out 1.5s forwards;
+	}
+
+	/* Desktop: wider layout (≥1200px — sidebar + enough content for two-column) */
+	@media (min-width: 1200px) {
 		.heading { font-size: 3.5rem; }
+
 		.summary {
-			max-width: 600px;
-			margin: 0 auto;
+			max-width: none;
+			margin: 0;
+		}
+	}
+
+	/* Desktop (≥1200px) + landscape phone (actual phone, short viewport) */
+	@media (min-width: 1200px), (orientation: landscape) and (min-width: 568px) and (max-height: 500px) {
+		/* Quiz stays column — heading + top bar above, panels below */
+		.quiz {
+			flex-direction: column;
+			gap: 1rem;
+		}
+		/* Two-column container for viz + answers — grid for precise alignment */
+		.quiz-panels {
+			display: grid;
+			grid-template-columns: 3fr 2fr;
+			gap: 1.5rem;
+		}
+		/* Answer grid — height-matched to viewpod via grid row */
+		.quiz-panels .answer-area {
+			min-width: 0;
+			margin-top: 0;
+			display: flex;
+			flex-direction: column;
+		}
+		.quiz-panels .answer-area.hidden {
+			visibility: hidden;
+		}
+		/* Stack answer cards single-column, fill height, equal rows */
+		.quiz-panels .answer-area :global(.grid) {
+			grid-template-columns: 1fr;
+			grid-template-rows: repeat(4, 1fr);
+			flex: 1;
+		}
+		.debrief-panels {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 2rem;
+			width: 100%;
+			align-items: start;
 		}
 	}
 </style>

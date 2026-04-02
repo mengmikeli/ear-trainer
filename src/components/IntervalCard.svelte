@@ -80,7 +80,7 @@
 				{isOff ? 'OFF' : 'ON'}
 			</button>
 		{:else if istate.unlocked}
-			<div class="acc-value">{istate.attempts > 0 ? `${accuracy}%` : '—'}</div>
+			<div class="acc-value">{istate.attempts > 0 ? `${accuracy}%` : '--'}</div>
 		{/if}
 	</div>
 </div>

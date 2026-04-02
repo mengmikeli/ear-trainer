@@ -63,6 +63,17 @@ export const MODES: ModeDef[] = [
 
 	// Tier 3 — distinctive color modes
 	{
+		id: 'phrygian',
+		name: 'Phrygian',
+		label: 'Phr',
+		parent: 'major',
+		degree: 3,
+		intervals: [0, 1, 3, 5, 7, 8, 10, 12],
+		tier: 3,
+		category: 'mode',
+		characteristic: [1], // m2 (the "Spanish" flavor)
+	},
+	{
 		id: 'lydian',
 		name: 'Lydian',
 		label: 'Lyd',
@@ -74,26 +85,13 @@ export const MODES: ModeDef[] = [
 		characteristic: [6], // aug4/TT (the "dreamy" interval)
 	},
 	{
-		id: 'phrygian',
-		name: 'Phrygian',
-		label: 'Phr',
-		parent: 'major',
-		degree: 3,
-		intervals: [0, 1, 3, 5, 7, 8, 10, 12],
-		tier: 3,
-		category: 'mode',
-		characteristic: [1], // m2 (the "Spanish" flavor)
-	},
-
-	// Tier 4 — the outlier
-	{
 		id: 'locrian',
 		name: 'Locrian',
 		label: 'Loc',
 		parent: 'major',
 		degree: 7,
 		intervals: [0, 1, 3, 5, 6, 8, 10, 12],
-		tier: 4,
+		tier: 3,
 		category: 'mode',
 		characteristic: [1, 6], // m2 + dim5 (unstable, diminished feel)
 	},

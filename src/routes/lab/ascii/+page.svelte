@@ -72,9 +72,9 @@
 	let field = new Float32Array(COLS * ROWS);
 
 	// --- Poem reflow state ---
-	const POEM_BASE = `Do you know how the air trembles when a string is touched? How the room fills with a shape you cannot see but feel behind your ribs, a curve that bends the silence into something almost like a name? Listen — the interval between two notes is not emptiness. It is the distance a wave must travel to become its own reflection, the breath held between recognition and surprise. Every fifth is a cathedral door swung wide. Every minor second, a whisper pressed against the ear. The octave is the self returned, older, knowing what it knew before but hearing it as if for the first time. And the tritone — restless, unstable — is the question music asks when it has forgotten how to end. So when you listen, do not count the semitones. Feel the geometry — the spirals and the intersections, the places where two frequencies agree to build a momentary room and then, just as gently, let it go.`;
+	const POEM_BASE = `Do you know how the air trembles when a string is touched? How the room fills with a shape you cannot see but feel behind your ribs, a curve that bends the silence into something almost like a name? Listen -- the interval between two notes is not emptiness. It is the distance a wave must travel to become its own reflection, the breath held between recognition and surprise. Every fifth is a cathedral door swung wide. Every minor second, a whisper pressed against the ear. The octave is the self returned, older, knowing what it knew before but hearing it as if for the first time. And the tritone -- restless, unstable -- is the question music asks when it has forgotten how to end. So when you listen, do not count the semitones. Feel the geometry -- the spirals and the intersections, the places where two frequencies agree to build a momentary room and then, just as gently, let it go.`;
 	// Repeat poem to fill dense grid
-	const POEM = (POEM_BASE + ' · ').repeat(6);
+	const POEM = (POEM_BASE + ' . ').repeat(6);
 
 	const PROP_FONT = '400 9px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 	const LINE_HEIGHT = 12; // px
@@ -608,7 +608,7 @@
 				class="interval-btn"
 				class:active={selected === iv.id}
 				onclick={() => { if (selected === iv.id) handlePlay(); else selected = iv.id; }}
-				aria-label="{iv.name} — {RATIOS[iv.id][0]}:{RATIOS[iv.id][1]}"
+				aria-label="{iv.name} - {RATIOS[iv.id][0]}:{RATIOS[iv.id][1]}"
 			>
 				{iv.id}
 			</button>
@@ -625,7 +625,7 @@
 					<span class="toggle-dot" class:on={vizMode === 'chladni'}></span>CHLADNI
 				</button>
 			{/if}
-			<span class="footer-sep">·</span>
+			<span class="footer-sep">.</span>
 			<button class="hud-tag" class:dimmed={renderMode !== 'mono'} onclick={() => renderMode = 'mono'}>
 				<span class="toggle-dot" class:on={renderMode === 'mono'}></span>MONO
 			</button>
@@ -633,7 +633,7 @@
 				<span class="toggle-dot" class:on={renderMode === 'typo'}></span>POEM
 			</button>
 		</div>
-		<span class="grid-info">{renderMode === 'typo' ? 'pretext reflow' : `${COLS}×${ROWS}`}</span>
+		<span class="grid-info">{renderMode === 'typo' ? 'pretext reflow' : `${COLS}x${ROWS}`}</span>
 	</footer>
 </div>
 

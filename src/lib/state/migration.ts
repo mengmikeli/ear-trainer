@@ -40,9 +40,15 @@ function doMigrate(raw: any): UserStateV4 {
 		return freshV4State();
 	}
 
-	// Already v4 — pass through
+	// Already v4 — patch in any missing definitions (handles new content added in updates)
 	if (raw.version === STATE_VERSION) {
-		return raw as UserStateV4;
+		const state = raw as UserStateV4;
+		patchMissingDefinitions(state);
+		// Existing v4 user without FRE flag → skip FRE
+		if (state.settings.hasCompletedFRE === undefined) {
+			state.settings.hasCompletedFRE = true;
+		}
+		return state;
 	}
 
 	// ── Definitions ──────────────────────────────────────────────────────
@@ -296,6 +302,7 @@ function migrateSettings(raw: any): Settings {
 		activeContent,
 		...(s.devMode !== undefined ? { devMode: s.devMode === true } : {}),
 		...(s.superchargeViz !== undefined ? { superchargeViz: s.superchargeViz === true } : {}),
+		hasCompletedFRE: true, // existing user migrating → skip FRE
 	};
 }
 
@@ -368,6 +375,7 @@ export function freshV4State(): UserStateV4 {
 			enabledModes: { ascending: true, descending: false, harmonic: false },
 			enabledVoicings: { root: true, first: false, second: false },
 			activeContent: 'intervals',
+			hasCompletedFRE: false,
 		},
 		globalStats: {
 			totalSessions: 0,
@@ -378,6 +386,36 @@ export function freshV4State(): UserStateV4 {
 		},
 		sessionHistory: [],
 	};
+}
+
+// ─── Patch missing definitions (v4 → v4 with new content) ──────────────────
+
+/**
+ * Ensure all currently-defined content exists in a v4 state.
+ * Handles new chords/intervals/scales/modes added in app updates
+ * for users who already have a v4 state in localStorage.
+ */
+function patchMissingDefinitions(state: UserStateV4): void {
+	for (const def of INTERVALS) {
+		if (!state.definitions.intervals[def.id]) {
+			state.definitions.intervals[def.id] = defaultDefinitionState(def.tier === 1);
+		}
+	}
+	for (const def of CHORDS) {
+		if (!state.definitions.chords[def.id]) {
+			state.definitions.chords[def.id] = defaultDefinitionState(def.tier === 1);
+		}
+	}
+	for (const def of SCALES) {
+		if (!state.definitions.scales[def.id]) {
+			state.definitions.scales[def.id] = defaultDefinitionState(def.tier === 1);
+		}
+	}
+	for (const def of MODES) {
+		if (!state.definitions.modes[def.id]) {
+			state.definitions.modes[def.id] = defaultDefinitionState(def.tier === 1);
+		}
+	}
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────

@@ -3,14 +3,16 @@
 	import { goto } from '$app/navigation';
 	import { base } from '$app/paths';
 	import { loadStateV4, saveStateV4 } from '$lib/state/storage';
-	import { checkTierUnlockV4 } from '$lib/state/progression';
+	import { checkTierUnlockV4, getNextUnlockProgress } from '$lib/state/progression';
 	import { getStatsForDef, aggregateStats, getStatsByKind } from '$lib/state/stats';
 	import { isModeMastered, buildIntervalState } from '$lib/state/compat';
 	import { warmUpAudio } from '$lib/audio/context';
 	import { INTERVALS } from '$lib/definitions/intervals';
 	import { CHORDS } from '$lib/definitions/chords';
 	import { SCALES } from '$lib/definitions/scales';
+	import { MODES } from '$lib/definitions/modes';
 	import { VERSION_STRING } from '$lib/version';
+	import { canAccess, getUserTier } from '$lib/features/gate';
 	import type { UserStateV4 } from '$lib/state/schema';
 	import RadarGrid from '../components/RadarGrid.svelte';
 	import TelemetryBar from '../components/TelemetryBar.svelte';
@@ -24,6 +26,9 @@
 
 	onMount(() => {
 		state = loadStateV4();
+		if (state && !state.settings.hasCompletedFRE) {
+			goto(`${base}/welcome`);
+		}
 	});
 
 	// Chord system unlock: Bronze mastery on 5+ intervals
@@ -58,17 +63,18 @@
 		return bronzeCount >= 3;
 	});
 
-	// Modes unlock: any mode is unlocked
+	// Modes unlock: any mode is unlocked + Pro gate
 	const modesUnlocked = $derived(() => {
 		if (!state) return false;
 		if (state.settings.devMode) return true;
+		if (!canAccess('content:modes', getUserTier(state.settings), false)) return false;
 		return Object.values(state.definitions.modes).some(m => m.unlocked);
 	});
 
 	const activeContent = $derived(() => {
-		const content = state?.settings?.activeContent ?? 'intervals';
+		const content = state?.settings?.activeContent ?? 'adaptive';
 		const devMode = state?.settings?.devMode;
-		if (devMode) return content;
+		if (devMode) return content; // dev mode: respect any selection including 'adaptive'
 		if (content === 'chords' && !chordsUnlocked()) return 'intervals';
 		if (content === 'scales' && !scalesUnlocked()) return 'intervals';
 		if (content === 'modes' && !modesUnlocked()) return 'intervals';
@@ -78,7 +84,12 @@
 
 	function setActiveContent(mode: 'intervals' | 'chords' | 'scales' | 'modes') {
 		if (!state) return;
-		state.settings.activeContent = mode;
+		// Toggle: tapping already-selected type deselects back to adaptive
+		if (state.settings.activeContent === mode) {
+			state.settings.activeContent = 'adaptive';
+		} else {
+			state.settings.activeContent = mode;
+		}
 		saveStateV4(state);
 	}
 
@@ -172,6 +183,29 @@
 		}
 		return state.globalStats.totalQuestions;
 	});
+
+	const unlockHint = $derived(() => {
+		if (!state) return null;
+		const content = activeContent();
+		if (content === 'adaptive') return null;
+		const info = getNextUnlockProgress(state, content as 'intervals' | 'chords' | 'scales' | 'modes');
+		if (!info) return null;
+		const { prerequisiteMastery: pm, threshold, pooledAttempts } = info;
+		const remaining = pm.totalItems - pm.masteredCount;
+		const needAttempts = pm.items.filter(i => i.attempts < 5);
+		if (needAttempts.length > 0 && needAttempts.length <= 3) {
+			const names = needAttempts.map(i => i.id).join(', ');
+			return `PRACTICE ${names} -- NEED 5+ ATTEMPTS EACH`;
+		}
+		if (remaining > 0) {
+			const label = content === 'chords' ? 'chords' : content === 'scales' ? 'scales' : content === 'modes' ? 'modes' : 'intervals';
+			return `Master ${remaining} more ${label} to unlock T${info.nextTier}`;
+		}
+		if (pooledAttempts < threshold.questions) {
+			return `${pooledAttempts}/${threshold.questions} questions for T${info.nextTier}`;
+		}
+		return `${pm.masteredCount}/${pm.totalItems} mastered`;
+	});
 </script>
 
 <div class="home">
@@ -240,6 +274,10 @@
 					{ label: 'Q', value: totalQuestions() },
 				]} />
 			</div>
+
+			{#if unlockHint() && !state.settings.devMode}
+				<div class="unlock-hint">{unlockHint()}</div>
+			{/if}
 		</div>
 	{/if}
 </div>
@@ -339,6 +377,16 @@
 		position: relative;
 		z-index: 1;
 		margin-top: 0.75rem;
+	}
+	.unlock-hint {
+		font-family: var(--mono);
+		font-size: 0.35rem;
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		color: var(--text-secondary);
+		text-align: center;
+		margin-top: 0.5rem;
+		opacity: 0.7;
 	}
 	.content-switcher {
 		display: flex;

@@ -81,7 +81,7 @@
 				{isOff ? 'OFF' : 'ON'}
 			</button>
 		{:else if cstate.unlocked}
-			<div class="acc-value">{cstate.attempts > 0 ? `${accuracy}%` : '—'}</div>
+			<div class="acc-value">{cstate.attempts > 0 ? `${accuracy}%` : '--'}</div>
 		{/if}
 	</div>
 </div>

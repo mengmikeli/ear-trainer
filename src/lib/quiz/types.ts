@@ -108,4 +108,12 @@ export interface QuizSessionConfig {
 	onPageEnter?: () => void;
 	/** Called on unmount (e.g., stop drone, tear down listeners). */
 	onPageExit?: () => void;
+	/** Optional guidance overlay text (e.g., FRE tutorial messages). */
+	getGuidanceMessage?: (questionNum: number, phase: QuizPhase, correct?: boolean) => string | null;
+	/** If true, skip debrief screen and call onSessionEnd immediately. */
+	skipDebrief?: boolean;
+	/** FRE mode: boot sequence, auto-play on dismiss, answer blocking during overlay. */
+	freMode?: boolean;
+	/** If false, nextQuestion() won't auto-play after glitch (default true). */
+	autoPlay?: boolean;
 }

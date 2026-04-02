@@ -315,7 +315,12 @@
 		onboardGlitchText = '\uE018 ONBOARD \uE018';
 		onboardHoldProgress = 1;
 		setTimeout(() => {
-			window.location.href = `${base}/quiz?onboard=1`;
+			// Reset FRE flag so the welcome flow shows again
+			if (state) {
+				state.settings.hasCompletedFRE = false;
+				saveStateV4(state);
+			}
+			window.location.href = `${base}/welcome`;
 		}, 500);
 	}
 </script>
@@ -548,40 +553,40 @@
 						<span class="credit-emoji">🧑‍💻</span>
 						<div class="credit-info">
 							<span class="credit-name">MIKE</span>
-							<span class="credit-role">Creator · The Only Human</span>
+							<span class="credit-role">Creator / The Only Human</span>
 						</div>
 					</div>
 					<div class="credit-entry">
 						<span class="credit-emoji">🗝️</span>
 						<div class="credit-info">
 							<span class="credit-name">MOTO</span>
-							<span class="credit-role">Lead · Architecture · Sprint Ops</span>
+							<span class="credit-role">Lead / Architecture / Sprint Ops</span>
 						</div>
 					</div>
 					<div class="credit-entry">
 						<span class="credit-emoji">🌉</span>
 						<div class="credit-info">
 							<span class="credit-name">PIXI</span>
-							<span class="credit-role">Design · Learning Systems · UI</span>
+							<span class="credit-role">Design / Learning Systems / UI</span>
 						</div>
 					</div>
 					<div class="credit-entry">
 						<span class="credit-emoji">🇫🇮</span>
 						<div class="credit-info">
 							<span class="credit-name">NOKI</span>
-							<span class="credit-role">Visualization · Chladni · Lissajous</span>
+							<span class="credit-role">Visualization / Chladni / Lissajous</span>
 						</div>
 					</div>
 					<div class="credit-entry">
 						<span class="credit-emoji">🌴</span>
 						<div class="credit-info">
 							<span class="credit-name">PALM</span>
-							<span class="credit-role">QA · Testing · Visual Regression</span>
+							<span class="credit-role">QA / Testing / Visual Regression</span>
 						</div>
 					</div>
 				</div>
 				<div class="credits-footer">
-					Built with <span class="credits-accent">OpenClaw</span> · Human-directed, agent-built
+					Built with <span class="credits-accent">OpenClaw</span> / Human-directed, agent-built
 				</div>
 			</div>
 		</div>
@@ -947,9 +952,8 @@
 	}
 	.credits-accent { color: var(--marathon-blue); }
 
-	/* Desktop: constrained width, larger type */
+	/* Desktop: larger type (width controlled by layout shell) */
 	@media (min-width: 768px) {
-		.settings-page { max-width: 600px; margin: 0 auto; }
 		.heading { font-size: 3.5rem; }
 		.credits-grid {
 			display: grid;

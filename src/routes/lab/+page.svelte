@@ -517,7 +517,7 @@
 				class="interval-btn"
 				class:active={selected === iv.id}
 				onclick={() => { if (selected === iv.id) handlePlay(); else selected = iv.id; }}
-				aria-label="{iv.name} — {RATIOS[iv.id][0]}:{RATIOS[iv.id][1]}"
+				aria-label="{iv.name} - {RATIOS[iv.id][0]}:{RATIOS[iv.id][1]}"
 			>
 				{iv.id}
 			</button>

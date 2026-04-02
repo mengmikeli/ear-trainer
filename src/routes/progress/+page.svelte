@@ -7,12 +7,15 @@
 	import { MODES } from '$lib/definitions/modes';
 	import { playInterval, playChord, playScale } from '$lib/audio/playback';
 	import { isModeMastered, buildIntervalState, buildChordState, buildScaleState, buildModeState } from '$lib/state/compat';
-	import { getStats, getStatsByKind, aggregateStats, getStatsForDef } from '$lib/state/stats';
+	import { getStats, getStatsByKind, aggregateStats } from '$lib/state/stats';
+
 	import IntervalCard from '../../components/IntervalCard.svelte';
 	import ChordCard from '../../components/ChordCard.svelte';
 	import ScaleCard from '../../components/ScaleCard.svelte';
 	import ModeCard from '../../components/ModeCard.svelte';
+	import LockedCard from '../../components/LockedCard.svelte';
 	import TelemetryBar from '../../components/TelemetryBar.svelte';
+	import { canAccess, getUserTier, type Tier } from '$lib/features/gate';
 	import type { UserStateV4, PlayMode, ChordVoicing } from '$lib/state/schema';
 
 	let state: UserStateV4 | null = $state(null);
@@ -23,6 +26,7 @@
 	let contentView: 'intervals' | 'chords' | 'scales' | 'modes' = $state('intervals');
 
 	const modes: PlayMode[] = ['ascending', 'descending', 'harmonic'];
+
 
 	const intervalTabs: { label: string; value: PlayMode | null }[] = [
 		{ label: 'ALL', value: null },
@@ -75,6 +79,20 @@
 		if (state.settings.devMode) return true;
 		return scalesUnlocked();
 	});
+
+	// Pro gate helpers
+	const userTier = $derived(() => {
+		if (!state) return 'free' as Tier;
+		return getUserTier(state.settings);
+	});
+	const devMode = $derived(() => state?.settings?.devMode ?? false);
+
+	function handleProUnlock() {
+		if (!state) return;
+		state.settings.proUnlocked = true;
+		state = { ...state };
+		saveStateV4(state);
+	}
 
 	onMount(() => {
 		state = loadStateV4();
@@ -294,31 +312,45 @@
 		<TelemetryBar segments={telemetrySegments()} />
 
 		{#if minWarning}
-			<div class="min-warn">⚠ MINIMUM {contentView === 'chords' ? '2 CHORDS' : contentView === 'scales' ? '2 SCALES' : contentView === 'modes' ? '2 MODES' : '3 INTERVALS'} REQUIRED</div>
+			<div class="min-warn">MINIMUM {contentView === 'chords' ? '2 CHORDS' : contentView === 'scales' ? '2 SCALES' : contentView === 'modes' ? '2 MODES' : '3 INTERVALS'} REQUIRED</div>
 		{/if}
 
 		{#if contentView === 'intervals'}
 			<div class="interval-list">
 				{#each INTERVALS as def}
-					<IntervalCard {def} state={buildIntervalState(state, def.id)} modeFilter={activeTab} ontoggle={toggleInterval} onplay={playIntervalPreview} playing={playingId === def.id} />
+					{#if !canAccess(`content:intervals:tier${def.tier}`, userTier(), devMode())}
+						<LockedCard feature={def.name} onUnlock={handleProUnlock} devMode={devMode()} />
+					{:else}
+						<IntervalCard {def} state={buildIntervalState(state, def.id)} modeFilter={activeTab} ontoggle={toggleInterval} onplay={playIntervalPreview} playing={playingId === def.id} />
+					{/if}
 				{/each}
 			</div>
 		{:else if contentView === 'chords'}
 			<div class="interval-list">
 				{#each CHORDS as def}
-					<ChordCard {def} state={buildChordState(state, def.id)} voicingFilter={chordVoicingTab} ontoggle={toggleChord} onplay={playChordPreview} playing={playingId === def.id} />
+					{#if !canAccess(`content:chords:tier${def.tier}`, userTier(), devMode())}
+						<LockedCard feature={def.name} onUnlock={handleProUnlock} devMode={devMode()} />
+					{:else}
+						<ChordCard {def} state={buildChordState(state, def.id)} voicingFilter={chordVoicingTab} ontoggle={toggleChord} onplay={playChordPreview} playing={playingId === def.id} />
+					{/if}
 				{/each}
 			</div>
 		{:else if contentView === 'scales'}
 			<div class="interval-list">
 				{#each SCALES as def}
-					<ScaleCard {def} state={buildScaleState(state, def.id)} ontoggle={toggleScale} onplay={playScalePreview} playing={playingId === def.id} />
+					{#if !canAccess(`content:scales:tier${def.tier}`, userTier(), devMode())}
+						<LockedCard feature={def.name} onUnlock={handleProUnlock} devMode={devMode()} />
+					{:else}
+						<ScaleCard {def} state={buildScaleState(state, def.id)} ontoggle={toggleScale} onplay={playScalePreview} playing={playingId === def.id} />
+					{/if}
 				{/each}
 			</div>
 		{:else if contentView === 'modes'}
 			<div class="interval-list">
 				{#each MODES as def}
-					{#if state.definitions.modes[def.id]?.unlocked || state.settings.devMode}
+					{#if !canAccess('content:modes', userTier(), devMode())}
+						<LockedCard feature={def.name} onUnlock={handleProUnlock} devMode={devMode()} />
+					{:else if state.definitions.modes[def.id]?.unlocked || state.settings.devMode}
 						<ModeCard {def} state={buildModeState(state, def.id)} ontoggle={toggleMode} onplay={playModePreview} playing={playingId === def.id} />
 					{/if}
 				{/each}
