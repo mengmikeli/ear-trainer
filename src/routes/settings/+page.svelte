@@ -315,7 +315,12 @@
 		onboardGlitchText = '\uE018 ONBOARD \uE018';
 		onboardHoldProgress = 1;
 		setTimeout(() => {
-			window.location.href = `${base}/quiz?onboard=1`;
+			// Reset FRE flag so the welcome flow shows again
+			if (state) {
+				state.settings.hasCompletedFRE = false;
+				saveStateV4(state);
+			}
+			window.location.href = `${base}/welcome`;
 		}, 500);
 	}
 </script>
