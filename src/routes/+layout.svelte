@@ -145,7 +145,8 @@
 	/* Home page: no padding, let the page own the full viewport */
 	.content.home-content {
 		padding: 0;
-		overflow: hidden;
+		overflow-y: auto;
+		-webkit-overflow-scrolling: touch;
 	}
 
 	.bottomnav-slot {

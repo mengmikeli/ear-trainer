@@ -311,12 +311,14 @@
 			const unlocked = Object.values(state.definitions.modes).filter(s => s.unlocked).length;
 			return { accuracy: 0, count: `${unlocked}/${MODES.length}`, tier: 1 };
 		}
-		// intervals
+		// intervals — always use interval stats, not activeContent-dependent
+		const entries = getStatsByKind(state.stats, 'interval');
+		const agg = aggregateStats(entries);
 		const unlocked = Object.values(state.definitions.intervals).filter(s => s.unlocked).length;
 		let highest = 1;
 		for (const def of INTERVALS) { if (state.definitions.intervals[def.id]?.unlocked && def.tier > highest) highest = def.tier; }
 		return {
-			accuracy: overallAccuracy(),
+			accuracy: agg.attempts > 0 ? Math.round(agg.accuracy * 100) : 0,
 			count: `${unlocked}/${INTERVALS.length}`,
 			tier: highest,
 		};
@@ -407,17 +409,19 @@
 			</a>
 		</div>
 
-		<!-- ═══ Unlock announcement band — always rendered for layout stability ═══ -->
-		<div class="unlock-band">
-			{#if unlockHint()}
-				<span class="unlock-chevron">{CHEVRON_LEFT}</span>
-				<span class="unlock-text">{unlockHint()}</span>
-				<span class="unlock-chevron">{CHEVRON_RIGHT}</span>
-			{/if}
-		</div>
+		<!-- ═══ Bottom section — pinned to bottom ═══ -->
+		<div class="bottom-section">
+			<!-- Unlock announcement band — always rendered for layout stability -->
+			<div class="unlock-band">
+				{#if unlockHint()}
+					<span class="unlock-chevron">{CHEVRON_LEFT}</span>
+					<span class="unlock-text">{unlockHint()}</span>
+					<span class="unlock-chevron">{CHEVRON_RIGHT}</span>
+				{/if}
+			</div>
 
-		<!-- ═══ BAND 4: Content type mode switches ═══ -->
-		<nav class="content-selector">
+			<!-- Content type mode switches -->
+			<nav class="content-selector">
 			{#each CONTENT_TYPES as ct}
 				{@const unlocked = isContentUnlocked(ct.id)}
 				{@const active = activeContent() === ct.id}
@@ -460,6 +464,7 @@
 				</button>
 			{/each}
 		</nav>
+		</div>
 	{/if}
 </div>
 
@@ -584,18 +589,21 @@
 
 	/* ─── BAND 3: Hero zone ─── */
 	.hero-zone {
-		flex: 1;
+		flex: 1 1 0;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		position: relative;
 		min-height: 0;
+		overflow: hidden;
 	}
 
 	.ring-container {
-		width: 320px;
-		height: 320px;
+		width: min(320px, 80vw, 100%);
+		height: min(320px, 80vw, 100%);
 		position: relative;
+		aspect-ratio: 1;
+		max-height: 100%;
 	}
 
 	/* Corner HUD marks */
@@ -663,27 +671,40 @@
 	}
 
 	/* ─── Unlock announcement band ─── */
+	/* ─── Bottom section — unlock band + tiles pinned together ─── */
+	.bottom-section {
+		margin-top: auto;
+		flex-shrink: 0;
+		padding: 0 0.5rem;
+		padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.75rem);
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+	}
+
 	/* ─── Unlock announcement band — fixed height for layout stability ─── */
 	.unlock-band {
+		position: relative;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		gap: 0.5rem;
-		padding: 0.4rem 1rem;
-		min-height: 2.4rem; /* Reserve space for 2 lines */
+		padding: 0.4rem 2rem;
+		min-height: 2.4rem;
 		background: var(--ambient-dim, rgba(194, 254, 12, 0.04));
-		border-top: 1px solid color-mix(in srgb, var(--ambient, var(--accent)) 15%, transparent);
-		border-bottom: 1px solid color-mix(in srgb, var(--ambient, var(--accent)) 15%, transparent);
+		border: 1px solid color-mix(in srgb, var(--ambient, var(--accent)) 15%, transparent);
 		transition: background 0.3s, border-color 0.3s;
 	}
 
 	.unlock-chevron {
+		position: absolute;
 		font-family: var(--mono);
 		font-size: 0.45rem;
 		color: var(--ambient, var(--accent));
 		opacity: 0.5;
 		transition: color 0.3s;
 	}
+	.unlock-chevron:first-child { left: 0.5rem; }
+	.unlock-chevron:last-child { right: 0.5rem; }
 
 	.unlock-text {
 		font-family: var(--mono);
@@ -701,9 +722,6 @@
 		display: grid;
 		grid-template-columns: repeat(4, 1fr);
 		gap: 2px;
-		padding: 0 0.5rem;
-		padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.5rem);
-		margin-top: auto;
 	}
 
 	.content-tile {
@@ -730,7 +748,7 @@
 		align-items: center;
 		justify-content: space-between;
 		background: var(--border);
-		padding: 0.2rem 0.4rem;
+		padding: 0.15rem 0.35rem;
 		transition: background 0.15s;
 	}
 	.tile-header.active {
@@ -793,7 +811,7 @@
 	.tile-footer {
 		display: flex;
 		justify-content: space-between;
-		padding: 0.15rem 0.4rem 0.25rem;
+		padding: 0.1rem 0.35rem 0.15rem;
 		border-top: 1px solid var(--border);
 	}
 
@@ -822,7 +840,7 @@
 		.ring-container { width: 420px; height: 420px; }
 		.go-btn { width: 130px; height: 130px; }
 		.go-text { font-size: 2rem; }
-		.content-selector { padding: 0 2rem; padding-bottom: 1.5rem; }
+		.bottom-section { padding: 0 2rem; padding-bottom: 1.5rem; }
 		.telemetry-strip { margin: 0.5rem 2rem 0; }
 	}
 </style>
