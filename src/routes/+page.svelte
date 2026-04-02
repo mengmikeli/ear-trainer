@@ -15,7 +15,7 @@
 	import { canAccess, getUserTier } from '$lib/features/gate';
 	import type { UserStateV4 } from '$lib/state/schema';
 	import LissajousRing from '../components/LissajousRing.svelte';
-	import ChladniBackground from '../components/ChladniBackground.svelte';
+	// import ChladniBackground from '../components/ChladniBackground.svelte'; // disabled — perf not optimized yet
 	import MiniLissajous from '../components/MiniLissajous.svelte';
 
 	let state: UserStateV4 | null = $state(null);
@@ -325,14 +325,14 @@
 	}
 </script>
 
-<!-- Full-bleed Chladni background — boosted visibility -->
-<div class="chladni-wrap">
+<!-- Chladni background disabled — perf not optimized yet -->
+<!-- <div class="chladni-wrap">
 	<ChladniBackground
 		semitones={heroSemitones()}
 		chordIntervals={heroChordIntervals()}
 		scaleIntervals={heroScaleIntervals()}
 	/>
-</div>
+</div> -->
 
 <div class="home" class:booted style:--ambient={ambientColor()} style:--ambient-dim={ambientColorDim()}>
 	<!-- ═══ BAND 1: Header strip ═══ -->
