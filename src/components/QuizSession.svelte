@@ -963,8 +963,8 @@
 		animation: terminal-appear 0.3s ease-out 1.5s forwards;
 	}
 
-	/* Desktop: wider layout */
-	@media (min-width: 768px) {
+	/* Desktop: wider layout (sidebar-aware: 768px sidebar + enough content) */
+	@media (min-width: 1024px) {
 		.heading { font-size: 3.5rem; }
 
 		.summary {
@@ -974,34 +974,26 @@
 	}
 
 	/* Desktop + landscape phone: two-column quiz & debrief */
-	@media (min-width: 768px), (orientation: landscape) and (min-width: 568px) {
+	@media (min-width: 1024px), (orientation: landscape) and (min-width: 568px) and (max-width: 1023px) {
 		/* Quiz stays column — heading + top bar above, panels below */
 		.quiz {
 			flex-direction: column;
 			gap: 1rem;
 		}
-		/* Two-column container for viz + answers */
+		/* Two-column container for viz + answers — grid for precise alignment */
 		.quiz-panels {
-			display: flex;
-			flex-direction: row;
-			align-items: stretch;
+			display: grid;
+			grid-template-columns: 3fr 2fr;
 			gap: 1.5rem;
 			flex: 1;
 			min-height: 0;
 		}
-		/* VizQuizLayout — left, wider */
-		.quiz-panels :global(.canvas-frame) {
-			flex: 3;
-			min-width: 0;
-		}
-		/* Answer grid — right, height-matched to viewpod */
+		/* Answer grid — height-matched to viewpod via grid row */
 		.quiz-panels .answer-area {
-			flex: 2;
 			min-width: 0;
 			margin-top: 0;
 			display: flex;
 			flex-direction: column;
-			justify-content: stretch;
 		}
 		.quiz-panels .answer-area.hidden {
 			visibility: hidden;
@@ -1011,7 +1003,6 @@
 			grid-template-columns: 1fr;
 			grid-template-rows: repeat(4, 1fr);
 			flex: 1;
-			height: 100%;
 		}
 		.debrief-panels {
 			display: grid;
