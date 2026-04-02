@@ -199,7 +199,7 @@
 		if (pooledAttempts < threshold.questions) {
 			return `${pooledAttempts}/${threshold.questions} questions for T${info.nextTier}`;
 		}
-		return `${pm.masteredCount}/${pm.totalItems} mastered ✓`;
+		return `${pm.masteredCount}/${pm.totalItems} mastered`;
 	});
 </script>
 
