@@ -963,8 +963,8 @@
 		animation: terminal-appear 0.3s ease-out 1.5s forwards;
 	}
 
-	/* Desktop: wider layout (sidebar-aware: 768px sidebar + enough content) */
-	@media (min-width: 1024px) {
+	/* Desktop: wider layout (≥1200px — sidebar + enough content for two-column) */
+	@media (min-width: 1200px) {
 		.heading { font-size: 3.5rem; }
 
 		.summary {
@@ -973,8 +973,8 @@
 		}
 	}
 
-	/* Desktop (≥1024px) + landscape phone (wide but short = real phone) */
-	@media (min-width: 1024px), (orientation: landscape) and (min-width: 568px) and (max-height: 500px) {
+	/* Desktop (≥1200px) + landscape phone (actual phone, short viewport) */
+	@media (min-width: 1200px), (orientation: landscape) and (min-width: 568px) and (max-height: 500px) {
 		/* Quiz stays column — heading + top bar above, panels below */
 		.quiz {
 			flex-direction: column;
