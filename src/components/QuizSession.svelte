@@ -458,7 +458,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="quiz" onclick={() => { if (ctrl.needsTap) handlePlay(); }}>
 	{#if ctrl.needsTap}
-		<TickerBanner message="NEURAL LINK OFFLINE — TAP TO RECONNECT" onclick={() => handlePlay()} />
+		<TickerBanner message="NEURAL LINK OFFLINE -- TAP TO RECONNECT" onclick={() => handlePlay()} />
 	{/if}
 	<h2 class="heading">{sessionConfig.heading}</h2>
 	<div class="top">

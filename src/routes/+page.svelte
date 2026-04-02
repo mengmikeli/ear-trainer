@@ -195,7 +195,7 @@
 		const needAttempts = pm.items.filter(i => i.attempts < 5);
 		if (needAttempts.length > 0 && needAttempts.length <= 3) {
 			const names = needAttempts.map(i => i.id).join(', ');
-			return `Practice ${names} more — need 5+ attempts each`;
+			return `PRACTICE ${names} -- NEED 5+ ATTEMPTS EACH`;
 		}
 		if (remaining > 0) {
 			const label = content === 'chords' ? 'chords' : content === 'scales' ? 'scales' : content === 'modes' ? 'modes' : 'intervals';

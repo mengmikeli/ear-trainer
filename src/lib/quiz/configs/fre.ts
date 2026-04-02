@@ -117,7 +117,7 @@ export function createFREConfig(): QuizSessionConfig {
 			}
 			// Post-answer feedback — Q1 (Octave)
 			if (phase === 'feedback_correct' && questionNum === 1) {
-				return 'OCTAVE DETECTED\n\nSAME NOTE — HIGHER PITCH\nSIGNAL CONFIRMED';
+				return 'OCTAVE DETECTED\n\nSAME NOTE -- HIGHER PITCH\nSIGNAL CONFIRMED';
 			}
 			if ((phase === 'feedback_wrong' || phase === 'result_mode') && questionNum === 1) {
 				return 'SIGNAL MISMATCH\n\nTARGET WAS OCTAVE\nCALIBRATING...';

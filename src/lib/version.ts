@@ -1,6 +1,6 @@
-export const APP_VERSION = '4.0';
+export const APP_VERSION = '4.1';
 
-// Vite `define` injects this at build time — declared to satisfy TypeScript
+// Vite `define` injects this at build time -- declared to satisfy TypeScript
 declare const __BUILD_HASH__: string;
 const buildHash = typeof __BUILD_HASH__ !== 'undefined' ? __BUILD_HASH__ : '';
 export const VERSION_STRING = buildHash ? `v${APP_VERSION}-${buildHash}` : `v${APP_VERSION}`;
@@ -18,14 +18,14 @@ export const RELEASE_NOTES: ReleaseNote[] = [
 		date: '2026-04-01',
 		title: 'ARCHITECTURE REDESIGN',
 		changes: [
-			'Unified quiz engine — one shared controller for all content types',
-			'Persistent audio — no more audio drops between pages',
-			'Smart audio session — claims on play, releases after silence',
+			'Unified quiz engine -- one shared controller for all content types',
+			'Persistent audio -- no more audio drops between pages',
+			'Smart audio session -- claims on play, releases after silence',
 			'Tap to reconnect after long background',
-			'Practice mode as default — mixed content based on mastery',
-			'Mastery gates — earn chords, scales, modes through intervals',
-			'Route cleanup — /quiz/intervals, /quiz/chords, /quiz/scales, /quiz/modes',
-			'Feature gate system — plumbing for future Pro/Free split',
+			'Practice mode as default -- mixed content based on mastery',
+			'Mastery gates -- earn chords, scales, modes through intervals',
+			'Route cleanup -- /quiz/intervals, /quiz/chords, /quiz/scales, /quiz/modes',
+			'Feature gate system -- plumbing for future Pro/Free split',
 			'Scale tempo aligned with modes',
 			'Ticker-style update + reconnect banners',
 			'New ring+dot app icon across all platforms',
@@ -38,7 +38,7 @@ export const RELEASE_NOTES: ReleaseNote[] = [
 		changes: [
 			'Progress page Modes tab with 4 modes across 2 tiers',
 			'Adaptive/Training UI hidden behind dev mode toggle',
-			'Learn cards disabled on cold start — quizzes work immediately',
+			'Learn cards disabled on cold start -- quizzes work immediately',
 			'Version string shows build hash (v3.6+abc1234)',
 			'Light mode Chladni background fix',
 			'Whole Tone + Major Blues scales in lab',
@@ -50,13 +50,13 @@ export const RELEASE_NOTES: ReleaseNote[] = [
 		title: 'AUDIO HARDENING + VISUAL POLISH',
 		changes: [
 			'Whole Tone + Major Blues scales',
-			'AudioContext pre-warm on GO button — eliminates first-tap silence',
+			'AudioContext pre-warm on GO button -- eliminates first-tap silence',
 			'Adaptive audio reconnect with visual ticker banner',
 			'Physics bounce animation on correct answers',
 			'Replay timer reset on wrong answers',
-			'SVG play/pause icons — consistent rendering across all browsers',
-			'Viz pod layout — ring hugs content, answers match width',
-			'Viz pod resize stability — no collapse on window resize',
+			'SVG play/pause icons -- consistent rendering across all browsers',
+			'Viz pod layout -- ring hugs content, answers match width',
+			'Viz pod resize stability -- no collapse on window resize',
 			'Light mode lab background fix',
 			'Chladni idle pause for performance',
 			'Scanline contrast tuning',
@@ -67,13 +67,13 @@ export const RELEASE_NOTES: ReleaseNote[] = [
 		date: '2026-03-28',
 		title: 'QUIZ VISUALIZATION',
 		changes: [
-			'Chladni particle visualization on quiz pages — reacts to audio in real-time',
+			'Chladni particle visualization on quiz pages -- reacts to audio in real-time',
 			'Animated ring with orbiting dot and per-note bounce',
 			'Damped oscillation for chords and harmonic intervals',
 			'Red/green feedback on correct and wrong answers',
 			'Glitch text transitions between questions',
 			'Wrong-answer countdown bar with tap-to-replay',
-			'Supercharge Viz toggle (Dev Mode) — enable particles on mobile',
+			'Supercharge Viz toggle (Dev Mode) -- enable particles on mobile',
 			'Light mode support',
 			'New app icon',
 			'Performance: CSS-based ring, idle animation pausing',
@@ -85,10 +85,10 @@ export const RELEASE_NOTES: ReleaseNote[] = [
 		date: '2026-03-26',
 		title: 'SCALES + VISUALIZATION',
 		changes: [
-			'Scale identification quiz — 8 scales across 3 tiers with mastery tracking',
-			'Visualization lab — chord, scale, and interval visualizations with audio-reactive Chladni + harmonograph',
+			'Scale identification quiz -- 8 scales across 3 tiers with mastery tracking',
+			'Visualization lab -- chord, scale, and interval visualizations with audio-reactive Chladni + harmonograph',
 			'Chromatic circle scale visualization with polygon trail',
-			'Interruptible playback — switch selections mid-play, audio stops on page exit',
+			'Interruptible playback -- switch selections mid-play, audio stops on page exit',
 			'Shorthand labels for all content types',
 		],
 	},
@@ -97,13 +97,13 @@ export const RELEASE_NOTES: ReleaseNote[] = [
 		date: '2026-03-24',
 		title: 'CHORDS + LAB',
 		changes: [
-			'Chord identification quiz — Major, Minor, Dim, Aug + 7th chords across 4 tiers',
+			'Chord identification quiz -- Major, Minor, Dim, Aug + 7th chords across 4 tiers',
 			'Block and arpeggiated chord playback toggle',
 			'Per-voicing mastery tracking (Root / 1st Inv / 2nd Inv)',
 			'Chord progress tab with voicing sub-filters',
 			'INTERVALS / CHORDS switcher on home and progress pages',
-			'Lissajous + Chladni visualization lab — 4-way mirror, 13 interval patterns',
-			'Dev mode toggle in settings — bypasses mastery gates, shows lab link',
+			'Lissajous + Chladni visualization lab -- 4-way mirror, 13 interval patterns',
+			'Dev mode toggle in settings -- bypasses mastery gates, shows lab link',
 			'Chord voicing toggles in settings',
 		],
 	},
@@ -114,10 +114,10 @@ export const RELEASE_NOTES: ReleaseNote[] = [
 		changes: [
 			'End-of-quiz debrief screen with score breakdown',
 			'Tap missed intervals on debrief to replay',
-			'Tabbed progress page — filter by mode (ALL / ASC / DESC / HARM)',
+			'Tabbed progress page -- filter by mode (ALL / ASC / DESC / HARM)',
 			'Tap interval cards on progress page to preview sound',
 			'Electric piano tone (FM synthesis) for clearer harmonic intervals',
-			'Skip arrow on correct answer card — tap to advance',
+			'Skip arrow on correct answer card -- tap to advance',
 			'Consistent stat labels and telemetry styling',
 		],
 	},
@@ -127,7 +127,7 @@ export const RELEASE_NOTES: ReleaseNote[] = [
 		title: 'PLAY MODES + MASTERY',
 		changes: [
 			'Three play modes: ascending, descending, harmonic',
-			'Harmonic mode — hear both notes simultaneously',
+			'Harmonic mode -- hear both notes simultaneously',
 			'Per-mode stats tracking with weakness-weighted selection',
 			'Mastery system: Bronze / Silver / Gold per interval',
 			'Mode indicator glyph on quiz bar',

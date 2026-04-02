@@ -87,7 +87,7 @@
 
 	<div class="app-main scanlines">
 		{#if showUpdate}
-			<TickerBanner message="UPDATE AVAILABLE — TAP TO RELOAD" onclick={applyUpdate} />
+			<TickerBanner message="UPDATE AVAILABLE -- TAP TO RELOAD" onclick={applyUpdate} />
 		{/if}
 		<main class="content">
 			{@render children()}

@@ -8,13 +8,12 @@
       <span class="feature-name">{feature}</span>
     {/if}
     <div class="locked-badge">
-      <span class="lock-icon">🔒</span>
       <span class="lock-label">PRO</span>
     </div>
   </div>
   {#if onUnlock}
     <button class="unlock-btn" onclick={onUnlock}>
-      UNLOCK — $4.99
+      UNLOCK -- $4.99
     </button>
   {/if}
 </div>
@@ -53,10 +52,6 @@
     align-items: center;
     gap: 0.3rem;
     flex-shrink: 0;
-  }
-  .lock-icon {
-    font-size: 0.55rem;
-    line-height: 1;
   }
   .lock-label {
     font-size: 0.35rem;

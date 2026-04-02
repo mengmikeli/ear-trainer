@@ -553,40 +553,40 @@
 						<span class="credit-emoji">🧑‍💻</span>
 						<div class="credit-info">
 							<span class="credit-name">MIKE</span>
-							<span class="credit-role">Creator · The Only Human</span>
+							<span class="credit-role">Creator / The Only Human</span>
 						</div>
 					</div>
 					<div class="credit-entry">
 						<span class="credit-emoji">🗝️</span>
 						<div class="credit-info">
 							<span class="credit-name">MOTO</span>
-							<span class="credit-role">Lead · Architecture · Sprint Ops</span>
+							<span class="credit-role">Lead / Architecture / Sprint Ops</span>
 						</div>
 					</div>
 					<div class="credit-entry">
 						<span class="credit-emoji">🌉</span>
 						<div class="credit-info">
 							<span class="credit-name">PIXI</span>
-							<span class="credit-role">Design · Learning Systems · UI</span>
+							<span class="credit-role">Design / Learning Systems / UI</span>
 						</div>
 					</div>
 					<div class="credit-entry">
 						<span class="credit-emoji">🇫🇮</span>
 						<div class="credit-info">
 							<span class="credit-name">NOKI</span>
-							<span class="credit-role">Visualization · Chladni · Lissajous</span>
+							<span class="credit-role">Visualization / Chladni / Lissajous</span>
 						</div>
 					</div>
 					<div class="credit-entry">
 						<span class="credit-emoji">🌴</span>
 						<div class="credit-info">
 							<span class="credit-name">PALM</span>
-							<span class="credit-role">QA · Testing · Visual Regression</span>
+							<span class="credit-role">QA / Testing / Visual Regression</span>
 						</div>
 					</div>
 				</div>
 				<div class="credits-footer">
-					Built with <span class="credits-accent">OpenClaw</span> · Human-directed, agent-built
+					Built with <span class="credits-accent">OpenClaw</span> / Human-directed, agent-built
 				</div>
 			</div>
 		</div>

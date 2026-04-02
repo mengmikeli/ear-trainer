@@ -507,7 +507,7 @@ export function createAdaptiveConfig(state: UserStateV4): QuizSessionConfig {
 			return [{
 				label: 'PER TYPE',
 				items: Object.entries(kinds).map(([kind, stats]) => ({
-					label: `${kindGlyph[kind] ?? '•'} ${kindLabel[kind] ?? kind}`,
+					label: `${kindGlyph[kind] ?? '-'} ${kindLabel[kind] ?? kind}`,
 					value: `${stats.correct}/${stats.total}  ${Math.round((stats.correct / stats.total) * 100)}%`,
 				})),
 			}];
