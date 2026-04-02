@@ -107,10 +107,13 @@ export function createFREConfig(): QuizSessionConfig {
 			if (phase === 'idle' && questionNum === 0) {
 				return 'BOOT:' + BOOT_LINES.join('\n');
 			}
-			// Q1 idle: no guidance — play immediately after boot dismiss
+			// Q1 pre-play (after boot dismiss → nextQuestion)
+			if (phase === 'idle' && questionNum === 1) {
+				return 'TRANSMITTING...\n\nLISTEN TO THE INTERVAL\nIDENTIFY THE FREQUENCY';
+			}
 			// Q2 pre-play intro (questionNum=2 after nextQuestion increments)
 			if (phase === 'idle' && questionNum === 2) {
-				return 'SIGNAL ACQUIRED\n\nNEW FREQUENCY DETECTED\nANALYZING...';
+				return 'TRANSMITTING...\n\nNEW FREQUENCY DETECTED\nANALYZING SIGNAL';
 			}
 			// Post-answer feedback — Q1 (Octave)
 			if (phase === 'feedback_correct' && questionNum === 1) {

@@ -243,8 +243,11 @@
 	});
 
 	const showTerminal = $derived(capturedMsg !== null);
-	// Block answer grid when terminal overlay is visible
-	const answersBlocked = $derived(isFRE && showTerminal);
+	// Block answer grid only during pre-play overlays (boot/idle), NOT during feedback
+	const isFeedbackOverlay = $derived(
+		ctrl.phase === 'feedback_correct' || ctrl.phase === 'feedback_wrong' || ctrl.phase === 'result_mode'
+	);
+	const answersBlocked = $derived(isFRE && showTerminal && !isFeedbackOverlay);
 
 	// Dismiss terminal → trigger the appropriate next action synchronously
 	// (synchronous so Svelte batches the state change with the controller
@@ -744,7 +747,7 @@
 	}
 	.terminal-continue {
 		font-family: var(--mono);
-		font-size: 0.35rem;
+		font-size: 0.45rem;
 		font-weight: 900;
 		letter-spacing: 0.15em;
 		color: var(--text-secondary);
