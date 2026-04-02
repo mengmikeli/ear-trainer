@@ -570,13 +570,9 @@
 	.q-text.feedback-correct { color: var(--base); transition: none; }
 	.q-text.feedback-wrong { color: var(--base); transition: none; }
 	.q-text.glitch-text { /* clean glyph cycling, no effects */ }
-	/* ── Quiz panels: stacked mobile, side-by-side desktop ── */
+	/* ── Quiz panels: invisible on mobile, side-by-side on desktop ── */
 	.quiz-panels {
-		display: flex;
-		flex-direction: column;
-		width: 100%;
-		flex: 1;
-		min-height: 0;
+		display: contents; /* Mobile: panels disappear, children flow in .quiz column */
 	}
 	.panel-viz {
 		width: 100%;
@@ -714,9 +710,13 @@
 
 		/* ── Two-column quiz: viz left, answers right ── */
 		.quiz-panels {
+			display: flex;
 			flex-direction: row;
 			align-items: center;
 			gap: 2rem;
+			width: 100%;
+			flex: 1;
+			min-height: 0;
 		}
 		.panel-viz {
 			flex: 1;
