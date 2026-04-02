@@ -3,7 +3,7 @@
 	import { base } from '$app/paths';
 
 	const tabs = [
-		{ href: `${base}/`, label: 'PRACTICE', icon: '\uE014' },
+		{ href: `${base}/quiz`, label: 'PRACTICE', icon: '\uE014' },
 		{ href: `${base}/progress`, label: 'PROGRESS', icon: '\uE002' },
 		{ href: `${base}/settings`, label: 'SETTINGS', icon: '\uE015' },
 	];
@@ -11,22 +11,22 @@
 	const isQuiz = $derived(page.url.pathname.startsWith(`${base}/quiz`));
 
 	function isActive(href: string): boolean {
-		if (href === `${base}/`) return page.url.pathname === `${base}/` || page.url.pathname.startsWith(`${base}/quiz`);
+		if (href === `${base}/quiz`) return page.url.pathname === `${base}/` || page.url.pathname.startsWith(`${base}/quiz`);
 		return page.url.pathname === href;
 	}
 </script>
 
 <nav class="side-nav">
-	<div class="brand">
+	<a href="{base}/" class="brand">
 		<span class="brand-title">EAR</span>
 		<span class="brand-accent">TRAINER</span>
-	</div>
+	</a>
 
 	<div class="brand-divider"></div>
 
 	<div class="nav-items">
 		{#each tabs as tab}
-			{#if isQuiz && tab.href === `${base}/`}
+			{#if isQuiz && tab.href === `${base}/quiz`}
 				<span class="nav-item active disabled">
 					<span class="icon">{tab.icon}</span>
 					<span class="label">{tab.label}</span>
@@ -65,6 +65,8 @@
 		flex-direction: column;
 		align-items: center;
 		padding-bottom: 0.75rem;
+		text-decoration: none;
+		cursor: pointer;
 	}
 
 	.brand-title {
