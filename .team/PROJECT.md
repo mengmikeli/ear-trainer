@@ -13,7 +13,7 @@ Local: ~/Projects/ear-trainer
 ## Deploy
 - Staging: mengmikeli.github.io/ear-trainer/ (GitHub Pages, auto from main)
 - Production: hear.tasteful.work (Cloudflare Pages, `wrangler pages deploy build --project-name=ear-trainer`)
-- PR Preview: mengmikeli.github.io/ear-trainer/pr-preview/pr-{N}/ (rossjrw/pr-preview-action)
+- PR Preview: mengmikeli.github.io/ear-trainer/pr/pr-{N}/ (rossjrw/pr-preview-action)
 
 ## Discord
 - Guild: 1483051571280347240
@@ -23,4 +23,4 @@ Local: ~/Projects/ear-trainer
 v4.0
 
 ## Active Sprint
-None — planning next
+S5 Release Polish — Phase 7 (Integration + QA)
