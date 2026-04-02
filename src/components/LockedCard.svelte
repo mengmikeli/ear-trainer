@@ -1,5 +1,5 @@
 <script lang="ts">
-  let { feature = '', onUnlock }: { feature?: string; onUnlock?: () => void } = $props();
+  let { feature = '', onUnlock, devMode = false }: { feature?: string; onUnlock?: () => void; devMode?: boolean } = $props();
 </script>
 
 <div class="locked-card">
@@ -11,9 +11,9 @@
       <span class="lock-label">PRO</span>
     </div>
   </div>
-  {#if onUnlock}
+  {#if onUnlock && devMode}
     <button class="unlock-btn" onclick={onUnlock}>
-      UNLOCK -- $4.99
+      UNLOCK
     </button>
   {/if}
 </div>

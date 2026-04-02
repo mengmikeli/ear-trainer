@@ -319,7 +319,7 @@
 			<div class="interval-list">
 				{#each INTERVALS as def}
 					{#if !canAccess(`content:intervals:tier${def.tier}`, userTier(), devMode())}
-						<LockedCard feature={def.name} onUnlock={handleProUnlock} />
+						<LockedCard feature={def.name} onUnlock={handleProUnlock} devMode={devMode()} />
 					{:else}
 						<IntervalCard {def} state={buildIntervalState(state, def.id)} modeFilter={activeTab} ontoggle={toggleInterval} onplay={playIntervalPreview} playing={playingId === def.id} />
 					{/if}
@@ -329,7 +329,7 @@
 			<div class="interval-list">
 				{#each CHORDS as def}
 					{#if !canAccess(`content:chords:tier${def.tier}`, userTier(), devMode())}
-						<LockedCard feature={def.name} onUnlock={handleProUnlock} />
+						<LockedCard feature={def.name} onUnlock={handleProUnlock} devMode={devMode()} />
 					{:else}
 						<ChordCard {def} state={buildChordState(state, def.id)} voicingFilter={chordVoicingTab} ontoggle={toggleChord} onplay={playChordPreview} playing={playingId === def.id} />
 					{/if}
@@ -339,7 +339,7 @@
 			<div class="interval-list">
 				{#each SCALES as def}
 					{#if !canAccess(`content:scales:tier${def.tier}`, userTier(), devMode())}
-						<LockedCard feature={def.name} onUnlock={handleProUnlock} />
+						<LockedCard feature={def.name} onUnlock={handleProUnlock} devMode={devMode()} />
 					{:else}
 						<ScaleCard {def} state={buildScaleState(state, def.id)} ontoggle={toggleScale} onplay={playScalePreview} playing={playingId === def.id} />
 					{/if}
@@ -349,7 +349,7 @@
 			<div class="interval-list">
 				{#each MODES as def}
 					{#if !canAccess('content:modes', userTier(), devMode())}
-						<LockedCard feature={def.name} onUnlock={handleProUnlock} />
+						<LockedCard feature={def.name} onUnlock={handleProUnlock} devMode={devMode()} />
 					{:else if state.definitions.modes[def.id]?.unlocked || state.settings.devMode}
 						<ModeCard {def} state={buildModeState(state, def.id)} ontoggle={toggleMode} onplay={playModePreview} playing={playingId === def.id} />
 					{/if}
