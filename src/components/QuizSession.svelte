@@ -985,8 +985,6 @@
 			display: grid;
 			grid-template-columns: 3fr 2fr;
 			gap: 1.5rem;
-			flex: 1;
-			min-height: 0;
 		}
 		/* Answer grid — height-matched to viewpod via grid row */
 		.quiz-panels .answer-area {
