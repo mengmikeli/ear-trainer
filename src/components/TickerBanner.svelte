@@ -3,7 +3,7 @@
 </script>
 
 <button class="ticker-banner" {onclick}>
-	<span class="ticker-text">{message} &nbsp;&nbsp;&nbsp; {message} &nbsp;&nbsp;&nbsp; {message} &nbsp;&nbsp;&nbsp;</span>
+	<span class="ticker-text">{message} &nbsp;&nbsp;&nbsp; {message} &nbsp;&nbsp;&nbsp; {message} &nbsp;&nbsp;&nbsp; {message} &nbsp;&nbsp;&nbsp; {message} &nbsp;&nbsp;&nbsp; {message} &nbsp;&nbsp;&nbsp;</span>
 </button>
 
 <style>
@@ -31,5 +31,5 @@
 		display: inline-block;
 		animation: ticker 12s linear infinite;
 	}
-	@keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-33.33%); } }
+	@keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-16.67%); } }
 </style>
