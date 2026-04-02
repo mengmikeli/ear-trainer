@@ -407,14 +407,14 @@
 			</a>
 		</div>
 
-		<!-- ═══ Unlock announcement band ═══ -->
-		{#if unlockHint()}
-			<div class="unlock-band">
+		<!-- ═══ Unlock announcement band — always rendered for layout stability ═══ -->
+		<div class="unlock-band">
+			{#if unlockHint()}
 				<span class="unlock-chevron">{CHEVRON_LEFT}</span>
 				<span class="unlock-text">{unlockHint()}</span>
 				<span class="unlock-chevron">{CHEVRON_RIGHT}</span>
-			</div>
-		{/if}
+			{/if}
+		</div>
 
 		<!-- ═══ BAND 4: Content type mode switches ═══ -->
 		<nav class="content-selector">
@@ -663,12 +663,14 @@
 	}
 
 	/* ─── Unlock announcement band ─── */
+	/* ─── Unlock announcement band — fixed height for layout stability ─── */
 	.unlock-band {
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		gap: 0.5rem;
 		padding: 0.4rem 1rem;
+		min-height: 2.4rem; /* Reserve space for 2 lines */
 		background: var(--ambient-dim, rgba(194, 254, 12, 0.04));
 		border-top: 1px solid color-mix(in srgb, var(--ambient, var(--accent)) 15%, transparent);
 		border-bottom: 1px solid color-mix(in srgb, var(--ambient, var(--accent)) 15%, transparent);
@@ -696,7 +698,8 @@
 
 	/* ─── BAND 4: Content mode switches ─── */
 	.content-selector {
-		display: flex;
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
 		gap: 2px;
 		padding: 0 0.5rem;
 		padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.5rem);
@@ -704,7 +707,6 @@
 	}
 
 	.content-tile {
-		flex: 1;
 		display: flex;
 		flex-direction: column;
 		background: var(--surface);
@@ -713,6 +715,7 @@
 		transition: border-color 0.15s, background 0.15s;
 		padding: 0;
 		overflow: hidden;
+		min-width: 0;
 	}
 	.content-tile.active {
 		border-color: var(--tile-color);

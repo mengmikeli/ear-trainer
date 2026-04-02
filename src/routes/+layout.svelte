@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { page } from '$app/state';
 	import '../app.css';
 	import BottomNav from '../components/BottomNav.svelte';
 	import SideNav from '../components/SideNav.svelte';
@@ -12,6 +13,13 @@
 	let { children } = $props();
 
 	let showUpdate = $state(false);
+
+	// Hide nav on home page — GO is the only action
+	const isHome = $derived(() => {
+		const path = page.url?.pathname ?? '/';
+		// Match root and base-prefixed root
+		return path === '/' || path === '/ear-trainer' || path === '/ear-trainer/';
+	});
 
 	function applyUpdate() {
 		showUpdate = false;
@@ -80,22 +88,26 @@
 </script>
 
 <div class="app-shell">
-	<!-- Desktop sidebar — hidden on mobile via CSS -->
+	<!-- Desktop sidebar — hidden on mobile and on home page -->
+	{#if !isHome()}
 	<div class="sidebar-slot">
 		<SideNav />
 	</div>
+	{/if}
 
 	<div class="app-main scanlines">
 		{#if showUpdate}
 			<TickerBanner message="UPDATE AVAILABLE — TAP TO RELOAD" onclick={applyUpdate} />
 		{/if}
-		<main class="content">
+		<main class="content" class:home-content={isHome()}>
 			{@render children()}
 		</main>
-		<!-- Mobile bottom nav — hidden on desktop via CSS -->
+		<!-- Mobile bottom nav — hidden on desktop and on home page -->
+		{#if !isHome()}
 		<div class="bottomnav-slot">
 			<BottomNav />
 		</div>
+		{/if}
 	</div>
 </div>
 
@@ -128,6 +140,12 @@
 		flex: 1;
 		overflow-y: auto;
 		padding: 1.5rem 1.25rem;
+	}
+
+	/* Home page: no padding, let the page own the full viewport */
+	.content.home-content {
+		padding: 0;
+		overflow: hidden;
 	}
 
 	.bottomnav-slot {
