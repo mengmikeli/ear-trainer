@@ -82,14 +82,27 @@ export function createFREConfig(): QuizSessionConfig {
 		// No onAnswer — FRE doesn't record stats
 
 		getGuidanceMessage(questionNum: number, phase: QuizPhase, correct?: boolean): string | null {
-			if (questionNum === 0) return 'TRAIN YOUR EARS';
-			if (phase === 'feedback_correct' && questionNum === 1)
-				return "THAT'S AN OCTAVE -- SAME NOTE, HIGHER PITCH";
-			if (phase === 'feedback_wrong' && questionNum === 1)
-				return "THAT WAS AN OCTAVE -- YOU'LL LEARN TO HEAR IT";
-			if (phase === 'feedback_correct' && questionNum === 2) return "YOU'RE A NATURAL";
-			if (phase === 'feedback_wrong' && questionNum === 2)
-				return 'THAT WAS A PERFECT 5TH -- PRACTICE MAKES PERFECT';
+			if (phase === 'idle' && questionNum === 0) {
+				return 'SYSTEM INITIALIZING\n\nLISTEN CAREFULLY\nIDENTIFY THE INTERVAL\nTAP PLAY TO BEGIN';
+			}
+			if (phase === 'idle' && questionNum === 1) {
+				return 'SIGNAL ACQUIRED\n\nNEW FREQUENCY DETECTED\nTAP PLAY TO ANALYZE';
+			}
+			if (phase === 'awaiting_answer') {
+				return 'ANALYZING\n\nSELECT MATCHING FREQUENCY';
+			}
+			if (phase === 'feedback_correct' && questionNum === 1) {
+				return 'OCTAVE DETECTED\n\nSAME NOTE -- HIGHER PITCH\nSIGNAL CONFIRMED';
+			}
+			if (phase === 'feedback_wrong' && questionNum === 1) {
+				return 'SIGNAL MISMATCH\n\nTARGET WAS OCTAVE\nCALIBRATING';
+			}
+			if (phase === 'feedback_correct' && questionNum === 2) {
+				return 'PERFECT 5TH CONFIRMED\n\nNATURAL APTITUDE DETECTED\nSYSTEM READY';
+			}
+			if (phase === 'feedback_wrong' && questionNum === 2) {
+				return 'SIGNAL MISMATCH\n\nTARGET WAS PERFECT 5TH\nCALIBRATION COMPLETE';
+			}
 			return null;
 		},
 	};

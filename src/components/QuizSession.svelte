@@ -204,12 +204,13 @@
 	const showGlitch = $derived(ctrl.isGlitching || feedbackState === 'wrong' || feedbackState === 'correct' || ctrl.needsTap);
 	const displayText = $derived(glitchText || `Q${ctrl.questionNum}`);
 
-	// ── Guidance message (FRE overlay) ────────────────────────────────
+	// ── Guidance message (FRE terminal overlay) ──────────────────────
 	const guidanceMsg = $derived.by((): string | null => {
 		if (!sessionConfig.getGuidanceMessage) return null;
 		const correct = feedbackState === 'correct' ? true : feedbackState === 'wrong' ? false : undefined;
 		return sessionConfig.getGuidanceMessage(ctrl.questionNum, ctrl.phase, correct);
 	});
+	const guidanceLines = $derived(guidanceMsg ? guidanceMsg.split('\n') : []);
 
 	// ── Lifecycle ─────────────────────────────────────────────────────
 	onMount(() => {
@@ -389,15 +390,25 @@
 			ontransitionend={handleTransitionEnd}
 			{playingNotes}
 		>
+			{#if guidanceMsg}
+				<div class="terminal-screen">
+					{#each guidanceLines as line, i}
+						{#if line === ''}
+							<div class="terminal-line terminal-blank" style="animation-delay: {i * 150}ms"></div>
+						{:else}
+							<div class="terminal-line" style="animation-delay: {i * 150}ms">
+								<span class="terminal-prompt">&gt;</span> {line}
+							</div>
+						{/if}
+					{/each}
+				</div>
+			{/if}
 			<button bind:this={playBtnEl} class="play-tap" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} onclick={ctrl.hasPlayed && inResultMode ? handleReplayInResult : handlePlay}>
 				<div class="orbit-track"><div class="orbit-dot"></div></div>
 				<span class="q-text" class:feedback-correct={feedbackState === 'correct'} class:feedback-wrong={feedbackState === 'wrong'} class:glitch-text={showGlitch}>
 					{displayText}
 				</span>
 			</button>
-			{#if guidanceMsg}
-				<div class="guidance-msg">{guidanceMsg}</div>
-			{/if}
 		</VizQuizLayout>
 
 		<div class="answer-area" class:hidden={!ctrl.question}>
@@ -576,16 +587,37 @@
 	.q-text.feedback-correct { color: var(--base); transition: none; }
 	.q-text.feedback-wrong { color: var(--base); transition: none; }
 	.q-text.glitch-text { /* clean glyph cycling, no effects */ }
-	.guidance-msg {
+	.terminal-screen {
+		position: absolute;
+		inset: 0;
+		background: var(--base, #0A0A0A);
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		padding: 1.5rem;
+		z-index: 0;
+	}
+	.terminal-line {
 		font-family: var(--mono);
-		font-size: 0.4rem;
-		font-weight: 700;
-		letter-spacing: 0.08em;
-		color: var(--text-secondary);
-		text-align: center;
+		font-size: 0.45rem;
+		font-weight: 900;
+		letter-spacing: 0.12em;
+		color: var(--accent, #C2FE0C);
+		line-height: 1.8;
 		text-transform: uppercase;
-		margin-top: 0.5rem;
-		line-height: 1.5;
+		opacity: 0;
+		animation: terminal-appear 0.3s ease-out forwards;
+	}
+	.terminal-blank {
+		height: 0.5rem;
+	}
+	.terminal-prompt {
+		color: var(--marathon-blue);
+		margin-right: 0.3rem;
+	}
+	@keyframes terminal-appear {
+		from { opacity: 0; transform: translateY(4px); }
+		to { opacity: 1; transform: translateY(0); }
 	}
 	.answer-area {
 		width: 100%;
