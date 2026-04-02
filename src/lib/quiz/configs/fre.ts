@@ -107,18 +107,18 @@ export function createFREConfig(): QuizSessionConfig {
 			if (phase === 'awaiting_answer') {
 				return null;
 			}
-			// Post-answer feedback — Q1
-			if (phase === 'feedback_correct' && questionNum === 1) {
+			// Post-answer feedback — Q1 (feedback_correct or feedback_wrong/result_mode)
+			if ((phase === 'feedback_correct') && questionNum === 1) {
 				return 'OCTAVE DETECTED\n\nSAME NOTE — HIGHER PITCH\nSIGNAL CONFIRMED';
 			}
-			if (phase === 'feedback_wrong' && questionNum === 1) {
+			if ((phase === 'feedback_wrong' || phase === 'result_mode') && questionNum === 1) {
 				return 'SIGNAL MISMATCH\n\nTARGET WAS OCTAVE\nCALIBRATING...';
 			}
 			// Post-answer feedback — Q2
-			if (phase === 'feedback_correct' && questionNum === 2) {
+			if ((phase === 'feedback_correct') && questionNum === 2) {
 				return 'PERFECT 5TH CONFIRMED\n\nNATURAL APTITUDE DETECTED\nSYSTEM READY';
 			}
-			if (phase === 'feedback_wrong' && questionNum === 2) {
+			if ((phase === 'feedback_wrong' || phase === 'result_mode') && questionNum === 2) {
 				return 'CLOSE ENOUGH\n\nTARGET WAS PERFECT 5TH\nCALIBRATION COMPLETE';
 			}
 			return null;

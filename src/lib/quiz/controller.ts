@@ -362,6 +362,18 @@ export class QuizController {
 	}
 
 	/**
+	 * Cancel all auto-advance timers (correct timeout + wrong countdown).
+	 * Used by FRE mode to let the terminal overlay control pacing.
+	 */
+	pauseAutoAdvance(): void {
+		if (this.correctTimeout) {
+			clearTimeout(this.correctTimeout);
+			this.correctTimeout = null;
+		}
+		this._cancelCountdown();
+	}
+
+	/**
 	 * Force the "tap to reconnect" banner — used when the component detects
 	 * that iOS killed the AudioContext during background and resume() failed.
 	 */

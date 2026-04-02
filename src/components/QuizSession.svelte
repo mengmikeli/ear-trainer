@@ -6,6 +6,7 @@
 	import type { QuizSessionConfig, QuestionResult } from '$lib/quiz/types';
 	import type { UserStateV4 } from '$lib/state/schema';
 	import { isAudioReady, resetContext } from '$lib/audio/context';
+	import { saveStateV4 } from '$lib/state/storage';
 	import AnswerGrid from './AnswerGrid.svelte';
 	import ProgressBar from './ProgressBar.svelte';
 	import TelemetryBar from './TelemetryBar.svelte';
@@ -231,7 +232,7 @@
 			setTimeout(() => handlePlay(), 100);
 		}
 		// In FRE mode: advance after feedback guidance
-		if (isFRE && (ctrl.phase === 'feedback_correct' || ctrl.phase === 'feedback_wrong')) {
+		if (isFRE && (ctrl.phase === 'feedback_correct' || ctrl.phase === 'feedback_wrong' || ctrl.phase === 'result_mode')) {
 			setTimeout(() => {
 				// If this was the last question, nextQuestion triggers onSessionEnd via skipDebrief
 				handleNextQuestion();
@@ -242,6 +243,14 @@
 	const showTerminal = $derived(!!guidanceMsg && guidanceMsg !== lastDismissedMsg);
 	// Block answer grid when terminal overlay is visible (FRE mode)
 	const answersBlocked = $derived(isFRE && showTerminal);
+
+	// FRE pacing: cancel auto-advance timers when entering feedback phase
+	// so the terminal overlay controls advancement via tap
+	$effect(() => {
+		if (isFRE && (ctrl.phase === 'feedback_correct' || ctrl.phase === 'feedback_wrong' || ctrl.phase === 'result_mode')) {
+			ctrl.pauseAutoAdvance();
+		}
+	});
 
 	// ── Lifecycle ─────────────────────────────────────────────────────
 	onMount(() => {
@@ -305,6 +314,12 @@
 
 	function handleEndEarly() {
 		clearNoteTimeouts();
+		// In FRE mode: "exit" means "skip onboarding" — mark complete so it doesn't restart
+		if (isFRE) {
+			const state = ctrl.userState;
+			state.settings.hasCompletedFRE = true;
+			saveStateV4(state);
+		}
 		ctrl.endEarly();
 		goto(`${base}/`);
 	}
