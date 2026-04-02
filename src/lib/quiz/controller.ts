@@ -87,7 +87,7 @@ export class QuizController {
 		this.countdownDuration = config.countdownDuration ?? 8000;
 		this.correctAdvanceDelay = config.correctAdvanceDelay ?? 1350;
 		this.userState = initialState ?? loadStateV4();
-		this.totalQuestions = this.userState.settings.sessionLength;
+		this.totalQuestions = config.sessionLength;
 
 		// Lifecycle callback
 		config.onPageEnter?.();
@@ -302,6 +302,12 @@ export class QuizController {
 		);
 		this.userState.globalStats.lastPractice = Date.now();
 
+		// skipDebrief: call onSessionEnd and bail — no debrief phase, no extra save
+		if (this.config.skipDebrief) {
+			this.config.onSessionEnd?.(this.userState);
+			return;
+		}
+
 		// Config hook
 		this.config.onSessionEnd?.(this.userState);
 
@@ -325,7 +331,7 @@ export class QuizController {
 		this.isGlitching = false;
 		this.countdownPct = 1.0;
 		this.userState = loadStateV4();
-		this.totalQuestions = this.userState.settings.sessionLength;
+		this.totalQuestions = this.config.sessionLength;
 		this.nextQuestion();
 	}
 

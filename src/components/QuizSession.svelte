@@ -204,6 +204,13 @@
 	const showGlitch = $derived(ctrl.isGlitching || feedbackState === 'wrong' || feedbackState === 'correct' || ctrl.needsTap);
 	const displayText = $derived(glitchText || `Q${ctrl.questionNum}`);
 
+	// ── Guidance message (FRE overlay) ────────────────────────────────
+	const guidanceMsg = $derived.by((): string | null => {
+		if (!sessionConfig.getGuidanceMessage) return null;
+		const correct = feedbackState === 'correct' ? true : feedbackState === 'wrong' ? false : undefined;
+		return sessionConfig.getGuidanceMessage(ctrl.questionNum, ctrl.phase, correct);
+	});
+
 	// ── Lifecycle ─────────────────────────────────────────────────────
 	onMount(() => {
 		ctrl.nextQuestion();
@@ -388,6 +395,9 @@
 					{displayText}
 				</span>
 			</button>
+			{#if guidanceMsg}
+				<div class="guidance-msg">{guidanceMsg}</div>
+			{/if}
 		</VizQuizLayout>
 
 		<div class="answer-area" class:hidden={!ctrl.question}>
@@ -566,6 +576,17 @@
 	.q-text.feedback-correct { color: var(--base); transition: none; }
 	.q-text.feedback-wrong { color: var(--base); transition: none; }
 	.q-text.glitch-text { /* clean glyph cycling, no effects */ }
+	.guidance-msg {
+		font-family: var(--mono);
+		font-size: 0.4rem;
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		color: var(--text-secondary);
+		text-align: center;
+		text-transform: uppercase;
+		margin-top: 0.5rem;
+		line-height: 1.5;
+	}
 	.answer-area {
 		width: 100%;
 		margin-top: auto;

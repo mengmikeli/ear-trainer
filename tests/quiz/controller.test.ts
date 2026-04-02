@@ -124,7 +124,7 @@ describe('QuizController — initialization', () => {
 
 		expect(ctrl.phase).toBe('idle');
 		expect(ctrl.questionNum).toBe(0);
-		expect(ctrl.totalQuestions).toBe(5); // from state.settings.sessionLength
+		expect(ctrl.totalQuestions).toBe(5); // from config.sessionLength
 		expect(ctrl.hasPlayed).toBe(false);
 		expect(ctrl.needsTap).toBe(false);
 		expect(ctrl.selectedId).toBeNull();
@@ -143,10 +143,10 @@ describe('QuizController — initialization', () => {
 		expect(config.onPageEnter).toHaveBeenCalledOnce();
 	});
 
-	it('uses provided initial state instead of loading', () => {
+	it('uses config.sessionLength for totalQuestions (not userState)', () => {
 		const config = createTestConfig();
+		config.sessionLength = 10;
 		const state = createTestState();
-		state.settings.sessionLength = 10;
 		const ctrl = new QuizController(config, state);
 		expect(ctrl.totalQuestions).toBe(10);
 	});
