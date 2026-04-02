@@ -386,7 +386,7 @@
 			<span class="corner-mark br"></span>
 
 			<!-- Coordinate micro-labels -->
-			<span class="coord-label top-left">FREQ 1:{heroSemitones() === 7 ? '2' : heroSemitones() === 10 ? '5' : '1'}</span>
+			<span class="coord-label top-left">FREQ 1:1</span>
 			<span class="coord-label bottom-right">PHASE +90</span>
 
 			<div class="ring-container">
