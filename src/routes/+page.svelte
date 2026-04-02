@@ -392,10 +392,8 @@
 			<div class="ring-container">
 				<LissajousRing
 					size={320}
-					semitones={heroSemitones()}
-					chordIntervals={heroChordIntervals()}
-					scaleIntervals={heroScaleIntervals()}
-					phase="playing"
+					semitones={0}
+					phase="rest"
 				/>
 			</div>
 
