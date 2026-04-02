@@ -275,7 +275,7 @@
 				]} />
 			</div>
 
-			{#if unlockHint()}
+			{#if unlockHint() && !state.settings.devMode}
 				<div class="unlock-hint">{unlockHint()}</div>
 			{/if}
 		</div>
