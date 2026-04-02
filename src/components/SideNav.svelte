@@ -55,7 +55,7 @@
 		height: 100dvh;
 		background: var(--surface);
 		border-right: 1px solid var(--border-heavy);
-		padding: 1.5rem 0;
+		padding: 2rem 0;
 		gap: 0;
 	}
 
@@ -63,8 +63,8 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		padding: 0 1rem 1.25rem;
-		line-height: 0.85;
+		padding: 0 1rem 1.5rem;
+		line-height: 1;
 	}
 
 	.brand-title {
@@ -81,6 +81,7 @@
 		font-size: 1.35rem;
 		letter-spacing: 0.12em;
 		color: var(--accent);
+		margin-top: 0.15rem;
 	}
 
 	.nav-items {
@@ -94,6 +95,7 @@
 	.nav-item {
 		display: flex;
 		align-items: center;
+		justify-content: center;
 		gap: 0.75rem;
 		padding: 0.65rem 0.75rem;
 		color: var(--text-secondary);
