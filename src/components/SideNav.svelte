@@ -22,7 +22,7 @@
 		<span class="brand-accent">TRAINER</span>
 	</div>
 
-	<div class="tick-ruler"></div>
+	<div class="brand-divider"></div>
 
 	<div class="nav-items">
 		{#each tabs as tab}
@@ -47,6 +47,7 @@
 </nav>
 
 <style>
+	/* ── Shell ── */
 	.side-nav {
 		display: flex;
 		flex-direction: column;
@@ -55,40 +56,49 @@
 		height: 100dvh;
 		background: var(--surface);
 		border-right: 1px solid var(--border-heavy);
-		padding: 2rem 0;
-		gap: 0;
+		padding: 2rem 1rem;
 	}
 
+	/* ── Brand — matches page heading rhythm ── */
 	.brand {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		padding: 0 1rem 1.5rem;
-		line-height: 1;
+		padding-bottom: 0.75rem;
 	}
 
 	.brand-title {
 		font-family: var(--font-display);
-		font-size: 2.5rem;
+		font-size: 3rem;
 		font-weight: 400;
 		letter-spacing: 0.05em;
 		color: var(--text-primary);
 		text-transform: uppercase;
+		line-height: 1;
 	}
 
 	.brand-accent {
 		font-family: var(--font-display);
-		font-size: 1.35rem;
+		font-size: 1.6rem;
+		font-weight: 400;
 		letter-spacing: 0.12em;
 		color: var(--accent);
-		margin-top: 0.15rem;
+		line-height: 1;
+		margin-top: 0.25rem;
 	}
 
+	/* Divider — matches page heading border-bottom */
+	.brand-divider {
+		height: 2px;
+		background: var(--border-heavy);
+		margin-bottom: 1rem;
+	}
+
+	/* ── Nav items ── */
 	.nav-items {
 		display: flex;
 		flex-direction: column;
 		gap: 2px;
-		padding: 1rem 0.75rem;
 		flex: 1;
 	}
 
@@ -96,10 +106,10 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		gap: 0.75rem;
-		padding: 0.65rem 0.75rem;
+		gap: 0.6rem;
+		padding: 0.65rem 0.5rem;
 		color: var(--text-secondary);
-		font-size: 0.55rem;
+		font-size: 0.6rem;
 		font-weight: 400;
 		letter-spacing: 0.15em;
 		text-transform: uppercase;
@@ -131,8 +141,12 @@
 		text-align: center;
 	}
 
+	.label {
+		font-size: 0.6rem;
+	}
+
+	/* ── Footer ── */
 	.side-nav-footer {
-		padding: 0 0.75rem;
 		display: flex;
 		flex-direction: column;
 		gap: 0.5rem;
