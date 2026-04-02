@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
+	import { base } from '$app/paths';
 	import '../app.css';
 	import BottomNav from '../components/BottomNav.svelte';
 	import SideNav from '../components/SideNav.svelte';
@@ -17,8 +18,8 @@
 	// Hide nav on home page — GO is the only action
 	const isHome = $derived(() => {
 		const path = page.url?.pathname ?? '/';
-		// Match root and base-prefixed root
-		return path === '/' || path === '/ear-trainer' || path === '/ear-trainer/';
+		const homePath = base || '/';
+		return path === homePath || path === homePath + '/';
 	});
 
 	function applyUpdate() {
