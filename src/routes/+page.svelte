@@ -16,6 +16,7 @@
 	import type { UserStateV4 } from '$lib/state/schema';
 	import LissajousRing from '../components/LissajousRing.svelte';
 	import ChladniBackground from '../components/ChladniBackground.svelte';
+	import MiniLissajous from '../components/MiniLissajous.svelte';
 
 	let state: UserStateV4 | null = $state(null);
 	let goGlitching = $state(false);
@@ -251,6 +252,23 @@
 		return `${pm.masteredCount}/${pm.totalItems} MASTERED`;
 	});
 
+	// Ambient color — shifts the whole page palette per content type
+	const CONTENT_COLORS: Record<string, string> = {
+		'intervals': '#C2FE0C',  // accent
+		'chords': '#3A2CFF',     // marathon-blue
+		'scales': '#FF6B2C',     // warm orange
+		'modes': '#9B59B6',      // deep purple
+		'adaptive': '#C2FE0C',
+	};
+
+	const ambientColor = $derived(() => {
+		return CONTENT_COLORS[activeContent()] ?? '#C2FE0C';
+	});
+
+	const ambientColorDim = $derived(() => {
+		return ambientColor() + '15'; // 8% opacity hex suffix
+	});
+
 	// Lissajous signature for current content type
 	const heroSemitones = $derived(() => {
 		const content = activeContent();
@@ -305,14 +323,16 @@
 	}
 </script>
 
-<!-- Full-bleed Chladni background — the ambient resonance -->
-<ChladniBackground
-	semitones={heroSemitones()}
-	chordIntervals={heroChordIntervals()}
-	scaleIntervals={heroScaleIntervals()}
-/>
+<!-- Full-bleed Chladni background — boosted visibility -->
+<div class="chladni-wrap">
+	<ChladniBackground
+		semitones={heroSemitones()}
+		chordIntervals={heroChordIntervals()}
+		scaleIntervals={heroScaleIntervals()}
+	/>
+</div>
 
-<div class="home" class:booted>
+<div class="home" class:booted style:--ambient={ambientColor()} style:--ambient-dim={ambientColorDim()}>
 	<!-- ═══ BAND 1: Header strip ═══ -->
 	<header class="header-strip">
 		<div class="title-boot">
@@ -375,7 +395,7 @@
 					semitones={heroSemitones()}
 					chordIntervals={heroChordIntervals()}
 					scaleIntervals={heroScaleIntervals()}
-					phase="rest"
+					phase="playing"
 				/>
 			</div>
 
@@ -419,10 +439,21 @@
 						{/if}
 					</div>
 					<div class="tile-body">
-						<span class="tile-full-label">{ct.fullLabel}</span>
-						{#if unlocked && stats.accuracy > 0}
-							<span class="tile-stat">{stats.accuracy}%</span>
-						{/if}
+						<div class="tile-viz">
+							<MiniLissajous
+								size={36}
+								semitones={ct.semitones ?? 7}
+								chordIntervals={'chordIntervals' in ct ? ct.chordIntervals : undefined}
+								scaleIntervals={'scaleIntervals' in ct ? ct.scaleIntervals : undefined}
+								color={active ? ct.color : 'var(--text-secondary)'}
+							/>
+						</div>
+						<div class="tile-info">
+							<span class="tile-full-label">{ct.fullLabel}</span>
+							{#if unlocked && stats.accuracy > 0}
+								<span class="tile-stat">{stats.accuracy}%</span>
+							{/if}
+						</div>
 					</div>
 					<div class="tile-footer">
 						<span class="tile-count">{stats.count}</span>
@@ -435,6 +466,11 @@
 </div>
 
 <style>
+	/* Chladni background boost */
+	.chladni-wrap :global(.chladni-bg) {
+		opacity: 0.85;
+	}
+
 	.home {
 		position: relative;
 		z-index: 1;
@@ -527,10 +563,11 @@
 		font-size: 0.4rem;
 		font-weight: 900;
 		letter-spacing: 0.1em;
-		color: var(--accent);
-		border: 1px solid var(--accent);
+		color: var(--ambient, var(--accent));
+		border: 1px solid var(--ambient, var(--accent));
 		padding: 0 0.3rem;
 		line-height: 1.6;
+		transition: color 0.3s, border-color 0.3s;
 	}
 
 	.telem-val {
@@ -569,8 +606,9 @@
 		width: 16px;
 		height: 16px;
 		border-style: solid;
-		border-color: var(--accent);
+		border-color: var(--ambient, var(--accent));
 		opacity: 0.25;
+		transition: border-color 0.3s;
 	}
 	.corner-mark.tl { top: 1rem; left: 1rem; border-width: 1px 0 0 1px; }
 	.corner-mark.tr { top: 1rem; right: 1rem; border-width: 1px 1px 0 0; }
@@ -583,8 +621,9 @@
 		font-family: var(--mono);
 		font-size: 0.3rem;
 		letter-spacing: 0.15em;
-		color: var(--accent);
+		color: var(--ambient, var(--accent));
 		opacity: 0.2;
+		transition: color 0.3s;
 	}
 	.coord-label.top-left { top: 1.4rem; left: 2rem; }
 	.coord-label.bottom-right { bottom: 1.4rem; right: 2rem; }
@@ -632,16 +671,18 @@
 		justify-content: center;
 		gap: 0.5rem;
 		padding: 0.4rem 1rem;
-		background: rgba(194, 254, 12, 0.04);
-		border-top: 1px solid rgba(194, 254, 12, 0.15);
-		border-bottom: 1px solid rgba(194, 254, 12, 0.15);
+		background: var(--ambient-dim, rgba(194, 254, 12, 0.04));
+		border-top: 1px solid color-mix(in srgb, var(--ambient, var(--accent)) 15%, transparent);
+		border-bottom: 1px solid color-mix(in srgb, var(--ambient, var(--accent)) 15%, transparent);
+		transition: background 0.3s, border-color 0.3s;
 	}
 
 	.unlock-chevron {
 		font-family: var(--mono);
 		font-size: 0.45rem;
-		color: var(--accent);
+		color: var(--ambient, var(--accent));
 		opacity: 0.5;
+		transition: color 0.3s;
 	}
 
 	.unlock-text {
@@ -649,9 +690,10 @@
 		font-size: 0.35rem;
 		font-weight: 700;
 		letter-spacing: 0.12em;
-		color: var(--accent);
+		color: var(--ambient, var(--accent));
 		opacity: 0.7;
 		text-align: center;
+		transition: color 0.3s;
 	}
 
 	/* ─── BAND 4: Content mode switches ─── */
@@ -714,9 +756,20 @@
 	.tile-body {
 		flex: 1;
 		display: flex;
+		align-items: center;
+		gap: 0.2rem;
+		padding: 0.2rem 0.3rem;
+	}
+
+	.tile-viz {
+		flex-shrink: 0;
+	}
+
+	.tile-info {
+		display: flex;
 		flex-direction: column;
 		align-items: flex-start;
-		padding: 0.3rem 0.4rem 0.15rem;
+		min-width: 0;
 	}
 
 	.tile-full-label {

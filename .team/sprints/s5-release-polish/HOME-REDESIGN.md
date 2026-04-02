@@ -1,7 +1,10 @@
 # Design Study: Home Page Redesign
 
+## Brand
+**LISSA** — the app name. Short for Lissajous. Also the training AI personality.
+
 ## Goal
-Redesign the home page to reflect the evolved product identity. The P1 Lissajous ring is our brand mark. Chladni effects are our visual signature. Marathon "Graphic Realism" is our design language. The home page should embody all three.
+Redesign the home page for Lissa. The P1 Lissajous ring is the brand mark. Chladni effects are the visual signature. Marathon "Graphic Realism" is the design language. Lissa is the AI voice.
 
 ## Status
 Exploration — do NOT merge without Mike's explicit approval.
