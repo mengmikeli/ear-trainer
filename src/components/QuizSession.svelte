@@ -205,52 +205,67 @@
 	const showGlitch = $derived(ctrl.isGlitching || feedbackState === 'wrong' || feedbackState === 'correct' || ctrl.needsTap);
 	const displayText = $derived(glitchText || `Q${ctrl.questionNum}`);
 
-	// ── Guidance message (FRE terminal overlay) ──────────────────────
+	// ── FRE guidance overlay (sticky capture system) ─────────────────
+	// The config's getGuidanceMessage is a pure function of controller state.
+	// We "capture" its output into $state so the terminal stays visible
+	// until the user explicitly taps to dismiss — even if the underlying
+	// controller state changes (e.g. auto-play changing phase).
 	const isFRE = $derived(!!sessionConfig.freMode);
-	const guidanceMsg = $derived.by((): string | null => {
+
+	// What the config wants to show right now (reactive, may flicker)
+	const rawGuidanceMsg = $derived.by((): string | null => {
 		if (!sessionConfig.getGuidanceMessage) return null;
 		const correct = feedbackState === 'correct' ? true : feedbackState === 'wrong' ? false : undefined;
 		return sessionConfig.getGuidanceMessage(ctrl.questionNum, ctrl.phase, correct);
 	});
-	const isBootSequence = $derived(guidanceMsg?.startsWith('BOOT:') ?? false);
-	const guidanceLines = $derived.by(() => {
-		if (!guidanceMsg) return [];
-		const text = isBootSequence ? guidanceMsg.slice(5) : guidanceMsg;
-		return text.split('\n');
+
+	// Sticky captured state — holds until dismissed
+	let capturedMsg: string | null = $state(null);
+	let capturedBoot = $state(false);
+	let capturedLines: string[] = $state([]);
+	let dismissedKey = ''; // prevents re-capture of same (questionNum:phase) after dismiss
+
+	// Capture new guidance messages when nothing is currently showing
+	$effect(() => {
+		const msg = rawGuidanceMsg;
+		const key = `${ctrl.questionNum}:${ctrl.phase}`;
+		if (isFRE && msg && !capturedMsg && key !== dismissedKey) {
+			capturedMsg = msg;
+			capturedBoot = msg.startsWith('BOOT:');
+			const text = capturedBoot ? msg.slice(5) : msg;
+			capturedLines = text.split('\n');
+
+			// Pause auto-advance for feedback phases
+			if (ctrl.phase === 'feedback_correct' || ctrl.phase === 'feedback_wrong' || ctrl.phase === 'result_mode') {
+				ctrl.pauseAutoAdvance();
+			}
+		}
 	});
 
-	// ── Guidance dismiss (tap terminal to continue) ──────────────────
-	let lastDismissedMsg = $state('');
+	const showTerminal = $derived(capturedMsg !== null);
+	// Block answer grid when terminal overlay is visible
+	const answersBlocked = $derived(isFRE && showTerminal);
 
+	// Dismiss terminal → trigger the appropriate next action synchronously
+	// (synchronous so Svelte batches the state change with the controller
+	//  mutation, preventing the old message from being re-captured)
 	function dismissGuidance() {
-		const msg = guidanceMsg ?? '';
-		lastDismissedMsg = msg;
+		const wasBoot = capturedBoot;
+		const phase = ctrl.phase;
+		dismissedKey = `${ctrl.questionNum}:${ctrl.phase}`;
+		capturedMsg = null;
+		capturedLines = [];
+		capturedBoot = false;
 
-		// In FRE mode: auto-play after dismissing idle/boot guidance
-		if (isFRE && (ctrl.phase === 'idle' || isBootSequence)) {
-			// Small delay to let overlay animate out before playing
-			setTimeout(() => handlePlay(), 100);
-		}
-		// In FRE mode: advance after feedback guidance
-		if (isFRE && (ctrl.phase === 'feedback_correct' || ctrl.phase === 'feedback_wrong' || ctrl.phase === 'result_mode')) {
-			setTimeout(() => {
-				// If this was the last question, nextQuestion triggers onSessionEnd via skipDebrief
-				handleNextQuestion();
-			}, 100);
+		if (phase === 'idle' || wasBoot) {
+			// After boot/idle guidance: play the question
+			handlePlay();
+		} else if (phase === 'feedback_correct' || phase === 'feedback_wrong' || phase === 'result_mode') {
+			// After feedback guidance: advance to next question (or finish)
+			handleNextQuestion();
 		}
 	}
 
-	const showTerminal = $derived(!!guidanceMsg && guidanceMsg !== lastDismissedMsg);
-	// Block answer grid when terminal overlay is visible (FRE mode)
-	const answersBlocked = $derived(isFRE && showTerminal);
-
-	// FRE pacing: cancel auto-advance timers when entering feedback phase
-	// so the terminal overlay controls advancement via tap
-	$effect(() => {
-		if (isFRE && (ctrl.phase === 'feedback_correct' || ctrl.phase === 'feedback_wrong' || ctrl.phase === 'result_mode')) {
-			ctrl.pauseAutoAdvance();
-		}
-	});
 
 	// ── Lifecycle ─────────────────────────────────────────────────────
 	onMount(() => {
@@ -343,6 +358,41 @@
 </script>
 
 {#if ctrl.phase === 'debrief'}
+{#if isFRE}
+<!-- FRE conclusion — terminal-style calibration complete screen -->
+<div class="summary fre-conclusion">
+	<div class="fre-terminal">
+		<span class="corner-mark tl">+</span>
+		<span class="corner-mark tr">+</span>
+		<span class="corner-mark bl">+</span>
+		<span class="corner-mark br">+</span>
+
+		<div class="fre-score">{ctrl.sessionCorrect}/{ctrl.results.length}</div>
+
+		<div class="terminal-line" style="animation-delay: 200ms">
+			<span class="terminal-prompt">&gt;</span> CALIBRATION COMPLETE
+		</div>
+		<div class="terminal-line terminal-blank" style="animation-delay: 350ms"></div>
+		<div class="terminal-line" style="animation-delay: 500ms">
+			<span class="terminal-prompt">&gt;</span> {ctrl.results.length} INTERVALS ANALYZED
+		</div>
+		<div class="terminal-line" style="animation-delay: 650ms">
+			<span class="terminal-prompt">&gt;</span> ACCURACY: {ctrl.summaryAccuracy}%
+		</div>
+		<div class="terminal-line terminal-blank" style="animation-delay: 800ms"></div>
+		<div class="terminal-line" style="animation-delay: 950ms">
+			<span class="terminal-prompt">&gt;</span> NEURAL LINK ESTABLISHED
+		</div>
+		<div class="terminal-line" style="animation-delay: 1100ms">
+			<span class="terminal-prompt">&gt;</span> ALL SYSTEMS OPERATIONAL
+		</div>
+	</div>
+
+	<div class="summary-actions fre-actions">
+		<button class="action-btn primary" onclick={() => goto(`${base}/`)}>BEGIN TRAINING</button>
+	</div>
+</div>
+{:else}
 <div class="summary">
 	<h2 class="heading">DEBRIEF</h2>
 
@@ -399,6 +449,7 @@
 		<button class="action-btn" onclick={() => goto(`${base}/`)}>HOME</button>
 	</div>
 </div>
+{/if}
 {:else}
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -444,9 +495,9 @@
 					<span class="corner-mark tr">+</span>
 					<span class="corner-mark bl">+</span>
 					<span class="corner-mark br">+</span>
-					{#if isBootSequence}
+					{#if capturedBoot}
 						<div class="boot-cursor" style="animation-delay: 0ms">█</div>
-						{#each guidanceLines as line, i}
+						{#each capturedLines as line, i}
 							{#if line === ''}
 								<div class="terminal-line terminal-blank" style="animation-delay: {(i + 1) * 400 + 600}ms"></div>
 							{:else}
@@ -456,7 +507,7 @@
 							{/if}
 						{/each}
 					{:else}
-						{#each guidanceLines as line, i}
+						{#each capturedLines as line, i}
 							{#if line === ''}
 								<div class="terminal-line terminal-blank" style="animation-delay: {i * 150}ms"></div>
 							{:else}
@@ -466,7 +517,7 @@
 							{/if}
 						{/each}
 					{/if}
-					<div class="terminal-continue" style="animation-delay: {isBootSequence ? guidanceLines.length * 400 + 1200 : guidanceLines.length * 150 + 300}ms">
+					<div class="terminal-continue" style="animation-delay: {capturedBoot ? capturedLines.length * 400 + 1200 : capturedLines.length * 150 + 300}ms">
 						TAP TO CONTINUE
 					</div>
 				</div>
@@ -481,7 +532,7 @@
 
 		<div class="answer-area" class:hidden={!ctrl.question} class:blocked={answersBlocked}>
 			<AnswerGrid
-				choices={(ctrl.needsTap || answersBlocked) ? ctrl.question.choices.map(c => ({ ...c, label: '—', name: '—' })) : ctrl.question.choices}
+				choices={(ctrl.needsTap || answersBlocked) ? ctrl.question.choices.map(c => ({ ...c, label: 'NA', name: 'UNAVAILABLE' })) : ctrl.question.choices}
 				onselect={handleSelectAnswer}
 					disabled={ctrl.needsTap || answersBlocked || !ctrl.hasPlayed || !!ctrl.selectedId}
 					offline={ctrl.needsTap || answersBlocked}
@@ -874,6 +925,34 @@
 		border-color: var(--accent);
 	}
 	.action-btn.primary:active { opacity: 0.85; }
+
+	/* ── FRE conclusion screen ── */
+	.fre-conclusion {
+		justify-content: center;
+	}
+	.fre-terminal {
+		position: relative;
+		width: 100%;
+		background: var(--base);
+		border: 1px solid var(--border-heavy);
+		padding: 2rem 1.5rem;
+		display: flex;
+		flex-direction: column;
+	}
+	.fre-score {
+		font-size: 5rem;
+		font-weight: 900;
+		font-family: var(--mono);
+		color: var(--accent);
+		letter-spacing: -0.02em;
+		line-height: 1;
+		text-align: center;
+		margin-bottom: 1.5rem;
+	}
+	.fre-actions {
+		opacity: 0;
+		animation: terminal-appear 0.3s ease-out 1.5s forwards;
+	}
 
 	/* Desktop: wider layout */
 	@media (min-width: 768px) {

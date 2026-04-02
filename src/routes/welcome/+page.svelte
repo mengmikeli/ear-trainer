@@ -19,9 +19,9 @@
 	const freConfig = {
 		...config,
 		onSessionEnd(state: import('$lib/state/schema').UserStateV4) {
+			// Mark FRE complete — navigation is handled by the debrief conclusion screen
 			state.settings.hasCompletedFRE = true;
 			saveStateV4(state);
-			goto(`${base}/`);
 		},
 	};
 </script>

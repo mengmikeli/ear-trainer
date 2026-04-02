@@ -2,7 +2,8 @@
  * First-Run Experience (FRE) quiz config.
  *
  * Boot sequence → 2 scripted questions (Octave, Perfect 5th) with guidance.
- * No stat recording, no debrief — marks FRE complete and navigates home.
+ * No stat recording — marks FRE complete via onSessionEnd, then shows
+ * a conclusion debrief screen before navigating home.
  */
 
 import type { QuizSessionConfig, UnifiedQuestion, PlaybackInfo, QuizPhase } from '../types';
@@ -51,9 +52,8 @@ export function createFREConfig(): QuizSessionConfig {
 		heading: 'INITIALIZING',
 		contentKinds: ['interval'],
 		sessionLength: 2,
-		skipDebrief: true,
-		/** Tells QuizSession this config uses boot sequence + auto-play on dismiss */
 		freMode: true,
+		autoPlay: false, // Component controls play via terminal dismiss
 
 		generateQuestion(_state: UserStateV4): UnifiedQuestion {
 			const q = SCRIPTED[Math.min(questionIndex, SCRIPTED.length - 1)];
@@ -94,29 +94,34 @@ export function createFREConfig(): QuizSessionConfig {
 
 		// No onAnswer — FRE doesn't record stats
 
+		/**
+		 * Guidance messages keyed by (questionNum, phase).
+		 *
+		 * questionNum mapping (after nextQuestion increments):
+		 *   0 = before any question (boot sequence, component create)
+		 *   1 = Q1 active (Octave)
+		 *   2 = Q2 active (Perfect 5th)
+		 */
 		getGuidanceMessage(questionNum: number, phase: QuizPhase, correct?: boolean): string | null {
-			// Boot sequence — shown before first question plays
+			// Boot sequence — component creates with questionNum=0, phase='idle'
 			if (phase === 'idle' && questionNum === 0) {
 				return 'BOOT:' + BOOT_LINES.join('\n');
 			}
-			// Pre-play guidance for Q2
-			if (phase === 'idle' && questionNum === 1) {
+			// Q1 idle: no guidance — play immediately after boot dismiss
+			// Q2 pre-play intro (questionNum=2 after nextQuestion increments)
+			if (phase === 'idle' && questionNum === 2) {
 				return 'SIGNAL ACQUIRED\n\nNEW FREQUENCY DETECTED\nANALYZING...';
 			}
-			// No overlay during awaiting_answer — let them pick freely
-			if (phase === 'awaiting_answer') {
-				return null;
-			}
-			// Post-answer feedback — Q1 (feedback_correct or feedback_wrong/result_mode)
-			if ((phase === 'feedback_correct') && questionNum === 1) {
+			// Post-answer feedback — Q1 (Octave)
+			if (phase === 'feedback_correct' && questionNum === 1) {
 				return 'OCTAVE DETECTED\n\nSAME NOTE — HIGHER PITCH\nSIGNAL CONFIRMED';
 			}
 			if ((phase === 'feedback_wrong' || phase === 'result_mode') && questionNum === 1) {
 				return 'SIGNAL MISMATCH\n\nTARGET WAS OCTAVE\nCALIBRATING...';
 			}
-			// Post-answer feedback — Q2
-			if ((phase === 'feedback_correct') && questionNum === 2) {
-				return 'PERFECT 5TH CONFIRMED\n\nNATURAL APTITUDE DETECTED\nSYSTEM READY';
+			// Post-answer feedback — Q2 (Perfect 5th)
+			if (phase === 'feedback_correct' && questionNum === 2) {
+				return 'PERFECT 5TH CONFIRMED\n\nSTRONG SIGNAL\nCALIBRATION COMPLETE';
 			}
 			if ((phase === 'feedback_wrong' || phase === 'result_mode') && questionNum === 2) {
 				return 'CLOSE ENOUGH\n\nTARGET WAS PERFECT 5TH\nCALIBRATION COMPLETE';
