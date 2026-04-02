@@ -112,4 +112,6 @@ export interface QuizSessionConfig {
 	getGuidanceMessage?: (questionNum: number, phase: QuizPhase, correct?: boolean) => string | null;
 	/** If true, skip debrief screen and call onSessionEnd immediately. */
 	skipDebrief?: boolean;
+	/** FRE mode: boot sequence, auto-play on dismiss, answer blocking during overlay. */
+	freMode?: boolean;
 }

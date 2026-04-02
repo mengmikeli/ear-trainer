@@ -205,21 +205,43 @@
 	const displayText = $derived(glitchText || `Q${ctrl.questionNum}`);
 
 	// ── Guidance message (FRE terminal overlay) ──────────────────────
+	const isFRE = $derived(!!sessionConfig.freMode);
 	const guidanceMsg = $derived.by((): string | null => {
 		if (!sessionConfig.getGuidanceMessage) return null;
 		const correct = feedbackState === 'correct' ? true : feedbackState === 'wrong' ? false : undefined;
 		return sessionConfig.getGuidanceMessage(ctrl.questionNum, ctrl.phase, correct);
 	});
-	const guidanceLines = $derived(guidanceMsg ? guidanceMsg.split('\n') : []);
+	const isBootSequence = $derived(guidanceMsg?.startsWith('BOOT:') ?? false);
+	const guidanceLines = $derived.by(() => {
+		if (!guidanceMsg) return [];
+		const text = isBootSequence ? guidanceMsg.slice(5) : guidanceMsg;
+		return text.split('\n');
+	});
 
 	// ── Guidance dismiss (tap terminal to continue) ──────────────────
 	let lastDismissedMsg = $state('');
 
 	function dismissGuidance() {
-		lastDismissedMsg = guidanceMsg ?? '';
+		const msg = guidanceMsg ?? '';
+		lastDismissedMsg = msg;
+
+		// In FRE mode: auto-play after dismissing idle/boot guidance
+		if (isFRE && (ctrl.phase === 'idle' || isBootSequence)) {
+			// Small delay to let overlay animate out before playing
+			setTimeout(() => handlePlay(), 100);
+		}
+		// In FRE mode: advance after feedback guidance
+		if (isFRE && (ctrl.phase === 'feedback_correct' || ctrl.phase === 'feedback_wrong')) {
+			setTimeout(() => {
+				// If this was the last question, nextQuestion triggers onSessionEnd via skipDebrief
+				handleNextQuestion();
+			}, 100);
+		}
 	}
 
 	const showTerminal = $derived(!!guidanceMsg && guidanceMsg !== lastDismissedMsg);
+	// Block answer grid when terminal overlay is visible (FRE mode)
+	const answersBlocked = $derived(isFRE && showTerminal);
 
 	// ── Lifecycle ─────────────────────────────────────────────────────
 	onMount(() => {
@@ -403,16 +425,33 @@
 				<!-- svelte-ignore a11y_click_events_have_key_events -->
 				<!-- svelte-ignore a11y_no_static_element_interactions -->
 				<div class="terminal-screen" onclick={dismissGuidance}>
-					{#each guidanceLines as line, i}
-						{#if line === ''}
-							<div class="terminal-line terminal-blank" style="animation-delay: {i * 150}ms"></div>
-						{:else}
-							<div class="terminal-line" style="animation-delay: {i * 150}ms">
-								<span class="terminal-prompt">&gt;</span> {line}
-							</div>
-						{/if}
-					{/each}
-					<div class="terminal-continue" style="animation-delay: {guidanceLines.length * 150 + 300}ms">
+					<span class="corner-mark tl">+</span>
+					<span class="corner-mark tr">+</span>
+					<span class="corner-mark bl">+</span>
+					<span class="corner-mark br">+</span>
+					{#if isBootSequence}
+						<div class="boot-cursor" style="animation-delay: 0ms">█</div>
+						{#each guidanceLines as line, i}
+							{#if line === ''}
+								<div class="terminal-line terminal-blank" style="animation-delay: {(i + 1) * 400 + 600}ms"></div>
+							{:else}
+								<div class="terminal-line boot-line" style="animation-delay: {(i + 1) * 400 + 600}ms">
+									<span class="terminal-prompt">&gt;</span> {line}
+								</div>
+							{/if}
+						{/each}
+					{:else}
+						{#each guidanceLines as line, i}
+							{#if line === ''}
+								<div class="terminal-line terminal-blank" style="animation-delay: {i * 150}ms"></div>
+							{:else}
+								<div class="terminal-line" style="animation-delay: {i * 150}ms">
+									<span class="terminal-prompt">&gt;</span> {line}
+								</div>
+							{/if}
+						{/each}
+					{/if}
+					<div class="terminal-continue" style="animation-delay: {isBootSequence ? guidanceLines.length * 400 + 1200 : guidanceLines.length * 150 + 300}ms">
 						TAP TO CONTINUE
 					</div>
 				</div>
@@ -425,12 +464,12 @@
 			</button>
 		</VizQuizLayout>
 
-		<div class="answer-area" class:hidden={!ctrl.question}>
+		<div class="answer-area" class:hidden={!ctrl.question} class:blocked={answersBlocked}>
 			<AnswerGrid
-				choices={ctrl.needsTap ? ctrl.question.choices.map(c => ({ ...c, label: 'NA', name: 'UNAVAILABLE' })) : ctrl.question.choices}
+				choices={(ctrl.needsTap || answersBlocked) ? ctrl.question.choices.map(c => ({ ...c, label: '—', name: '—' })) : ctrl.question.choices}
 				onselect={handleSelectAnswer}
-					disabled={ctrl.needsTap || !ctrl.hasPlayed || !!ctrl.selectedId}
-					offline={ctrl.needsTap}
+					disabled={ctrl.needsTap || answersBlocked || !ctrl.hasPlayed || !!ctrl.selectedId}
+					offline={ctrl.needsTap || answersBlocked}
 					correctId={ctrl.selectedId ? ctrl.question.correctAnswer.id : null}
 					selectedId={ctrl.selectedId}
 					onCorrectClick={ctrl.selectedId ? (inResultMode ? handleNextQuestion : handleSkipCorrect) : null}
@@ -656,12 +695,47 @@
 	.terminal-screen {
 		cursor: pointer;
 	}
+	/* ── Corner markers (Marathon aesthetic) ── */
+	.corner-mark {
+		position: absolute;
+		font-family: var(--mono);
+		font-size: 0.5rem;
+		font-weight: 400;
+		color: var(--accent);
+		opacity: 0.4;
+		line-height: 1;
+		pointer-events: none;
+	}
+	.corner-mark.tl { top: 0.6rem; left: 0.6rem; }
+	.corner-mark.tr { top: 0.6rem; right: 0.6rem; }
+	.corner-mark.bl { bottom: 0.6rem; left: 0.6rem; }
+	.corner-mark.br { bottom: 0.6rem; right: 0.6rem; }
+	/* ── Boot sequence cursor ── */
+	.boot-cursor {
+		font-family: var(--mono);
+		font-size: 0.5rem;
+		color: var(--accent);
+		line-height: 1.8;
+		animation: cursor-blink 0.6s step-end infinite;
+		margin-bottom: 0.25rem;
+	}
+	@keyframes cursor-blink {
+		0%, 100% { opacity: 1; }
+		50% { opacity: 0; }
+	}
+	.boot-line {
+		/* Slower typewriter appearance for boot lines */
+	}
 	.answer-area {
 		width: 100%;
 		margin-top: auto;
 	}
 	.answer-area.hidden {
 		visibility: hidden;
+	}
+	.answer-area.blocked {
+		opacity: 0.3;
+		pointer-events: none;
 	}
 
 	/* Summary screen */

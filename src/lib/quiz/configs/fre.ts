@@ -1,7 +1,7 @@
 /**
  * First-Run Experience (FRE) quiz config.
  *
- * Exactly 2 scripted questions (Octave, Perfect 5th) with guidance messages.
+ * Boot sequence → 2 scripted questions (Octave, Perfect 5th) with guidance.
  * No stat recording, no debrief — marks FRE complete and navigates home.
  */
 
@@ -31,6 +31,17 @@ function buildChoices(correctId: string) {
 	return all.map((i) => ({ id: i.id, name: i.name, label: i.id }));
 }
 
+// ─── Boot sequence lines ────────────────────────────────────────────────────
+
+const BOOT_LINES = [
+	'SYSTEM CHECK...',
+	'AUDIO ENGINE: ONLINE',
+	'FREQUENCY ANALYZER: CALIBRATED',
+	'EAR TRAINER v4.0',
+	'',
+	'READY',
+];
+
 // ─── Config factory ─────────────────────────────────────────────────────────
 
 export function createFREConfig(): QuizSessionConfig {
@@ -41,6 +52,8 @@ export function createFREConfig(): QuizSessionConfig {
 		contentKinds: ['interval'],
 		sessionLength: 2,
 		skipDebrief: true,
+		/** Tells QuizSession this config uses boot sequence + auto-play on dismiss */
+		freMode: true,
 
 		generateQuestion(_state: UserStateV4): UnifiedQuestion {
 			const q = SCRIPTED[Math.min(questionIndex, SCRIPTED.length - 1)];
@@ -82,26 +95,31 @@ export function createFREConfig(): QuizSessionConfig {
 		// No onAnswer — FRE doesn't record stats
 
 		getGuidanceMessage(questionNum: number, phase: QuizPhase, correct?: boolean): string | null {
+			// Boot sequence — shown before first question plays
 			if (phase === 'idle' && questionNum === 0) {
-				return 'SYSTEM INITIALIZING\n\nLISTEN CAREFULLY\nIDENTIFY THE INTERVAL\nTAP PLAY TO BEGIN';
+				return 'BOOT:' + BOOT_LINES.join('\n');
 			}
+			// Pre-play guidance for Q2
 			if (phase === 'idle' && questionNum === 1) {
-				return 'SIGNAL ACQUIRED\n\nNEW FREQUENCY DETECTED\nTAP PLAY TO ANALYZE';
+				return 'SIGNAL ACQUIRED\n\nNEW FREQUENCY DETECTED\nANALYZING...';
 			}
+			// No overlay during awaiting_answer — let them pick freely
 			if (phase === 'awaiting_answer') {
-				return 'ANALYZING\n\nSELECT MATCHING FREQUENCY';
+				return null;
 			}
+			// Post-answer feedback — Q1
 			if (phase === 'feedback_correct' && questionNum === 1) {
-				return 'OCTAVE DETECTED\n\nSAME NOTE -- HIGHER PITCH\nSIGNAL CONFIRMED';
+				return 'OCTAVE DETECTED\n\nSAME NOTE — HIGHER PITCH\nSIGNAL CONFIRMED';
 			}
 			if (phase === 'feedback_wrong' && questionNum === 1) {
-				return 'SIGNAL MISMATCH\n\nTARGET WAS OCTAVE\nCALIBRATING';
+				return 'SIGNAL MISMATCH\n\nTARGET WAS OCTAVE\nCALIBRATING...';
 			}
+			// Post-answer feedback — Q2
 			if (phase === 'feedback_correct' && questionNum === 2) {
 				return 'PERFECT 5TH CONFIRMED\n\nNATURAL APTITUDE DETECTED\nSYSTEM READY';
 			}
 			if (phase === 'feedback_wrong' && questionNum === 2) {
-				return 'SIGNAL MISMATCH\n\nTARGET WAS PERFECT 5TH\nCALIBRATION COMPLETE';
+				return 'CLOSE ENOUGH\n\nTARGET WAS PERFECT 5TH\nCALIBRATION COMPLETE';
 			}
 			return null;
 		},
