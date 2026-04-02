@@ -480,6 +480,7 @@
 	</div>
 
 	{#if ctrl.question}
+		<div class="quiz-panels">
 		<VizQuizLayout
 			mode={vizMode}
 			phase={ctrl.vizPhase}
@@ -546,6 +547,7 @@
 					onWrongClick={inResultMode ? handleReplayInResult : null}
 				/>
 			</div>
+		</div>
 	{/if}
 </div>
 {/if}
@@ -795,6 +797,10 @@
 	.boot-line {
 		/* Slower typewriter appearance for boot lines */
 	}
+	/* On mobile: transparent wrapper, just passes through */
+	.quiz-panels {
+		display: contents;
+	}
 	.answer-area {
 		width: 100%;
 		margin-top: auto;
@@ -969,35 +975,41 @@
 
 	/* Desktop + landscape phone: two-column quiz & debrief */
 	@media (min-width: 768px), (orientation: landscape) and (min-width: 568px) {
+		/* Quiz stays column — heading + top bar above, panels below */
 		.quiz {
+			flex-direction: column;
+			gap: 1rem;
+		}
+		/* Two-column container for viz + answers */
+		.quiz-panels {
+			display: flex;
 			flex-direction: row;
-			flex-wrap: wrap;
-			align-items: flex-start;
+			align-items: stretch;
 			gap: 1.5rem;
+			flex: 1;
+			min-height: 0;
 		}
-		.heading {
-			width: 100%;
-			flex-shrink: 0;
-		}
-		.top {
-			width: 100%;
-			flex-shrink: 0;
-		}
-		/* VizQuizLayout root — left, takes more space */
-		.quiz :global(.canvas-frame) {
+		/* VizQuizLayout — left, wider */
+		.quiz-panels :global(.canvas-frame) {
 			flex: 3;
 			min-width: 0;
 		}
-		/* Answer grid — right, stacked vertically, narrower */
-		.answer-area {
+		/* Answer grid — right, height-matched to viewpod */
+		.quiz-panels .answer-area {
 			flex: 2;
 			min-width: 0;
 			margin-top: 0;
-			align-self: center;
+			display: flex;
+			flex-direction: column;
 		}
-		/* Stack answer cards in a single column */
-		.answer-area :global(.grid) {
+		.quiz-panels .answer-area.hidden {
+			visibility: hidden;
+		}
+		/* Stack answer cards single-column, distribute evenly */
+		.quiz-panels .answer-area :global(.grid) {
 			grid-template-columns: 1fr;
+			flex: 1;
+			align-content: space-evenly;
 		}
 		.debrief-panels {
 			display: grid;
