@@ -1,54 +1,76 @@
 <script lang="ts">
-	import type { ScaleDef } from '$lib/definitions/scales';
-	import type { LegacyScaleState } from '$lib/state/compat';
-
 	interface Props {
-		def: ScaleDef;
-		state: LegacyScaleState;
+		id: string;
+		label: string;
+		name: string;
+		tier: number;
+		unlocked: boolean;
+		enabled: boolean;
+		accuracy: number;
+		attempts: number;
+		isNew: boolean;
+		masteryDots?: string;
+		masteryColor?: string;
+		playing?: boolean;
 		ontoggle?: (id: string) => void;
 		onplay?: (id: string) => void;
-		playing?: boolean;
 	}
-	let { def, state: sstate, ontoggle, onplay, playing = false }: Props = $props();
-
-	const accuracy = $derived(sstate.attempts > 0 ? Math.round((sstate.correct / sstate.attempts) * 100) : 0);
+	let {
+		id,
+		label,
+		name,
+		tier,
+		unlocked,
+		enabled,
+		accuracy,
+		attempts,
+		isNew = false,
+		masteryDots = '',
+		masteryColor = '',
+		playing = false,
+		ontoggle,
+		onplay,
+	}: Props = $props();
 
 	let pendingFlip = $state(false);
 	let pressed = $state(false);
-	const isOff = $derived(pressed || pendingFlip ? sstate.enabled : !sstate.enabled);
+	const isOff = $derived(pressed || pendingFlip ? enabled : !enabled);
 
 	function handleToggle() {
 		if (!ontoggle) return;
 		pendingFlip = true;
 		pressed = false;
 		requestAnimationFrame(() => {
-			ontoggle(def.id);
+			ontoggle(id);
 			pendingFlip = false;
 		});
 	}
 </script>
 
-<div class="card" class:locked={!sstate.unlocked} class:disabled={sstate.unlocked && !sstate.enabled} class:playing
-	onclick={() => { if (sstate.unlocked && onplay) onplay(def.id); }}
-	role={sstate.unlocked && onplay ? 'button' : undefined}
-	tabindex={sstate.unlocked && onplay ? 0 : undefined}
+<div class="card" class:locked={!unlocked} class:disabled={unlocked && !enabled} class:playing
+	onclick={() => { if (unlocked && onplay) onplay(id); }}
+	role={unlocked && onplay ? 'button' : undefined}
+	tabindex={unlocked && onplay ? 0 : undefined}
 >
-	<div class="card-fill" style="width: {sstate.unlocked && sstate.enabled ? accuracy : 0}%"></div>
+	<div class="card-fill" style="width: {unlocked && enabled ? accuracy : 0}%"></div>
 	<div class="card-content">
 		<div class="id">
-			{sstate.unlocked ? def.label : 'NA'}
-		</div>
-		<div class="info">
-			<div class="name">{def.name}</div>
-			{#if sstate.unlocked && sstate.attempts === 0}
-				<div class="stats new">NEW</div>
-			{:else if sstate.unlocked}
-				<div class="stats"><span class="stat-tag">ACC</span><span class="stat-value">{accuracy}%</span><span class="stat-tag">Q</span><span class="stat-value">{sstate.attempts}</span></div>
-			{:else}
-				<div class="stats"><span class="tier-tag">T{def.tier}</span> LOCKED</div>
+			{unlocked ? label : 'NA'}
+			{#if masteryDots}
+				<span class="mastery-dots" style="color: {masteryColor}">{masteryDots}</span>
 			{/if}
 		</div>
-		{#if sstate.unlocked && ontoggle}
+		<div class="info">
+			<div class="name">{name}</div>
+			{#if unlocked && isNew}
+				<div class="stats new">NEW</div>
+			{:else if unlocked}
+				<div class="stats"><span class="stat-tag">ACC</span><span class="stat-value">{accuracy}%</span><span class="stat-tag">Q</span><span class="stat-value">{attempts}</span></div>
+			{:else}
+				<div class="stats"><span class="tier-tag">T{tier}</span> LOCKED</div>
+			{/if}
+		</div>
+		{#if unlocked && ontoggle}
 			<button class="toggle" class:toggle-off={isOff}
 				onpointerdown={(e) => { e.stopPropagation(); pressed = true; }}
 				onpointerup={() => pressed = false}
@@ -56,8 +78,8 @@
 				onclick={(e) => { e.stopPropagation(); handleToggle(); }}>
 				{isOff ? 'OFF' : 'ON'}
 			</button>
-		{:else if sstate.unlocked}
-			<div class="acc-value">{sstate.attempts > 0 ? `${accuracy}%` : '--'}</div>
+		{:else if unlocked}
+			<div class="acc-value">{attempts > 0 ? `${accuracy}%` : '--'}</div>
 		{/if}
 	</div>
 </div>
@@ -93,6 +115,10 @@
 		transform: translateY(-5px);
 	}
 	.locked .id { color: var(--hot); font-size: 2rem; }
+	.mastery-dots {
+		display: block; font-size: 0.5rem; line-height: 1;
+		letter-spacing: 0.1em; margin-top: 2px;
+	}
 	.name { font-weight: 400; font-size: 0.85rem; letter-spacing: 0.02em; font-family: var(--font-display); }
 	.stats { font-size: 0.4rem; color: var(--text-secondary); font-weight: 600; font-family: var(--mono); display: flex; align-items: center; gap: 2px; opacity: 0.7; }
 	.stat-tag {
