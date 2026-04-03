@@ -74,7 +74,7 @@
 		font-size: 3rem;
 		font-weight: 400;
 		letter-spacing: 0.05em;
-		color: var(--text-primary);
+		color: var(--accent);
 		text-transform: uppercase;
 		line-height: 1;
 	}
