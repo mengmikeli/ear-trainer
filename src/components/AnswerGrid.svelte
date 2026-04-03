@@ -60,12 +60,6 @@
 </div>
 
 <style>
-	.grid-container { width: 100%; }
-	.grid-label {
-		font-family: var(--mono); font-size: 0.45rem;
-		color: var(--accent); opacity: 0.4;
-		letter-spacing: 0.15em; margin-bottom: 0.5rem;
-	}
 	.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; width: 100%; }
 	.answer {
 		position: relative;
