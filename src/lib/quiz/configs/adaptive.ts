@@ -291,6 +291,13 @@ export function createAdaptiveConfig(state: UserStateV4): QuizSessionConfig {
 			noteTimeouts = [];
 		},
 
+		onSessionEnd() {
+			stopDrone();
+			drone = null;
+			noteTimeouts.forEach(clearTimeout);
+			noteTimeouts = [];
+		},
+
 		generateQuestion(s: UserStateV4): UnifiedQuestion {
 			const unlockedKinds = getUnlockedKinds(s);
 			const candidates = buildCandidates(s, unlockedKinds);

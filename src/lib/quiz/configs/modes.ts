@@ -92,6 +92,13 @@ export function createModeConfig(state: UserStateV4): QuizSessionConfig {
 			noteTimeouts = [];
 		},
 
+		onSessionEnd() {
+			stopDrone();
+			drone = null;
+			noteTimeouts.forEach(clearTimeout);
+			noteTimeouts = [];
+		},
+
 		generateQuestion(s: UserStateV4): UnifiedQuestion {
 			const enabled = getEnabledModesV4(s);
 			if (enabled.length === 0) throw new Error('No enabled modes');
