@@ -6,6 +6,7 @@
 	import { SCALES } from '$lib/definitions/scales';
 	import { MODES } from '$lib/definitions/modes';
 	import { playInterval, playChord, playScale } from '$lib/audio/playback';
+	import { SCALE_TEMPO, MODE_TEMPO } from '$lib/audio/tempo';
 	import { isModeMastered, buildIntervalState, buildChordState, buildScaleState, buildModeState } from '$lib/state/compat';
 	import { getStats, getStatsByKind, aggregateStats } from '$lib/state/stats';
 
@@ -174,8 +175,8 @@
 		const def = SCALES.find(d => d.id === id);
 		if (!def) return;
 		playingId = id;
-		playScale(60, def.intervals, state.settings.toneType, 150);
-		const dur = def.intervals.length * 150 + 200;
+		playScale(60, def.intervals, state.settings.toneType, SCALE_TEMPO);
+		const dur = def.intervals.length * SCALE_TEMPO + 200;
 		setTimeout(() => { playingId = null; }, dur);
 	}
 
@@ -201,8 +202,8 @@
 		const def = MODES.find(d => d.id === id);
 		if (!def) return;
 		playingId = id;
-		playScale(60, def.intervals, state.settings.toneType, 150);
-		const dur = def.intervals.length * 150 + 200;
+		playScale(60, def.intervals, state.settings.toneType, MODE_TEMPO);
+		const dur = def.intervals.length * MODE_TEMPO + 200;
 		setTimeout(() => { playingId = null; }, dur);
 	}
 

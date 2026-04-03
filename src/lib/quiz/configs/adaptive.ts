@@ -24,9 +24,7 @@ import { MODES, type ModeDef } from '$lib/definitions/modes';
 import { buildIntervalState, isModeMastered } from '$lib/state/compat';
 import { canAccess, getUserTier } from '$lib/features/gate';
 import type { PlayMode } from '$lib/state/schema';
-
-const SCALE_TEMPO = 150;
-const MODE_TEMPO = 180;
+import { SCALE_TEMPO, MODE_TEMPO } from '$lib/audio/tempo';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 

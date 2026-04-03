@@ -14,7 +14,8 @@ import { startDrone, stopDrone, forceStopDrone, type DroneHandle } from '$lib/au
 import { responseQuality, calculateSm2 } from '$lib/learning/sm2';
 import { MODES, type ModeDef } from '$lib/definitions/modes';
 
-const TEMPO = 180;
+import { MODE_TEMPO } from '$lib/audio/tempo';
+const TEMPO = MODE_TEMPO;
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 

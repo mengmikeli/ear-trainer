@@ -12,7 +12,8 @@ import { playScale } from '$lib/audio/playback';
 import { responseQuality, calculateSm2 } from '$lib/learning/sm2';
 import { SCALES, type ScaleDef } from '$lib/definitions/scales';
 
-const TEMPO = 180;
+import { SCALE_TEMPO } from '$lib/audio/tempo';
+const TEMPO = SCALE_TEMPO;
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
