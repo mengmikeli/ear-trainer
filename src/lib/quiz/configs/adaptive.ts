@@ -456,7 +456,7 @@ export function createAdaptiveConfig(state: UserStateV4): QuizSessionConfig {
 					}, droneLeadIn));
 				});
 				const notesDur = q.playback.intervals.length * tempo + 400;
-				noteTimeouts.push(setTimeout(() => { stopDrone(); drone = null; }, notesDur + 800));
+				noteTimeouts.push(setTimeout(() => { stopDrone(); drone = null; }, notesDur + 300));
 				return { durationMs: droneLeadIn + notesDur, notes: q.playback.intervals.map((s: number) => q.rootNote + s) };
 			}
 

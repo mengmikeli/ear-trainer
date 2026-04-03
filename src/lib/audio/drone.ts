@@ -138,7 +138,7 @@ export async function startDrone(midi: number): Promise<DroneHandle> {
 			const currentGain = droneGain.gain.value;
 			droneGain.gain.setValueAtTime(currentGain, t);
 			droneGain.gain.setValueAtTime(currentGain, fadeStart);
-			droneGain.gain.linearRampToValueAtTime(0, fadeStart + 0.6);
+			droneGain.gain.linearRampToValueAtTime(0, fadeStart + 0.3);
 			// DISCONNECT from master first (removes from output graph),
 			// THEN stop oscillators. osc.stop() while connected to
 			// destination causes a click at the waveform's current phase.
@@ -165,7 +165,7 @@ export async function startDrone(midi: number): Promise<DroneHandle> {
 						/* ok */
 					}
 				}, 100);
-			}, 700);
+			}, 400);
 			if (activeDrone === handle) activeDrone = null;
 			// NOTE: No scheduleSuspend() — AudioContext stays alive
 			scheduleRelease();

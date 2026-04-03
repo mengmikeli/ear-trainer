@@ -145,7 +145,7 @@ export function createModeConfig(state: UserStateV4): QuizSessionConfig {
 
 			// Drone management
 			const droneLeadIn = 400;
-			const droneTail = 800;
+			const droneTail = 300; // short tail — just enough to let last note ring
 
 			stopDrone();
 			drone = null;
