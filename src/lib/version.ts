@@ -1,4 +1,4 @@
-export const APP_VERSION = '4.1';
+export const APP_VERSION = '4.2';
 
 // Vite `define` injects this at build time -- declared to satisfy TypeScript
 declare const __BUILD_HASH__: string;

@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { page } from '$app/state';
+	import { base } from '$app/paths';
 	import '../app.css';
 	import BottomNav from '../components/BottomNav.svelte';
 	import SideNav from '../components/SideNav.svelte';
@@ -12,6 +14,22 @@
 	let { children } = $props();
 
 	let showUpdate = $state(false);
+
+	// Home page: hide nav entirely (GO is the only action)
+	const isHome = $derived(() => {
+		const path = page.url?.pathname ?? '/';
+		const homePath = base || '/';
+		return path === homePath || path === homePath + '/';
+	});
+
+	// Onboarding: show nav but disabled (visual presence, no function)
+	const isOnboarding = $derived(() => {
+		const path = page.url?.pathname ?? '/';
+		return path.includes('/welcome');
+	});
+
+	// Hide nav on home, disable nav during onboarding
+	const disableNav = $derived(() => isOnboarding());
 
 	function applyUpdate() {
 		showUpdate = false;
@@ -53,12 +71,21 @@
 		document.addEventListener('visibilitychange', handleVisibility);
 
 		// Detect service worker updates — show prompt instead of auto-reloading
+		// Delay before showing banner to avoid flash on fresh loads
 		if ('serviceWorker' in navigator) {
 			navigator.serviceWorker.getRegistration().then((reg) => {
 				if (!reg) return;
+
+				function showUpdateBanner() {
+					// Don't show on home page or onboarding — let SW update silently
+					if (isHome() || isOnboarding()) return;
+					// Small delay to avoid flash when loading a just-deployed version
+					setTimeout(() => { showUpdate = true; }, 3000);
+				}
+
 				// If a new SW is already waiting (installed while tab was open)
 				if (reg.waiting) {
-					showUpdate = true;
+					showUpdateBanner();
 				}
 				// Watch for future updates
 				reg.addEventListener('updatefound', () => {
@@ -66,7 +93,7 @@
 					if (!newSw) return;
 					newSw.addEventListener('statechange', () => {
 						if (newSw.state === 'installed' && navigator.serviceWorker.controller) {
-							showUpdate = true;
+							showUpdateBanner();
 						}
 					});
 				});
@@ -80,20 +107,20 @@
 </script>
 
 <div class="app-shell">
-	<!-- Desktop sidebar — hidden on mobile via CSS -->
-	<div class="sidebar-slot">
+	<!-- Desktop sidebar — disabled during onboarding -->
+	<div class="sidebar-slot" class:nav-disabled={disableNav()}>
 		<SideNav />
 	</div>
 
 	<div class="app-main scanlines">
-		{#if showUpdate}
+		{#if showUpdate && !isHome() && !isOnboarding()}
 			<TickerBanner message="UPDATE AVAILABLE -- TAP TO RELOAD" onclick={applyUpdate} />
 		{/if}
 		<main class="content">
 			{@render children()}
 		</main>
-		<!-- Mobile bottom nav — hidden on desktop via CSS -->
-		<div class="bottomnav-slot">
+		<!-- Mobile bottom nav — disabled during onboarding -->
+		<div class="bottomnav-slot" class:nav-disabled={disableNav()}>
 			<BottomNav />
 		</div>
 	</div>
@@ -132,6 +159,12 @@
 
 	.bottomnav-slot {
 		display: block;
+	}
+
+	/* Onboarding: nav visible but non-interactive */
+	.nav-disabled {
+		pointer-events: none;
+		opacity: 0.3;
 	}
 
 	/* ── Desktop (≥768px): sidebar visible, bottom nav hidden ── */

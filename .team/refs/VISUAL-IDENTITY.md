@@ -1,6 +1,9 @@
-# Visual Identity — Ear Trainer
+# Visual Identity — Lissa
 
-*This is a living document. Updated as the design evolves.*
+*Formerly "Ear Trainer." Renamed to Lissa — short for Lissajous, the mathematical curves behind the app's visual identity. Also the name of the training AI who guides you.*
+
+## Brand Name
+**LISSA** — always uppercase in UI. Short for Lissajous. She's the AI, the brand, the voice of the terminal.
 
 ## Design Language
 Marathon "Graphic Realism" — inspired by Bungie's Marathon reboot and the Designers Republic aesthetic (Warp Records, Wipeout). The app feels like a training interface from a fictional audio corporation, not an educational toy.
@@ -84,4 +87,5 @@ Private Use Area characters available:
 
 ### References to review
 - timeline.bumgie.org (Mike, 2026-04-01 — pending review)
+- tauceti.world/explorer — Marathon fan project, excellent terminal HUD aesthetic. Acid green on black, wireframe globe as hero, full-width coordinate readout bars, color-blocked nav strip. (Noki, 2026-04-02)
 - (add more as they come)
