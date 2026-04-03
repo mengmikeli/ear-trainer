@@ -19,13 +19,17 @@ Marathon "Graphic Realism" — inspired by Bungie's Marathon reboot and the Desi
 | Token | Hex | Use |
 |-------|-----|-----|
 | `--base` | #0A0A0A | Background (deep charcoal, not pure black) |
-| `--surface` | #1A1A1A | Cards, panels |
-| `--text-primary` | #E8E8E8 | Primary text |
+| `--surface` | #0D0D0D | Elevated surface (cards, panels) |
+| `--surface-raised` | #1A1A1A | Raised surface (modals, popovers) |
+| `--border` | #1F1F1F | Subtle borders |
+| `--text-primary` | #F0F0F0 | Primary text |
 | `--text-secondary` | #666666 | Secondary text |
-| `--accent` | #C2FE0C | Interactive elements, highlights (neon green) |
-| `--marathon-blue` | (check CSS) | Labels, borders, navigation active state |
-| `--correct` | #00FF88 | Correct feedback |
-| `--hot` | #FF3355 | Wrong feedback, errors |
+| `--accent` | #C2FE0C | Interactive elements, highlights (acid yellow-green) |
+| `--accent-dim` | #C2FE0C15 | Faint accent wash |
+| `--marathon-blue` | #3A2CFF | Labels, borders, navigation active state (electric indigo) |
+| `--correct` | #00FF88 | Correct feedback (mint green — distinct from accent) |
+| `--hot` | #ED174F | Wrong feedback, errors, danger (spanish crimson) |
+| `--wrong` | #ED174F | Alias for hot |
 | `--border-heavy` | #333333 | Card borders, dividers |
 
 ## Fonts

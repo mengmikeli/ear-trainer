@@ -24,7 +24,7 @@
 
 :root {
 	/* Marathon palette */
-	--base: #000000;
+	--base: #0A0A0A;
 	--surface: #0D0D0D;
 	--surface-raised: #1A1A1A;
 	--border: #1F1F1F;
@@ -37,16 +37,32 @@
 	--marathon-blue: #3A2CFF;   /* electric indigo — QUATERNARY / signal */
 
 	/* Semantic */
-	--correct: #C2FE0C;         /* acid green = correct */
+	--correct: #00FF88;         /* mint green = correct (distinct from accent) */
 	--wrong: #ED174F;           /* crimson = wrong */
 
 	/* Text */
 	--text-primary: #F0F0F0;
 	--text-secondary: #666666;
 
+	/* Type scale */
+	--text-xs: 0.35rem;         /* stat tags, smallest labels */
+	--text-sm: 0.45rem;         /* buttons, counters, mono labels */
+	--text-md: 0.6rem;          /* section labels, nav items */
+	--text-lg: 0.85rem;         /* card names, body text */
+	--text-xl: 1.5rem;          /* sub-headings, card IDs */
+	--text-2xl: 3rem;           /* page headings */
+	--text-3xl: 4rem;           /* score display */
+	--text-4xl: 6.5rem;         /* home title */
+
+	/* Spacing scale */
+	--space-xs: 0.25rem;
+	--space-sm: 0.5rem;
+	--space-md: 0.75rem;
+	--space-lg: 1.25rem;
+	--space-xl: 2rem;
+
 	/* Fonts */
-	--font-display: 'Maratype', 'Barlow Condensed', sans-serif;  /* titles, headings */
-	--font: 'Inter', system-ui, -apple-system, sans-serif;    /* body text */
+	--font-display: 'Maratype', 'Barlow Condensed', sans-serif;  /* titles, headings, body */
 	--mono: 'Matrix Mono', 'JetBrains Mono', monospace;  /* numbers, IDs, code */
 }
 
@@ -66,7 +82,7 @@ html, body {
 	height: 100%;
 	background: var(--base);
 	color: var(--text-primary);
-	font-family: var(--font);
+	font-family: var(--font-display);
 	font-size: 16px;
 	line-height: 1.4;
 	-webkit-font-smoothing: antialiased;
@@ -172,3 +188,40 @@ button {
 	);
 	opacity: 0.2;
 }
+
+/* ── Shared heading ── */
+.page-heading {
+	font-size: var(--text-2xl);
+	font-weight: 400;
+	letter-spacing: 0.12em;
+	color: var(--text-primary);
+	padding-bottom: var(--space-sm);
+	text-transform: uppercase;
+	font-family: var(--font-display);
+	width: 100%;
+	margin-bottom: 0;
+}
+
+/* ── Shared button system ── */
+.btn {
+	font-family: var(--mono);
+	font-weight: 900;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	border: 1px solid var(--border-heavy);
+	background: transparent;
+	cursor: pointer;
+	transition: all 0.15s;
+}
+.btn-sm { font-size: var(--text-xs); padding: 0 6px; line-height: 1.6; }
+.btn-md { font-size: var(--text-sm); padding: var(--space-sm) var(--space-md); }
+.btn-lg { font-size: var(--text-sm); padding: var(--space-md); flex: 1; text-align: center; }
+
+.btn-primary { background: var(--accent); color: var(--base); border-color: var(--accent); }
+.btn-primary:active { opacity: 0.85; }
+.btn-secondary { color: var(--text-primary); }
+.btn-secondary:active { background: var(--surface-raised); }
+.btn-danger { color: var(--hot); border-color: var(--hot); }
+.btn-toggle { color: var(--text-secondary); }
+.btn-toggle.active { color: var(--correct, #00FF88); border-color: var(--correct, #00FF88); }
+.btn-toggle:not(.active) { opacity: 0.6; }
