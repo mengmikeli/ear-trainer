@@ -354,22 +354,22 @@ function migrateSessionHistory(raw: any): SessionRecord[] {
 function patchMissingDefinitions(state: UserStateV4): void {
 	for (const def of INTERVALS) {
 		if (!state.definitions.intervals[def.id]) {
-			state.definitions.intervals[def.id] = defaultDefinitionState(def.tier === 1);
+			state.definitions.intervals[def.id] = defaultDefinitionState(def.pack === 'beginner');
 		}
 	}
 	for (const def of CHORDS) {
 		if (!state.definitions.chords[def.id]) {
-			state.definitions.chords[def.id] = defaultDefinitionState(def.tier === 1);
+			state.definitions.chords[def.id] = defaultDefinitionState(def.pack === 'beginner');
 		}
 	}
 	for (const def of SCALES) {
 		if (!state.definitions.scales[def.id]) {
-			state.definitions.scales[def.id] = defaultDefinitionState(def.tier === 1);
+			state.definitions.scales[def.id] = defaultDefinitionState(def.pack === 'beginner');
 		}
 	}
 	for (const def of MODES) {
 		if (!state.definitions.modes[def.id]) {
-			state.definitions.modes[def.id] = defaultDefinitionState(def.tier === 1);
+			state.definitions.modes[def.id] = defaultDefinitionState(def.pack === 'beginner');
 		}
 	}
 }
