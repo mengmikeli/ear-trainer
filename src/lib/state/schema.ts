@@ -94,8 +94,10 @@ export interface Settings {
 	activeContent: 'intervals' | 'chords' | 'scales' | 'modes' | 'adaptive';
 	/** Bypass mastery gates and show lab link. */
 	devMode?: boolean;
-	/** True if user has purchased Pro (unlocks gated content tiers). */
+	/** True if user has purchased Pro (unlocks gated content tiers). @deprecated Use unlockedPacks instead. */
 	proUnlocked?: boolean;
+	/** Content packs the user has unlocked (beginner always free). */
+	unlockedPacks?: ContentPack[];
 	/** Enable experimental visualisation enhancements. */
 	superchargeViz?: boolean;
 	/** True after completing the first-run experience. */

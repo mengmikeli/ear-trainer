@@ -47,6 +47,7 @@ export function createDefaultStateV4(): UserStateV4 {
 			enabledModes: { ascending: true, descending: false, harmonic: false },
 			enabledVoicings: { root: true, first: false, second: false },
 			activeContent: 'intervals',
+			unlockedPacks: [],
 			hasCompletedFRE: false,
 		},
 		globalStats: {

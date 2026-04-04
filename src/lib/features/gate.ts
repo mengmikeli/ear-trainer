@@ -38,15 +38,28 @@ export function canAccess(id: FeatureId, userTier: Tier = 'free', devMode: boole
   return userTier === 'pro';
 }
 
+/** Check if a specific content pack is unlocked for this user. Beginner is always free. */
+export function isPackUnlocked(pack: ContentPack, settings: { unlockedPacks?: ContentPack[]; devMode?: boolean }): boolean {
+  if (pack === 'beginner') return true;
+  if (settings.devMode) return true;
+  const packs = settings.unlockedPacks ?? [];
+  // 'advanced' grants access to ALL packs
+  if (packs.includes('advanced')) return true;
+  return packs.includes(pack);
+}
+
 /** Check if a content pack is accessible for the given user. Beginner is always free. */
 export function canAccessPack(pack: ContentPack, userTier: Tier, devMode: boolean): boolean {
   if (pack === 'beginner') return true;
+  if (devMode) return true;
   return canAccess(`pack:${pack}`, userTier, devMode);
 }
 
-export function getUserTier(settings: { proUnlocked?: boolean; devMode?: boolean }): Tier {
-  if (settings.devMode) return 'pro'; // dev mode = pro access
-  return settings.proUnlocked ? 'pro' : 'free';
+export function getUserTier(settings: { unlockedPacks?: ContentPack[]; devMode?: boolean; proUnlocked?: boolean }): Tier {
+  if (settings.devMode) return 'pro';
+  if (settings.proUnlocked) return 'pro'; // legacy compat
+  if ((settings.unlockedPacks ?? []).length > 0) return 'pro';
+  return 'free';
 }
 
 export function isProFeature(id: FeatureId): boolean {

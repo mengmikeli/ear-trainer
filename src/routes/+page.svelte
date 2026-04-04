@@ -2,20 +2,12 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { base } from '$app/paths';
-	import { loadStateV4, saveStateV4 } from '$lib/state/storage';
-	import { checkTierUnlockV4, getNextUnlockProgress } from '$lib/state/progression';
-	import { getStatsForDef, aggregateStats, getStatsByKind } from '$lib/state/stats';
+	import { loadStateV4 } from '$lib/state/storage';
+	import { aggregateStats, getStatsByKind } from '$lib/state/stats';
 	import { warmUpAudio } from '$lib/audio/context';
-	import { isContentKindAvailable } from '$lib/features/content-access';
-	import { INTERVALS } from '$lib/definitions/intervals';
-	import { CHORDS } from '$lib/definitions/chords';
-	import { SCALES } from '$lib/definitions/scales';
-	import { MODES } from '$lib/definitions/modes';
 	import { VERSION_STRING } from '$lib/version';
 	import type { UserStateV4 } from '$lib/state/schema';
 	import LissajousRing from '../components/LissajousRing.svelte';
-	// import ChladniBackground from '../components/ChladniBackground.svelte'; // disabled — perf not optimized yet
-	// import MiniLissajous from '../components/MiniLissajous.svelte'; // disabled — repetitive, revisit later
 
 	let state: UserStateV4 | null = $state(null);
 	let goGlitching = $state(false);
@@ -27,17 +19,6 @@
 
 	const TITLE_TEXT = 'EAR TRAINER';
 	const glitchChars = ['\uE000', '\uE001', '\uE002', '\uE003', '\uE004', '\uE005', '\uE006', '\uE007', '\uE008', '\uE010', '\uE013', '\uE014', '\uE017'];
-	const CHEVRON_LEFT = '\uE007';
-	const CHEVRON_RIGHT = '\uE008';
-	const LOCK_GLYPH = '\uE015';
-
-	// Content type metadata for mode-switch tiles
-	const CONTENT_TYPES = [
-		{ id: 'intervals' as const, label: 'INT', fullLabel: 'INTERVALS', color: 'var(--accent)', semitones: 7 },
-		{ id: 'chords' as const, label: 'CRD', fullLabel: 'CHORDS', color: 'var(--marathon-blue)', chordIntervals: [0, 4, 7] },
-		{ id: 'scales' as const, label: 'SCL', fullLabel: 'SCALES', color: '#FF6B2C', scaleIntervals: [0, 2, 4, 5, 7, 9, 11] },
-		{ id: 'modes' as const, label: 'MOD', fullLabel: 'MODES', color: '#9B59B6', semitones: 10 },
-	] as const;
 
 	onMount(() => {
 		state = loadStateV4();
@@ -75,249 +56,42 @@
 		}, 300);
 	});
 
-	// --- Unlock logic (single source of truth: isContentKindAvailable) ---
-	const chordsUnlocked = $derived(() => {
-		if (!state) return false;
-		return isContentKindAvailable(state, 'chord');
+	// --- Stats derivations ---
+	const overallAccuracy = $derived(() => {
+		if (!state) return 0;
+		const entries = [
+			...getStatsByKind(state.stats, 'interval'),
+			...getStatsByKind(state.stats, 'chord'),
+			...getStatsByKind(state.stats, 'scale'),
+			...getStatsByKind(state.stats, 'mode'),
+		];
+		const agg = aggregateStats(entries);
+		return agg.attempts > 0 ? Math.round(agg.accuracy * 100) : 0;
 	});
 
-	const scalesUnlocked = $derived(() => {
-		if (!state) return false;
-		return isContentKindAvailable(state, 'scale');
+	const totalQuestions = $derived(() => {
+		if (!state) return 0;
+		return state.globalStats.totalQuestions;
 	});
-
-	const modesUnlocked = $derived(() => {
-		if (!state) return false;
-		return isContentKindAvailable(state, 'mode');
-	});
-
-	const activeContent = $derived(() => {
-		const content = state?.settings?.activeContent ?? 'adaptive';
-		const devMode = state?.settings?.devMode;
-		if (devMode) return content;
-		if (content === 'chords' && !chordsUnlocked()) return 'intervals';
-		if (content === 'scales' && !scalesUnlocked()) return 'intervals';
-		if (content === 'modes' && !modesUnlocked()) return 'intervals';
-		if (content === 'adaptive') return 'adaptive';
-		return content;
-	});
-
-	function setActiveContent(mode: 'intervals' | 'chords' | 'scales' | 'modes') {
-		if (!state) return;
-		if (state.settings.activeContent === mode) {
-			state.settings.activeContent = 'adaptive';
-		} else {
-			state.settings.activeContent = mode;
-		}
-		saveStateV4(state);
-	}
-
-	function isContentUnlocked(id: string): boolean {
-		if (id === 'intervals') return true;
-		if (id === 'chords') return chordsUnlocked();
-		if (id === 'scales') return scalesUnlocked();
-		if (id === 'modes') return modesUnlocked();
-		return false;
-	}
 
 	function handleGo(e: Event) {
 		e.preventDefault();
 		warmUpAudio();
 		if (goGlitching) return;
 		goGlitching = true;
-		const content = activeContent();
-		const target = content === 'chords'
-			? `${base}/quiz/chords`
-			: content === 'scales'
-				? `${base}/quiz/scales`
-				: content === 'modes'
-					? `${base}/quiz/modes`
-					: content === 'intervals'
-						? `${base}/quiz/intervals`
-						: `${base}/quiz`;
 		let tick = 0;
 		const iv = setInterval(() => {
 			goText = glitchChars[Math.floor(Math.random() * glitchChars.length)];
 			tick++;
 			if (tick >= 6) {
 				clearInterval(iv);
-				goto(target);
+				goto(`${base}/quiz`);
 			}
 		}, 50);
 	}
-
-	// --- Stats derivations ---
-	const overallAccuracy = $derived(() => {
-		if (!state) return 0;
-		const content = activeContent();
-		const kind = content === 'chords' ? 'chord' as const
-			: content === 'scales' ? 'scale' as const
-			: 'interval' as const;
-		const entries = getStatsByKind(state.stats, kind);
-		const agg = aggregateStats(entries);
-		return agg.attempts > 0 ? Math.round(agg.accuracy * 100) : 0;
-	});
-
-	const currentTier = $derived(() => {
-		if (!state) return 1;
-		if (activeContent() === 'chords') {
-			let highest = 1;
-			for (const def of CHORDS) {
-				if (state.definitions.chords[def.id]?.unlocked && def.tier > highest) highest = def.tier;
-			}
-			return highest;
-		}
-		if (activeContent() === 'scales') {
-			let highest = 1;
-			for (const def of SCALES) {
-				if (state.definitions.scales[def.id]?.unlocked && def.tier > highest) highest = def.tier;
-			}
-			return highest;
-		}
-		let highest = 1;
-		for (const def of INTERVALS) {
-			if (state.definitions.intervals[def.id]?.unlocked && def.tier > highest) highest = def.tier;
-		}
-		return highest;
-	});
-
-	const contentCount = $derived(() => {
-		if (!state) return '0/13';
-		if (activeContent() === 'chords') {
-			const unlocked = Object.values(state.definitions.chords).filter(s => s.unlocked).length;
-			return `${unlocked}/${CHORDS.length}`;
-		}
-		if (activeContent() === 'scales') {
-			const unlocked = Object.values(state.definitions.scales).filter(s => s.unlocked).length;
-			return `${unlocked}/${SCALES.length}`;
-		}
-		const unlocked = Object.values(state.definitions.intervals).filter(s => s.unlocked).length;
-		return `${unlocked}/${INTERVALS.length}`;
-	});
-
-	const totalQuestions = $derived(() => {
-		if (!state) return 0;
-		if (activeContent() === 'chords') {
-			const entries = getStatsByKind(state.stats, 'chord');
-			return aggregateStats(entries).attempts;
-		}
-		if (activeContent() === 'scales') {
-			const entries = getStatsByKind(state.stats, 'scale');
-			return aggregateStats(entries).attempts;
-		}
-		return state.globalStats.totalQuestions;
-	});
-
-	const unlockHint = $derived(() => {
-		if (!state) return null;
-		const content = activeContent();
-		if (content === 'adaptive') return null;
-		const info = getNextUnlockProgress(state, content as 'intervals' | 'chords' | 'scales' | 'modes');
-		if (!info) return null;
-		const { prerequisiteMastery: pm, threshold, pooledAttempts } = info;
-		const remaining = pm.totalItems - pm.masteredCount;
-		const needAttempts = pm.items.filter(i => i.attempts < 5);
-		if (needAttempts.length > 0 && needAttempts.length <= 3) {
-			const names = needAttempts.map(i => i.id).join(', ');
-			return `PRACTICE ${names} -- NEED 5+ ATTEMPTS EACH`;
-		}
-		if (remaining > 0) {
-			const label = content === 'chords' ? 'CHORDS' : content === 'scales' ? 'SCALES' : content === 'modes' ? 'MODES' : 'INTERVALS';
-			return `MASTER ${remaining} MORE ${label} TO UNLOCK T${info.nextTier}`;
-		}
-		if (pooledAttempts < threshold.questions) {
-			return `${pooledAttempts}/${threshold.questions} QUESTIONS FOR T${info.nextTier}`;
-		}
-		return `${pm.masteredCount}/${pm.totalItems} MASTERED`;
-	});
-
-	// Ambient color — shifts the whole page palette per content type
-	const CONTENT_COLORS: Record<string, string> = {
-		'intervals': '#C2FE0C',  // accent
-		'chords': '#3A2CFF',     // marathon-blue
-		'scales': '#FF6B2C',     // warm orange
-		'modes': '#9B59B6',      // deep purple
-		'adaptive': '#C2FE0C',
-	};
-
-	const ambientColor = $derived(() => {
-		return CONTENT_COLORS[activeContent()] ?? '#C2FE0C';
-	});
-
-	const ambientColorDim = $derived(() => {
-		return ambientColor() + '15'; // 8% opacity hex suffix
-	});
-
-	// Lissajous signature for current content type
-	const heroSemitones = $derived(() => {
-		const content = activeContent();
-		if (content === 'modes') return 10;
-		return 7; // P5 — the signature
-	});
-
-	const heroChordIntervals = $derived(() => {
-		const content = activeContent();
-		if (content === 'chords') return [0, 4, 7]; // major triad
-		return undefined;
-	});
-
-	const heroScaleIntervals = $derived(() => {
-		const content = activeContent();
-		if (content === 'scales') return [0, 2, 4, 5, 7, 9, 11]; // major scale
-		return undefined;
-	});
-
-	// Content type stats for tiles
-	function getContentStats(id: string): { accuracy: number; count: string; tier: number } {
-		if (!state) return { accuracy: 0, count: '0/0', tier: 1 };
-		if (id === 'chords') {
-			const entries = getStatsByKind(state.stats, 'chord');
-			const agg = aggregateStats(entries);
-			const unlocked = Object.values(state.definitions.chords).filter(s => s.unlocked).length;
-			let highest = 1;
-			for (const def of CHORDS) { if (state.definitions.chords[def.id]?.unlocked && def.tier > highest) highest = def.tier; }
-			return { accuracy: agg.attempts > 0 ? Math.round(agg.accuracy * 100) : 0, count: `${unlocked}/${CHORDS.length}`, tier: highest };
-		}
-		if (id === 'scales') {
-			const entries = getStatsByKind(state.stats, 'scale');
-			const agg = aggregateStats(entries);
-			const unlocked = Object.values(state.definitions.scales).filter(s => s.unlocked).length;
-			let highest = 1;
-			for (const def of SCALES) { if (state.definitions.scales[def.id]?.unlocked && def.tier > highest) highest = def.tier; }
-			return { accuracy: agg.attempts > 0 ? Math.round(agg.accuracy * 100) : 0, count: `${unlocked}/${SCALES.length}`, tier: highest };
-		}
-		if (id === 'modes') {
-			const entries = getStatsByKind(state.stats, 'mode');
-			const agg = aggregateStats(entries);
-			const unlocked = Object.values(state.definitions.modes).filter(s => s.unlocked).length;
-			let highest = 1;
-			for (const def of MODES) { if (state.definitions.modes[def.id]?.unlocked && def.tier > highest) highest = def.tier; }
-			return { accuracy: agg.attempts > 0 ? Math.round(agg.accuracy * 100) : 0, count: `${unlocked}/${MODES.length}`, tier: highest };
-		}
-		// intervals — always use interval stats, not activeContent-dependent
-		const entries = getStatsByKind(state.stats, 'interval');
-		const agg = aggregateStats(entries);
-		const unlocked = Object.values(state.definitions.intervals).filter(s => s.unlocked).length;
-		let highest = 1;
-		for (const def of INTERVALS) { if (state.definitions.intervals[def.id]?.unlocked && def.tier > highest) highest = def.tier; }
-		return {
-			accuracy: agg.attempts > 0 ? Math.round(agg.accuracy * 100) : 0,
-			count: `${unlocked}/${INTERVALS.length}`,
-			tier: highest,
-		};
-	}
 </script>
 
-<!-- Chladni background disabled — perf not optimized yet -->
-<!-- <div class="chladni-wrap">
-	<ChladniBackground
-		semitones={heroSemitones()}
-		chordIntervals={heroChordIntervals()}
-		scaleIntervals={heroScaleIntervals()}
-	/>
-</div> -->
-
-<div class="home" class:booted style:--ambient={ambientColor()} style:--ambient-dim={ambientColorDim()}>
+<div class="home" class:booted>
 	<!-- ═══ BAND 1: Header strip ═══ -->
 	<header class="header-strip">
 		<div class="title-boot">
@@ -352,11 +126,6 @@
 			</div>
 			<div class="telem-divider"></div>
 			<div class="telem-segment">
-				<span class="telem-tag">T{currentTier()}</span>
-				<span class="telem-val">{contentCount()}</span>
-			</div>
-			<div class="telem-divider"></div>
-			<div class="telem-segment">
 				<span class="telem-tag">Q</span>
 				<span class="telem-val">{totalQuestions()}</span>
 			</div>
@@ -383,7 +152,7 @@
 			</div>
 
 			<a
-				href={activeContent() === 'chords' ? `${base}/quiz/chords` : activeContent() === 'scales' ? `${base}/quiz/scales` : activeContent() === 'modes' ? `${base}/quiz/modes` : activeContent() === 'intervals' ? `${base}/quiz/intervals` : `${base}/quiz`}
+				href="{base}/quiz"
 				class="go-btn"
 				class:glitching={goGlitching}
 				onclick={handleGo}
@@ -391,61 +160,10 @@
 				<span class="go-text">{goText}</span>
 			</a>
 		</div>
-
-		<!-- ═══ Bottom section — pinned to bottom ═══ -->
-		<div class="bottom-section">
-			<!-- Unlock announcement band — always rendered for layout stability -->
-			<div class="unlock-band">
-				{#if unlockHint()}
-					<span class="unlock-chevron">{CHEVRON_LEFT}</span>
-					<span class="unlock-text">{unlockHint()}</span>
-					<span class="unlock-chevron">{CHEVRON_RIGHT}</span>
-				{/if}
-			</div>
-
-			<!-- Content type mode switches -->
-			<nav class="content-selector">
-			{#each CONTENT_TYPES as ct}
-				{@const unlocked = isContentUnlocked(ct.id)}
-				{@const active = activeContent() === ct.id}
-				{@const stats = getContentStats(ct.id)}
-				<button
-					class="content-tile"
-					class:active
-					class:locked={!unlocked}
-					style:--tile-color={ct.color}
-					onclick={() => unlocked && setActiveContent(ct.id)}
-					disabled={!unlocked}
-				>
-					<div class="tile-header" class:active>
-						<span class="tile-label">{ct.label}</span>
-						{#if !unlocked}
-							<span class="tile-lock">{LOCK_GLYPH}</span>
-						{/if}
-					</div>
-					<div class="tile-body">
-						<span class="tile-full-label">{ct.fullLabel}</span>
-						{#if unlocked && stats.accuracy > 0}
-							<span class="tile-stat">{stats.accuracy}%</span>
-						{/if}
-					</div>
-					<div class="tile-footer">
-						<span class="tile-count">{stats.count}</span>
-						<span class="tile-tier">T{stats.tier}</span>
-					</div>
-				</button>
-			{/each}
-		</nav>
-		</div>
 	{/if}
 </div>
 
 <style>
-	/* Chladni background boost */
-	.chladni-wrap :global(.chladni-bg) {
-		opacity: 0.85;
-	}
-
 	.home {
 		position: relative;
 		z-index: 1;
@@ -460,7 +178,7 @@
 		opacity: 1;
 	}
 
-	/* ─── BAND 1: Header — centered/stacked mobile, hidden desktop ─── */
+	/* ─── BAND 1: Header ─── */
 	.header-strip {
 		display: flex;
 		flex-direction: column;
@@ -541,11 +259,10 @@
 		font-size: 0.4rem;
 		font-weight: 900;
 		letter-spacing: 0.1em;
-		color: var(--ambient, var(--accent));
-		border: 1px solid var(--ambient, var(--accent));
+		color: var(--accent);
+		border: 1px solid var(--accent);
 		padding: 0 0.3rem;
 		line-height: 1.6;
-		transition: color 0.3s, border-color 0.3s;
 	}
 
 	.telem-val {
@@ -587,9 +304,8 @@
 		width: 16px;
 		height: 16px;
 		border-style: solid;
-		border-color: var(--ambient, var(--accent));
+		border-color: var(--accent);
 		opacity: 0.25;
-		transition: border-color 0.3s;
 	}
 	.corner-mark.tl { top: 1rem; left: 1rem; border-width: 1px 0 0 1px; }
 	.corner-mark.tr { top: 1rem; right: 1rem; border-width: 1px 1px 0 0; }
@@ -602,9 +318,8 @@
 		font-family: var(--mono);
 		font-size: 0.3rem;
 		letter-spacing: 0.15em;
-		color: var(--ambient, var(--accent));
+		color: var(--accent);
 		opacity: 0.2;
-		transition: color 0.3s;
 	}
 	.coord-label.top-left { top: 1.4rem; left: 2rem; }
 	.coord-label.bottom-right { bottom: 1.4rem; right: 2rem; }
@@ -645,166 +360,12 @@
 		text-transform: uppercase;
 	}
 
-	/* ─── Unlock announcement band ─── */
-	/* ─── Bottom section — unlock band + tiles pinned together ─── */
-	.bottom-section {
-		margin-top: auto;
-		flex-shrink: 0;
-		padding: 0 0.5rem;
-		padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.75rem);
-		display: flex;
-		flex-direction: column;
-		gap: 2px;
-	}
-
-	/* ─── Unlock announcement band — fixed height for layout stability ─── */
-	.unlock-band {
-		position: relative;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		padding: 0.4rem 2rem;
-		min-height: 2.4rem;
-		background: var(--ambient-dim, rgba(194, 254, 12, 0.04));
-		border: 1px solid color-mix(in srgb, var(--ambient, var(--accent)) 15%, transparent);
-		transition: background 0.3s, border-color 0.3s;
-	}
-
-	.unlock-chevron {
-		position: absolute;
-		font-family: var(--mono);
-		font-size: 0.45rem;
-		color: var(--ambient, var(--accent));
-		opacity: 0.5;
-		transition: color 0.3s;
-	}
-	.unlock-chevron:first-child { left: 0.5rem; }
-	.unlock-chevron:last-child { right: 0.5rem; }
-
-	.unlock-text {
-		font-family: var(--mono);
-		font-size: 0.35rem;
-		font-weight: 700;
-		letter-spacing: 0.12em;
-		color: var(--ambient, var(--accent));
-		opacity: 0.7;
-		text-align: center;
-		transition: color 0.3s;
-	}
-
-	/* ─── BAND 4: Content mode switches ─── */
-	.content-selector {
-		display: grid;
-		grid-template-columns: repeat(4, 1fr);
-		gap: 2px;
-	}
-
-	.content-tile {
-		display: flex;
-		flex-direction: column;
-		background: var(--surface);
-		border: 1px solid var(--border);
-		cursor: pointer;
-		transition: border-color 0.15s, background 0.15s;
-		padding: 0;
-		overflow: hidden;
-		min-width: 0;
-	}
-	.content-tile.active {
-		border-color: var(--tile-color);
-	}
-	.content-tile.locked {
-		opacity: 0.35;
-		cursor: not-allowed;
-	}
-
-	.tile-header {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		background: var(--border);
-		padding: 0.15rem 0.35rem;
-		transition: background 0.15s;
-	}
-	.tile-header.active {
-		background: var(--tile-color);
-	}
-
-	.tile-label {
-		font-family: var(--mono);
-		font-size: 0.4rem;
-		font-weight: 900;
-		letter-spacing: 0.12em;
-		color: var(--text-primary);
-	}
-	.tile-header.active .tile-label {
-		color: var(--base);
-	}
-
-	.tile-lock {
-		font-family: var(--mono);
-		font-size: 0.35rem;
-		color: var(--text-secondary);
-	}
-
-	.tile-body {
-		flex: 1;
-		display: flex;
-		flex-direction: column;
-		align-items: flex-start;
-		padding: 0.25rem 0.35rem;
-	}
-
-	.tile-full-label {
-		font-family: var(--mono);
-		font-size: 0.3rem;
-		font-weight: 700;
-		letter-spacing: 0.08em;
-		color: var(--text-secondary);
-	}
-
-	.tile-stat {
-		font-family: var(--mono);
-		font-size: 0.55rem;
-		font-weight: 900;
-		letter-spacing: 0.05em;
-		color: var(--tile-color);
-		margin-top: 0.1rem;
-	}
-
-	.tile-footer {
-		display: flex;
-		justify-content: space-between;
-		padding: 0.1rem 0.35rem 0.15rem;
-		border-top: 1px solid var(--border);
-	}
-
-	.tile-count {
-		font-family: var(--mono);
-		font-size: 0.3rem;
-		font-weight: 700;
-		letter-spacing: 0.08em;
-		color: var(--text-secondary);
-	}
-
-	.tile-tier {
-		font-family: var(--mono);
-		font-size: 0.3rem;
-		font-weight: 700;
-		letter-spacing: 0.08em;
-		color: var(--tile-color);
-	}
-	.content-tile:not(.active) .tile-tier {
-		color: var(--text-secondary);
-	}
-
 	/* ─── Desktop adaptations ─── */
 	@media (min-width: 768px) {
 		.header-strip { display: none; }
 		.ring-container { width: 420px; height: 420px; }
 		.go-btn { width: 130px; height: 130px; }
 		.go-text { font-size: 2rem; }
-		.bottom-section { padding: 0 2rem; padding-bottom: 1.5rem; }
 		.telemetry-strip { margin: 0.5rem 2rem 0; }
 	}
 </style>

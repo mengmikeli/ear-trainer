@@ -9,7 +9,7 @@
  */
 
 import type { QuizSessionConfig, UnifiedQuestion, QuestionResult, DebriefSection, PlaybackInfo } from '../types';
-import type { UserStateV4, ContentKind, ChordVoicing } from '$lib/state/schema';
+import type { UserStateV4, ContentKind, ContentPack, ChordVoicing } from '$lib/state/schema';
 import { defaultContentStats } from '$lib/state/schema';
 import { getStats, getStatsByKind, aggregateStats } from '$lib/state/stats';
 import { playInterval } from '$lib/audio/playback';
@@ -52,16 +52,30 @@ interface ContentCandidate {
 	statsKey: string;
 }
 
-function buildCandidates(state: UserStateV4, unlockedKinds: ContentKind[]): ContentCandidate[] {
+/** Get the set of packs included in a given pack filter. */
+function getPacksForFilter(pack: ContentPack): Set<ContentPack> {
+	switch (pack) {
+		case 'beginner': return new Set(['beginner']);
+		case 'blues': return new Set(['beginner', 'blues']);
+		case 'jazz': return new Set(['beginner', 'jazz']);
+		case 'advanced': return new Set(['beginner', 'blues', 'jazz', 'advanced']);
+		default: return new Set(['beginner']);
+	}
+}
+
+function buildCandidates(state: UserStateV4, unlockedKinds: ContentKind[], pack?: ContentPack): ContentCandidate[] {
 	const candidates: ContentCandidate[] = [];
 	const kindSet = new Set(unlockedKinds);
+	const packFilter = pack ? getPacksForFilter(pack) : null;
 
 	// Intervals
 	if (kindSet.has('interval')) {
 	const devMode = state.settings.devMode;
 	for (const def of INTERVALS) {
+		if (packFilter && !packFilter.has(def.pack)) continue;
 		const d = state.definitions.intervals[def.id];
-		if (!devMode && (!d?.unlocked || !d?.enabled)) continue;
+		if (!devMode && !packFilter && (!d?.unlocked || !d?.enabled)) continue;
+		if (packFilter && !devMode && d && !d.enabled) continue;
 		for (const mode of ['ascending', 'descending', 'harmonic'] as const) {
 			if (!state.settings.enabledModes[mode]) continue;
 			candidates.push({
@@ -78,8 +92,10 @@ function buildCandidates(state: UserStateV4, unlockedKinds: ContentKind[]): Cont
 	if (kindSet.has('chord')) {
 	const devMode = state.settings.devMode;
 	for (const def of CHORDS) {
+		if (packFilter && !packFilter.has(def.pack)) continue;
 		const d = state.definitions.chords[def.id];
-		if (!devMode && (!d?.unlocked || !d?.enabled)) continue;
+		if (!devMode && !packFilter && (!d?.unlocked || !d?.enabled)) continue;
+		if (packFilter && !devMode && d && !d.enabled) continue;
 		for (const voicing of ['root', 'first', 'second'] as const) {
 			if (!state.settings.enabledVoicings[voicing]) continue;
 			candidates.push({
@@ -96,8 +112,10 @@ function buildCandidates(state: UserStateV4, unlockedKinds: ContentKind[]): Cont
 	if (kindSet.has('scale')) {
 	const devMode = state.settings.devMode;
 	for (const def of SCALES) {
+		if (packFilter && !packFilter.has(def.pack)) continue;
 		const d = state.definitions.scales[def.id];
-		if (!devMode && (!d?.unlocked || !d?.enabled)) continue;
+		if (!devMode && !packFilter && (!d?.unlocked || !d?.enabled)) continue;
+		if (packFilter && !devMode && d && !d.enabled) continue;
 		candidates.push({
 			kind: 'scale',
 			defId: def.id,
@@ -110,8 +128,10 @@ function buildCandidates(state: UserStateV4, unlockedKinds: ContentKind[]): Cont
 	if (kindSet.has('mode')) {
 	const devMode = state.settings.devMode;
 	for (const def of MODES) {
+		if (packFilter && !packFilter.has(def.pack)) continue;
 		const d = state.definitions.modes[def.id];
-		if (!devMode && (!d?.unlocked || !d?.enabled)) continue;
+		if (!devMode && !packFilter && (!d?.unlocked || !d?.enabled)) continue;
+		if (packFilter && !devMode && d && !d.enabled) continue;
 		candidates.push({
 			kind: 'mode',
 			defId: def.id,
@@ -265,13 +285,20 @@ const kindGlyph: Record<string, string> = {
 	mode: '\uE014',
 };
 
-export function createAdaptiveConfig(state: UserStateV4): QuizSessionConfig {
+const PACK_HEADING: Record<string, string> = {
+	beginner: 'BEGINNER',
+	blues: 'BLUES / ROCK',
+	jazz: 'JAZZ',
+	advanced: 'ADVANCED',
+};
+
+export function createAdaptiveConfig(state: UserStateV4, pack?: ContentPack): QuizSessionConfig {
 	let drone: DroneHandle | null = null;
 	let noteTimeouts: ReturnType<typeof setTimeout>[] = [];
 	let lastKind: ContentKind | null = null;
 
 	return {
-		heading: 'PRACTICE',
+		heading: pack ? (PACK_HEADING[pack] ?? 'PRACTICE') : 'PRACTICE',
 		contentKinds: ['interval', 'chord', 'scale', 'mode'],
 		sessionLength: state.settings.sessionLength,
 
@@ -291,7 +318,7 @@ export function createAdaptiveConfig(state: UserStateV4): QuizSessionConfig {
 
 		generateQuestion(s: UserStateV4): UnifiedQuestion {
 			const unlockedKinds = getUnlockedKinds(s);
-			const candidates = buildCandidates(s, unlockedKinds);
+			const candidates = buildCandidates(s, unlockedKinds, pack);
 			if (candidates.length === 0) throw new Error('No content available');
 
 			// Prefer different kind from last question for variety
