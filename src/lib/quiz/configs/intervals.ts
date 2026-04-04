@@ -93,14 +93,18 @@ function generateDistractorsV4(correctId: string, state: UserStateV4): IntervalD
 	const enabled = getEnabledIntervalsV4(state).filter((i) => i.id !== correctId);
 
 	// Sort by proximity (closest semitones = most confusable)
-	// Add small random factor to avoid deterministic ordering
-	const sorted = [...enabled].sort((a, b) => {
+	// Take top ~8 closest, then randomly pick 3 from those
+	const byProximity = [...enabled].sort((a, b) => {
 		const distA = Math.abs(a.semitones - correctSemitones);
 		const distB = Math.abs(b.semitones - correctSemitones);
-		return (distA - distB) + (Math.random() - 0.5) * 2;
+		return distA - distB;
 	});
 
-	if (sorted.length >= 3) return sorted.slice(0, 3);
+	// Pool: closest 8 (or all if fewer), then shuffle and take 3
+	const pool = byProximity.slice(0, Math.min(8, byProximity.length));
+	const shuffled = pool.sort(() => Math.random() - 0.5);
+
+	if (shuffled.length >= 3) return shuffled.slice(0, 3);
 
 	// Fill from all intervals if not enough enabled
 	const usedIds = new Set([correctId, ...sorted.map((i) => i.id)]);

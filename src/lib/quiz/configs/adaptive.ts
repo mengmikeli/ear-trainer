@@ -149,13 +149,15 @@ function generateDistractorsForKind(
 			(i) => i.id !== correctId && state.definitions.intervals[i.id]?.unlocked && state.definitions.intervals[i.id]?.enabled,
 		);
 		// Sort by proximity (closest semitones = most confusable)
-		// Add small random factor to avoid deterministic ordering
-		const sorted = [...enabled].sort((a, b) => {
+		// Take top ~8 closest, then randomly pick 3
+		const byProximity = [...enabled].sort((a, b) => {
 			const distA = Math.abs(a.semitones - sem);
 			const distB = Math.abs(b.semitones - sem);
-			return (distA - distB) + (Math.random() - 0.5) * 2;
+			return distA - distB;
 		});
-		const result = sorted.length >= 3 ? sorted.slice(0, 3) : sorted;
+		const pool = byProximity.slice(0, Math.min(8, byProximity.length));
+		const shuffled = pool.sort(() => Math.random() - 0.5);
+		const result = shuffled.length >= 3 ? shuffled.slice(0, 3) : shuffled;
 		if (result.length < 3) {
 			const usedIds = new Set([correctId, ...result.map((i) => i.id)]);
 			const locked = INTERVALS.filter((i) => !usedIds.has(i.id))
