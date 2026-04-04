@@ -81,9 +81,10 @@ function buildCandidates(state: UserStateV4, unlockedKinds: ContentKind[]): Cont
 
 	// Intervals
 	if (kindSet.has('interval')) {
+	const devMode = state.settings.devMode;
 	for (const def of INTERVALS) {
 		const d = state.definitions.intervals[def.id];
-		if (!d?.unlocked || !d?.enabled) continue;
+		if (!devMode && (!d?.unlocked || !d?.enabled)) continue;
 		for (const mode of ['ascending', 'descending', 'harmonic'] as const) {
 			if (!state.settings.enabledModes[mode]) continue;
 			candidates.push({
@@ -98,9 +99,10 @@ function buildCandidates(state: UserStateV4, unlockedKinds: ContentKind[]): Cont
 
 	// Chords
 	if (kindSet.has('chord')) {
+	const devMode = state.settings.devMode;
 	for (const def of CHORDS) {
 		const d = state.definitions.chords[def.id];
-		if (!d?.unlocked || !d?.enabled) continue;
+		if (!devMode && (!d?.unlocked || !d?.enabled)) continue;
 		for (const voicing of ['root', 'first', 'second'] as const) {
 			if (!state.settings.enabledVoicings[voicing]) continue;
 			candidates.push({
@@ -115,9 +117,10 @@ function buildCandidates(state: UserStateV4, unlockedKinds: ContentKind[]): Cont
 
 	// Scales
 	if (kindSet.has('scale')) {
+	const devMode = state.settings.devMode;
 	for (const def of SCALES) {
 		const d = state.definitions.scales[def.id];
-		if (!d?.unlocked || !d?.enabled) continue;
+		if (!devMode && (!d?.unlocked || !d?.enabled)) continue;
 		candidates.push({
 			kind: 'scale',
 			defId: def.id,
