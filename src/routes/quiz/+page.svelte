@@ -38,39 +38,38 @@
 		}
 	}
 
-	// --- Pack accuracy (average across all items in pack) ---
-	function getPackAccuracy(pack: ContentPack): number {
-		if (!state) return 0;
+	// --- Pack accuracy + attempt tracking ---
+	function getPackStats(pack: ContentPack): { accuracy: number; hasAttempts: boolean } {
+		if (!state) return { accuracy: 0, hasAttempts: false };
 		const packs = getPacksForFilter(pack);
 		let totalAttempts = 0;
 		let totalCorrect = 0;
 
-		// Intervals
 		for (const def of INTERVALS) {
 			if (!packs.has(def.pack)) continue;
 			const entries = Object.entries(state.stats).filter(([k]) => k.startsWith(`interval:${def.id}:`));
 			for (const [, s] of entries) { totalAttempts += s.attempts; totalCorrect += s.correct; }
 		}
-		// Chords
 		for (const def of CHORDS) {
 			if (!packs.has(def.pack)) continue;
 			const entries = Object.entries(state.stats).filter(([k]) => k.startsWith(`chord:${def.id}:`));
 			for (const [, s] of entries) { totalAttempts += s.attempts; totalCorrect += s.correct; }
 		}
-		// Scales
 		for (const def of SCALES) {
 			if (!packs.has(def.pack)) continue;
 			const key = `scale:${def.id}`;
 			if (state.stats[key]) { totalAttempts += state.stats[key].attempts; totalCorrect += state.stats[key].correct; }
 		}
-		// Modes
 		for (const def of MODES) {
 			if (!packs.has(def.pack)) continue;
 			const key = `mode:${def.id}`;
 			if (state.stats[key]) { totalAttempts += state.stats[key].attempts; totalCorrect += state.stats[key].correct; }
 		}
 
-		return totalAttempts > 0 ? Math.round((totalCorrect / totalAttempts) * 100) : 0;
+		return {
+			accuracy: totalAttempts > 0 ? Math.round((totalCorrect / totalAttempts) * 100) : 0,
+			hasAttempts: totalAttempts > 0,
+		};
 	}
 
 	// --- Paths data ---
@@ -80,6 +79,7 @@
 		unlocked: boolean;
 		count: string;
 		accuracy: number;
+		hasAttempts: boolean;
 		price: string;
 	}
 
@@ -87,10 +87,10 @@
 		if (!state) return [];
 		const settings = state.settings;
 		return [
-			{ id: 'beginner', name: 'BEGINNER', unlocked: true, count: String(countPackItems('beginner')), accuracy: getPackAccuracy('beginner'), price: 'FREE' },
-			{ id: 'blues', name: 'BLUES / ROCK', unlocked: isPackUnlocked('blues', settings), count: String(countPackItems('blues')), accuracy: getPackAccuracy('blues'), price: '$1.99' },
-			{ id: 'jazz', name: 'JAZZ', unlocked: isPackUnlocked('jazz', settings), count: String(countPackItems('jazz')), accuracy: getPackAccuracy('jazz'), price: '$1.99' },
-			{ id: 'advanced', name: 'ADVANCED', unlocked: isPackUnlocked('advanced', settings), count: String(countPackItems('advanced')), accuracy: getPackAccuracy('advanced'), price: '$4.99' },
+			{ id: 'beginner', name: 'BEGINNER', unlocked: true, count: String(countPackItems('beginner')), ...getPackStats('beginner'), price: 'FREE' },
+			{ id: 'blues', name: 'BLUES / ROCK', unlocked: isPackUnlocked('blues', settings), count: String(countPackItems('blues')), ...getPackStats('blues'), price: '$1.99' },
+			{ id: 'jazz', name: 'JAZZ', unlocked: isPackUnlocked('jazz', settings), count: String(countPackItems('jazz')), ...getPackStats('jazz'), price: '$1.99' },
+			{ id: 'advanced', name: 'ADVANCED', unlocked: isPackUnlocked('advanced', settings), count: String(countPackItems('advanced')), ...getPackStats('advanced'), price: '$4.99' },
 		];
 	});
 
@@ -104,7 +104,6 @@
 	function handleLockedPathClick(packId: ContentPack) {
 		if (!state) return;
 		if (!state.settings.devMode) return;
-		// Toggle: add pack to unlockedPacks
 		const packs = state.settings.unlockedPacks ?? [];
 		if (!packs.includes(packId)) {
 			state.settings.unlockedPacks = [...packs, packId];
@@ -112,7 +111,6 @@
 			state.settings.unlockedPacks = packs.filter(p => p !== packId);
 		}
 		saveStateV4(state);
-		// Trigger reactivity
 		state = { ...state };
 	}
 </script>
@@ -121,27 +119,22 @@
 	<h2 class="heading">PRACTICE</h2>
 
 	{#if state}
-		<!-- Quick Start -->
-		<section class="section">
-			<a href="{base}/quiz/adaptive" class="quick-start-btn">
-				QUICK START
-			</a>
-		</section>
-
 		<!-- Paths -->
-		<section class="section">
+		<div class="section">
 			<label class="section-label">PATHS</label>
 			<div class="path-grid">
 				{#each paths() as path}
 					{#if path.unlocked}
-						<a href="{base}/quiz/path/{path.id}" class="path-card">
-							<div class="path-header">
+						<a href="{base}/quiz/path/{path.id}" class="path-card unlocked">
+							<div class="path-top">
 								<span class="path-name">{path.name}</span>
 								<span class="path-count">{path.count} ITEMS</span>
 							</div>
-							<div class="path-footer">
-								{#if path.accuracy > 0}
-									<span class="path-accuracy">{path.accuracy}%</span>
+							<div class="path-bottom">
+								{#if path.hasAttempts}
+									<span class="path-accuracy">{path.accuracy}% ACCURACY</span>
+								{:else if path.id === 'beginner'}
+									<span class="path-free">FREE</span>
 								{:else}
 									<span class="path-new">NEW</span>
 								{/if}
@@ -153,22 +146,22 @@
 							onclick={() => handleLockedPathClick(path.id)}
 							disabled={!state?.settings.devMode}
 						>
-							<div class="path-header">
+							<div class="path-top">
 								<span class="path-name">{path.name}</span>
 								<span class="path-count">{path.count} ITEMS</span>
 							</div>
-							<div class="path-footer">
+							<div class="path-bottom">
 								<span class="path-price">{path.price}</span>
-								<span class="path-lock">PRO</span>
+								<span class="path-pro">PRO</span>
 							</div>
 						</button>
 					{/if}
 				{/each}
 			</div>
-		</section>
+		</div>
 
 		<!-- By Type -->
-		<section class="section">
+		<div class="section">
 			<label class="section-label">BY TYPE</label>
 			<div class="type-grid">
 				<a href="{base}/quiz/intervals" class="type-btn">INT</a>
@@ -176,214 +169,203 @@
 				<a href="{base}/quiz/scales" class="type-btn">SCL</a>
 				{#if modesAvailable()}
 					<a href="{base}/quiz/modes" class="type-btn">MODE</a>
+				{:else}
+					<span class="type-btn type-locked">MODE<span class="type-pro">PRO</span></span>
 				{/if}
 			</div>
-		</section>
+		</div>
+
+		<!-- Quick Start -->
+		<div class="section">
+			<a href="{base}/quiz/adaptive" class="quick-start-btn">
+				QUICK START
+			</a>
+		</div>
 	{/if}
 </div>
 
 <style>
-	.practice-page {
-		display: flex;
-		flex-direction: column;
-		gap: 0;
-		padding: 0.75rem 0.75rem;
-		padding-top: calc(env(safe-area-inset-top, 0px) + 0.75rem);
-		height: 100%;
-		overflow-y: auto;
-	}
+	.practice-page { display: flex; flex-direction: column; gap: 1.5rem; }
 
+	/* ─── Heading — matches settings/progress ─── */
 	.heading {
-		font-family: var(--font-display, 'Maratype', monospace);
-		font-size: 2rem;
-		font-weight: 400;
-		letter-spacing: 0.12em;
-		color: var(--accent, #C2FE0C);
-		margin: 0 0 0.75rem 0;
-		line-height: 1;
+		font-size: 3rem; font-weight: 400;
+		letter-spacing: 0.12em; color: var(--text-primary);
+		padding-bottom: 0.5rem; border-bottom: 2px solid var(--border-heavy);
+		text-transform: uppercase; font-family: var(--font-display);
 	}
 
-	.section {
-		margin-bottom: 1rem;
-	}
+	/* ─── Sections — matches settings pattern ─── */
+	.section { display: flex; flex-direction: column; gap: 0.5rem; }
 
+	/* ─── Section labels — matches settings .field-label ─── */
 	.section-label {
-		display: block;
-		font-family: var(--mono, monospace);
-		font-size: 0.35rem;
-		font-weight: 900;
-		letter-spacing: 0.2em;
-		color: var(--text-secondary, #666);
-		margin-bottom: 0.4rem;
-		text-transform: uppercase;
-	}
-
-	/* ─── Quick Start ─── */
-	.quick-start-btn {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 100%;
-		padding: 1rem;
-		background: var(--accent, #C2FE0C);
-		color: var(--base, #0A0A0A);
-		font-family: var(--mono, monospace);
-		font-size: 0.65rem;
-		font-weight: 900;
-		letter-spacing: 0.2em;
-		text-decoration: none;
-		text-transform: uppercase;
-		border: none;
-		transition: opacity 0.15s;
-	}
-	.quick-start-btn:active {
-		opacity: 0.85;
+		font-size: 0.6rem; font-weight: 400;
+		letter-spacing: 0.25em; color: var(--text-primary);
+		font-family: var(--font-display);
 	}
 
 	/* ─── Path Grid ─── */
 	.path-grid {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
-		gap: 2px;
+		gap: 0.5rem;
 	}
 
 	.path-card {
 		display: flex;
 		flex-direction: column;
 		justify-content: space-between;
-		background: var(--surface, #1A1A1A);
-		border: 1px solid var(--accent, #C2FE0C);
+		min-height: 5.5rem;
+		background: var(--surface);
 		padding: 0;
 		text-decoration: none;
 		color: inherit;
 		overflow: hidden;
-		min-height: 5rem;
 		cursor: pointer;
 		transition: border-color 0.15s, opacity 0.15s;
 	}
-	.path-card:active {
-		opacity: 0.85;
+	.path-card:active { opacity: 0.85; }
+
+	/* Unlocked: accent left border (like ContentCard) */
+	.path-card.unlocked {
+		border: 1px solid var(--border-heavy);
+		border-left: 3px solid var(--accent);
 	}
 
+	/* Locked: dim border, reduced opacity */
 	.path-card.locked {
-		border-color: color-mix(in srgb, var(--marathon-blue, #3A2CFF) 40%, var(--border-heavy, #333));
+		border: 1px solid var(--border-heavy);
+		border-left: 3px solid var(--border-heavy);
 		opacity: 0.5;
 	}
-	.path-card.locked:disabled {
-		cursor: not-allowed;
-	}
-	.path-card.locked:not(:disabled) {
-		cursor: pointer;
-		opacity: 0.6;
-	}
-	.path-card.locked:not(:disabled):active {
-		opacity: 0.5;
-	}
+	.path-card.locked:disabled { cursor: not-allowed; }
+	.path-card.locked:not(:disabled) { cursor: pointer; opacity: 0.6; }
+	.path-card.locked:not(:disabled):active { opacity: 0.5; }
 
-	.path-header {
-		display: flex;
-		flex-direction: column;
-		gap: 0.15rem;
-		padding: 0.5rem 0.6rem 0.3rem;
+	.path-top {
+		display: flex; flex-direction: column; gap: 0.15rem;
+		padding: 0.6rem 0.6rem 0.3rem;
 	}
 
 	.path-name {
-		font-family: var(--mono, monospace);
-		font-size: 0.45rem;
-		font-weight: 900;
-		letter-spacing: 0.1em;
-		color: var(--text-primary, #E8E8E8);
+		font-family: var(--font-display);
+		font-size: 0.55rem; font-weight: 400;
+		letter-spacing: 0.15em;
+		color: var(--text-primary);
 		text-transform: uppercase;
 	}
 
 	.path-count {
-		font-family: var(--mono, monospace);
-		font-size: 0.3rem;
-		font-weight: 700;
+		font-family: var(--mono);
+		font-size: 0.35rem; font-weight: 700;
 		letter-spacing: 0.08em;
-		color: var(--text-secondary, #666);
+		color: var(--text-secondary);
 	}
 
-	.path-footer {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: 0.3rem 0.6rem 0.4rem;
-		border-top: 1px solid var(--border, #1F1F1F);
+	.path-bottom {
+		display: flex; align-items: center; justify-content: space-between;
+		padding: 0.35rem 0.6rem 0.5rem;
+		border-top: 1px solid var(--border);
 	}
 
 	.path-accuracy {
-		font-family: var(--mono, monospace);
-		font-size: 0.55rem;
-		font-weight: 900;
+		font-family: var(--mono);
+		font-size: 0.4rem; font-weight: 900;
 		letter-spacing: 0.05em;
-		color: var(--accent, #C2FE0C);
+		color: var(--accent);
+	}
+
+	.path-free {
+		font-family: var(--mono);
+		font-size: 0.4rem; font-weight: 900;
+		letter-spacing: 0.15em;
+		color: var(--accent);
 	}
 
 	.path-new {
-		font-family: var(--mono, monospace);
-		font-size: 0.3rem;
-		font-weight: 900;
+		font-family: var(--mono);
+		font-size: 0.35rem; font-weight: 900;
 		letter-spacing: 0.15em;
-		color: var(--text-secondary, #666);
+		color: var(--text-secondary);
 	}
 
 	.path-price {
-		font-family: var(--mono, monospace);
-		font-size: 0.4rem;
-		font-weight: 700;
+		font-family: var(--mono);
+		font-size: 0.4rem; font-weight: 700;
 		letter-spacing: 0.05em;
-		color: var(--marathon-blue, #3A2CFF);
+		color: var(--marathon-blue);
 	}
 
-	.path-lock {
-		font-family: var(--mono, monospace);
-		font-size: 0.3rem;
-		font-weight: 900;
+	.path-pro {
+		font-family: var(--mono);
+		font-size: 0.3rem; font-weight: 900;
 		letter-spacing: 0.2em;
-		color: var(--marathon-blue, #3A2CFF);
+		color: var(--marathon-blue);
 	}
 
-	/* ─── Type Grid ─── */
-	.type-grid {
-		display: flex;
-		gap: 2px;
-	}
+	/* ─── Type Grid — matches settings toggle-group ─── */
+	.type-grid { display: flex; gap: 0.5rem; }
 
 	.type-btn {
 		flex: 1;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		padding: 0.65rem 0.5rem;
-		background: var(--surface, #1A1A1A);
-		border: 1px solid var(--border-heavy, #333);
-		font-family: var(--mono, monospace);
-		font-size: 0.45rem;
-		font-weight: 900;
+		display: flex; align-items: center; justify-content: center;
+		gap: 0.3rem;
+		padding: 0.85rem;
+		background: var(--surface);
+		border: 1px solid var(--border-heavy);
+		font-family: var(--mono);
+		font-size: 0.45rem; font-weight: 900;
 		letter-spacing: 0.12em;
-		color: var(--text-primary, #E8E8E8);
+		color: var(--text-primary);
 		text-decoration: none;
 		text-transform: uppercase;
 		transition: border-color 0.15s, background 0.15s;
 	}
 	.type-btn:active {
-		background: var(--surface-raised, #242424);
-		border-color: var(--accent, #C2FE0C);
+		background: var(--surface-raised);
+		border-color: var(--accent);
+	}
+
+	.type-locked {
+		opacity: 0.5;
+		cursor: default;
+	}
+	.type-locked:active {
+		background: var(--surface);
+		border-color: var(--border-heavy);
+	}
+
+	.type-pro {
+		font-size: 0.25rem;
+		letter-spacing: 0.15em;
+		color: var(--marathon-blue);
+	}
+
+	/* ─── Quick Start — secondary, at bottom ─── */
+	.quick-start-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 100%;
+		padding: 0.85rem;
+		background: transparent;
+		border: 1px solid var(--border-heavy);
+		color: var(--text-secondary);
+		font-family: var(--mono);
+		font-size: 0.45rem; font-weight: 900;
+		letter-spacing: 0.2em;
+		text-decoration: none;
+		text-transform: uppercase;
+		transition: border-color 0.15s, color 0.15s;
+	}
+	.quick-start-btn:active {
+		border-color: var(--accent);
+		color: var(--accent);
 	}
 
 	/* ─── Desktop ─── */
 	@media (min-width: 768px) {
-		.practice-page {
-			max-width: 600px;
-			margin: 0 auto;
-			padding: 1.5rem 2rem;
-		}
-		.heading {
-			font-size: 2.5rem;
-		}
-		.path-grid {
-			grid-template-columns: 1fr 1fr;
-		}
+		.heading { font-size: 3.5rem; }
 	}
 </style>
