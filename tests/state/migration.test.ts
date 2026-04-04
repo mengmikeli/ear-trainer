@@ -652,13 +652,13 @@ describe('createDefaultStateV4', () => {
 		expect(Object.keys(state.definitions.modes)).toHaveLength(MODES.length);
 	});
 
-	it('tier 1 items are unlocked, others are not', () => {
+	it('beginner-pack items are unlocked, others are not', () => {
 		const state = createDefaultStateV4();
 		for (const def of INTERVALS) {
-			expect(state.definitions.intervals[def.id].unlocked).toBe(def.tier === 1);
+			expect(state.definitions.intervals[def.id].unlocked).toBe(def.pack === 'beginner');
 		}
 		for (const def of CHORDS) {
-			expect(state.definitions.chords[def.id].unlocked).toBe(def.tier === 1);
+			expect(state.definitions.chords[def.id].unlocked).toBe(def.pack === 'beginner');
 		}
 	});
 });

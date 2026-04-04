@@ -207,9 +207,9 @@ describe('createDefaultStateV4', () => {
 		}
 	});
 
-	it('tier 2+ intervals are locked', () => {
+	it('non-beginner intervals are locked', () => {
 		const s = createDefaultStateV4();
-		for (const def of INTERVALS.filter((i) => i.tier > 1)) {
+		for (const def of INTERVALS.filter((i) => i.pack !== 'beginner')) {
 			expect(s.definitions.intervals[def.id].unlocked).toBe(false);
 		}
 	});
@@ -228,10 +228,10 @@ describe('createDefaultStateV4', () => {
 		}
 	});
 
-	it('tier 1 modes are unlocked, tier 2+ locked', () => {
+	it('all modes are locked (no beginner-pack modes)', () => {
 		const s = createDefaultStateV4();
 		for (const def of MODES) {
-			expect(s.definitions.modes[def.id].unlocked).toBe(def.tier === 1);
+			expect(s.definitions.modes[def.id].unlocked).toBe(false);
 		}
 	});
 
@@ -410,24 +410,28 @@ describe('saveStateV4', () => {
 // ===========================================================================
 
 describe('checkTierUnlockV4 — Intervals', () => {
-	it('does not unlock tier 2 with insufficient attempts (<10)', () => {
+	it('does not unlock tier 3 with insufficient attempts (<30)', () => {
 		const state = createDefaultStateV4();
-		addV4IntervalStats(state, TIER1_INTERVALS, 9, 9);
+		state.settings.proUnlocked = true; // tier 3 items are blues/jazz pack
+		// Beginner intervals (T1+T2) are unlocked by default; 29 total < 30 threshold
+		addV4IntervalStats(state, [...TIER1_INTERVALS, ...TIER2_INTERVALS], 29, 29);
 
 		const result = checkTierUnlockV4(state);
 
-		for (const id of TIER2_INTERVALS) {
+		for (const id of TIER3_INTERVALS) {
 			expect(result.definitions.intervals[id].unlocked).toBe(false);
 		}
 	});
 
-	it('does not unlock tier 2 with low accuracy (<70%)', () => {
+	it('does not unlock tier 3 with low accuracy (<70%)', () => {
 		const state = createDefaultStateV4();
-		addV4IntervalStats(state, TIER1_INTERVALS, 10, 6);
+		state.settings.proUnlocked = true; // tier 3 items are blues/jazz pack
+		// 30 attempts at 60% accuracy — below 70% threshold
+		addV4IntervalStats(state, [...TIER1_INTERVALS, ...TIER2_INTERVALS], 30, 18);
 
 		const result = checkTierUnlockV4(state);
 
-		for (const id of TIER2_INTERVALS) {
+		for (const id of TIER3_INTERVALS) {
 			expect(result.definitions.intervals[id].unlocked).toBe(false);
 		}
 	});
@@ -483,13 +487,15 @@ describe('checkTierUnlockV4 — Intervals', () => {
 
 	it('returns a new object (no mutation)', () => {
 		const state = createDefaultStateV4();
-		addV4IntervalStats(state, TIER1_INTERVALS, 15, 12);
+		state.settings.proUnlocked = true; // tier 3 items are blues/jazz pack
+		// Enough stats on beginner intervals for tier 3 unlock: 36/6 = 6 each, 30/6 = 5 each (83%)
+		addV4IntervalStats(state, [...TIER1_INTERVALS, ...TIER2_INTERVALS], 36, 30);
 
 		const result = checkTierUnlockV4(state);
 
 		expect(result).not.toBe(state);
-		expect(result.definitions.intervals['M3'].unlocked).toBe(true);
-		expect(state.definitions.intervals['M3'].unlocked).toBe(false);
+		expect(result.definitions.intervals['M2'].unlocked).toBe(true);
+		expect(state.definitions.intervals['M2'].unlocked).toBe(false);
 	});
 });
 
@@ -583,18 +589,15 @@ describe('checkTierUnlockV4 — Modes', () => {
 		for (const id of TIER3_SCALES) {
 			expect(result.definitions.scales[id].unlocked).toBe(false);
 		}
-		// Tier 1 modes stay unlocked by default, higher tiers stay locked
+		// ALL modes stay locked (modes are 'advanced' pack, not unlocked by default)
 		for (const id of ALL_MODE_IDS) {
-			if (TIER1_MODES.includes(id)) {
-				expect(result.definitions.modes[id].unlocked).toBe(true);
-			} else {
-				expect(result.definitions.modes[id].unlocked).toBe(false);
-			}
+			expect(result.definitions.modes[id].unlocked).toBe(false);
 		}
 	});
 
 	it('does not unlock modes with all scales but insufficient scale attempts', () => {
 		const state = createDefaultStateV4();
+		state.settings.proUnlocked = true; // Pro needed for modes
 		// Manually unlock all scales
 		for (const id of ALL_SCALE_IDS) {
 			state.definitions.scales[id].unlocked = true;
@@ -603,23 +606,20 @@ describe('checkTierUnlockV4 — Modes', () => {
 
 		const result = checkTierUnlockV4(state);
 
-		// Tier 1 modes are unlocked by default, but prerequisite not met (50 < 60)
-		// so no tier 2/3 mode unlocks
+		// All modes stay locked (50 < 60 prerequisite)
 		for (const id of ALL_MODE_IDS) {
-			if (TIER1_MODES.includes(id)) {
-				expect(result.definitions.modes[id].unlocked).toBe(true);
-			} else {
-				expect(result.definitions.modes[id].unlocked).toBe(false);
-			}
+			expect(result.definitions.modes[id].unlocked).toBe(false);
 		}
 	});
 
-	it('unlocks tier 1 modes when all scales unlocked + 60 attempts at 70%', () => {
+	it('unlocks tier 1 modes when all scales unlocked + mastery met', () => {
 		const state = createDefaultStateV4();
+		state.settings.proUnlocked = true; // modes are 'advanced' pack
 		for (const id of ALL_SCALE_IDS) {
 			state.definitions.scales[id].unlocked = true;
 		}
-		addV4ScaleStats(state, TIER1_SCALES, 60, 42);
+		// All scales mastered: per-item on max tier met + 96 >= 60 at 83%
+		addV4ScaleStats(state, ALL_SCALE_IDS, 96, 80);
 
 		const result = checkTierUnlockV4(state);
 

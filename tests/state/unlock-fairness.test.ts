@@ -243,19 +243,19 @@ describe('getItemMasteryStatus', () => {
 // ===========================================================================
 
 describe('checkTierUnlockV4 with per-item mastery', () => {
-	it('pooled threshold met but per-item NOT met → does NOT unlock intervals tier 2', () => {
+	it('pooled threshold met but per-item NOT met → does NOT unlock intervals tier 3', () => {
 		const state = proState();
-		// Give enough pooled stats: 15 attempts, 80% accuracy across tier 1
-		// But concentrate all stats on P1, leaving P5 and P8 untouched
-		setIntervalStats(state, 'P1', 15, 12); // P1: 15 attempts, 80%
-		// P5: 0 attempts — per-item check fails (not all have ≥5 attempts)
-		// P8: 0 attempts
+		// Concentrate all stats on M3, leaving m3 and P4 untouched
+		// Total: 35 attempts ≥ 30 (tier 3 threshold), accuracy 80% ≥ 70%
+		// But per-item on tier 2: m3 and P4 have 0 attempts → per-item fails
+		setIntervalStats(state, 'M3', 35, 28);
 
 		const updated = checkTierUnlockV4(state);
-		const t2Unlocked = T2_INTERVALS.every(
+		const t3 = INTERVALS.filter((i) => i.tier === 3);
+		const t3Unlocked = t3.every(
 			(d) => updated.definitions.intervals[d.id]?.unlocked,
 		);
-		expect(t2Unlocked).toBe(false);
+		expect(t3Unlocked).toBe(false);
 	});
 
 	it('both pooled and per-item met → unlocks intervals tier 2', () => {
@@ -329,17 +329,23 @@ describe('checkTierUnlockV4 with per-item mastery', () => {
 
 	it('items with 4 attempts (below min 5) → blocks even with 100% accuracy', () => {
 		const state = proState();
-		// Set 4 attempts at 100% for each tier 1 item
-		for (const def of T1_INTERVALS) {
+		// Set 4 attempts at 100% for each tier 2 item (prerequisite for tier 3)
+		for (const def of T2_INTERVALS) {
 			setIntervalStats(state, def.id, 4, 4);
 		}
-		// Total: 12 attempts, 100% — pooled threshold met (10 questions, 70%)
+		// Add stats to tier 1 items to boost pooled count above tier 3 threshold (30)
+		for (const def of T1_INTERVALS) {
+			setIntervalStats(state, def.id, 10, 8);
+		}
+		// Total: 3*10 + 3*4 = 42 attempts ≥ 30, 36/42 = 86% ≥ 70%
+		// Per-item on tier 2: 4 attempts each < 5 minimum → blocks
 
 		const updated = checkTierUnlockV4(state);
-		const t2Unlocked = T2_INTERVALS.every(
+		const t3 = INTERVALS.filter((i) => i.tier === 3);
+		const t3Unlocked = t3.every(
 			(d) => updated.definitions.intervals[d.id]?.unlocked,
 		);
-		expect(t2Unlocked).toBe(false);
+		expect(t3Unlocked).toBe(false);
 	});
 
 	it('backward compat: already-unlocked tiers stay unlocked', () => {
