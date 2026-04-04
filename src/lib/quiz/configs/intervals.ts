@@ -16,8 +16,10 @@ import { INTERVALS, type IntervalDef } from '$lib/definitions/intervals';
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function getEnabledIntervalsV4(state: UserStateV4): IntervalDef[] {
+	const devMode = state.settings.devMode;
 	return INTERVALS.filter((def) => {
 		const d = state.definitions.intervals[def.id];
+		if (devMode) return true;
 		return d?.unlocked && d?.enabled;
 	});
 }

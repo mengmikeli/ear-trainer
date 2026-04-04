@@ -18,8 +18,10 @@ const TEMPO = SCALE_TEMPO;
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function getEnabledScalesV4(state: UserStateV4): ScaleDef[] {
+	const devMode = state.settings.devMode;
 	return SCALES.filter((def) => {
 		const d = state.definitions.scales[def.id];
+		if (devMode) return true;
 		return d?.unlocked && d?.enabled;
 	});
 }

@@ -15,8 +15,10 @@ import { CHORDS, type ChordDef, availableVoicings } from '$lib/definitions/chord
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function getEnabledChordsV4(state: UserStateV4): ChordDef[] {
+	const devMode = state.settings.devMode;
 	return CHORDS.filter((def) => {
 		const d = state.definitions.chords[def.id];
+		if (devMode) return true;
 		return d?.unlocked && d?.enabled;
 	});
 }
