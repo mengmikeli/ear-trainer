@@ -5,14 +5,13 @@
 	import { loadStateV4, saveStateV4 } from '$lib/state/storage';
 	import { checkTierUnlockV4, getNextUnlockProgress } from '$lib/state/progression';
 	import { getStatsForDef, aggregateStats, getStatsByKind } from '$lib/state/stats';
-	import { isModeMastered, buildIntervalState } from '$lib/state/compat';
 	import { warmUpAudio } from '$lib/audio/context';
+	import { isContentKindAvailable } from '$lib/features/content-access';
 	import { INTERVALS } from '$lib/definitions/intervals';
 	import { CHORDS } from '$lib/definitions/chords';
 	import { SCALES } from '$lib/definitions/scales';
 	import { MODES } from '$lib/definitions/modes';
 	import { VERSION_STRING } from '$lib/version';
-	import { canAccess, getUserTier } from '$lib/features/gate';
 	import type { UserStateV4 } from '$lib/state/schema';
 	import LissajousRing from '../components/LissajousRing.svelte';
 	// import ChladniBackground from '../components/ChladniBackground.svelte'; // disabled — perf not optimized yet
@@ -76,42 +75,20 @@
 		}, 300);
 	});
 
-	// --- Unlock logic (same as before) ---
+	// --- Unlock logic (single source of truth: isContentKindAvailable) ---
 	const chordsUnlocked = $derived(() => {
 		if (!state) return false;
-		if (state.settings.devMode) return true;
-		let bronzeCount = 0;
-		for (const def of INTERVALS) {
-			const ds = state.definitions.intervals[def.id];
-			if (!ds?.unlocked) continue;
-			const istate = buildIntervalState(state, def.id);
-			const mastered = [istate.modes.ascending, istate.modes.descending, istate.modes.harmonic]
-				.filter(m => isModeMastered(m)).length;
-			if (mastered >= 1) bronzeCount++;
-		}
-		return bronzeCount >= 5;
+		return isContentKindAvailable(state, 'chord');
 	});
 
 	const scalesUnlocked = $derived(() => {
 		if (!state) return false;
-		if (state.settings.devMode) return true;
-		let bronzeCount = 0;
-		for (const def of INTERVALS) {
-			const ds = state.definitions.intervals[def.id];
-			if (!ds?.unlocked) continue;
-			const istate = buildIntervalState(state, def.id);
-			const mastered = [istate.modes.ascending, istate.modes.descending, istate.modes.harmonic]
-				.filter(m => isModeMastered(m)).length;
-			if (mastered >= 1) bronzeCount++;
-		}
-		return bronzeCount >= 3;
+		return isContentKindAvailable(state, 'scale');
 	});
 
 	const modesUnlocked = $derived(() => {
 		if (!state) return false;
-		if (state.settings.devMode) return true;
-		if (!canAccess('content:modes', getUserTier(state.settings), false)) return false;
-		return Object.values(state.definitions.modes).some(m => m.unlocked);
+		return isContentKindAvailable(state, 'mode');
 	});
 
 	const activeContent = $derived(() => {

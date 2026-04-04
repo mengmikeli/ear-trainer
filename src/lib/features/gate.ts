@@ -3,9 +3,6 @@ export type FeatureId =
   | 'content:scales'
   | 'content:modes'
   | 'content:adaptive'
-  | 'quiz:session_length_30'
-  | 'lab:ascii'
-  | 'settings:tone_piano'
   | string;
 
 export type Tier = 'free' | 'pro';

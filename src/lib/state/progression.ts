@@ -25,7 +25,6 @@ const INTERVAL_THRESHOLDS: Record<number, { questions: number; accuracy: number 
 	2: { questions: 10, accuracy: 0.7 },
 	3: { questions: 30, accuracy: 0.7 },
 	4: { questions: 60, accuracy: 0.7 },
-	5: { questions: 100, accuracy: 0.7 },
 };
 
 const CHORD_THRESHOLDS: Record<number, { questions: number; accuracy: number }> = {

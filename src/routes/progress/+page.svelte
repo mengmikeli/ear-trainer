@@ -9,6 +9,7 @@
 	import { SCALE_TEMPO, MODE_TEMPO } from '$lib/audio/tempo';
 	import { isModeMastered, buildIntervalState, buildChordState, buildScaleState, buildModeState, getMasteryLevel } from '$lib/state/compat';
 	import { getStats, getStatsByKind, aggregateStats } from '$lib/state/stats';
+	import { isContentKindAvailable } from '$lib/features/content-access';
 
 	import ContentCard from '../../components/ContentCard.svelte';
 	import LockedCard from '../../components/LockedCard.svelte';
@@ -40,42 +41,20 @@
 		{ label: 'INV2', value: 'second' },
 	];
 
-	// Chord system unlock: Bronze mastery on 5+ intervals
+	// Content unlock checks (single source of truth: isContentKindAvailable)
 	const chordsUnlocked = $derived(() => {
 		if (!state) return false;
-		if (state.settings.devMode) return true;
-		let bronzeCount = 0;
-		for (const def of INTERVALS) {
-			const ds = state.definitions.intervals[def.id];
-			if (!ds?.unlocked) continue;
-			const istate = buildIntervalState(state, def.id);
-			const mastered = [istate.modes.ascending, istate.modes.descending, istate.modes.harmonic]
-				.filter(m => isModeMastered(m)).length;
-			if (mastered >= 1) bronzeCount++;
-		}
-		return bronzeCount >= 5;
+		return isContentKindAvailable(state, 'chord');
 	});
 
-	// Scale system unlock: Bronze mastery on 3+ intervals
 	const scalesUnlocked = $derived(() => {
 		if (!state) return false;
-		if (state.settings.devMode) return true;
-		let bronzeCount = 0;
-		for (const def of INTERVALS) {
-			const ds = state.definitions.intervals[def.id];
-			if (!ds?.unlocked) continue;
-			const istate = buildIntervalState(state, def.id);
-			const mastered = [istate.modes.ascending, istate.modes.descending, istate.modes.harmonic]
-				.filter(m => isModeMastered(m)).length;
-			if (mastered >= 1) bronzeCount++;
-		}
-		return bronzeCount >= 3;
+		return isContentKindAvailable(state, 'scale');
 	});
 
 	const modesUnlocked = $derived(() => {
 		if (!state) return false;
-		if (state.settings.devMode) return true;
-		return scalesUnlocked();
+		return isContentKindAvailable(state, 'mode');
 	});
 
 	// Pro gate helpers

@@ -51,8 +51,6 @@ export interface ContentStats {
 	easeFactor: number;
 	/** Timestamp (ms) of the next scheduled review. */
 	nextReview: number;
-	/** IDs of related content items for cross-content connections. */
-	relatedItems: string[];
 }
 
 // ─── Definition state ───────────────────────────────────────────────────────
@@ -177,7 +175,6 @@ export function defaultContentStats(): ContentStats {
 		lastSeen: 0,
 		easeFactor: 2.5,
 		nextReview: 0,
-		relatedItems: [],
 	};
 }
 
@@ -185,3 +182,19 @@ export function defaultContentStats(): ContentStats {
 export function defaultDefinitionState(unlocked: boolean = false): DefinitionState {
 	return { unlocked, enabled: true };
 }
+
+// ─── ContentKind ↔ plural mapping ───────────────────────────────────────────
+
+export const KIND_TO_PLURAL: Record<ContentKind, 'intervals' | 'chords' | 'scales' | 'modes'> = {
+	interval: 'intervals',
+	chord: 'chords',
+	scale: 'scales',
+	mode: 'modes',
+};
+
+export const PLURAL_TO_KIND: Record<string, ContentKind> = {
+	intervals: 'interval',
+	chords: 'chord',
+	scales: 'scale',
+	modes: 'mode',
+};

@@ -1,4 +1,20 @@
 /**
+ * MASTERY SYSTEMS — Two different thresholds serve different purposes:
+ *
+ * 1. DISPLAY MASTERY (this file): 20 attempts, 85% accuracy
+ *    Used for: bronze/silver/gold badges, content-type unlock gating
+ *    (isModeMastered, getMasteryLevel)
+ *
+ * 2. PROGRESSION MASTERY (progression.ts): 5 attempts, 70% accuracy
+ *    Used for: tier unlock within a content type
+ *    (checkPerItemMastery, PER_ITEM_MIN_ATTEMPTS, PER_ITEM_MIN_ACCURACY)
+ *
+ * These are intentionally different. Display mastery is a higher bar
+ * that gates access to new content types. Progression mastery is a
+ * lower bar that gates access to harder content within a type.
+ */
+
+/**
  * v4 → legacy state compat layer.
  *
  * Constructs old-format state objects (IntervalState, ChordState, ScaleState,

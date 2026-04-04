@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { migrateToV4, freshV4State } from '$lib/state/migration';
+import { migrateToV4 } from '$lib/state/migration';
+import { createDefaultStateV4 } from '$lib/state/defaults';
 import { STATE_VERSION, defaultContentStats, defaultDefinitionState } from '$lib/state/schema';
 import type { UserStateV4 } from '$lib/state/schema';
 import { INTERVALS } from '$lib/definitions/intervals';
@@ -117,7 +118,7 @@ function fullV3(): any {
 // ===========================================================================
 describe('basic migration', () => {
 	it('returns v4 state unchanged (already migrated)', () => {
-		const v4 = freshV4State();
+		const v4 = createDefaultStateV4();
 		const result = migrateToV4(v4);
 		expect(result).toBe(v4); // exact same reference (no clone)
 		expect(result.version).toBe(STATE_VERSION);
@@ -172,7 +173,6 @@ describe('stats migration', () => {
 					lastSeen: 1700000000000,
 					easeFactor: 2.8,
 					nextReview: 1700100000000,
-					relatedItems: ['interval:P4:ascending'],
 				},
 			},
 			sessionHistory: [],
@@ -187,7 +187,6 @@ describe('stats migration', () => {
 			lastSeen: 1700000000000,
 			easeFactor: 2.8,
 			nextReview: 1700100000000,
-			relatedItems: ['interval:P4:ascending'],
 		});
 	});
 
@@ -210,7 +209,6 @@ describe('stats migration', () => {
 			lastSeen: 1700000000000,
 			easeFactor: 2.6,
 			nextReview: 1700050000000,
-			relatedItems: [],
 		});
 	});
 
@@ -243,7 +241,6 @@ describe('stats migration', () => {
 			lastSeen: 1700000000000,
 			easeFactor: 2.7,
 			nextReview: 1700090000000,
-			relatedItems: [],
 		});
 	});
 
@@ -278,28 +275,6 @@ describe('stats migration', () => {
 		expect(result.stats['mode:dorian'].attempts).toBe(8);
 		expect(result.stats['mode:dorian'].correct).toBe(6);
 		expect(result.stats['mode:dorian'].streak).toBe(2);
-	});
-
-	it('adaptive.stats entry missing relatedItems → defaults to []', () => {
-		const v3 = fullV3();
-		v3.adaptive = {
-			stats: {
-				'interval:P5:ascending': {
-					attempts: 5,
-					correct: 3,
-					streak: 1,
-					lastSeen: 0,
-					easeFactor: 2.5,
-					nextReview: 0,
-					// no relatedItems
-				},
-			},
-			sessionHistory: [],
-			lastSessionDate: 0,
-		};
-
-		const result = migrateToV4(v3);
-		expect(result.stats['interval:P5:ascending'].relatedItems).toEqual([]);
 	});
 });
 
@@ -661,16 +636,16 @@ describe('edge cases', () => {
 });
 
 // ===========================================================================
-// freshV4State
+// createDefaultStateV4
 // ===========================================================================
-describe('freshV4State', () => {
+describe('createDefaultStateV4', () => {
 	it('has correct version', () => {
-		const state = freshV4State();
+		const state = createDefaultStateV4();
 		expect(state.version).toBe(STATE_VERSION);
 	});
 
 	it('has all definition categories populated', () => {
-		const state = freshV4State();
+		const state = createDefaultStateV4();
 		expect(Object.keys(state.definitions.intervals)).toHaveLength(INTERVALS.length);
 		expect(Object.keys(state.definitions.chords)).toHaveLength(CHORDS.length);
 		expect(Object.keys(state.definitions.scales)).toHaveLength(SCALES.length);
@@ -678,7 +653,7 @@ describe('freshV4State', () => {
 	});
 
 	it('tier 1 items are unlocked, others are not', () => {
-		const state = freshV4State();
+		const state = createDefaultStateV4();
 		for (const def of INTERVALS) {
 			expect(state.definitions.intervals[def.id].unlocked).toBe(def.tier === 1);
 		}
