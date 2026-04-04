@@ -6,7 +6,7 @@
  *
  *   Intervals  2=10/70%  3=30/70%  4=60/70%  5=100/70%
  *   Chords     2=10/70%  3=30/70%  4=60/70%
- *   Scales     2=10/70%  3=30/70%  4=60/70%
+ *   Scales     2=10/70%  3=30/70%
  *   Modes      prerequisite: all scales unlocked + 60 attempts at 70%
  *              then tiers: 2=10/70%  3=30/70%
  */
@@ -36,7 +36,6 @@ const CHORD_THRESHOLDS: Record<number, { questions: number; accuracy: number }> 
 const SCALE_THRESHOLDS: Record<number, { questions: number; accuracy: number }> = {
 	2: { questions: 10, accuracy: 0.7 },
 	3: { questions: 30, accuracy: 0.7 },
-	4: { questions: 60, accuracy: 0.7 },
 };
 
 const MODE_PREREQUISITE = { questions: 60, accuracy: 0.7 };
@@ -381,7 +380,7 @@ function unlockScaleTiers(state: UserStateV4): void {
 	}
 	const overallAccuracy = totalAttempts > 0 ? totalCorrect / totalAttempts : 0;
 
-	for (let tier = 2; tier <= 4; tier++) {
+	for (let tier = 2; tier <= 3; tier++) {
 		const threshold = SCALE_THRESHOLDS[tier];
 		const tierDefs = SCALES.filter((s) => s.tier === tier);
 

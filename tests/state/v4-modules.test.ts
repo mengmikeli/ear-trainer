@@ -568,7 +568,7 @@ describe('checkTierUnlockV4 — Scales', () => {
 });
 
 describe('checkTierUnlockV4 — Modes', () => {
-	it('does not unlock modes when tier 4 scales are locked', () => {
+	it('does not unlock modes when tier 3 scales are locked', () => {
 		const state = createDefaultStateV4();
 		state.settings.proUnlocked = true; // Pro needed for scale/mode gating
 		// Give scale stats but don't unlock all scale tiers
@@ -581,9 +581,6 @@ describe('checkTierUnlockV4 — Modes', () => {
 			expect(result.definitions.scales[id].unlocked).toBe(true);
 		}
 		for (const id of TIER3_SCALES) {
-			expect(result.definitions.scales[id].unlocked).toBe(false);
-		}
-		for (const id of TIER4_SCALES) {
 			expect(result.definitions.scales[id].unlocked).toBe(false);
 		}
 		// Tier 1 modes stay unlocked by default, higher tiers stay locked

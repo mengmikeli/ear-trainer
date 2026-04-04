@@ -418,20 +418,20 @@ describe('checkTierUnlockV4 with per-item mastery', () => {
 		}
 
 		// Unlock all scale tiers
-		for (let t = 1; t <= 4; t++) {
+		for (let t = 1; t <= 3; t++) {
 			unlockTier(state, 'scales', t);
 		}
 
 		// Add enough scale stats for mode prerequisite (60 attempts, 70%)
-		// But DON'T master tier 4 scale items per-item
-		const maxTierScales = SCALES.filter((s) => s.tier === 4); // 2 items
-		const otherScales = SCALES.filter((s) => s.tier < 4);
+		// But DON'T master tier 3 scale items per-item
+		const maxTierScales = SCALES.filter((s) => s.tier === 3); // 5 items
+		const otherScales = SCALES.filter((s) => s.tier < 3);
 		for (const def of otherScales) {
 			setScaleStats(state, def.id, 8, 6); // spread attempts
 		}
-		// For max tier, put all attempts on one item
+		// For max tier, put all attempts on first item only
 		setScaleStats(state, maxTierScales[0].id, 10, 8);
-		// maxTierScales[1] has 0 attempts — per-item fails
+		// remaining maxTierScales items have 0 attempts — per-item fails
 
 		const updated = checkTierUnlockV4(state);
 		const t1Modes = MODES.filter((m) => m.tier === 1);

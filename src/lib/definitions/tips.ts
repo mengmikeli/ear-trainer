@@ -40,8 +40,6 @@ export const LISTENING_TIPS: Record<string, string> = {
 	'whole': 'Every step the same size -- dreamy, Debussy-like',
 	'mel_min': 'Minor going up, natural coming down -- classical voice leading',
 	'chromatic': 'Every single semitone -- tension city, no home base',
-	'dorian_scale': 'Minor but with a bright 6th -- jazzy, sophisticated',
-	'mixolydian_scale': 'Major but with a flat 7th -- bluesy, rock feel',
 
 	// Modes
 	'ionian': 'Standard major scale -- bright, resolved',

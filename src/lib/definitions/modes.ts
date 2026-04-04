@@ -17,7 +17,7 @@ export const MODES: ModeDef[] = [
 	{
 		id: 'ionian',
 		name: 'Ionian (Major)',
-		label: 'Ion',
+		label: 'ION',
 		parent: 'major',
 		degree: 1,
 		intervals: [0, 2, 4, 5, 7, 9, 11, 12],
@@ -28,7 +28,7 @@ export const MODES: ModeDef[] = [
 	{
 		id: 'aeolian',
 		name: 'Aeolian (Minor)',
-		label: 'Aeo',
+		label: 'AEO',
 		parent: 'major',
 		degree: 6,
 		intervals: [0, 2, 3, 5, 7, 8, 10, 12],
@@ -41,7 +41,7 @@ export const MODES: ModeDef[] = [
 	{
 		id: 'dorian',
 		name: 'Dorian',
-		label: 'Dor',
+		label: 'DOR',
 		parent: 'major',
 		degree: 2,
 		intervals: [0, 2, 3, 5, 7, 9, 10, 12],
@@ -52,7 +52,7 @@ export const MODES: ModeDef[] = [
 	{
 		id: 'mixolydian',
 		name: 'Mixolydian',
-		label: 'Mix',
+		label: 'MIX',
 		parent: 'major',
 		degree: 5,
 		intervals: [0, 2, 4, 5, 7, 9, 10, 12],
@@ -65,7 +65,7 @@ export const MODES: ModeDef[] = [
 	{
 		id: 'phrygian',
 		name: 'Phrygian',
-		label: 'Phr',
+		label: 'PHR',
 		parent: 'major',
 		degree: 3,
 		intervals: [0, 1, 3, 5, 7, 8, 10, 12],
@@ -76,7 +76,7 @@ export const MODES: ModeDef[] = [
 	{
 		id: 'lydian',
 		name: 'Lydian',
-		label: 'Lyd',
+		label: 'LYD',
 		parent: 'major',
 		degree: 4,
 		intervals: [0, 2, 4, 6, 7, 9, 11, 12],
@@ -87,7 +87,7 @@ export const MODES: ModeDef[] = [
 	{
 		id: 'locrian',
 		name: 'Locrian',
-		label: 'Loc',
+		label: 'LOC',
 		parent: 'major',
 		degree: 7,
 		intervals: [0, 1, 3, 5, 6, 8, 10, 12],

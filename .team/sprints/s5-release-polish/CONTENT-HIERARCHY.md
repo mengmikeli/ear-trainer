@@ -27,16 +27,15 @@
 
 New items needed: Sus2, Sus4, Power chord, Dim7, Half-dim7, Aug7
 
-## Scales (4 tiers, 10 items)
+## Scales (3 tiers, 9 items)
 
 | Tier | Items | Theme | Gate |
 |------|-------|-------|------|
 | 1 | Major, Natural Minor | The two fundamentals | Free |
 | 2 | Major Pentatonic, Minor Pentatonic | Pattern-based, common | Pro |
 | 3 | Harmonic Minor, Blues, Whole Tone, Melodic Minor, Chromatic | Character scales | Pro |
-| 4 | Dorian, Mixolydian | Intro to modal color | Pro |
 
-New items needed: Dorian scale, Mixolydian scale (as scale recognition, not mode-over-drone), Whole Tone, Melodic Minor, Chromatic
+New items needed: Whole Tone, Melodic Minor, Chromatic
 
 ## Modes (3 tiers, 7 items, all Pro)
 
@@ -54,13 +53,13 @@ Prerequisite: scale mastery (tier 2+ scales)
 |---|---|---|---|
 | Intervals | 6 | 7 | 13 |
 | Chords | 2 | 11 | 13 |
-| Scales | 2 | 8 | 10 |
+| Scales | 2 | 7 | 9 |
 | Modes | 0 | 7 | 7 |
-| **Total** | **10** | **33** | **43** |
+| **Total** | **10** | **31** | **41** |
 
 Free: 10 items with one unlock moment
-Pro: 33 items ($4.99 one-time)
-Ratio: 3.3:1 Pro-to-free
+Pro: 31 items ($4.99 one-time)
+Ratio: 3.1:1 Pro-to-free
 
 ## Cross-content dependencies
 
