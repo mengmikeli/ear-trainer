@@ -67,6 +67,14 @@ class MockAudioContext {
 		Q: { value: 0 },
 		connect: vi.fn(),
 	}));
+	createDynamicsCompressor = vi.fn(() => ({
+		threshold: { value: -24 },
+		knee: { value: 30 },
+		ratio: { value: 12 },
+		attack: { value: 0.003 },
+		release: { value: 0.25 },
+		connect: vi.fn(),
+	}));
 	resume = vi.fn().mockResolvedValue(undefined);
 	close = vi.fn();
 }
