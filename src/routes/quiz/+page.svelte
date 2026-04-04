@@ -123,20 +123,21 @@
 		const scaleStats = aggregateStats(getStatsByKind(state.stats, 'scale'));
 		const modeStats = aggregateStats(getStatsByKind(state.stats, 'mode'));
 
+		const typeColor = 'var(--marathon-blue)';
 		return [
 			{ id: 'intervals', name: 'INTERVALS', href: `${base}/quiz/intervals`, count: INTERVALS.length,
 				accuracy: intervalStats.attempts > 0 ? Math.round(intervalStats.accuracy * 100) : 0,
-				hasAttempts: intervalStats.attempts > 0, unlocked: true, color: '#C2FE0C' },
+				hasAttempts: intervalStats.attempts > 0, unlocked: true, color: typeColor },
 			{ id: 'chords', name: 'CHORDS', href: `${base}/quiz/chords`, count: CHORDS.length,
 				accuracy: chordStats.attempts > 0 ? Math.round(chordStats.accuracy * 100) : 0,
-				hasAttempts: chordStats.attempts > 0, unlocked: true, color: '#FFB800' },
+				hasAttempts: chordStats.attempts > 0, unlocked: true, color: typeColor },
 			{ id: 'scales', name: 'SCALES', href: `${base}/quiz/scales`, count: SCALES.length,
 				accuracy: scaleStats.attempts > 0 ? Math.round(scaleStats.accuracy * 100) : 0,
-				hasAttempts: scaleStats.attempts > 0, unlocked: true, color: '#A855F7' },
+				hasAttempts: scaleStats.attempts > 0, unlocked: true, color: typeColor },
 			{ id: 'modes', name: 'MODES', href: `${base}/quiz/modes`, count: MODES.length,
 				accuracy: modeStats.attempts > 0 ? Math.round(modeStats.accuracy * 100) : 0,
 				hasAttempts: modeStats.attempts > 0,
-				unlocked: isContentKindAvailable(state!, 'mode') || dev, color: '#FF0D1A' },
+				unlocked: isContentKindAvailable(state!, 'mode') || dev, color: typeColor },
 		];
 	});
 
@@ -183,7 +184,7 @@
 							onclick={() => handleLockedPathClick(path.id)}
 							disabled={!state?.settings.devMode}
 						>
-							<span class="card-name">{path.name}</span>
+							<span class="card-name" style="color: {path.color}">{path.name}</span>
 							<span class="card-count">{path.count} ITEMS</span>
 							<span class="card-stat card-pro">{path.price} PRO</span>
 						</button>
@@ -258,6 +259,7 @@
 		display: flex;
 		flex-direction: column;
 		justify-content: center;
+		align-items: flex-start;
 		gap: 0.2rem;
 		min-height: 5rem;
 		padding: 0.6rem;
@@ -265,6 +267,7 @@
 		border: 1px solid var(--border-heavy);
 		border-left: 3px solid var(--accent); /* overridden by inline style */
 		text-decoration: none;
+		text-align: left;
 		color: inherit;
 		cursor: pointer;
 		transition: opacity 0.15s;
