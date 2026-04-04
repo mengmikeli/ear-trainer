@@ -287,8 +287,12 @@
 			return { accuracy: agg.attempts > 0 ? Math.round(agg.accuracy * 100) : 0, count: `${unlocked}/${SCALES.length}`, tier: highest };
 		}
 		if (id === 'modes') {
+			const entries = getStatsByKind(state.stats, 'mode');
+			const agg = aggregateStats(entries);
 			const unlocked = Object.values(state.definitions.modes).filter(s => s.unlocked).length;
-			return { accuracy: 0, count: `${unlocked}/${MODES.length}`, tier: 1 };
+			let highest = 1;
+			for (const def of MODES) { if (state.definitions.modes[def.id]?.unlocked && def.tier > highest) highest = def.tier; }
+			return { accuracy: agg.attempts > 0 ? Math.round(agg.accuracy * 100) : 0, count: `${unlocked}/${MODES.length}`, tier: highest };
 		}
 		// intervals — always use interval stats, not activeContent-dependent
 		const entries = getStatsByKind(state.stats, 'interval');
