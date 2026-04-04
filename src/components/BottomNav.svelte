@@ -3,7 +3,7 @@
 	import { base } from '$app/paths';
 
 	const tabs = [
-		{ href: `${base}/`, label: 'PRACTICE', icon: '\uE014' },
+		{ href: `${base}/quiz`, label: 'PRACTICE', icon: '\uE014' },
 		{ href: `${base}/progress`, label: 'PROGRESS', icon: '\uE002' },
 		{ href: `${base}/settings`, label: 'SETTINGS', icon: '\uE015' },
 	];
