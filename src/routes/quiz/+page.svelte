@@ -13,12 +13,12 @@
 
 	let state: UserStateV4 | null = $state(null);
 
-	// Marathon faction colors — paths
+	// Marathon corporation colors — paths
 	const packColors: Record<string, string> = {
-		beginner: '#C2FE0C',  // Green — Leela
-		blues:    '#FFB800',  // Amber — S'pht
-		jazz:     '#01FFFF',  // Cyan — Durandal
-		advanced: '#FF0D1A',  // Red — Pfhor
+		beginner: '#C2FE0C',  // CyberAcme — green (our accent)
+		blues:    '#FFB800',  // MIDA — military amber
+		jazz:     '#A855F7',  // NuCaloric — purple/violet
+		advanced: '#FF0D1A',  // Traxus — industrial red
 	};
 
 	onMount(() => {
@@ -132,11 +132,11 @@
 				hasAttempts: chordStats.attempts > 0, unlocked: true, color: '#FFB800' },
 			{ id: 'scales', name: 'SCALES', href: `${base}/quiz/scales`, count: SCALES.length,
 				accuracy: scaleStats.attempts > 0 ? Math.round(scaleStats.accuracy * 100) : 0,
-				hasAttempts: scaleStats.attempts > 0, unlocked: true, color: '#01FFFF' },
+				hasAttempts: scaleStats.attempts > 0, unlocked: true, color: '#A855F7' },
 			{ id: 'modes', name: 'MODES', href: `${base}/quiz/modes`, count: MODES.length,
 				accuracy: modeStats.attempts > 0 ? Math.round(modeStats.accuracy * 100) : 0,
 				hasAttempts: modeStats.attempts > 0,
-				unlocked: isContentKindAvailable(state!, 'mode') || dev, color: '#5200FF' },
+				unlocked: isContentKindAvailable(state!, 'mode') || dev, color: '#FF0D1A' },
 		];
 	});
 
