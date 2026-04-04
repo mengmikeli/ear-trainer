@@ -963,9 +963,13 @@
 		animation: terminal-appear 0.3s ease-out 1.5s forwards;
 	}
 
-	/* Desktop: wider layout (≥1200px — sidebar + enough content for two-column) */
-	@media (min-width: 1200px) {
+	/* Desktop: wider layout (>=768px — match page heading size) */
+	@media (min-width: 768px) {
 		.heading { font-size: 3.5rem; }
+	}
+
+	/* Desktop: wider layout (>=1200px — sidebar + enough content for two-column) */
+	@media (min-width: 1200px) {
 
 		.summary {
 			max-width: none;
