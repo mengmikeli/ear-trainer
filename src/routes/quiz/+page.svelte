@@ -309,9 +309,9 @@
 		font-weight: 900;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
-		background: transparent;
-		border: 1px solid var(--border-heavy);
-		color: var(--text-secondary);
+		background: var(--accent);
+		border: 1px solid var(--accent);
+		color: var(--base);
 		text-align: center;
 		text-decoration: none;
 		display: block;
