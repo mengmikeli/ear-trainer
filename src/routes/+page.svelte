@@ -379,7 +379,7 @@
 			</div>
 
 			<a
-				href={activeContent() === 'chords' ? `${base}/quiz/chords` : activeContent() === 'scales' ? `${base}/quiz/scales` : activeContent() === 'modes' ? `${base}/quiz/modes` : `${base}/quiz`}
+				href={activeContent() === 'chords' ? `${base}/quiz/chords` : activeContent() === 'scales' ? `${base}/quiz/scales` : activeContent() === 'modes' ? `${base}/quiz/modes` : activeContent() === 'intervals' ? `${base}/quiz/intervals` : `${base}/quiz`}
 				class="go-btn"
 				class:glitching={goGlitching}
 				onclick={handleGo}
