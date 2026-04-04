@@ -33,9 +33,10 @@ export function playEpianoToneToNode(
 	const modGain = audioCtx.createGain();
 	modulator.type = 'sine';
 	modulator.frequency.value = freq * 2;
-	// Modulation depth — higher = more bell-like harmonics
-	modGain.gain.setValueAtTime(freq * 1.5, startTime);
-	modGain.gain.exponentialRampToValueAtTime(freq * 0.1, startTime + duration * 0.7);
+	// Modulation depth — scaled to frequency to avoid harsh harmonics at high pitches
+	const modDepth = Math.min(freq * 1.5, 400); // cap at 400Hz to prevent buzzing
+	modGain.gain.setValueAtTime(modDepth, startTime);
+	modGain.gain.exponentialRampToValueAtTime(modDepth * 0.07, startTime + duration * 0.7);
 	modGain.gain.linearRampToValueAtTime(0, startTime + duration);
 
 	// FM: modulator → modGain → carrier.frequency
