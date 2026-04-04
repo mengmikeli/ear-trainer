@@ -356,9 +356,11 @@
 		}
 		// Intervals
 		if (!activeTab) {
+			const intervalEntries = getStatsByKind(state.stats, 'interval');
+			const intervalAgg = aggregateStats(intervalEntries);
 			return [
 				{ label: 'SES', value: state.globalStats.totalSessions },
-				{ label: 'Q', value: state.globalStats.totalQuestions },
+				{ label: 'Q', value: intervalAgg.attempts },
 				{ label: 'STK', value: state.globalStats.currentStreak },
 			];
 		}
