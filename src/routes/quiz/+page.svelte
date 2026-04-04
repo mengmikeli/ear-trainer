@@ -186,7 +186,7 @@
 						>
 							<span class="card-name" style="color: {path.color}">{path.name}</span>
 							<span class="card-count">{path.count} ITEMS</span>
-							<span class="card-stat card-pro">{path.price} PRO</span>
+							<span class="card-stat"><span class="pro-badge">PRO</span></span>
 						</button>
 					{/if}
 				{/each}
@@ -212,7 +212,7 @@
 						<span class="pack-card locked" style="border-left-color: {type.color}">
 							<span class="card-name">{type.name}</span>
 							<span class="card-count">{type.count} ITEMS</span>
-							<span class="card-stat card-pro">PRO</span>
+							<span class="card-stat"><span class="pro-badge">PRO</span></span>
 						</span>
 					{/if}
 				{/each}
@@ -299,6 +299,17 @@
 
 	.card-free { color: var(--accent); }
 	.card-pro { color: var(--marathon-blue); }
+	.pro-badge {
+		display: inline-flex;
+		align-items: center;
+		padding: 0.1rem 0.4rem;
+		border: 1px solid var(--marathon-blue);
+		color: var(--marathon-blue);
+		font-family: var(--mono);
+		font-size: 0.35rem;
+		font-weight: 900;
+		letter-spacing: 0.12em;
+	}
 
 	/* ─── Quick Start — secondary, full-width ─── */
 	.quick-start {
