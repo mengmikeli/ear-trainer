@@ -132,7 +132,9 @@
 				? `${base}/quiz/scales`
 				: content === 'modes'
 					? `${base}/quiz/modes`
-					: `${base}/quiz`;
+					: content === 'intervals'
+						? `${base}/quiz/intervals`
+						: `${base}/quiz`;
 		let tick = 0;
 		const iv = setInterval(() => {
 			goText = glitchChars[Math.floor(Math.random() * glitchChars.length)];
