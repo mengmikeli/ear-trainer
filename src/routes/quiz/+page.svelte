@@ -209,7 +209,7 @@
 							{/if}
 						</a>
 					{:else}
-						<span class="pack-card locked" style="border-left-color: {type.color}">
+						<span class="pack-card locked" style="border-left-color: {type.color}; cursor: default">
 							<span class="card-name">{type.name}</span>
 							<span class="card-count">{type.count} ITEMS</span>
 							<span class="card-stat"><span class="pro-badge">PRO</span></span>
@@ -266,11 +266,7 @@
 	}
 	.pack-card:active { opacity: 0.85; }
 
-	/* Locked state */
-	.pack-card.locked {
-		opacity: 0.5;
-	}
-	.pack-card.locked:disabled { cursor: not-allowed; }
+	.pack-card.locked { opacity: 0.5; cursor: default; }
 	.pack-card.locked:not(:disabled) { cursor: pointer; }
 	.pack-card.locked:not(:disabled):active { opacity: 0.4; }
 
