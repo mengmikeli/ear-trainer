@@ -642,8 +642,8 @@ describe('checkTierUnlockV4 — Modes', () => {
 		for (const id of ALL_SCALE_IDS) {
 			state.definitions.scales[id].unlocked = true;
 		}
-		// Scale stats: 66 ÷ 11 = 6 each, 55 ÷ 11 = 5 each (83%) → all scale items mastered
-		addV4ScaleStats(state, ALL_SCALE_IDS, 66, 55);
+		// Scale stats: 96 ÷ 16 = 6 each, 80 ÷ 16 = 5 each (83%) → all scale items mastered
+		addV4ScaleStats(state, ALL_SCALE_IDS, 96, 80);
 		// Mode stats: 10 ÷ 2 = 5 each, 8 ÷ 2 = 4 each (80%) → both mastered
 		addV4ModeStats(state, TIER1_MODES, 10, 8);
 
@@ -667,7 +667,7 @@ describe('checkTierUnlockV4 — Modes', () => {
 			state.definitions.scales[id].unlocked = true;
 		}
 		// Scale stats: all items mastered for mode prerequisite
-		addV4ScaleStats(state, ALL_SCALE_IDS, 66, 55);
+		addV4ScaleStats(state, ALL_SCALE_IDS, 96, 80);
 		// T1 modes: 30 ÷ 2 = 15 each, 22 ÷ 2 = 11 each (73%) → both mastered
 		addV4ModeStats(state, TIER1_MODES, 30, 22);
 		// Pre-seed T2 mode per-item stats for tier 3 chain unlock

@@ -49,6 +49,13 @@ export const LISTENING_TIPS: Record<string, string> = {
 	'maj_blues': 'Major pentatonic with a blue note -- gospel, country, upbeat blues',
 	'bebop': 'Dominant scale with passing tone -- makes chord tones land on downbeats in jazz eighth notes',
 
+	// Scales (modal)
+	'dorian_scale': 'Minor with a bright 6th -- jazzy, sophisticated',
+	'mixolydian_scale': 'Major with a flat 7th -- bluesy, rock feel',
+	'lydian_scale': 'Major with a raised 4th -- dreamy, floating',
+	'phrygian_scale': 'Minor with a flat 2nd -- Spanish, dramatic',
+	'locrian_scale': 'Diminished feel -- darkest scale, theoretical',
+
 	// Modes
 	'ionian': 'Standard major scale -- bright, resolved',
 	'aeolian': 'Natural minor -- dark, melancholic',

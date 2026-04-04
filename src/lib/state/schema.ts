@@ -17,6 +17,9 @@ export const STATE_VERSION = 4;
 /** The four kinds of ear-training content. */
 export type ContentKind = 'interval' | 'chord' | 'scale' | 'mode';
 
+/** Content pack — controls access gating (beginner = free, others = pro). */
+export type ContentPack = 'beginner' | 'blues' | 'jazz' | 'advanced';
+
 /** Available tone / instrument types for audio playback. */
 export type ToneType = 'epiano' | 'sine' | 'piano';
 

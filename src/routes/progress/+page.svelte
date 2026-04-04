@@ -14,7 +14,7 @@
 	import ContentCard from '../../components/ContentCard.svelte';
 	import LockedCard from '../../components/LockedCard.svelte';
 	import TelemetryBar from '../../components/TelemetryBar.svelte';
-	import { canAccess, getUserTier, type Tier } from '$lib/features/gate';
+	import { canAccessPack, getUserTier, type Tier } from '$lib/features/gate';
 	import type { UserStateV4, PlayMode, ChordVoicing } from '$lib/state/schema';
 
 	let state: UserStateV4 | null = $state(null);
@@ -424,7 +424,7 @@
 		{#if contentView === 'intervals'}
 			<div class="interval-list">
 				{#each INTERVALS as def}
-					{#if !canAccess(`content:intervals:tier${def.tier}`, userTier(), devMode())}
+					{#if !canAccessPack(def.pack, userTier(), devMode())}
 						<LockedCard feature={def.name} onUnlock={handleProUnlock} devMode={devMode()} />
 					{:else}
 						{@const props = intervalCardProps(def.id)}
@@ -437,7 +437,7 @@
 		{:else if contentView === 'chords'}
 			<div class="interval-list">
 				{#each CHORDS as def}
-					{#if !canAccess(`content:chords:tier${def.tier}`, userTier(), devMode())}
+					{#if !canAccessPack(def.pack, userTier(), devMode())}
 						<LockedCard feature={def.name} onUnlock={handleProUnlock} devMode={devMode()} />
 					{:else}
 						{@const props = chordCardProps(def.id)}
@@ -450,7 +450,7 @@
 		{:else if contentView === 'scales'}
 			<div class="interval-list">
 				{#each SCALES as def}
-					{#if !canAccess(`content:scales:tier${def.tier}`, userTier(), devMode())}
+					{#if !canAccessPack(def.pack, userTier(), devMode())}
 						<LockedCard feature={def.name} onUnlock={handleProUnlock} devMode={devMode()} />
 					{:else}
 						{@const props = scaleCardProps(def.id)}
@@ -463,7 +463,7 @@
 		{:else if contentView === 'modes'}
 			<div class="interval-list">
 				{#each MODES as def}
-					{#if !canAccess('content:modes', userTier(), devMode())}
+					{#if !canAccessPack(def.pack, userTier(), devMode())}
 						<LockedCard feature={def.name} onUnlock={handleProUnlock} devMode={devMode()} />
 					{:else}
 						{@const props = modeCardProps(def.id)}
