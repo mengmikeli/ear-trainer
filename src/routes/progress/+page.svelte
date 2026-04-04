@@ -7,13 +7,11 @@
 	import { MODES } from '$lib/definitions/modes';
 	import { playInterval, playChord, playScale } from '$lib/audio/playback';
 	import { SCALE_TEMPO, MODE_TEMPO } from '$lib/audio/tempo';
-	import { isModeMastered, buildIntervalState, buildChordState, buildScaleState, buildModeState } from '$lib/state/compat';
+	import { isModeMastered, buildIntervalState, buildChordState, buildScaleState, buildModeState, getMasteryLevel } from '$lib/state/compat';
 	import { getStats, getStatsByKind, aggregateStats } from '$lib/state/stats';
+	import { isContentKindAvailable } from '$lib/features/content-access';
 
-	import IntervalCard from '../../components/IntervalCard.svelte';
-	import ChordCard from '../../components/ChordCard.svelte';
-	import ScaleCard from '../../components/ScaleCard.svelte';
-	import ModeCard from '../../components/ModeCard.svelte';
+	import ContentCard from '../../components/ContentCard.svelte';
 	import LockedCard from '../../components/LockedCard.svelte';
 	import TelemetryBar from '../../components/TelemetryBar.svelte';
 	import { canAccess, getUserTier, type Tier } from '$lib/features/gate';
@@ -43,42 +41,20 @@
 		{ label: 'INV2', value: 'second' },
 	];
 
-	// Chord system unlock: Bronze mastery on 5+ intervals
+	// Content unlock checks (single source of truth: isContentKindAvailable)
 	const chordsUnlocked = $derived(() => {
 		if (!state) return false;
-		if (state.settings.devMode) return true;
-		let bronzeCount = 0;
-		for (const def of INTERVALS) {
-			const ds = state.definitions.intervals[def.id];
-			if (!ds?.unlocked) continue;
-			const istate = buildIntervalState(state, def.id);
-			const mastered = [istate.modes.ascending, istate.modes.descending, istate.modes.harmonic]
-				.filter(m => isModeMastered(m)).length;
-			if (mastered >= 1) bronzeCount++;
-		}
-		return bronzeCount >= 5;
+		return isContentKindAvailable(state, 'chord');
 	});
 
-	// Scale system unlock: Bronze mastery on 3+ intervals
 	const scalesUnlocked = $derived(() => {
 		if (!state) return false;
-		if (state.settings.devMode) return true;
-		let bronzeCount = 0;
-		for (const def of INTERVALS) {
-			const ds = state.definitions.intervals[def.id];
-			if (!ds?.unlocked) continue;
-			const istate = buildIntervalState(state, def.id);
-			const mastered = [istate.modes.ascending, istate.modes.descending, istate.modes.harmonic]
-				.filter(m => isModeMastered(m)).length;
-			if (mastered >= 1) bronzeCount++;
-		}
-		return bronzeCount >= 3;
+		return isContentKindAvailable(state, 'scale');
 	});
 
 	const modesUnlocked = $derived(() => {
 		if (!state) return false;
-		if (state.settings.devMode) return true;
-		return scalesUnlocked();
+		return isContentKindAvailable(state, 'mode');
 	});
 
 	// Pro gate helpers
@@ -104,6 +80,126 @@
 	onMount(() => {
 		state = loadStateV4();
 	});
+
+	// ─── Helper functions: compute display props for ContentCard ─────────
+
+	function intervalCardProps(defId: string) {
+		if (!state) return null;
+		const def = INTERVALS.find(d => d.id === defId)!;
+		const istate = devUnlock(buildIntervalState(state, defId));
+		const filteredAttempts = activeTab ? istate.modes[activeTab].attempts : istate.attempts;
+		const filteredCorrect = activeTab ? istate.modes[activeTab].correct : istate.correct;
+		const accuracy = filteredAttempts > 0 ? Math.round((filteredCorrect / filteredAttempts) * 100) : 0;
+
+		const mastery = getMasteryLevel(istate);
+		const modeMastered = activeTab ? isModeMastered(istate.modes[activeTab]) : false;
+
+		let dots = '';
+		let color = '';
+		if (activeTab) {
+			dots = modeMastered ? '●' : '';
+			color = modeMastered ? '#C2FE0C' : '';
+		} else {
+			dots = mastery === 'gold' ? '●●●' : mastery === 'silver' ? '●●' : mastery === 'bronze' ? '●' : '';
+			color = mastery === 'gold' ? '#FFD700' : mastery === 'silver' ? '#C0C0C0' : '#CD7F32';
+		}
+
+		return {
+			id: def.id,
+			label: def.id,
+			name: def.name,
+			tier: def.tier,
+			unlocked: istate.unlocked,
+			enabled: istate.enabled,
+			accuracy,
+			attempts: filteredAttempts,
+			isNew: istate.unlocked && filteredAttempts === 0,
+			masteryDots: dots,
+			masteryColor: color,
+		};
+	}
+
+	function chordCardProps(defId: string) {
+		if (!state) return null;
+		const def = CHORDS.find(d => d.id === defId)!;
+		const cstate = devUnlock(buildChordState(state, defId));
+		const filteredAttempts = chordVoicingTab ? cstate.voicings[chordVoicingTab].attempts : cstate.attempts;
+		const filteredCorrect = chordVoicingTab ? cstate.voicings[chordVoicingTab].correct : cstate.correct;
+		const accuracy = filteredAttempts > 0 ? Math.round((filteredCorrect / filteredAttempts) * 100) : 0;
+
+		const masteredCount = [cstate.voicings.root, cstate.voicings.first, cstate.voicings.second]
+			.filter(v => isModeMastered(v)).length;
+		const mastery = masteredCount === 3 ? 'gold' : masteredCount === 2 ? 'silver' : masteredCount === 1 ? 'bronze' : 'none';
+		const modeMastered = chordVoicingTab ? isModeMastered(cstate.voicings[chordVoicingTab]) : false;
+
+		let dots = '';
+		let color = '';
+		if (chordVoicingTab) {
+			dots = modeMastered ? '●' : '';
+			color = modeMastered ? '#C2FE0C' : '';
+		} else {
+			dots = mastery === 'gold' ? '●●●' : mastery === 'silver' ? '●●' : mastery === 'bronze' ? '●' : '';
+			color = mastery === 'gold' ? '#FFD700' : mastery === 'silver' ? '#C0C0C0' : '#CD7F32';
+		}
+
+		return {
+			id: def.id,
+			label: def.label ?? def.id.toUpperCase(),
+			name: def.name,
+			tier: def.tier,
+			unlocked: cstate.unlocked,
+			enabled: cstate.enabled,
+			accuracy,
+			attempts: filteredAttempts,
+			isNew: cstate.unlocked && filteredAttempts === 0,
+			masteryDots: dots,
+			masteryColor: color,
+		};
+	}
+
+	function scaleCardProps(defId: string) {
+		if (!state) return null;
+		const def = SCALES.find(d => d.id === defId)!;
+		const sstate = devUnlock(buildScaleState(state, defId));
+		const accuracy = sstate.attempts > 0 ? Math.round((sstate.correct / sstate.attempts) * 100) : 0;
+
+		return {
+			id: def.id,
+			label: def.label,
+			name: def.name,
+			tier: def.tier,
+			unlocked: sstate.unlocked,
+			enabled: sstate.enabled,
+			accuracy,
+			attempts: sstate.attempts,
+			isNew: sstate.unlocked && sstate.attempts === 0,
+			masteryDots: '',
+			masteryColor: '',
+		};
+	}
+
+	function modeCardProps(defId: string) {
+		if (!state) return null;
+		const def = MODES.find(d => d.id === defId)!;
+		const mstate = devUnlock(buildModeState(state, defId));
+		const accuracy = mstate.attempts > 0 ? Math.round((mstate.correct / mstate.attempts) * 100) : 0;
+
+		return {
+			id: def.id,
+			label: def.label,
+			name: def.name,
+			tier: def.tier,
+			unlocked: mstate.unlocked,
+			enabled: mstate.enabled,
+			accuracy,
+			attempts: mstate.attempts,
+			isNew: mstate.unlocked && mstate.attempts === 0,
+			masteryDots: '',
+			masteryColor: '',
+		};
+	}
+
+	// ─── Toggle & play handlers (unchanged) ──────────────────────────────
 
 	function toggleInterval(id: string) {
 		if (!state) return;
@@ -260,9 +356,11 @@
 		}
 		// Intervals
 		if (!activeTab) {
+			const intervalEntries = getStatsByKind(state.stats, 'interval');
+			const intervalAgg = aggregateStats(intervalEntries);
 			return [
 				{ label: 'SES', value: state.globalStats.totalSessions },
-				{ label: 'Q', value: state.globalStats.totalQuestions },
+				{ label: 'Q', value: intervalAgg.attempts },
 				{ label: 'STK', value: state.globalStats.currentStreak },
 			];
 		}
@@ -329,7 +427,10 @@
 					{#if !canAccess(`content:intervals:tier${def.tier}`, userTier(), devMode())}
 						<LockedCard feature={def.name} onUnlock={handleProUnlock} devMode={devMode()} />
 					{:else}
-						<IntervalCard {def} state={devUnlock(buildIntervalState(state, def.id))} modeFilter={activeTab} ontoggle={toggleInterval} onplay={playIntervalPreview} playing={playingId === def.id} />
+						{@const props = intervalCardProps(def.id)}
+						{#if props}
+							<ContentCard {...props} ontoggle={toggleInterval} onplay={playIntervalPreview} playing={playingId === def.id} />
+						{/if}
 					{/if}
 				{/each}
 			</div>
@@ -339,7 +440,10 @@
 					{#if !canAccess(`content:chords:tier${def.tier}`, userTier(), devMode())}
 						<LockedCard feature={def.name} onUnlock={handleProUnlock} devMode={devMode()} />
 					{:else}
-						<ChordCard {def} state={devUnlock(buildChordState(state, def.id))} voicingFilter={chordVoicingTab} ontoggle={toggleChord} onplay={playChordPreview} playing={playingId === def.id} />
+						{@const props = chordCardProps(def.id)}
+						{#if props}
+							<ContentCard {...props} ontoggle={toggleChord} onplay={playChordPreview} playing={playingId === def.id} />
+						{/if}
 					{/if}
 				{/each}
 			</div>
@@ -349,7 +453,10 @@
 					{#if !canAccess(`content:scales:tier${def.tier}`, userTier(), devMode())}
 						<LockedCard feature={def.name} onUnlock={handleProUnlock} devMode={devMode()} />
 					{:else}
-						<ScaleCard {def} state={devUnlock(buildScaleState(state, def.id))} ontoggle={toggleScale} onplay={playScalePreview} playing={playingId === def.id} />
+						{@const props = scaleCardProps(def.id)}
+						{#if props}
+							<ContentCard {...props} ontoggle={toggleScale} onplay={playScalePreview} playing={playingId === def.id} />
+						{/if}
 					{/if}
 				{/each}
 			</div>
@@ -358,8 +465,11 @@
 				{#each MODES as def}
 					{#if !canAccess('content:modes', userTier(), devMode())}
 						<LockedCard feature={def.name} onUnlock={handleProUnlock} devMode={devMode()} />
-					{:else if state.definitions.modes[def.id]?.unlocked || state.settings.devMode}
-						<ModeCard {def} state={devUnlock(buildModeState(state, def.id))} ontoggle={toggleMode} onplay={playModePreview} playing={playingId === def.id} />
+					{:else}
+						{@const props = modeCardProps(def.id)}
+						{#if props}
+							<ContentCard {...props} ontoggle={toggleMode} onplay={playModePreview} playing={playingId === def.id} />
+						{/if}
 					{/if}
 				{/each}
 			</div>

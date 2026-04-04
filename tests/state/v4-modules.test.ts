@@ -508,6 +508,10 @@ describe('checkTierUnlockV4 — Chords', () => {
 	it('unlocks chord tier 2 at threshold (aggregating across voicings)', () => {
 		const state = createDefaultStateV4();
 		state.settings.proUnlocked = true; // Pro needed for chord tier 2+
+		// Cross-content prerequisite: interval tier 2 must be unlocked for chord progression
+		for (const id of TIER2_INTERVALS) {
+			state.definitions.intervals[id].unlocked = true;
+		}
 		// Each chord item needs ≥5 attempts at ≥70%
 		addV4ChordStats(state, TIER1_CHORDS, 8, 6, 'root');
 		addV4ChordStats(state, TIER1_CHORDS, 6, 5, 'first');
@@ -564,7 +568,7 @@ describe('checkTierUnlockV4 — Scales', () => {
 });
 
 describe('checkTierUnlockV4 — Modes', () => {
-	it('does not unlock modes when tier 4 scales are locked', () => {
+	it('does not unlock modes when tier 3 scales are locked', () => {
 		const state = createDefaultStateV4();
 		state.settings.proUnlocked = true; // Pro needed for scale/mode gating
 		// Give scale stats but don't unlock all scale tiers
@@ -577,9 +581,6 @@ describe('checkTierUnlockV4 — Modes', () => {
 			expect(result.definitions.scales[id].unlocked).toBe(true);
 		}
 		for (const id of TIER3_SCALES) {
-			expect(result.definitions.scales[id].unlocked).toBe(false);
-		}
-		for (const id of TIER4_SCALES) {
 			expect(result.definitions.scales[id].unlocked).toBe(false);
 		}
 		// Tier 1 modes stay unlocked by default, higher tiers stay locked

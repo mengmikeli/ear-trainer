@@ -46,3 +46,7 @@ neon-console/
 *.qr.png
 openclaw-pair-qr.png
 ios-sim-*.png
+
+# Playwright
+test-results/
+playwright-report/

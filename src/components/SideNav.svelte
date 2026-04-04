@@ -3,7 +3,7 @@
 	import { base } from '$app/paths';
 
 	const tabs = [
-		{ href: `${base}/quiz`, label: 'PRACTICE', icon: '\uE014' },
+		{ href: `${base}/`, label: 'PRACTICE', icon: '\uE014' },
 		{ href: `${base}/progress`, label: 'PROGRESS', icon: '\uE002' },
 		{ href: `${base}/settings`, label: 'SETTINGS', icon: '\uE015' },
 	];
@@ -11,7 +11,7 @@
 	const isQuiz = $derived(page.url.pathname.startsWith(`${base}/quiz`));
 
 	function isActive(href: string): boolean {
-		if (href === `${base}/quiz`) return page.url.pathname === `${base}/` || page.url.pathname.startsWith(`${base}/quiz`);
+		if (href === `${base}/`) return page.url.pathname === `${base}/` || page.url.pathname.startsWith(`${base}/quiz`);
 		return page.url.pathname === href;
 	}
 </script>
@@ -26,7 +26,7 @@
 
 	<div class="nav-items">
 		{#each tabs as tab}
-			{#if isQuiz && tab.href === `${base}/quiz`}
+			{#if isQuiz && tab.href === `${base}/`}
 				<span class="nav-item active disabled">
 					<span class="icon">{tab.icon}</span>
 					<span class="label">{tab.label}</span>

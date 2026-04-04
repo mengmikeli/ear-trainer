@@ -20,12 +20,15 @@ Marathon "Graphic Realism" — inspired by Bungie's Marathon reboot and the Desi
 |-------|-----|-----|
 | `--base` | #0A0A0A | Background (deep charcoal, not pure black) |
 | `--surface` | #1A1A1A | Cards, panels |
+| `--surface-raised` | #242424 | Elevated surfaces |
+| `--border` | #1F1F1F | Subtle borders |
 | `--text-primary` | #E8E8E8 | Primary text |
 | `--text-secondary` | #666666 | Secondary text |
-| `--accent` | #C2FE0C | Interactive elements, highlights (neon green) |
-| `--marathon-blue` | (check CSS) | Labels, borders, navigation active state |
-| `--correct` | #00FF88 | Correct feedback |
-| `--hot` | #FF3355 | Wrong feedback, errors |
+| `--accent` | #C2FE0C | Interactive elements, highlights (acid yellow-green) |
+| `--accent-dim` | #C2FE0C15 | Accent at low opacity |
+| `--marathon-blue` | #3A2CFF | Labels, borders, navigation active state (electric indigo) |
+| `--correct` | #C2FE0C | Correct feedback (= accent) |
+| `--wrong` / `--hot` | #ED174F | Wrong feedback, errors (spanish crimson) |
 | `--border-heavy` | #333333 | Card borders, dividers |
 
 ## Fonts

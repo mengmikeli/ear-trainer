@@ -106,8 +106,18 @@ export function getMasterOutput(): GainNode {
 		analyserNode = audioCtx.createAnalyser();
 		analyserNode.fftSize = 256;
 		analyserNode.smoothingTimeConstant = 0.8;
+
+		// Safety limiter — prevents clipping when drone + scale notes stack
+		const compressor = audioCtx.createDynamicsCompressor();
+		compressor.threshold.value = -6;   // start limiting at -6dB
+		compressor.knee.value = 3;          // soft knee
+		compressor.ratio.value = 12;        // aggressive limiting
+		compressor.attack.value = 0.003;    // fast attack (catch transients)
+		compressor.release.value = 0.1;     // quick release
+
 		masterGain.connect(analyserNode);
-		analyserNode.connect(audioCtx.destination);
+		analyserNode.connect(compressor);
+		compressor.connect(audioCtx.destination);
 	}
 	return masterGain;
 }

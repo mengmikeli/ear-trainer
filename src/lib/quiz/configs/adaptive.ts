@@ -21,39 +21,16 @@ import { INTERVALS, type IntervalDef } from '$lib/definitions/intervals';
 import { CHORDS, type ChordDef } from '$lib/definitions/chords';
 import { SCALES, type ScaleDef } from '$lib/definitions/scales';
 import { MODES, type ModeDef } from '$lib/definitions/modes';
-import { buildIntervalState, isModeMastered } from '$lib/state/compat';
-import { canAccess, getUserTier } from '$lib/features/gate';
+import { isContentKindAvailable } from '$lib/features/content-access';
 import type { PlayMode } from '$lib/state/schema';
 import { SCALE_TEMPO, MODE_TEMPO } from '$lib/audio/tempo';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-/** Determine which content kinds the user has earned access to (matches home page gates). */
+/** Determine which content kinds the user has earned access to (uses shared isContentKindAvailable). */
 function getUnlockedKinds(state: UserStateV4): ContentKind[] {
-	if (state.settings.devMode) return ['interval', 'chord', 'scale', 'mode'];
-
-	const userTier = getUserTier(state.settings);
-	const kinds: ContentKind[] = ['interval']; // always available
-
-	// Bronze mastery = at least 1 play-mode mastered per interval
-	let bronzeCount = 0;
-	for (const def of INTERVALS) {
-		const ds = state.definitions.intervals[def.id];
-		if (!ds?.unlocked) continue;
-		const istate = buildIntervalState(state, def.id);
-		const mastered = [istate.modes.ascending, istate.modes.descending, istate.modes.harmonic]
-			.filter(m => isModeMastered(m)).length;
-		if (mastered >= 1) bronzeCount++;
-	}
-
-	if (bronzeCount >= 5) kinds.push('chord');
-	if (bronzeCount >= 3) kinds.push('scale');
-
-	// Mode gate: any mode unlocked + chord-level mastery + Pro gate
-	const anyModeUnlocked = Object.values(state.definitions.modes).some(m => m.unlocked);
-	if (anyModeUnlocked && bronzeCount >= 5 && canAccess('content:modes', userTier, false)) kinds.push('mode');
-
-	return kinds;
+	const allKinds: ContentKind[] = ['interval', 'chord', 'scale', 'mode'];
+	return allKinds.filter(kind => isContentKindAvailable(state, kind));
 }
 
 interface Weighted<T> { item: T; weight: number }
@@ -81,9 +58,10 @@ function buildCandidates(state: UserStateV4, unlockedKinds: ContentKind[]): Cont
 
 	// Intervals
 	if (kindSet.has('interval')) {
+	const devMode = state.settings.devMode;
 	for (const def of INTERVALS) {
 		const d = state.definitions.intervals[def.id];
-		if (!d?.unlocked || !d?.enabled) continue;
+		if (!devMode && (!d?.unlocked || !d?.enabled)) continue;
 		for (const mode of ['ascending', 'descending', 'harmonic'] as const) {
 			if (!state.settings.enabledModes[mode]) continue;
 			candidates.push({
@@ -98,9 +76,10 @@ function buildCandidates(state: UserStateV4, unlockedKinds: ContentKind[]): Cont
 
 	// Chords
 	if (kindSet.has('chord')) {
+	const devMode = state.settings.devMode;
 	for (const def of CHORDS) {
 		const d = state.definitions.chords[def.id];
-		if (!d?.unlocked || !d?.enabled) continue;
+		if (!devMode && (!d?.unlocked || !d?.enabled)) continue;
 		for (const voicing of ['root', 'first', 'second'] as const) {
 			if (!state.settings.enabledVoicings[voicing]) continue;
 			candidates.push({
@@ -115,9 +94,10 @@ function buildCandidates(state: UserStateV4, unlockedKinds: ContentKind[]): Cont
 
 	// Scales
 	if (kindSet.has('scale')) {
+	const devMode = state.settings.devMode;
 	for (const def of SCALES) {
 		const d = state.definitions.scales[def.id];
-		if (!d?.unlocked || !d?.enabled) continue;
+		if (!devMode && (!d?.unlocked || !d?.enabled)) continue;
 		candidates.push({
 			kind: 'scale',
 			defId: def.id,
@@ -165,11 +145,20 @@ function generateDistractorsForKind(
 	if (kind === 'interval') {
 		const correctDef = INTERVALS.find((i) => i.id === correctId);
 		const sem = correctDef?.semitones ?? 0;
+		const devMode = state.settings.devMode;
 		const enabled = INTERVALS.filter(
-			(i) => i.id !== correctId && state.definitions.intervals[i.id]?.unlocked && state.definitions.intervals[i.id]?.enabled,
+			(i) => i.id !== correctId && (devMode || (state.definitions.intervals[i.id]?.unlocked && state.definitions.intervals[i.id]?.enabled)),
 		);
-		const sorted = [...enabled].sort(() => Math.random() - 0.5);
-		const result = sorted.length >= 3 ? sorted.slice(0, 3) : sorted;
+		// Sort by proximity (closest semitones = most confusable)
+		// Take top ~8 closest, then randomly pick 3
+		const byProximity = [...enabled].sort((a, b) => {
+			const distA = Math.abs(a.semitones - sem);
+			const distB = Math.abs(b.semitones - sem);
+			return distA - distB;
+		});
+		const pool = byProximity.slice(0, Math.min(8, byProximity.length));
+		const shuffled = pool.sort(() => Math.random() - 0.5);
+		const result = shuffled.length >= 3 ? shuffled.slice(0, 3) : shuffled;
 		if (result.length < 3) {
 			const usedIds = new Set([correctId, ...result.map((i) => i.id)]);
 			const locked = INTERVALS.filter((i) => !usedIds.has(i.id))
@@ -185,8 +174,9 @@ function generateDistractorsForKind(
 	if (kind === 'chord') {
 		const correctDef = CHORDS.find((c) => c.id === correctId);
 		const correctInts = new Set(correctDef?.intervals ?? []);
+		const devMode = state.settings.devMode;
 		const enabled = CHORDS.filter(
-			(c) => c.id !== correctId && state.definitions.chords[c.id]?.unlocked && state.definitions.chords[c.id]?.enabled,
+			(c) => c.id !== correctId && (devMode || (state.definitions.chords[c.id]?.unlocked && state.definitions.chords[c.id]?.enabled)),
 		);
 		const sorted = [...enabled].sort(() => Math.random() - 0.5);
 		const result = sorted.length >= 3 ? sorted.slice(0, 3) : sorted;
@@ -209,8 +199,9 @@ function generateDistractorsForKind(
 	if (kind === 'scale') {
 		const correctDef = SCALES.find((s) => s.id === correctId);
 		const correctInts = new Set(correctDef?.intervals ?? []);
+		const devMode = state.settings.devMode;
 		const enabled = SCALES.filter(
-			(s) => s.id !== correctId && state.definitions.scales[s.id]?.unlocked && state.definitions.scales[s.id]?.enabled,
+			(s) => s.id !== correctId && (devMode || (state.definitions.scales[s.id]?.unlocked && state.definitions.scales[s.id]?.enabled)),
 		);
 		const sorted = [...enabled].sort(() => Math.random() - 0.5);
 		const result = sorted.length >= 3 ? sorted.slice(0, 3) : sorted;

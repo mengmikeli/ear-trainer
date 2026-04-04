@@ -16,6 +16,7 @@ import type {
 	ContentKind,
 } from './schema';
 import { STATE_VERSION, defaultContentStats, defaultDefinitionState } from './schema';
+import { createDefaultStateV4 } from './defaults';
 import { INTERVALS } from '$lib/definitions/intervals';
 import { CHORDS } from '$lib/definitions/chords';
 import { SCALES } from '$lib/definitions/scales';
@@ -28,7 +29,7 @@ export function migrateToV4(raw: any): UserStateV4 {
 		return doMigrate(raw);
 	} catch {
 		// Absolutely anything goes wrong → fresh defaults
-		return freshV4State();
+		return createDefaultStateV4();
 	}
 }
 
@@ -37,7 +38,7 @@ export function migrateToV4(raw: any): UserStateV4 {
 function doMigrate(raw: any): UserStateV4 {
 	// Null/undefined/non-object → fresh defaults
 	if (!raw || typeof raw !== 'object') {
-		return freshV4State();
+		return createDefaultStateV4();
 	}
 
 	// Already v4 — patch in any missing definitions (handles new content added in updates)
@@ -152,8 +153,7 @@ function buildStats(raw: any): Record<string, ContentStats> {
 }
 
 /**
- * Promote adaptive stats — ensure every entry has the full ContentStats shape
- * (add relatedItems if missing from older adaptive payloads).
+ * Promote adaptive stats — ensure every entry has the full ContentStats shape.
  */
 function promoteAdaptiveStats(adaptiveStats: Record<string, any>): Record<string, ContentStats> {
 	const result: Record<string, ContentStats> = {};
@@ -249,7 +249,6 @@ function toContentStats(raw: any): ContentStats {
 		lastSeen: safeNum(raw.lastSeen),
 		easeFactor: safeNum(raw.easeFactor, 2.5),
 		nextReview: safeNum(raw.nextReview),
-		relatedItems: Array.isArray(raw.relatedItems) ? raw.relatedItems : [],
 	};
 }
 
@@ -339,53 +338,6 @@ function migrateSessionHistory(raw: any): SessionRecord[] {
 	return history.filter(
 		(r: any) => r && typeof r === 'object' && typeof r.date === 'number',
 	) as SessionRecord[];
-}
-
-// ─── Fresh v4 state ─────────────────────────────────────────────────────────
-
-export function freshV4State(): UserStateV4 {
-	const intervals: Record<string, DefinitionState> = {};
-	for (const def of INTERVALS) {
-		intervals[def.id] = defaultDefinitionState(def.tier === 1);
-	}
-
-	const chords: Record<string, DefinitionState> = {};
-	for (const def of CHORDS) {
-		chords[def.id] = defaultDefinitionState(def.tier === 1);
-	}
-
-	const scales: Record<string, DefinitionState> = {};
-	for (const def of SCALES) {
-		scales[def.id] = defaultDefinitionState(def.tier === 1);
-	}
-
-	const modes: Record<string, DefinitionState> = {};
-	for (const def of MODES) {
-		modes[def.id] = defaultDefinitionState(def.tier === 1);
-	}
-
-	return {
-		version: STATE_VERSION,
-		stats: {},
-		definitions: { intervals, chords, scales, modes },
-		settings: {
-			toneType: 'epiano',
-			sessionLength: 20,
-			theme: 'dark',
-			enabledModes: { ascending: true, descending: false, harmonic: false },
-			enabledVoicings: { root: true, first: false, second: false },
-			activeContent: 'intervals',
-			hasCompletedFRE: false,
-		},
-		globalStats: {
-			totalSessions: 0,
-			totalQuestions: 0,
-			currentStreak: 0,
-			bestStreak: 0,
-			lastPractice: 0,
-		},
-		sessionHistory: [],
-	};
 }
 
 // ─── Patch missing definitions (v4 → v4 with new content) ──────────────────

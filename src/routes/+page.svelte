@@ -5,14 +5,13 @@
 	import { loadStateV4, saveStateV4 } from '$lib/state/storage';
 	import { checkTierUnlockV4, getNextUnlockProgress } from '$lib/state/progression';
 	import { getStatsForDef, aggregateStats, getStatsByKind } from '$lib/state/stats';
-	import { isModeMastered, buildIntervalState } from '$lib/state/compat';
 	import { warmUpAudio } from '$lib/audio/context';
+	import { isContentKindAvailable } from '$lib/features/content-access';
 	import { INTERVALS } from '$lib/definitions/intervals';
 	import { CHORDS } from '$lib/definitions/chords';
 	import { SCALES } from '$lib/definitions/scales';
 	import { MODES } from '$lib/definitions/modes';
 	import { VERSION_STRING } from '$lib/version';
-	import { canAccess, getUserTier } from '$lib/features/gate';
 	import type { UserStateV4 } from '$lib/state/schema';
 	import LissajousRing from '../components/LissajousRing.svelte';
 	// import ChladniBackground from '../components/ChladniBackground.svelte'; // disabled — perf not optimized yet
@@ -76,42 +75,20 @@
 		}, 300);
 	});
 
-	// --- Unlock logic (same as before) ---
+	// --- Unlock logic (single source of truth: isContentKindAvailable) ---
 	const chordsUnlocked = $derived(() => {
 		if (!state) return false;
-		if (state.settings.devMode) return true;
-		let bronzeCount = 0;
-		for (const def of INTERVALS) {
-			const ds = state.definitions.intervals[def.id];
-			if (!ds?.unlocked) continue;
-			const istate = buildIntervalState(state, def.id);
-			const mastered = [istate.modes.ascending, istate.modes.descending, istate.modes.harmonic]
-				.filter(m => isModeMastered(m)).length;
-			if (mastered >= 1) bronzeCount++;
-		}
-		return bronzeCount >= 5;
+		return isContentKindAvailable(state, 'chord');
 	});
 
 	const scalesUnlocked = $derived(() => {
 		if (!state) return false;
-		if (state.settings.devMode) return true;
-		let bronzeCount = 0;
-		for (const def of INTERVALS) {
-			const ds = state.definitions.intervals[def.id];
-			if (!ds?.unlocked) continue;
-			const istate = buildIntervalState(state, def.id);
-			const mastered = [istate.modes.ascending, istate.modes.descending, istate.modes.harmonic]
-				.filter(m => isModeMastered(m)).length;
-			if (mastered >= 1) bronzeCount++;
-		}
-		return bronzeCount >= 3;
+		return isContentKindAvailable(state, 'scale');
 	});
 
 	const modesUnlocked = $derived(() => {
 		if (!state) return false;
-		if (state.settings.devMode) return true;
-		if (!canAccess('content:modes', getUserTier(state.settings), false)) return false;
-		return Object.values(state.definitions.modes).some(m => m.unlocked);
+		return isContentKindAvailable(state, 'mode');
 	});
 
 	const activeContent = $derived(() => {
@@ -121,7 +98,7 @@
 		if (content === 'chords' && !chordsUnlocked()) return 'intervals';
 		if (content === 'scales' && !scalesUnlocked()) return 'intervals';
 		if (content === 'modes' && !modesUnlocked()) return 'intervals';
-		if (content === 'adaptive') return 'intervals';
+		if (content === 'adaptive') return 'adaptive';
 		return content;
 	});
 
@@ -155,7 +132,9 @@
 				? `${base}/quiz/scales`
 				: content === 'modes'
 					? `${base}/quiz/modes`
-					: `${base}/quiz`;
+					: content === 'intervals'
+						? `${base}/quiz/intervals`
+						: `${base}/quiz`;
 		let tick = 0;
 		const iv = setInterval(() => {
 			goText = glitchChars[Math.floor(Math.random() * glitchChars.length)];
@@ -308,8 +287,12 @@
 			return { accuracy: agg.attempts > 0 ? Math.round(agg.accuracy * 100) : 0, count: `${unlocked}/${SCALES.length}`, tier: highest };
 		}
 		if (id === 'modes') {
+			const entries = getStatsByKind(state.stats, 'mode');
+			const agg = aggregateStats(entries);
 			const unlocked = Object.values(state.definitions.modes).filter(s => s.unlocked).length;
-			return { accuracy: 0, count: `${unlocked}/${MODES.length}`, tier: 1 };
+			let highest = 1;
+			for (const def of MODES) { if (state.definitions.modes[def.id]?.unlocked && def.tier > highest) highest = def.tier; }
+			return { accuracy: agg.attempts > 0 ? Math.round(agg.accuracy * 100) : 0, count: `${unlocked}/${MODES.length}`, tier: highest };
 		}
 		// intervals — always use interval stats, not activeContent-dependent
 		const entries = getStatsByKind(state.stats, 'interval');
@@ -400,7 +383,7 @@
 			</div>
 
 			<a
-				href={activeContent() === 'chords' ? `${base}/quiz/chords` : activeContent() === 'scales' ? `${base}/quiz/scales` : activeContent() === 'modes' ? `${base}/quiz/modes` : `${base}/quiz`}
+				href={activeContent() === 'chords' ? `${base}/quiz/chords` : activeContent() === 'scales' ? `${base}/quiz/scales` : activeContent() === 'modes' ? `${base}/quiz/modes` : activeContent() === 'intervals' ? `${base}/quiz/intervals` : `${base}/quiz`}
 				class="go-btn"
 				class:glitching={goGlitching}
 				onclick={handleGo}

@@ -7,7 +7,7 @@ export interface ScaleDef {
 	name: string; // e.g. "Major", "Natural Minor"
 	label: string; // short display label for quiz grid (e.g. "MAJ", "NTm")
 	intervals: number[]; // semitones from root, e.g. [0,2,4,5,7,9,11,12]
-	tier: number; // 1-4 unlock tier
+	tier: number; // 1-3 unlock tier
 	category: ScaleCategory;
 }
 
@@ -24,7 +24,7 @@ export const SCALES: ScaleDef[] = [
 	{
 		id: 'nat_min',
 		name: 'Natural Minor',
-		label: 'Min',
+		label: 'NMIN',
 		intervals: [0, 2, 3, 5, 7, 8, 10, 12],
 		tier: 1,
 		category: 'diatonic',
@@ -52,7 +52,7 @@ export const SCALES: ScaleDef[] = [
 	{
 		id: 'harm_min',
 		name: 'Harmonic Minor',
-		label: 'hMin',
+		label: 'HMIN',
 		intervals: [0, 2, 3, 5, 7, 8, 11, 12],
 		tier: 3,
 		category: 'diatonic',
@@ -76,7 +76,7 @@ export const SCALES: ScaleDef[] = [
 	{
 		id: 'mel_min',
 		name: 'Melodic Minor',
-		label: 'mMin',
+		label: 'MMIN',
 		intervals: [0, 2, 3, 5, 7, 9, 11, 12],
 		tier: 3,
 		category: 'diatonic',
@@ -89,22 +89,20 @@ export const SCALES: ScaleDef[] = [
 		tier: 3,
 		category: 'symmetric',
 	},
-
-	// Tier 4 — Modal scales
 	{
-		id: 'dorian_scale',
-		name: 'Dorian',
-		label: 'DOR',
-		intervals: [0, 2, 3, 5, 7, 9, 10, 12],
-		tier: 4,
-		category: 'diatonic',
+		id: 'maj_blues',
+		name: 'Major Blues',
+		label: 'MBLU',
+		intervals: [0, 2, 3, 4, 7, 9, 12],
+		tier: 3,
+		category: 'pentatonic',
 	},
 	{
-		id: 'mixolydian_scale',
-		name: 'Mixolydian',
-		label: 'MXL',
-		intervals: [0, 2, 4, 5, 7, 9, 10, 12],
-		tier: 4,
+		id: 'bebop',
+		name: 'Bebop',
+		label: 'BOP',
+		intervals: [0, 2, 4, 5, 7, 9, 10, 11, 12],
+		tier: 3,
 		category: 'diatonic',
 	},
 ];

@@ -59,7 +59,7 @@ export const CHORDS: ChordDef[] = [
 	{
 		id: 'hdim7',
 		name: 'Half-dim 7th',
-		label: 'hDim7',
+		label: 'HDim7',
 		intervals: [0, 3, 6, 10],
 		tier: 4,
 		category: 'seventh',
@@ -77,6 +77,8 @@ export const CHORDS: ChordDef[] = [
 	{ id: 'sus2', name: 'Suspended 2nd', label: 'SUS2', intervals: [0, 2, 7], tier: 4, category: 'triad' },
 	{ id: 'sus4', name: 'Suspended 4th', label: 'SUS4', intervals: [0, 5, 7], tier: 4, category: 'triad' },
 	{ id: 'pow', name: 'Power Chord', label: 'PWR', intervals: [0, 7], tier: 4, category: 'triad' },
+	{ id: 'add9', name: 'Add 9', label: 'ADD9', intervals: [0, 2, 4, 7], tier: 4, category: 'triad' },
+	{ id: 'maj6', name: 'Major 6th', label: 'MAJ6', intervals: [0, 4, 7, 9], tier: 4, category: 'triad' },
 ];
 
 export function getChordsByTier(tier: number): ChordDef[] {

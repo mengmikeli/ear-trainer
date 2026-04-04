@@ -14,6 +14,10 @@ export const LISTENING_TIPS: Record<string, string> = {
 	'm2': 'Jaws theme -- tense, creeping half-step',
 	'm6': 'Dark, wide -- think beginning of "The Entertainer" in minor',
 	'TT': 'The "devil\'s interval" -- unstable, wants to resolve',
+	'm9': 'Minor 2nd stretched over an octave -- tense, wide',
+	'M9': 'The "add9" sound -- bright, open, one octave + whole step',
+	'm10': 'Minor 3rd over an octave -- wide, melancholic',
+	'M10': 'Major 3rd over an octave -- grand, pianistic',
 
 	// Chords
 	'maj': 'Bright, happy, stable -- the default "good" sound',
@@ -29,6 +33,8 @@ export const LISTENING_TIPS: Record<string, string> = {
 	'sus2': 'Open, airy -- neither happy nor sad',
 	'sus4': 'Suspended, expectant -- wants to resolve to major or minor',
 	'pow': 'Raw, powerful -- just root and fifth, no color',
+	'add9': 'Major chord with a bright 9th on top -- open, modern pop',
+	'maj6': 'Major chord with a 6th -- warm, classic jazz',
 
 	// Scales
 	'major': 'The "Do Re Mi" scale -- bright, familiar, happy',
@@ -40,8 +46,8 @@ export const LISTENING_TIPS: Record<string, string> = {
 	'whole': 'Every step the same size -- dreamy, Debussy-like',
 	'mel_min': 'Minor going up, natural coming down -- classical voice leading',
 	'chromatic': 'Every single semitone -- tension city, no home base',
-	'dorian_scale': 'Minor but with a bright 6th -- jazzy, sophisticated',
-	'mixolydian_scale': 'Major but with a flat 7th -- bluesy, rock feel',
+	'maj_blues': 'Major pentatonic with a blue note -- gospel, country, upbeat blues',
+	'bebop': 'Dominant scale with passing tone -- makes chord tones land on downbeats in jazz eighth notes',
 
 	// Modes
 	'ionian': 'Standard major scale -- bright, resolved',

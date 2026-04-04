@@ -6,7 +6,7 @@
  *
  *   Intervals  2=10/70%  3=30/70%  4=60/70%  5=100/70%
  *   Chords     2=10/70%  3=30/70%  4=60/70%
- *   Scales     2=10/70%  3=30/70%  4=60/70%
+ *   Scales     2=10/70%  3=30/70%
  *   Modes      prerequisite: all scales unlocked + 60 attempts at 70%
  *              then tiers: 2=10/70%  3=30/70%
  */
@@ -25,7 +25,6 @@ const INTERVAL_THRESHOLDS: Record<number, { questions: number; accuracy: number 
 	2: { questions: 10, accuracy: 0.7 },
 	3: { questions: 30, accuracy: 0.7 },
 	4: { questions: 60, accuracy: 0.7 },
-	5: { questions: 100, accuracy: 0.7 },
 };
 
 const CHORD_THRESHOLDS: Record<number, { questions: number; accuracy: number }> = {
@@ -37,7 +36,6 @@ const CHORD_THRESHOLDS: Record<number, { questions: number; accuracy: number }> 
 const SCALE_THRESHOLDS: Record<number, { questions: number; accuracy: number }> = {
 	2: { questions: 10, accuracy: 0.7 },
 	3: { questions: 30, accuracy: 0.7 },
-	4: { questions: 60, accuracy: 0.7 },
 };
 
 const MODE_PREREQUISITE = { questions: 60, accuracy: 0.7 };
@@ -313,6 +311,12 @@ function unlockChordTiers(state: UserStateV4): void {
 	const userTier = getUserTier(state.settings);
 	const devMode = state.settings.devMode ?? false;
 
+	// Cross-content prerequisite: interval tier 2 must be unlocked (M3, m3 needed for major/minor chords)
+	const intervalT2Unlocked = INTERVALS.filter((d) => d.tier === 2).every(
+		(d) => state.definitions.intervals[d.id]?.unlocked,
+	);
+	if (!intervalT2Unlocked) return; // no chord tier unlocks without interval T2
+
 	let totalAttempts = 0;
 	let totalCorrect = 0;
 	for (const def of CHORDS) {
@@ -333,6 +337,14 @@ function unlockChordTiers(state: UserStateV4): void {
 
 		// Pro gate check
 		if (!canAccess(`content:chords:tier${tier}`, userTier, devMode)) continue;
+
+		// Cross-content prerequisite: interval tier 3 must be unlocked for chord tier 3 (m7, M7 needed for 7th chords)
+		if (tier === 3) {
+			const intervalT3Unlocked = INTERVALS.filter((d) => d.tier === 3).every(
+				(d) => state.definitions.intervals[d.id]?.unlocked,
+			);
+			if (!intervalT3Unlocked) continue; // skip tier 3 chords until interval T3 earned
+		}
 
 		const prevUnlocked = CHORDS.filter((c) => c.tier === tier - 1).every(
 			(def) => state.definitions.chords[def.id]?.unlocked,
@@ -368,7 +380,7 @@ function unlockScaleTiers(state: UserStateV4): void {
 	}
 	const overallAccuracy = totalAttempts > 0 ? totalCorrect / totalAttempts : 0;
 
-	for (let tier = 2; tier <= 4; tier++) {
+	for (let tier = 2; tier <= 3; tier++) {
 		const threshold = SCALE_THRESHOLDS[tier];
 		const tierDefs = SCALES.filter((s) => s.tier === tier);
 

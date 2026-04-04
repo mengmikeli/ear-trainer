@@ -1,4 +1,4 @@
-export const APP_VERSION = '4.2';
+export const APP_VERSION = '4.3';
 
 // Vite `define` injects this at build time -- declared to satisfy TypeScript
 declare const __BUILD_HASH__: string;
@@ -13,6 +13,19 @@ export interface ReleaseNote {
 }
 
 export const RELEASE_NOTES: ReleaseNote[] = [
+	{
+		version: '4.3',
+		date: '2026-04-05',
+		title: 'CONTENT EXPANSION',
+		changes: [
+			'50 items -- compound intervals (m9/M9/m10/M10), Add9/Maj6 chords, Major Blues/Bebop scales',
+			'Modes cleaned up -- Dorian/Mixolydian as modes only, 3-letter labels',
+			'Faster unlock -- chords and scales appear sooner',
+			'Smarter distractors -- answer choices are more confusable',
+			'Audio limiter -- cleaner sound when notes overlap',
+			'First-run questions count toward progress',
+		],
+	},
 	{
 		version: '4.1',
 		date: '2026-04-03',

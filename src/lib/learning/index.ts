@@ -18,7 +18,6 @@ export {
 
 export {
 	getConnectionBoost,
-	populateRelatedItems,
 	getConnectionDescription,
 	CURATED_CONNECTIONS,
 	type Connection,

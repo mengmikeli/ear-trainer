@@ -144,31 +144,6 @@ export function getConnectionBoost(
 }
 
 /**
- * Populate relatedItems arrays in a stats map based on the connection index.
- * Called once during migration.
- */
-export function populateRelatedItems(stats: Record<string, ContentStats>): void {
-	const ids = Object.keys(stats);
-
-	for (const id of ids) {
-		const parts = id.split(':');
-		const prefix = parts.slice(0, 2).join(':');
-		const related = CONNECTION_INDEX.get(prefix);
-		if (!related) continue;
-
-		const relatedIds: string[] = [];
-		for (const relatedPrefix of related) {
-			for (const otherId of ids) {
-				if (otherId.startsWith(relatedPrefix) && otherId !== id) {
-					relatedIds.push(otherId);
-				}
-			}
-		}
-		stats[id].relatedItems = relatedIds;
-	}
-}
-
-/**
  * Get the description for a connection between two items (if one exists).
  * Used for potential future UI features.
  */
