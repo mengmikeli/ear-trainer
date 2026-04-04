@@ -29,7 +29,7 @@ export function isContentKindAvailable(state: UserStateV4, kind: ContentKind): b
 	if (kind === 'scale') return bronzeCount >= 3;
 	if (kind === 'mode') {
 		const anyModeUnlocked = Object.values(state.definitions.modes).some(m => m.unlocked);
-		return anyModeUnlocked && bronzeCount >= 5 && canAccess('content:modes', userTier, false);
+		return anyModeUnlocked && bronzeCount >= 5 && canAccess('content:modes', userTier, state.settings.devMode ?? false);
 	}
 
 	return false;

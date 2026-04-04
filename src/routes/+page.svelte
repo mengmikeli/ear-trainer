@@ -98,7 +98,7 @@
 		if (content === 'chords' && !chordsUnlocked()) return 'intervals';
 		if (content === 'scales' && !scalesUnlocked()) return 'intervals';
 		if (content === 'modes' && !modesUnlocked()) return 'intervals';
-		if (content === 'adaptive') return 'intervals';
+		if (content === 'adaptive') return 'adaptive';
 		return content;
 	});
 

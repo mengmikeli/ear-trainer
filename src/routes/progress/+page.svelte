@@ -465,7 +465,7 @@
 				{#each MODES as def}
 					{#if !canAccess('content:modes', userTier(), devMode())}
 						<LockedCard feature={def.name} onUnlock={handleProUnlock} devMode={devMode()} />
-					{:else if state.definitions.modes[def.id]?.unlocked || state.settings.devMode}
+					{:else}
 						{@const props = modeCardProps(def.id)}
 						{#if props}
 							<ContentCard {...props} ontoggle={toggleMode} onplay={playModePreview} playing={playingId === def.id} />
