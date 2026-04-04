@@ -1,1 +1,0 @@
-function s(e){return e.correct?e.replays>0?4:e.responseTimeMs>5e3?3:5:1}function a(e,r){const t=Math.max(1.3,e+(.1-(5-r)*(.08+(5-r)*.02)));let n;return r<3?n=7e-4:n=t*.5,{easeFactor:t,intervalMs:Math.round(n*24*60*60*1e3)}}export{a as c,s as r};
