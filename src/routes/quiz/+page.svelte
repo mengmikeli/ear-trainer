@@ -195,7 +195,7 @@
 
 		<!-- By Type -->
 		<div class="section">
-			<label class="section-label">BY TYPE</label>
+			<label class="section-label">TYPE</label>
 			<div class="card-grid">
 				{#each types() as type}
 					{#if type.unlocked}
