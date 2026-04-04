@@ -43,10 +43,14 @@ export function playEpianoToneToNode(
 	modGain.connect(carrier.frequency);
 
 	// Carrier envelope — sharp attack, smooth decay
+	// Guard sustain point: must be after the initial decay (0.15s)
+	const sustainStart = Math.max(0.16, duration - 0.2);
 	carrierGain.gain.setValueAtTime(0, startTime);
 	carrierGain.gain.linearRampToValueAtTime(0.35, startTime + 0.005); // snappy attack
 	carrierGain.gain.exponentialRampToValueAtTime(0.15, startTime + 0.15);
-	carrierGain.gain.setValueAtTime(0.15, startTime + duration - 0.2);
+	if (sustainStart > 0.16) {
+		carrierGain.gain.setValueAtTime(0.15, startTime + sustainStart);
+	}
 	carrierGain.gain.linearRampToValueAtTime(0, startTime + duration);
 
 	carrier.connect(carrierGain);
@@ -77,10 +81,14 @@ export function playSineToneToNode(
 	osc.frequency.value = freq;
 
 	// Main envelope — snappy attack, smooth decay
+	// Guard sustain point: must be after initial decay (0.08s)
+	const sustainStart = Math.max(0.09, duration - 0.15);
 	gain.gain.setValueAtTime(0, startTime);
 	gain.gain.linearRampToValueAtTime(0.4, startTime + 0.01);
 	gain.gain.exponentialRampToValueAtTime(0.25, startTime + 0.08);
-	gain.gain.setValueAtTime(0.25, startTime + duration - 0.15);
+	if (sustainStart > 0.09) {
+		gain.gain.setValueAtTime(0.25, startTime + sustainStart);
+	}
 	gain.gain.linearRampToValueAtTime(0, startTime + duration);
 
 	osc.connect(gain);

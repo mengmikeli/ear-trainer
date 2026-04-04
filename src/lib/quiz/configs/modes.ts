@@ -14,7 +14,8 @@ import { startDrone, stopDrone, forceStopDrone, type DroneHandle } from '$lib/au
 import { responseQuality, calculateSm2 } from '$lib/learning/sm2';
 import { MODES, type ModeDef } from '$lib/definitions/modes';
 
-const TEMPO = 180;
+import { MODE_TEMPO } from '$lib/audio/tempo';
+const TEMPO = MODE_TEMPO;
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -91,6 +92,13 @@ export function createModeConfig(state: UserStateV4): QuizSessionConfig {
 			noteTimeouts = [];
 		},
 
+		onSessionEnd() {
+			stopDrone();
+			drone = null;
+			noteTimeouts.forEach(clearTimeout);
+			noteTimeouts = [];
+		},
+
 		generateQuestion(s: UserStateV4): UnifiedQuestion {
 			const enabled = getEnabledModesV4(s);
 			if (enabled.length === 0) throw new Error('No enabled modes');
@@ -144,7 +152,7 @@ export function createModeConfig(state: UserStateV4): QuizSessionConfig {
 
 			// Drone management
 			const droneLeadIn = 400;
-			const droneTail = 800;
+			const droneTail = 300; // short tail — just enough to let last note ring
 
 			stopDrone();
 			drone = null;

@@ -6,6 +6,7 @@
 	import { SCALES } from '$lib/definitions/scales';
 	import { MODES } from '$lib/definitions/modes';
 	import { playInterval, playChord, playScale } from '$lib/audio/playback';
+	import { SCALE_TEMPO, MODE_TEMPO } from '$lib/audio/tempo';
 	import { isModeMastered, buildIntervalState, buildChordState, buildScaleState, buildModeState } from '$lib/state/compat';
 	import { getStats, getStatsByKind, aggregateStats } from '$lib/state/stats';
 
@@ -87,6 +88,12 @@
 	});
 	const devMode = $derived(() => state?.settings?.devMode ?? false);
 
+	// In dev mode, override unlock/enable so all items are accessible
+	function devUnlock<T extends { unlocked: boolean; enabled: boolean }>(s: T): T {
+		if (!devMode()) return s;
+		return { ...s, unlocked: true, enabled: s.enabled || true };
+	}
+
 	function handleProUnlock() {
 		if (!state) return;
 		state.settings.proUnlocked = true;
@@ -101,9 +108,9 @@
 	function toggleInterval(id: string) {
 		if (!state) return;
 		const ds = state.definitions.intervals[id];
-		if (!ds.unlocked) return;
+		if (!ds.unlocked && !state.settings.devMode) return;
 		if (ds.enabled) {
-			const enabledCount = Object.values(state.definitions.intervals).filter(i => i.unlocked && i.enabled).length;
+			const enabledCount = Object.values(state.definitions.intervals).filter(i => (i.unlocked || state!.settings.devMode) && i.enabled).length;
 			if (enabledCount <= 3) {
 				minWarning = true;
 				setTimeout(() => { minWarning = false; }, 2000);
@@ -118,9 +125,9 @@
 	function toggleChord(id: string) {
 		if (!state) return;
 		const ds = state.definitions.chords[id];
-		if (!ds.unlocked) return;
+		if (!ds.unlocked && !state.settings.devMode) return;
 		if (ds.enabled) {
-			const enabledCount = Object.values(state.definitions.chords).filter(c => c.unlocked && c.enabled).length;
+			const enabledCount = Object.values(state.definitions.chords).filter(c => (c.unlocked || state!.settings.devMode) && c.enabled).length;
 			if (enabledCount <= 2) {
 				minWarning = true;
 				setTimeout(() => { minWarning = false; }, 2000);
@@ -155,9 +162,9 @@
 	function toggleScale(id: string) {
 		if (!state) return;
 		const ds = state.definitions.scales[id];
-		if (!ds.unlocked) return;
+		if (!ds.unlocked && !state.settings.devMode) return;
 		if (ds.enabled) {
-			const enabledCount = Object.values(state.definitions.scales).filter(sc => sc.unlocked && sc.enabled).length;
+			const enabledCount = Object.values(state.definitions.scales).filter(sc => (sc.unlocked || state!.settings.devMode) && sc.enabled).length;
 			if (enabledCount <= 2) {
 				minWarning = true;
 				setTimeout(() => { minWarning = false; }, 2000);
@@ -174,17 +181,18 @@
 		const def = SCALES.find(d => d.id === id);
 		if (!def) return;
 		playingId = id;
-		playScale(60, def.intervals, state.settings.toneType, 150);
-		const dur = def.intervals.length * 150 + 200;
+		playScale(60, def.intervals, state.settings.toneType, SCALE_TEMPO);
+		const dur = def.intervals.length * SCALE_TEMPO + 200;
 		setTimeout(() => { playingId = null; }, dur);
 	}
 
 	function toggleMode(id: string) {
 		if (!state) return;
 		const ds = state.definitions.modes[id];
-		if (!ds || !ds.unlocked) return;
+		if (!ds) return;
+		if (!ds.unlocked && !state.settings.devMode) return;
 		if (ds.enabled) {
-			const enabledCount = Object.values(state.definitions.modes).filter(md => md.unlocked && md.enabled).length;
+			const enabledCount = Object.values(state.definitions.modes).filter(md => (md.unlocked || state!.settings.devMode) && md.enabled).length;
 			if (enabledCount <= 2) {
 				minWarning = true;
 				setTimeout(() => { minWarning = false; }, 2000);
@@ -201,8 +209,8 @@
 		const def = MODES.find(d => d.id === id);
 		if (!def) return;
 		playingId = id;
-		playScale(60, def.intervals, state.settings.toneType, 150);
-		const dur = def.intervals.length * 150 + 200;
+		playScale(60, def.intervals, state.settings.toneType, MODE_TEMPO);
+		const dur = def.intervals.length * MODE_TEMPO + 200;
 		setTimeout(() => { playingId = null; }, dur);
 	}
 
@@ -321,7 +329,7 @@
 					{#if !canAccess(`content:intervals:tier${def.tier}`, userTier(), devMode())}
 						<LockedCard feature={def.name} onUnlock={handleProUnlock} devMode={devMode()} />
 					{:else}
-						<IntervalCard {def} state={buildIntervalState(state, def.id)} modeFilter={activeTab} ontoggle={toggleInterval} onplay={playIntervalPreview} playing={playingId === def.id} />
+						<IntervalCard {def} state={devUnlock(buildIntervalState(state, def.id))} modeFilter={activeTab} ontoggle={toggleInterval} onplay={playIntervalPreview} playing={playingId === def.id} />
 					{/if}
 				{/each}
 			</div>
@@ -331,7 +339,7 @@
 					{#if !canAccess(`content:chords:tier${def.tier}`, userTier(), devMode())}
 						<LockedCard feature={def.name} onUnlock={handleProUnlock} devMode={devMode()} />
 					{:else}
-						<ChordCard {def} state={buildChordState(state, def.id)} voicingFilter={chordVoicingTab} ontoggle={toggleChord} onplay={playChordPreview} playing={playingId === def.id} />
+						<ChordCard {def} state={devUnlock(buildChordState(state, def.id))} voicingFilter={chordVoicingTab} ontoggle={toggleChord} onplay={playChordPreview} playing={playingId === def.id} />
 					{/if}
 				{/each}
 			</div>
@@ -341,7 +349,7 @@
 					{#if !canAccess(`content:scales:tier${def.tier}`, userTier(), devMode())}
 						<LockedCard feature={def.name} onUnlock={handleProUnlock} devMode={devMode()} />
 					{:else}
-						<ScaleCard {def} state={buildScaleState(state, def.id)} ontoggle={toggleScale} onplay={playScalePreview} playing={playingId === def.id} />
+						<ScaleCard {def} state={devUnlock(buildScaleState(state, def.id))} ontoggle={toggleScale} onplay={playScalePreview} playing={playingId === def.id} />
 					{/if}
 				{/each}
 			</div>
@@ -351,7 +359,7 @@
 					{#if !canAccess('content:modes', userTier(), devMode())}
 						<LockedCard feature={def.name} onUnlock={handleProUnlock} devMode={devMode()} />
 					{:else if state.definitions.modes[def.id]?.unlocked || state.settings.devMode}
-						<ModeCard {def} state={buildModeState(state, def.id)} ontoggle={toggleMode} onplay={playModePreview} playing={playingId === def.id} />
+						<ModeCard {def} state={devUnlock(buildModeState(state, def.id))} ontoggle={toggleMode} onplay={playModePreview} playing={playingId === def.id} />
 					{/if}
 				{/each}
 			</div>

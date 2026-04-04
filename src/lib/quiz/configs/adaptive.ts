@@ -24,9 +24,7 @@ import { MODES, type ModeDef } from '$lib/definitions/modes';
 import { buildIntervalState, isModeMastered } from '$lib/state/compat';
 import { canAccess, getUserTier } from '$lib/features/gate';
 import type { PlayMode } from '$lib/state/schema';
-
-const SCALE_TEMPO = 150;
-const MODE_TEMPO = 180;
+import { SCALE_TEMPO, MODE_TEMPO } from '$lib/audio/tempo';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -293,6 +291,13 @@ export function createAdaptiveConfig(state: UserStateV4): QuizSessionConfig {
 			noteTimeouts = [];
 		},
 
+		onSessionEnd() {
+			stopDrone();
+			drone = null;
+			noteTimeouts.forEach(clearTimeout);
+			noteTimeouts = [];
+		},
+
 		generateQuestion(s: UserStateV4): UnifiedQuestion {
 			const unlockedKinds = getUnlockedKinds(s);
 			const candidates = buildCandidates(s, unlockedKinds);
@@ -458,7 +463,7 @@ export function createAdaptiveConfig(state: UserStateV4): QuizSessionConfig {
 					}, droneLeadIn));
 				});
 				const notesDur = q.playback.intervals.length * tempo + 400;
-				noteTimeouts.push(setTimeout(() => { stopDrone(); drone = null; }, notesDur + 800));
+				noteTimeouts.push(setTimeout(() => { stopDrone(); drone = null; }, notesDur + 300));
 				return { durationMs: droneLeadIn + notesDur, notes: q.playback.intervals.map((s: number) => q.rootNote + s) };
 			}
 
