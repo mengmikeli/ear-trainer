@@ -2,13 +2,16 @@
  * First-Run Experience (FRE) quiz config.
  *
  * Boot sequence → 2 scripted questions (Octave, Perfect 5th) with guidance.
- * No stat recording — marks FRE complete via onSessionEnd, then shows
- * a conclusion debrief screen before navigating home.
+ * Records stats for the 2 FRE questions so they count toward progression.
+ * Marks FRE complete via onSessionEnd, then shows a conclusion debrief
+ * screen before navigating home.
  */
 
-import type { QuizSessionConfig, UnifiedQuestion, PlaybackInfo, QuizPhase } from '../types';
+import type { QuizSessionConfig, UnifiedQuestion, QuestionResult, PlaybackInfo, QuizPhase } from '../types';
 import type { UserStateV4 } from '$lib/state/schema';
+import { defaultContentStats } from '$lib/state/schema';
 import { playInterval } from '$lib/audio/playback';
+import { responseQuality, calculateSm2 } from '$lib/learning/sm2';
 import { INTERVALS } from '$lib/definitions/intervals';
 
 // ─── Scripted questions ─────────────────────────────────────────────────────
@@ -92,7 +95,31 @@ export function createFREConfig(): QuizSessionConfig {
 			};
 		},
 
-		// No onAnswer — FRE doesn't record stats
+		// Record FRE answers in stats so the 2 questions count toward progression
+		onAnswer(s: UserStateV4, q: UnifiedQuestion, result: QuestionResult) {
+			const statsKey = q.id; // e.g., "interval:P8:ascending"
+			if (!s.stats[statsKey]) s.stats[statsKey] = defaultContentStats();
+			const st = s.stats[statsKey];
+			st.attempts++;
+			if (result.correct) {
+				st.correct++;
+				st.streak++;
+			} else {
+				st.streak = 0;
+			}
+			st.lastSeen = Date.now();
+
+			const quality = responseQuality({
+				correct: result.correct,
+				replays: q.replays,
+				responseTimeMs: result.responseTimeMs,
+			});
+			const sm2 = calculateSm2(st.easeFactor, quality);
+			st.easeFactor = sm2.easeFactor;
+			st.nextReview = Date.now() + sm2.intervalMs;
+
+			s.globalStats.totalQuestions++;
+		},
 
 		/**
 		 * Guidance messages keyed by (questionNum, phase).

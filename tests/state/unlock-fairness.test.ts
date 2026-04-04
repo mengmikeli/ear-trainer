@@ -378,6 +378,8 @@ describe('checkTierUnlockV4 with per-item mastery', () => {
 
 	it('chords unlock when both pooled and per-item met for chord items', () => {
 		const state = proState();
+		// Cross-content prerequisite: interval tier 2 must be unlocked for chord progression
+		unlockTier(state, 'intervals', 2);
 		// Master both tier 1 chord items
 		for (const def of T1_CHORDS) {
 			setChordStats(state, def.id, 6, 5); // 83%, ≥5 attempts

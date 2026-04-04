@@ -312,6 +312,12 @@ function unlockChordTiers(state: UserStateV4): void {
 	const userTier = getUserTier(state.settings);
 	const devMode = state.settings.devMode ?? false;
 
+	// Cross-content prerequisite: interval tier 2 must be unlocked (M3, m3 needed for major/minor chords)
+	const intervalT2Unlocked = INTERVALS.filter((d) => d.tier === 2).every(
+		(d) => state.definitions.intervals[d.id]?.unlocked,
+	);
+	if (!intervalT2Unlocked) return; // no chord tier unlocks without interval T2
+
 	let totalAttempts = 0;
 	let totalCorrect = 0;
 	for (const def of CHORDS) {
@@ -332,6 +338,14 @@ function unlockChordTiers(state: UserStateV4): void {
 
 		// Pro gate check
 		if (!canAccess(`content:chords:tier${tier}`, userTier, devMode)) continue;
+
+		// Cross-content prerequisite: interval tier 3 must be unlocked for chord tier 3 (m7, M7 needed for 7th chords)
+		if (tier === 3) {
+			const intervalT3Unlocked = INTERVALS.filter((d) => d.tier === 3).every(
+				(d) => state.definitions.intervals[d.id]?.unlocked,
+			);
+			if (!intervalT3Unlocked) continue; // skip tier 3 chords until interval T3 earned
+		}
 
 		const prevUnlocked = CHORDS.filter((c) => c.tier === tier - 1).every(
 			(def) => state.definitions.chords[def.id]?.unlocked,

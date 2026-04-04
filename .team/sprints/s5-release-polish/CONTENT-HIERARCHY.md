@@ -23,9 +23,9 @@
 | 1 | Major, Minor | The two fundamental colors | Free |
 | 2 | Diminished, Augmented | Tense / unstable | Pro |
 | 3 | Maj7, Min7, Dom7 | Basic extensions (requires m7 + M7 intervals) | Pro |
-| 4 | Sus2, Sus4, Power | Ambiguous / modern | Pro |
+| 4 | Sus2, Sus4, Power, Dim7, Half-dim7, Aug7 | Ambiguous / modern + extended 7ths | Pro |
 
-New items needed: Sus2, Sus4, Power chord
+New items needed: Sus2, Sus4, Power chord, Dim7, Half-dim7, Aug7
 
 ## Scales (4 tiers, 10 items)
 
@@ -33,10 +33,10 @@ New items needed: Sus2, Sus4, Power chord
 |------|-------|-------|------|
 | 1 | Major, Natural Minor | The two fundamentals | Free |
 | 2 | Major Pentatonic, Minor Pentatonic | Pattern-based, common | Pro |
-| 3 | Harmonic Minor, Blues | Character scales | Pro |
+| 3 | Harmonic Minor, Blues, Whole Tone, Melodic Minor, Chromatic | Character scales | Pro |
 | 4 | Dorian, Mixolydian | Intro to modal color | Pro |
 
-New items needed: Dorian scale, Mixolydian scale (as scale recognition, not mode-over-drone)
+New items needed: Dorian scale, Mixolydian scale (as scale recognition, not mode-over-drone), Whole Tone, Melodic Minor, Chromatic
 
 ## Modes (3 tiers, 7 items, all Pro)
 
@@ -64,10 +64,12 @@ Ratio: 3.3:1 Pro-to-free
 
 ## Cross-content dependencies
 
+These are enforced in `progression.ts`:
+
 ```
-Intervals Tier 2 (M3, m3) ──→ Chords Tier 1 (Major, Minor)
-Intervals Tier 3 (m7, M7) ──→ Chords Tier 3 (7th chords)
-Scales Tier 2+ ──────────────→ Modes Tier 1
+Intervals Tier 2 (M3, m3) ──→ Chords Tier 1 (Major, Minor)   [enforced: unlockChordTiers gate]
+Intervals Tier 3 (m7, M7) ──→ Chords Tier 3 (7th chords)     [enforced: per-tier gate in loop]
+Scales Tier 2+ ──────────────→ Modes Tier 1                   [enforced: unlockModes prerequisite]
 ```
 
 Free users experience: intervals → unlock tier 2 → try chords + scales → hit Pro wall at depth

@@ -508,6 +508,10 @@ describe('checkTierUnlockV4 — Chords', () => {
 	it('unlocks chord tier 2 at threshold (aggregating across voicings)', () => {
 		const state = createDefaultStateV4();
 		state.settings.proUnlocked = true; // Pro needed for chord tier 2+
+		// Cross-content prerequisite: interval tier 2 must be unlocked for chord progression
+		for (const id of TIER2_INTERVALS) {
+			state.definitions.intervals[id].unlocked = true;
+		}
 		// Each chord item needs ≥5 attempts at ≥70%
 		addV4ChordStats(state, TIER1_CHORDS, 8, 6, 'root');
 		addV4ChordStats(state, TIER1_CHORDS, 6, 5, 'first');

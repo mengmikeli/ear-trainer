@@ -1,7 +1,7 @@
 /**
- * MASTERY SYSTEMS — Two different thresholds serve different purposes:
+ * MASTERY SYSTEMS — Display mastery now aligned with progression mastery:
  *
- * 1. DISPLAY MASTERY (this file): 20 attempts, 85% accuracy
+ * 1. DISPLAY MASTERY (this file): 10 attempts, 70% accuracy
  *    Used for: bronze/silver/gold badges, content-type unlock gating
  *    (isModeMastered, getMasteryLevel)
  *
@@ -9,9 +9,10 @@
  *    Used for: tier unlock within a content type
  *    (checkPerItemMastery, PER_ITEM_MIN_ATTEMPTS, PER_ITEM_MIN_ACCURACY)
  *
- * These are intentionally different. Display mastery is a higher bar
- * that gates access to new content types. Progression mastery is a
- * lower bar that gates access to harder content within a type.
+ * Display mastery is a slightly higher bar (more attempts) but uses the
+ * same 70% accuracy threshold as progression. This reduces the grind gap
+ * for content-type unlock (e.g., intervals → chords) from ~150 questions
+ * to ~50-60 questions while still requiring meaningful practice.
  */
 
 /**
@@ -198,8 +199,8 @@ export function buildModeState(state: UserStateV4, id: string): LegacyModeState 
 
 // ─── Mastery (moved from $lib/mastery.ts) ───────────────────────────────────
 
-const MASTERY_MIN_ATTEMPTS = 20;
-const MASTERY_MIN_ACCURACY = 0.85;
+const MASTERY_MIN_ATTEMPTS = 10;
+const MASTERY_MIN_ACCURACY = 0.70;
 
 export type MasteryLevel = 'none' | 'bronze' | 'silver' | 'gold';
 

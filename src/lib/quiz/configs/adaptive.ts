@@ -148,7 +148,13 @@ function generateDistractorsForKind(
 		const enabled = INTERVALS.filter(
 			(i) => i.id !== correctId && state.definitions.intervals[i.id]?.unlocked && state.definitions.intervals[i.id]?.enabled,
 		);
-		const sorted = [...enabled].sort(() => Math.random() - 0.5);
+		// Sort by proximity (closest semitones = most confusable)
+		// Add small random factor to avoid deterministic ordering
+		const sorted = [...enabled].sort((a, b) => {
+			const distA = Math.abs(a.semitones - sem);
+			const distB = Math.abs(b.semitones - sem);
+			return (distA - distB) + (Math.random() - 0.5) * 2;
+		});
 		const result = sorted.length >= 3 ? sorted.slice(0, 3) : sorted;
 		if (result.length < 3) {
 			const usedIds = new Set([correctId, ...result.map((i) => i.id)]);
