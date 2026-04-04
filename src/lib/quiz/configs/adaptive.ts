@@ -145,8 +145,9 @@ function generateDistractorsForKind(
 	if (kind === 'interval') {
 		const correctDef = INTERVALS.find((i) => i.id === correctId);
 		const sem = correctDef?.semitones ?? 0;
+		const devMode = state.settings.devMode;
 		const enabled = INTERVALS.filter(
-			(i) => i.id !== correctId && state.definitions.intervals[i.id]?.unlocked && state.definitions.intervals[i.id]?.enabled,
+			(i) => i.id !== correctId && (devMode || (state.definitions.intervals[i.id]?.unlocked && state.definitions.intervals[i.id]?.enabled)),
 		);
 		// Sort by proximity (closest semitones = most confusable)
 		// Take top ~8 closest, then randomly pick 3
@@ -173,8 +174,9 @@ function generateDistractorsForKind(
 	if (kind === 'chord') {
 		const correctDef = CHORDS.find((c) => c.id === correctId);
 		const correctInts = new Set(correctDef?.intervals ?? []);
+		const devMode = state.settings.devMode;
 		const enabled = CHORDS.filter(
-			(c) => c.id !== correctId && state.definitions.chords[c.id]?.unlocked && state.definitions.chords[c.id]?.enabled,
+			(c) => c.id !== correctId && (devMode || (state.definitions.chords[c.id]?.unlocked && state.definitions.chords[c.id]?.enabled)),
 		);
 		const sorted = [...enabled].sort(() => Math.random() - 0.5);
 		const result = sorted.length >= 3 ? sorted.slice(0, 3) : sorted;
@@ -197,8 +199,9 @@ function generateDistractorsForKind(
 	if (kind === 'scale') {
 		const correctDef = SCALES.find((s) => s.id === correctId);
 		const correctInts = new Set(correctDef?.intervals ?? []);
+		const devMode = state.settings.devMode;
 		const enabled = SCALES.filter(
-			(s) => s.id !== correctId && state.definitions.scales[s.id]?.unlocked && state.definitions.scales[s.id]?.enabled,
+			(s) => s.id !== correctId && (devMode || (state.definitions.scales[s.id]?.unlocked && state.definitions.scales[s.id]?.enabled)),
 		);
 		const sorted = [...enabled].sort(() => Math.random() - 0.5);
 		const result = sorted.length >= 3 ? sorted.slice(0, 3) : sorted;
