@@ -46,3 +46,4 @@ Subagent swarm — mechanical refactoring with clear specs.
 - [ ] Dead CSS removed
 - [ ] Zero visual regression — app looks identical
 - [ ] All tests pass, build clean
+
