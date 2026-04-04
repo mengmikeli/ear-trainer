@@ -276,9 +276,9 @@
 
 	/* Card content */
 	.card-name {
-		font-family: var(--font-display);
-		font-size: 0.55rem; font-weight: 400;
-		letter-spacing: 0.15em;
+		font-family: var(--mono);
+		font-size: 0.45rem; font-weight: 900;
+		letter-spacing: 0.12em;
 		color: var(--text-primary);
 		text-transform: uppercase;
 	}
