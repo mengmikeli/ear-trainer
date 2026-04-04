@@ -23,10 +23,10 @@
 }
 
 :root {
-	/* Marathon palette */
-	--base: #000000;
-	--surface: #0D0D0D;
-	--surface-raised: #1A1A1A;
+	/* Marathon palette (reconciled with VISUAL-IDENTITY.md) */
+	--base: #0A0A0A;
+	--surface: #1A1A1A;
+	--surface-raised: #242424;
 	--border: #1F1F1F;
 	--border-heavy: #333333;
 
@@ -41,13 +41,30 @@
 	--wrong: #ED174F;           /* crimson = wrong */
 
 	/* Text */
-	--text-primary: #F0F0F0;
+	--text-primary: #E8E8E8;
 	--text-secondary: #666666;
 
-	/* Fonts */
+	/* Fonts — NO system fonts (Maratype is the body font) */
 	--font-display: 'Maratype', 'Barlow Condensed', sans-serif;  /* titles, headings */
-	--font: 'Inter', system-ui, -apple-system, sans-serif;    /* body text */
+	--font: 'Maratype', 'Barlow Condensed', sans-serif;       /* body text — Maratype, not system */
 	--mono: 'Matrix Mono', 'JetBrains Mono', monospace;  /* numbers, IDs, code */
+
+	/* Type scale */
+	--text-xs: 0.35rem;
+	--text-sm: 0.45rem;
+	--text-md: 0.6rem;
+	--text-lg: 0.85rem;
+	--text-xl: 1.2rem;
+	--text-2xl: 2rem;
+	--text-3xl: 3rem;
+	--text-4xl: 6.5rem;
+
+	/* Spacing scale */
+	--space-xs: 0.25rem;
+	--space-sm: 0.5rem;
+	--space-md: 1rem;
+	--space-lg: 1.5rem;
+	--space-xl: 2rem;
 }
 
 [data-theme="light"] {
@@ -171,4 +188,74 @@ button {
 		transparent 8px
 	);
 	opacity: 0.2;
+}
+
+/* ─── Shared: Page Heading ─────────────────────────────────────────────────── */
+.page-heading {
+	font-size: var(--text-3xl);
+	font-weight: 400;
+	letter-spacing: 0.12em;
+	color: var(--text-primary);
+	padding-bottom: var(--space-sm);
+	border-bottom: 2px solid var(--border-heavy);
+	text-transform: uppercase;
+	font-family: var(--font-display);
+}
+@media (min-width: 768px) {
+	.page-heading { font-size: 3.5rem; }
+}
+
+/* ─── Shared: Buttons ──────────────────────────────────────────────────────── */
+.btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-family: var(--mono);
+	font-weight: 900;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	border: 1px solid var(--border-heavy);
+	background: var(--surface);
+	color: var(--text-secondary);
+	cursor: pointer;
+	transition: color 0.15s, border-color 0.15s, background 0.15s;
+	padding: 0.85rem;
+	font-size: var(--text-sm);
+	line-height: 1;
+	border-radius: 0;
+}
+.btn-sm { padding: 0.3rem 0.5rem; font-size: var(--text-xs); }
+.btn-md { padding: 0.5rem 0.75rem; font-size: var(--text-sm); }
+.btn-lg { padding: 0.85rem 1rem; font-size: var(--text-md); }
+.btn-primary {
+	border-color: var(--accent);
+	color: var(--accent);
+	background: rgba(194, 254, 12, 0.05);
+}
+.btn-secondary {
+	border-color: var(--marathon-blue);
+	color: var(--marathon-blue);
+	background: rgba(58, 44, 255, 0.08);
+}
+.btn-danger {
+	border-color: var(--hot);
+	color: var(--hot);
+	background: rgba(237, 23, 79, 0.06);
+}
+.btn-toggle {
+	flex: 1;
+	padding: 0.85rem;
+	background: var(--surface);
+	border: 1px solid var(--border-heavy);
+	font-size: var(--text-sm);
+	font-weight: 400;
+	letter-spacing: 0.08em;
+	color: var(--text-secondary);
+	transition: all 0.15s;
+	font-family: var(--mono);
+}
+.btn-toggle.active {
+	border-color: var(--marathon-blue);
+	color: var(--marathon-blue);
+	background: rgba(58, 44, 255, 0.08);
 }
