@@ -381,7 +381,7 @@
 </script>
 
 <div class="progress-page">
-	<h2 class="heading">PROGRESS</h2>
+	<h2 class="page-heading">PROGRESS</h2>
 
 	{#if chordsUnlocked() || scalesUnlocked() || modesUnlocked()}
 		<div class="content-toggle">
@@ -479,12 +479,6 @@
 
 <style>
 	.progress-page { display: flex; flex-direction: column; gap: 1.5rem; }
-	.heading {
-		font-size: 3rem; font-weight: 400;
-		letter-spacing: 0.12em; color: var(--text-primary);
-		padding-bottom: 0.5rem; border-bottom: 2px solid var(--border-heavy);
-		text-transform: uppercase; font-family: var(--font-display);
-	}
 	.tabs {
 		display: flex; gap: 0; width: 100%;
 	}
@@ -554,6 +548,5 @@
 			grid-template-columns: repeat(2, 1fr);
 			gap: 0.75rem;
 		}
-		.heading { font-size: 3.5rem; }
 	}
 </style>

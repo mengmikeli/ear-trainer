@@ -73,7 +73,7 @@
 </script>
 
 <div class="settings-page">
-	<h2 class="heading">SETTINGS</h2>
+	<h2 class="page-heading">SETTINGS</h2>
 
 	{#if state}
 		<div class="section">
@@ -322,12 +322,6 @@
 
 <style>
 	.settings-page { display: flex; flex-direction: column; gap: 1.5rem; }
-	.heading {
-		font-size: 3rem; font-weight: 400;
-		letter-spacing: 0.12em; color: var(--text-primary);
-		padding-bottom: 0.5rem; border-bottom: 2px solid var(--border-heavy);
-		text-transform: uppercase; font-family: var(--font-display);
-	}
 	.section { display: flex; flex-direction: column; gap: 0.5rem; }
 	.field-label {
 		font-size: 0.6rem; font-weight: 400;
@@ -512,7 +506,6 @@
 
 	/* Desktop: larger type (width controlled by layout shell) */
 	@media (min-width: 768px) {
-		.heading { font-size: 3.5rem; }
 		.credits-grid {
 			display: grid;
 			grid-template-columns: repeat(2, 1fr);

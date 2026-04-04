@@ -157,7 +157,7 @@
 </script>
 
 <div class="practice-page">
-	<h2 class="heading">PRACTICE</h2>
+	<h2 class="page-heading">PRACTICE</h2>
 
 	{#if state}
 		<!-- Paths -->
@@ -228,14 +228,6 @@
 
 <style>
 	.practice-page { display: flex; flex-direction: column; gap: 1.5rem; }
-
-	/* ─── Heading — matches settings/progress ─── */
-	.heading {
-		font-size: 3rem; font-weight: 400;
-		letter-spacing: 0.12em; color: var(--text-primary);
-		padding-bottom: 0.5rem; border-bottom: 2px solid var(--border-heavy);
-		text-transform: uppercase; font-family: var(--font-display);
-	}
 
 	/* ─── Sections ─── */
 	.section { display: flex; flex-direction: column; gap: 0.5rem; }
@@ -329,8 +321,4 @@
 		color: var(--accent);
 	}
 
-	/* ─── Desktop ─── */
-	@media (min-width: 768px) {
-		.heading { font-size: 3.5rem; }
-	}
 </style>
