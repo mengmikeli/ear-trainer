@@ -234,9 +234,9 @@
 
 	/* ─── Section labels — matches settings .field-label ─── */
 	.section-label {
-		font-size: 0.45rem; font-weight: 900;
-		letter-spacing: 0.15em; color: var(--text-secondary);
-		font-family: var(--mono);
+		font-size: 0.6rem; font-weight: 400;
+		letter-spacing: 0.25em; color: var(--text-primary);
+		font-family: var(--font-display);
 	}
 
 	/* ─── Card Grid — 2×2 mobile ─── */
