@@ -1,1 +1,0 @@
-import"../chunks/DqOrwSpJ.js";import{p as e,a as i}from"../chunks/BW7DSscg.js";import{Q as n}from"../chunks/CrrpuTdp.js";import{c as p}from"../chunks/CvfqrDx5.js";import{l as s}from"../chunks/H_mwK9D8.js";function l(o,r){e(r,!0);const t=s(),a=p(t);n(o,{get config(){return a},get initialState(){return t}}),i()}export{l as component};
