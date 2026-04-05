@@ -95,6 +95,12 @@ export function createFREConfig(): QuizSessionConfig {
 			};
 		},
 
+		async replayChoice(choiceId: string, question: UnifiedQuestion): Promise<void> {
+			const def = INTERVALS.find((i) => i.id === choiceId);
+			if (!def) return;
+			await playInterval(question.rootNote, def.semitones, 'ascending', 'epiano');
+		},
+
 		// Record FRE answers in stats so the 2 questions count toward progression
 		onAnswer(s: UserStateV4, q: UnifiedQuestion, result: QuestionResult) {
 			const statsKey = q.id; // e.g., "interval:P8:ascending"

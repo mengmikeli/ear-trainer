@@ -73,7 +73,7 @@
 </script>
 
 <div class="settings-page">
-	<h2 class="heading">SETTINGS</h2>
+	<h2 class="page-heading">SETTINGS</h2>
 
 	{#if state}
 		<div class="section">
@@ -277,43 +277,101 @@
 				<div class="credits-header">TEAM</div>
 				<div class="credits-grid">
 					<div class="credit-entry">
-						<span class="credit-glyph">{'\uE014'}</span>
+						<span class="credit-glyph">🧑‍💻</span>
 						<div class="credit-info">
 							<span class="credit-name">MIKE</span>
 							<span class="credit-role">Creator / The Only Human</span>
 						</div>
 					</div>
 					<div class="credit-entry">
-						<span class="credit-glyph">{'\uE015'}</span>
+						<span class="credit-glyph">🗝️</span>
 						<div class="credit-info">
 							<span class="credit-name">MOTO</span>
 							<span class="credit-role">Lead / Architecture / Sprint Ops</span>
 						</div>
 					</div>
 					<div class="credit-entry">
-						<span class="credit-glyph">{'\uE002'}</span>
+						<span class="credit-glyph">🌉</span>
 						<div class="credit-info">
 							<span class="credit-name">PIXI</span>
 							<span class="credit-role">Design / Learning Systems / UI</span>
 						</div>
 					</div>
 					<div class="credit-entry">
-						<span class="credit-glyph">{'\uE000'}</span>
+						<span class="credit-glyph">🇫🇮</span>
 						<div class="credit-info">
 							<span class="credit-name">NOKI</span>
 							<span class="credit-role">Visualization / Chladni / Lissajous</span>
 						</div>
 					</div>
 					<div class="credit-entry">
-						<span class="credit-glyph">{'\uE012'}</span>
+						<span class="credit-glyph">🌴</span>
 						<div class="credit-info">
 							<span class="credit-name">PALM</span>
 							<span class="credit-role">QA / Testing / Visual Regression</span>
 						</div>
 					</div>
 				</div>
+
+				<div class="credits-header">FONTS</div>
+				<div class="credits-grid">
+					<div class="credit-entry">
+						<span class="credit-glyph" style="font-family: var(--font-display)">Aa</span>
+						<div class="credit-info">
+							<span class="credit-name">MARATYPE</span>
+							<span class="credit-role">Display headings</span>
+						</div>
+					</div>
+					<div class="credit-entry">
+						<span class="credit-glyph" style="font-family: var(--mono)">{'\uE014'}</span>
+						<div class="credit-info">
+							<span class="credit-name">MATRIX MONO</span>
+							<span class="credit-role">UI labels / glyphs</span>
+						</div>
+					</div>
+					<div class="credit-entry">
+						<span class="credit-glyph" style="font-family: 'BPdots', var(--mono)">P5</span>
+						<div class="credit-info">
+							<span class="credit-name">BPDOTS</span>
+							<span class="credit-role">Content IDs</span>
+						</div>
+					</div>
+				</div>
+
+				<div class="credits-header">BUILT WITH</div>
+				<div class="credits-grid">
+					<div class="credit-entry">
+						<span class="credit-glyph">🔥</span>
+						<div class="credit-info">
+							<span class="credit-name">SVELTEKIT</span>
+							<span class="credit-role">Framework</span>
+						</div>
+					</div>
+					<div class="credit-entry">
+						<span class="credit-glyph">🔊</span>
+						<div class="credit-info">
+							<span class="credit-name">WEB AUDIO API</span>
+							<span class="credit-role">Sound synthesis</span>
+						</div>
+					</div>
+					<div class="credit-entry">
+						<span class="credit-glyph">🦞</span>
+						<div class="credit-info">
+							<span class="credit-name">OPENCLAW</span>
+							<span class="credit-role">Agent orchestration</span>
+						</div>
+					</div>
+					<div class="credit-entry">
+						<span class="credit-glyph">☁️</span>
+						<div class="credit-info">
+							<span class="credit-name">CLOUDFLARE PAGES</span>
+							<span class="credit-role">Hosting</span>
+						</div>
+					</div>
+				</div>
+
 				<div class="credits-footer">
-					Built with <span class="credits-accent">OpenClaw</span> / Human-directed, agent-built
+					Human-directed, agent-built
 				</div>
 			</div>
 		</div>
@@ -322,12 +380,6 @@
 
 <style>
 	.settings-page { display: flex; flex-direction: column; gap: 1.5rem; }
-	.heading {
-		font-size: 3rem; font-weight: 400;
-		letter-spacing: 0.12em; color: var(--text-primary);
-		padding-bottom: 0.5rem; border-bottom: 2px solid var(--border-heavy);
-		text-transform: uppercase; font-family: var(--font-display);
-	}
 	.section { display: flex; flex-direction: column; gap: 0.5rem; }
 	.field-label {
 		font-size: 0.6rem; font-weight: 400;
@@ -512,7 +564,6 @@
 
 	/* Desktop: larger type (width controlled by layout shell) */
 	@media (min-width: 768px) {
-		.heading { font-size: 3.5rem; }
 		.credits-grid {
 			display: grid;
 			grid-template-columns: repeat(2, 1fr);

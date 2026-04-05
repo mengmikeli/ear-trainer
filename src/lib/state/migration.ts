@@ -49,6 +49,8 @@ function doMigrate(raw: any): UserStateV4 {
 		if (state.settings.hasCompletedFRE === undefined) {
 			state.settings.hasCompletedFRE = true;
 		}
+		// Migrate legacy proUnlocked → unlockedPacks
+		migrateProToUnlockedPacks(state.settings);
 		return state;
 	}
 
@@ -300,6 +302,8 @@ function migrateSettings(raw: any): Settings {
 		},
 		activeContent,
 		...(s.devMode !== undefined ? { devMode: s.devMode === true } : {}),
+		...(s.proUnlocked !== undefined ? { proUnlocked: s.proUnlocked === true } : {}),
+		unlockedPacks: s.proUnlocked ? ['advanced'] as const : [],
 		...(s.superchargeViz !== undefined ? { superchargeViz: s.superchargeViz === true } : {}),
 		hasCompletedFRE: true, // existing user migrating → skip FRE
 	};
@@ -350,22 +354,22 @@ function migrateSessionHistory(raw: any): SessionRecord[] {
 function patchMissingDefinitions(state: UserStateV4): void {
 	for (const def of INTERVALS) {
 		if (!state.definitions.intervals[def.id]) {
-			state.definitions.intervals[def.id] = defaultDefinitionState(def.tier === 1);
+			state.definitions.intervals[def.id] = defaultDefinitionState(def.pack === 'beginner');
 		}
 	}
 	for (const def of CHORDS) {
 		if (!state.definitions.chords[def.id]) {
-			state.definitions.chords[def.id] = defaultDefinitionState(def.tier === 1);
+			state.definitions.chords[def.id] = defaultDefinitionState(def.pack === 'beginner');
 		}
 	}
 	for (const def of SCALES) {
 		if (!state.definitions.scales[def.id]) {
-			state.definitions.scales[def.id] = defaultDefinitionState(def.tier === 1);
+			state.definitions.scales[def.id] = defaultDefinitionState(def.pack === 'beginner');
 		}
 	}
 	for (const def of MODES) {
 		if (!state.definitions.modes[def.id]) {
-			state.definitions.modes[def.id] = defaultDefinitionState(def.tier === 1);
+			state.definitions.modes[def.id] = defaultDefinitionState(def.pack === 'beginner');
 		}
 	}
 }
@@ -374,4 +378,19 @@ function patchMissingDefinitions(state: UserStateV4): void {
 
 function safeNum(v: any, fallback: number = 0): number {
 	return typeof v === 'number' && !Number.isNaN(v) ? v : fallback;
+}
+
+// ─── proUnlocked → unlockedPacks migration ─────────────────────────────────
+
+/**
+ * Migrate legacy `proUnlocked: true` to `unlockedPacks: ['advanced']`.
+ * 'advanced' grants access to all packs, so this is equivalent to old Pro.
+ */
+function migrateProToUnlockedPacks(settings: any): void {
+	if (settings.proUnlocked && (!settings.unlockedPacks || settings.unlockedPacks.length === 0)) {
+		settings.unlockedPacks = ['advanced'];
+	}
+	if (!settings.unlockedPacks) {
+		settings.unlockedPacks = [];
+	}
 }

@@ -1,5 +1,7 @@
 // src/lib/definitions/modes.ts — Pure mode definitions (v4)
 
+import type { ContentPack } from '$lib/state/schema';
+
 export interface ModeDef {
 	id: string;
 	name: string;
@@ -8,6 +10,7 @@ export interface ModeDef {
 	degree: number; // degree of parent scale (1-indexed)
 	intervals: number[]; // semitones from root
 	tier: number;
+	pack: ContentPack; // access gating
 	category: 'mode';
 	characteristic: number[]; // semitones that distinguish this mode
 }
@@ -22,6 +25,7 @@ export const MODES: ModeDef[] = [
 		degree: 1,
 		intervals: [0, 2, 4, 5, 7, 9, 11, 12],
 		tier: 1,
+		pack: 'advanced',
 		category: 'mode',
 		characteristic: [4, 11], // M3 + M7 (bright, resolved)
 	},
@@ -33,6 +37,7 @@ export const MODES: ModeDef[] = [
 		degree: 6,
 		intervals: [0, 2, 3, 5, 7, 8, 10, 12],
 		tier: 1,
+		pack: 'advanced',
 		category: 'mode',
 		characteristic: [3, 8, 10], // m3 + m6 + m7 (dark, melancholy)
 	},
@@ -46,6 +51,7 @@ export const MODES: ModeDef[] = [
 		degree: 2,
 		intervals: [0, 2, 3, 5, 7, 9, 10, 12],
 		tier: 2,
+		pack: 'advanced',
 		category: 'mode',
 		characteristic: [3, 10], // m3 + m7 (minor feel but bright 6th)
 	},
@@ -57,6 +63,7 @@ export const MODES: ModeDef[] = [
 		degree: 5,
 		intervals: [0, 2, 4, 5, 7, 9, 10, 12],
 		tier: 2,
+		pack: 'advanced',
 		category: 'mode',
 		characteristic: [10], // m7 (major but with flat 7)
 	},
@@ -70,6 +77,7 @@ export const MODES: ModeDef[] = [
 		degree: 3,
 		intervals: [0, 1, 3, 5, 7, 8, 10, 12],
 		tier: 3,
+		pack: 'advanced',
 		category: 'mode',
 		characteristic: [1], // m2 (the "Spanish" flavor)
 	},
@@ -81,6 +89,7 @@ export const MODES: ModeDef[] = [
 		degree: 4,
 		intervals: [0, 2, 4, 6, 7, 9, 11, 12],
 		tier: 3,
+		pack: 'advanced',
 		category: 'mode',
 		characteristic: [6], // aug4/TT (the "dreamy" interval)
 	},
@@ -92,6 +101,7 @@ export const MODES: ModeDef[] = [
 		degree: 7,
 		intervals: [0, 1, 3, 5, 6, 8, 10, 12],
 		tier: 3,
+		pack: 'advanced',
 		category: 'mode',
 		characteristic: [1, 6], // m2 + dim5 (unstable, diminished feel)
 	},

@@ -18,22 +18,22 @@ export function createDefaultStateV4(): UserStateV4 {
 
 	const intervals: Record<string, DefinitionState> = {};
 	for (const def of INTERVALS) {
-		intervals[def.id] = defaultDefinitionState(def.tier === 1);
+		intervals[def.id] = defaultDefinitionState(def.pack === 'beginner');
 	}
 
 	const chords: Record<string, DefinitionState> = {};
 	for (const def of CHORDS) {
-		chords[def.id] = defaultDefinitionState(def.tier === 1);
+		chords[def.id] = defaultDefinitionState(def.pack === 'beginner');
 	}
 
 	const scales: Record<string, DefinitionState> = {};
 	for (const def of SCALES) {
-		scales[def.id] = defaultDefinitionState(def.tier === 1);
+		scales[def.id] = defaultDefinitionState(def.pack === 'beginner');
 	}
 
 	const modes: Record<string, DefinitionState> = {};
 	for (const def of MODES) {
-		modes[def.id] = defaultDefinitionState(def.tier === 1);
+		modes[def.id] = defaultDefinitionState(def.pack === 'beginner');
 	}
 
 	return {
@@ -47,6 +47,7 @@ export function createDefaultStateV4(): UserStateV4 {
 			enabledModes: { ascending: true, descending: false, harmonic: false },
 			enabledVoicings: { root: true, first: false, second: false },
 			activeContent: 'intervals',
+			unlockedPacks: [],
 			hasCompletedFRE: false,
 		},
 		globalStats: {

@@ -312,6 +312,14 @@
 		ctrl.replayInResult();
 	}
 
+	function handleAnswerReplay(choiceId: string) {
+		if (!ctrl.question) return;
+		if (sessionConfig.replayChoice) {
+			sessionConfig.replayChoice(choiceId, ctrl.question, ctrl.userState);
+		}
+		ctrl.resetCountdown();
+	}
+
 	function handleSelectAnswer(choice: { id: string; name: string }) {
 		ctrl.selectAnswer(choice.id);
 	}
@@ -397,7 +405,7 @@
 </div>
 {:else}
 <div class="summary">
-	<h2 class="heading">DEBRIEF</h2>
+	<h2 class="page-heading">DEBRIEF</h2>
 
 	<div class="debrief-panels">
 		<div class="debrief-stats">
@@ -460,7 +468,7 @@
 	{#if ctrl.needsTap}
 		<TickerBanner message="NEURAL LINK OFFLINE -- TAP TO RECONNECT" onclick={() => handlePlay()} />
 	{/if}
-	<h2 class="heading">{sessionConfig.heading}</h2>
+	<h2 class="page-heading">{sessionConfig.heading}</h2>
 	<div class="top">
 		<div class="bar-track-full">
 			<ProgressBar current={ctrl.questionNum} total={ctrl.totalQuestions} />
@@ -545,6 +553,7 @@
 					onCorrectClick={ctrl.selectedId ? (inResultMode ? handleNextQuestion : handleSkipCorrect) : null}
 					countdownPct={inResultMode ? ctrl.countdownPct : -1}
 					onWrongClick={inResultMode ? handleReplayInResult : null}
+					onAnswerReplay={inResultMode ? handleAnswerReplay : null}
 				/>
 			</div>
 		</div>
@@ -587,14 +596,6 @@
 		animation: ticker 12s linear infinite;
 	}
 	@keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-33.33%); } }
-	.heading {
-		font-size: 3rem; font-weight: 400;
-		letter-spacing: 0.12em; color: var(--text-primary);
-		padding-bottom: 0.5rem;
-		text-transform: uppercase; font-family: var(--font-display);
-		width: 100%;
-		margin-bottom: 0;
-	}
 	.top {
 		width: 100%;
 		margin-top: -1rem;
@@ -831,9 +832,6 @@
 		flex-direction: column;
 		gap: 1.25rem;
 	}
-	.summary .heading {
-		border-bottom: 2px solid var(--border-heavy);
-	}
 	.score-block {
 		display: flex; flex-direction: column; align-items: center;
 		margin: 0.25rem 0;
@@ -963,9 +961,8 @@
 		animation: terminal-appear 0.3s ease-out 1.5s forwards;
 	}
 
-	/* Desktop: wider layout (≥1200px — sidebar + enough content for two-column) */
+	/* Desktop: wider layout (>=1200px — sidebar + enough content for two-column) */
 	@media (min-width: 1200px) {
-		.heading { font-size: 3.5rem; }
 
 		.summary {
 			max-width: none;

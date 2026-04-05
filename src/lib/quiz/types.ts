@@ -116,4 +116,6 @@ export interface QuizSessionConfig {
 	freMode?: boolean;
 	/** If false, nextQuestion() won't auto-play after glitch (default true). */
 	autoPlay?: boolean;
+	/** Replay a specific answer choice's sound (for answer card tap in result mode). */
+	replayChoice?: (choiceId: string, question: UnifiedQuestion, state: UserStateV4) => Promise<void>;
 }

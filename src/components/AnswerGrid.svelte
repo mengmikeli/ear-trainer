@@ -16,9 +16,11 @@
 		countdownPct?: number;
 		/** Called when wrong answer card is tapped (replay) */
 		onWrongClick?: (() => void) | null;
+		/** Called with choiceId when any answer card is tapped in result mode */
+		onAnswerReplay?: ((choiceId: string) => void) | null;
 		offline?: boolean;
 	}
-	let { choices, onselect, disabled = false, correctId = null, selectedId = null, onCorrectClick = null, countdownPct = -1, onWrongClick = null, offline = false }: Props = $props();
+	let { choices, onselect, disabled = false, correctId = null, selectedId = null, onCorrectClick = null, countdownPct = -1, onWrongClick = null, onAnswerReplay = null, offline = false }: Props = $props();
 
 	function btnClass(id: string): string {
 		if (!selectedId) return '';
@@ -34,10 +36,13 @@
 		{@const isWrongBtn = selectedId != null && choice.id === selectedId && choice.id !== correctId}
 		<button
 			class="answer {btnClass(choice.id)}"
-			class:skip={isCorrectBtn && onCorrectClick}
+			class:skip={isCorrectBtn && onCorrectClick && !onAnswerReplay}
+			class:has-advance={isCorrectBtn && onCorrectClick && onAnswerReplay}
 			class:offline={offline}
 			onclick={() => {
-				if (isCorrectBtn && onCorrectClick) {
+				if (onAnswerReplay) {
+					onAnswerReplay(choice.id);
+				} else if (isCorrectBtn && onCorrectClick) {
 					onCorrectClick();
 				} else if (isWrongBtn && onWrongClick) {
 					onWrongClick();
@@ -45,14 +50,19 @@
 					onselect(choice);
 				}
 			}}
-			disabled={isCorrectBtn && onCorrectClick ? false : isWrongBtn && onWrongClick ? false : disabled}
+			disabled={onAnswerReplay ? false : (isCorrectBtn && onCorrectClick ? false : isWrongBtn && onWrongClick ? false : disabled)}
 		>
 			{#if isWrongBtn && countdownPct >= 0}
 				<div class="countdown-fill" style="width: {Math.max(0, countdownPct) * 100}%"></div>
 			{/if}
 			<span class="id">{choice.label ?? choice.id}</span>
 			<span class="name">{choice.name}</span>
-			{#if isCorrectBtn && onCorrectClick}
+			{#if isCorrectBtn && onCorrectClick && onAnswerReplay}
+				<!-- svelte-ignore a11y_no_static_element_interactions -->
+				<span class="skip-btn" role="button" tabindex="-1" onclick={(e) => { e.stopPropagation(); onCorrectClick?.(); }}>
+					<span class="skip-arrow">{'\uE011'}</span>
+				</span>
+			{:else if isCorrectBtn && onCorrectClick && !onAnswerReplay}
 				<span class="skip-arrow">{'\uE011'}</span>
 			{/if}
 		</button>
@@ -100,6 +110,8 @@
 		transition: width 0.1s linear;
 	}
 	.dim { opacity: 0.2; }
+	/* In answer-replay mode (has-advance present), dim cards are still tappable */
+	.dim:not(:disabled) { opacity: 0.35; }
 	.skip-arrow {
 		position: absolute;
 		right: 0.5rem;
@@ -109,5 +121,34 @@
 		font-size: 0.8rem;
 		color: var(--correct);
 		opacity: 0.7;
+	}
+	/* Separate skip button — large tap target with border divider */
+	.skip-btn {
+		position: absolute;
+		right: 0;
+		top: 0;
+		bottom: 0;
+		width: 3rem;
+		min-height: 44px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: transparent;
+		border: none;
+		border-left: 1px solid color-mix(in srgb, var(--correct) 30%, transparent);
+		cursor: pointer;
+		-webkit-tap-highlight-color: transparent;
+		z-index: 1;
+	}
+	.skip-btn:active {
+		background: color-mix(in srgb, var(--correct) 10%, transparent);
+	}
+	.skip-btn .skip-arrow {
+		position: static;
+		transform: none;
+	}
+	/* Correct card with advance button — pad right so text doesn't overlap arrow */
+	.has-advance {
+		padding-right: 3.5rem;
 	}
 </style>

@@ -61,10 +61,7 @@
 	<div class="card-fill" style="width: {unlocked && enabled ? accuracy : 0}%"></div>
 	<div class="card-content">
 		<div class="id-col">
-			{unlocked ? label : 'NA'}
-			{#if masteryDots}
-				<span class="mastery-dots" style="color: {masteryColor}">{masteryDots}</span>
-			{/if}
+			{label}
 		</div>
 		<div class="info">
 			<div class="name">{name}</div>
@@ -73,7 +70,7 @@
 			{:else if unlocked}
 				<div class="stats"><span class="stat-tag">ACC</span><span class="stat-value">{accuracy}%</span><span class="stat-tag">Q</span><span class="stat-value">{attempts}</span></div>
 			{:else}
-				<div class="stats"><span class="tier-tag">T{tier}</span> LOCKED</div>
+				<div class="stats locked-stats">UPGRADE TO UNLOCK</div>
 			{/if}
 		</div>
 		{#if unlocked && ontoggle}
@@ -86,6 +83,8 @@
 			</button>
 		{:else if unlocked}
 			<div class="acc-value">{attempts > 0 ? `${accuracy}%` : '--'}</div>
+		{:else}
+			<span class="pro-badge">PRO</span>
 		{/if}
 	</div>
 </div>
@@ -175,5 +174,24 @@
 	.toggle-off {
 		border-color: var(--hot); background: #ED174F10;
 		color: var(--hot);
+	}
+	.pro-badge {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0.1rem 0.4rem;
+		border: 1px solid var(--marathon-blue);
+		color: var(--marathon-blue);
+		font-family: var(--mono);
+		font-size: 0.35rem;
+		font-weight: 900;
+		letter-spacing: 0.12em;
+		flex-shrink: 0;
+		width: 2.8rem;
+		height: 1.4rem;
+		box-sizing: border-box;
+	}
+	.locked-stats {
+		letter-spacing: 0.1em;
 	}
 </style>

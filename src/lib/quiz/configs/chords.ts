@@ -191,6 +191,19 @@ export function createChordConfig(state: UserStateV4): QuizSessionConfig {
 			return { durationMs, notes: midis };
 		},
 
+		async replayChoice(choiceId: string, question: UnifiedQuestion): Promise<void> {
+			const def = CHORDS.find((c) => c.id === choiceId);
+			if (!def) return;
+			const voicing = (question.playback.voicing ?? 'root') as ChordVoicing;
+			await playChord(
+				question.rootNote,
+				def.intervals,
+				voicing,
+				question.playback.toneType,
+				isArpeggiated,
+			);
+		},
+
 		onAnswer(s: UserStateV4, q: UnifiedQuestion, result: QuestionResult) {
 			const voicing = q.metadata?.voicing as ChordVoicing;
 			const statsKey = `chord:${q.correctAnswer.id}:${voicing}`;

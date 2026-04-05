@@ -12,9 +12,8 @@
 	import { isContentKindAvailable } from '$lib/features/content-access';
 
 	import ContentCard from '../../components/ContentCard.svelte';
-	import LockedCard from '../../components/LockedCard.svelte';
 	import TelemetryBar from '../../components/TelemetryBar.svelte';
-	import { canAccess, getUserTier, type Tier } from '$lib/features/gate';
+	import { canAccessPack, getUserTier, type Tier } from '$lib/features/gate';
 	import type { UserStateV4, PlayMode, ChordVoicing } from '$lib/state/schema';
 
 	let state: UserStateV4 | null = $state(null);
@@ -70,12 +69,6 @@
 		return { ...s, unlocked: true, enabled: s.enabled || true };
 	}
 
-	function handleProUnlock() {
-		if (!state) return;
-		state.settings.proUnlocked = true;
-		state = { ...state };
-		saveStateV4(state);
-	}
 
 	onMount(() => {
 		state = loadStateV4();
@@ -381,7 +374,7 @@
 </script>
 
 <div class="progress-page">
-	<h2 class="heading">PROGRESS</h2>
+	<h2 class="page-heading">PROGRESS</h2>
 
 	{#if chordsUnlocked() || scalesUnlocked() || modesUnlocked()}
 		<div class="content-toggle">
@@ -424,52 +417,108 @@
 		{#if contentView === 'intervals'}
 			<div class="interval-list">
 				{#each INTERVALS as def}
-					{#if !canAccess(`content:intervals:tier${def.tier}`, userTier(), devMode())}
-						<LockedCard feature={def.name} onUnlock={handleProUnlock} devMode={devMode()} />
-					{:else}
+					{@const accessible = canAccessPack(def.pack, userTier(), devMode())}
+					{#if accessible}
 						{@const props = intervalCardProps(def.id)}
 						{#if props}
 							<ContentCard {...props} ontoggle={toggleInterval} onplay={playIntervalPreview} playing={playingId === def.id} />
 						{/if}
+					{:else}
+						<ContentCard
+							id={def.id}
+							label={def.label ?? def.id}
+							name={def.name}
+							tier={def.tier}
+							unlocked={false}
+							enabled={false}
+							accuracy={0}
+							attempts={0}
+							isNew={false}
+							masteryDots=""
+							masteryColor=""
+							playing={false}
+						/>
 					{/if}
 				{/each}
 			</div>
 		{:else if contentView === 'chords'}
 			<div class="interval-list">
 				{#each CHORDS as def}
-					{#if !canAccess(`content:chords:tier${def.tier}`, userTier(), devMode())}
-						<LockedCard feature={def.name} onUnlock={handleProUnlock} devMode={devMode()} />
-					{:else}
+					{@const accessible = canAccessPack(def.pack, userTier(), devMode())}
+					{#if accessible}
 						{@const props = chordCardProps(def.id)}
 						{#if props}
 							<ContentCard {...props} ontoggle={toggleChord} onplay={playChordPreview} playing={playingId === def.id} />
 						{/if}
+					{:else}
+						<ContentCard
+							id={def.id}
+							label={def.label ?? def.id}
+							name={def.name}
+							tier={def.tier}
+							unlocked={false}
+							enabled={false}
+							accuracy={0}
+							attempts={0}
+							isNew={false}
+							masteryDots=""
+							masteryColor=""
+							playing={false}
+						/>
 					{/if}
 				{/each}
 			</div>
 		{:else if contentView === 'scales'}
 			<div class="interval-list">
 				{#each SCALES as def}
-					{#if !canAccess(`content:scales:tier${def.tier}`, userTier(), devMode())}
-						<LockedCard feature={def.name} onUnlock={handleProUnlock} devMode={devMode()} />
-					{:else}
+					{@const accessible = canAccessPack(def.pack, userTier(), devMode())}
+					{#if accessible}
 						{@const props = scaleCardProps(def.id)}
 						{#if props}
 							<ContentCard {...props} ontoggle={toggleScale} onplay={playScalePreview} playing={playingId === def.id} />
 						{/if}
+					{:else}
+						<ContentCard
+							id={def.id}
+							label={def.label ?? def.id}
+							name={def.name}
+							tier={def.tier}
+							unlocked={false}
+							enabled={false}
+							accuracy={0}
+							attempts={0}
+							isNew={false}
+							masteryDots=""
+							masteryColor=""
+							playing={false}
+						/>
 					{/if}
 				{/each}
 			</div>
 		{:else if contentView === 'modes'}
 			<div class="interval-list">
 				{#each MODES as def}
-					{#if !canAccess('content:modes', userTier(), devMode())}
-						<LockedCard feature={def.name} onUnlock={handleProUnlock} devMode={devMode()} />
-					{:else}
+					{@const accessible = canAccessPack(def.pack, userTier(), devMode())}
+					{#if accessible}
 						{@const props = modeCardProps(def.id)}
 						{#if props}
 							<ContentCard {...props} ontoggle={toggleMode} onplay={playModePreview} playing={playingId === def.id} />
 						{/if}
+					{:else}
+						<ContentCard
+							id={def.id}
+							label={def.label ?? def.id}
+							name={def.name}
+							tier={def.tier}
+							unlocked={false}
+							enabled={false}
+							accuracy={0}
+							attempts={0}
+							isNew={false}
+							masteryDots=""
+							masteryColor=""
+							playing={false}
+						/>
 					{/if}
 				{/each}
 			</div>
@@ -479,12 +528,6 @@
 
 <style>
 	.progress-page { display: flex; flex-direction: column; gap: 1.5rem; }
-	.heading {
-		font-size: 3rem; font-weight: 400;
-		letter-spacing: 0.12em; color: var(--text-primary);
-		padding-bottom: 0.5rem; border-bottom: 2px solid var(--border-heavy);
-		text-transform: uppercase; font-family: var(--font-display);
-	}
 	.tabs {
 		display: flex; gap: 0; width: 100%;
 	}
@@ -554,6 +597,5 @@
 			grid-template-columns: repeat(2, 1fr);
 			gap: 0.75rem;
 		}
-		.heading { font-size: 3.5rem; }
 	}
 </style>

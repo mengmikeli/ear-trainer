@@ -19,7 +19,11 @@ const STORAGE_KEY = 'ear-trainer-state';
  */
 export function loadStateV4(storage: Storage = localStorage): UserStateV4 {
 	const raw = storage.getItem(STORAGE_KEY);
-	if (!raw) return createDefaultStateV4();
+	if (!raw) {
+		const defaults = createDefaultStateV4();
+		storage.setItem(STORAGE_KEY, JSON.stringify(defaults));
+		return defaults;
+	}
 	try {
 		const parsed = JSON.parse(raw);
 		const migrated = migrateToV4(parsed);

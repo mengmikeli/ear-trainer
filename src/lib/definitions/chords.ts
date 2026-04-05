@@ -1,5 +1,7 @@
 // src/lib/definitions/chords.ts — Pure chord definitions (v4)
 
+import type { ContentPack } from '$lib/state/schema';
+
 export type ChordCategory = 'triad' | 'seventh';
 export type ChordVoicing = 'root' | 'first' | 'second';
 
@@ -9,17 +11,18 @@ export interface ChordDef {
 	label?: string; // short display label (defaults to id.toUpperCase())
 	intervals: number[]; // semitones from root, e.g. [0, 4, 7]
 	tier: number; // 1-4 unlock tier (chord-specific)
+	pack: ContentPack; // access gating
 	category: ChordCategory;
 }
 
 export const CHORDS: ChordDef[] = [
 	// Tier 1 — Triads (unlocked when chord system is discovered)
-	{ id: 'maj', name: 'Major', label: 'Maj', intervals: [0, 4, 7], tier: 1, category: 'triad' },
-	{ id: 'min', name: 'Minor', label: 'Min', intervals: [0, 3, 7], tier: 1, category: 'triad' },
+	{ id: 'maj', name: 'Major', label: 'Maj', intervals: [0, 4, 7], tier: 1, pack: 'beginner', category: 'triad' },
+	{ id: 'min', name: 'Minor', label: 'Min', intervals: [0, 3, 7], tier: 1, pack: 'beginner', category: 'triad' },
 
 	// Tier 2 — Altered triads
-	{ id: 'dim', name: 'Diminished', label: 'Dim', intervals: [0, 3, 6], tier: 2, category: 'triad' },
-	{ id: 'aug', name: 'Augmented', label: 'Aug', intervals: [0, 4, 8], tier: 2, category: 'triad' },
+	{ id: 'dim', name: 'Diminished', label: 'Dim', intervals: [0, 3, 6], tier: 2, pack: 'jazz', category: 'triad' },
+	{ id: 'aug', name: 'Augmented', label: 'Aug', intervals: [0, 4, 8], tier: 2, pack: 'jazz', category: 'triad' },
 
 	// Tier 3 — Seventh chords
 	{
@@ -28,6 +31,7 @@ export const CHORDS: ChordDef[] = [
 		label: 'Dom7',
 		intervals: [0, 4, 7, 10],
 		tier: 3,
+		pack: 'blues',
 		category: 'seventh',
 	},
 	{
@@ -36,6 +40,7 @@ export const CHORDS: ChordDef[] = [
 		label: 'Maj7',
 		intervals: [0, 4, 7, 11],
 		tier: 3,
+		pack: 'jazz',
 		category: 'seventh',
 	},
 	{
@@ -44,6 +49,7 @@ export const CHORDS: ChordDef[] = [
 		label: 'Min7',
 		intervals: [0, 3, 7, 10],
 		tier: 3,
+		pack: 'jazz',
 		category: 'seventh',
 	},
 
@@ -54,6 +60,7 @@ export const CHORDS: ChordDef[] = [
 		label: 'Dim7',
 		intervals: [0, 3, 6, 9],
 		tier: 4,
+		pack: 'advanced',
 		category: 'seventh',
 	},
 	{
@@ -62,6 +69,7 @@ export const CHORDS: ChordDef[] = [
 		label: 'HDim7',
 		intervals: [0, 3, 6, 10],
 		tier: 4,
+		pack: 'advanced',
 		category: 'seventh',
 	},
 	{
@@ -70,15 +78,16 @@ export const CHORDS: ChordDef[] = [
 		label: 'Aug7',
 		intervals: [0, 4, 8, 10],
 		tier: 4,
+		pack: 'advanced',
 		category: 'seventh',
 	},
 
 	// Tier 4 — Suspended & Power chords
-	{ id: 'sus2', name: 'Suspended 2nd', label: 'SUS2', intervals: [0, 2, 7], tier: 4, category: 'triad' },
-	{ id: 'sus4', name: 'Suspended 4th', label: 'SUS4', intervals: [0, 5, 7], tier: 4, category: 'triad' },
-	{ id: 'pow', name: 'Power Chord', label: 'PWR', intervals: [0, 7], tier: 4, category: 'triad' },
-	{ id: 'add9', name: 'Add 9', label: 'ADD9', intervals: [0, 2, 4, 7], tier: 4, category: 'triad' },
-	{ id: 'maj6', name: 'Major 6th', label: 'MAJ6', intervals: [0, 4, 7, 9], tier: 4, category: 'triad' },
+	{ id: 'sus2', name: 'Suspended 2nd', label: 'SUS2', intervals: [0, 2, 7], tier: 4, pack: 'advanced', category: 'triad' },
+	{ id: 'sus4', name: 'Suspended 4th', label: 'SUS4', intervals: [0, 5, 7], tier: 4, pack: 'blues', category: 'triad' },
+	{ id: 'pow', name: 'Power Chord', label: 'PWR', intervals: [0, 7], tier: 4, pack: 'blues', category: 'triad' },
+	{ id: 'add9', name: 'Add 9', label: 'ADD9', intervals: [0, 2, 4, 7], tier: 4, pack: 'jazz', category: 'triad' },
+	{ id: 'maj6', name: 'Major 6th', label: 'MAJ6', intervals: [0, 4, 7, 9], tier: 4, pack: 'jazz', category: 'triad' },
 ];
 
 export function getChordsByTier(tier: number): ChordDef[] {

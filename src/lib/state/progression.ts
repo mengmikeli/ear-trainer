@@ -17,7 +17,7 @@ import { CHORDS } from '$lib/definitions/chords';
 import { SCALES } from '$lib/definitions/scales';
 import { MODES } from '$lib/definitions/modes';
 import { getStatsForDef, aggregateStats } from './stats';
-import { canAccess, getUserTier } from '$lib/features/gate';
+import { canAccessPack, getUserTier } from '$lib/features/gate';
 
 // ─── Threshold tables ───────────────────────────────────────────────────────
 
@@ -210,11 +210,12 @@ export function getNextUnlockProgress(
 	// Pro gate check — don't show progress if tier is inaccessible
 	const userTier = getUserTier(state.settings);
 	const devMode = state.settings.devMode ?? false;
-	const gateId =
-		contentType === 'modes'
-			? 'content:modes'
-			: `content:${contentType}:tier${nextTier}`;
-	if (!canAccess(gateId, userTier, devMode)) return null;
+	// Check if any item in the next tier requires a pack the user can't access
+	const nextTierDefs = c.defs.filter((d) => d.tier === nextTier);
+	const allGated = nextTierDefs.length > 0 && nextTierDefs.every(
+		(d) => !canAccessPack((d as any).pack, userTier, devMode),
+	);
+	if (allGated) return null;
 
 	// Pooled stats across all unlocked items
 	let totalAttempts = 0;
@@ -285,8 +286,9 @@ function unlockIntervalTiers(state: UserStateV4): void {
 		// Already unlocked → skip
 		if (tierDefs.every((def) => state.definitions.intervals[def.id]?.unlocked)) continue;
 
-		// Pro gate check — don't unlock if tier is gated for this user
-		if (!canAccess(`content:intervals:tier${tier}`, userTier, devMode)) continue;
+		// Pack gate check — skip items whose pack the user can't access
+		const accessibleDefs = tierDefs.filter((def) => canAccessPack(def.pack, userTier, devMode));
+		if (accessibleDefs.length === 0) continue;
 
 		// Previous tier must be unlocked
 		const prevUnlocked = INTERVALS.filter((i) => i.tier === tier - 1).every(
@@ -297,7 +299,7 @@ function unlockIntervalTiers(state: UserStateV4): void {
 		if (totalAttempts >= threshold.questions && overallAccuracy >= threshold.accuracy) {
 			// Per-item mastery on prerequisite tier
 			if (checkPerItemMastery(state, 'interval', tier - 1, INTERVALS)) {
-				for (const def of tierDefs) {
+				for (const def of accessibleDefs) {
 					state.definitions.intervals[def.id].unlocked = true;
 				}
 			}
@@ -335,8 +337,9 @@ function unlockChordTiers(state: UserStateV4): void {
 
 		if (tierDefs.every((def) => state.definitions.chords[def.id]?.unlocked)) continue;
 
-		// Pro gate check
-		if (!canAccess(`content:chords:tier${tier}`, userTier, devMode)) continue;
+		// Pack gate check — skip items whose pack the user can't access
+		const accessibleDefs = tierDefs.filter((def) => canAccessPack(def.pack, userTier, devMode));
+		if (accessibleDefs.length === 0) continue;
 
 		// Cross-content prerequisite: interval tier 3 must be unlocked for chord tier 3 (m7, M7 needed for 7th chords)
 		if (tier === 3) {
@@ -354,7 +357,7 @@ function unlockChordTiers(state: UserStateV4): void {
 		if (totalAttempts >= threshold.questions && overallAccuracy >= threshold.accuracy) {
 			// Per-item mastery on prerequisite tier
 			if (checkPerItemMastery(state, 'chord', tier - 1, CHORDS)) {
-				for (const def of tierDefs) {
+				for (const def of accessibleDefs) {
 					state.definitions.chords[def.id].unlocked = true;
 				}
 			}
@@ -386,8 +389,9 @@ function unlockScaleTiers(state: UserStateV4): void {
 
 		if (tierDefs.every((def) => state.definitions.scales[def.id]?.unlocked)) continue;
 
-		// Pro gate check
-		if (!canAccess(`content:scales:tier${tier}`, userTier, devMode)) continue;
+		// Pack gate check — skip items whose pack the user can't access
+		const accessibleDefs = tierDefs.filter((def) => canAccessPack(def.pack, userTier, devMode));
+		if (accessibleDefs.length === 0) continue;
 
 		const prevUnlocked = SCALES.filter((s) => s.tier === tier - 1).every(
 			(def) => state.definitions.scales[def.id]?.unlocked,
@@ -397,7 +401,7 @@ function unlockScaleTiers(state: UserStateV4): void {
 		if (totalAttempts >= threshold.questions && overallAccuracy >= threshold.accuracy) {
 			// Per-item mastery on prerequisite tier
 			if (checkPerItemMastery(state, 'scale', tier - 1, SCALES)) {
-				for (const def of tierDefs) {
+				for (const def of accessibleDefs) {
 					state.definitions.scales[def.id].unlocked = true;
 				}
 			}
@@ -411,8 +415,8 @@ function unlockModes(state: UserStateV4): void {
 	const userTier = getUserTier(state.settings);
 	const devMode = state.settings.devMode ?? false;
 
-	// Pro gate check — all modes are gated behind Pro
-	if (!canAccess('content:modes', userTier, devMode)) return;
+	// Pack gate check — all modes are in the 'advanced' pack
+	if (!canAccessPack('advanced', userTier, devMode)) return;
 
 	// Prerequisite: all scales must be unlocked (all tiers)
 	const maxScaleTier = Math.max(...SCALES.map((s) => s.tier));

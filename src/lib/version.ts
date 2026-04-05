@@ -1,4 +1,4 @@
-export const APP_VERSION = '4.3';
+export const APP_VERSION = '4.4';
 
 // Vite `define` injects this at build time -- declared to satisfy TypeScript
 declare const __BUILD_HASH__: string;
@@ -13,6 +13,19 @@ export interface ReleaseNote {
 }
 
 export const RELEASE_NOTES: ReleaseNote[] = [
+	{
+		version: '4.4',
+		date: '2026-04-05',
+		title: 'CONTENT PATHS',
+		changes: [
+			'4 learning paths -- Beginner (free), Blues/Rock, Jazz, Advanced',
+			'Practice sub-home -- choose a path, type, or quick start',
+			'57 total items -- modal scales added (Dorian, Mixolydian, Lydian, Phrygian, Locrian)',
+			'Pack-based unlock -- buy Blues, Jazz, or Advanced separately',
+			'Answer replay -- tap any answer card to hear that sound',
+			'Unified page headings and Marathon corporation colors',
+		],
+	},
 	{
 		version: '4.3',
 		date: '2026-04-05',

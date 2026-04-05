@@ -138,6 +138,13 @@ export function createScaleConfig(state: UserStateV4): QuizSessionConfig {
 			};
 		},
 
+		async replayChoice(choiceId: string, question: UnifiedQuestion): Promise<void> {
+			const def = SCALES.find((s) => s.id === choiceId);
+			if (!def) return;
+			const tempo = question.playback.tempo ?? TEMPO;
+			await playScale(question.rootNote, def.intervals, question.playback.toneType, tempo);
+		},
+
 		onAnswer(s: UserStateV4, q: UnifiedQuestion, result: QuestionResult) {
 			const statsKey = `scale:${q.correctAnswer.id}`;
 			if (!s.stats[statsKey]) s.stats[statsKey] = defaultContentStats();
