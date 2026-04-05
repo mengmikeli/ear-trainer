@@ -111,6 +111,7 @@
 		glyph: string;
 		href: string;
 		count: number;
+		countLabel: string;
 		accuracy: number;
 		hasAttempts: boolean;
 		unlocked: boolean;
@@ -125,18 +126,28 @@
 		const scaleStats = aggregateStats(getStatsByKind(state.stats, 'scale'));
 		const modeStats = aggregateStats(getStatsByKind(state.stats, 'mode'));
 
+		// Unlocked counts per type
+		const unlockedIntervals = INTERVALS.filter(d => state!.definitions.intervals[d.id]?.unlocked).length;
+		const unlockedChords = CHORDS.filter(d => state!.definitions.chords[d.id]?.unlocked).length;
+		const unlockedScales = SCALES.filter(d => state!.definitions.scales[d.id]?.unlocked).length;
+		const unlockedModes = MODES.filter(d => state!.definitions.modes[d.id]?.unlocked).length;
+
 		const typeColor = 'var(--marathon-blue)';
 		return [
 			{ id: 'intervals', name: 'INTERVALS', glyph: '\uE007', href: `${base}/quiz/intervals`, count: INTERVALS.length,
+				countLabel: `${unlockedIntervals}/${INTERVALS.length} ITEMS`,
 				accuracy: intervalStats.attempts > 0 ? Math.round(intervalStats.accuracy * 100) : 0,
 				hasAttempts: intervalStats.attempts > 0, unlocked: true, color: typeColor },
 			{ id: 'chords', name: 'CHORDS', glyph: '\uE000', href: `${base}/quiz/chords`, count: CHORDS.length,
+				countLabel: `${unlockedChords}/${CHORDS.length} ITEMS`,
 				accuracy: chordStats.attempts > 0 ? Math.round(chordStats.accuracy * 100) : 0,
 				hasAttempts: chordStats.attempts > 0, unlocked: true, color: typeColor },
 			{ id: 'scales', name: 'SCALES', glyph: '\uE004', href: `${base}/quiz/scales`, count: SCALES.length,
+				countLabel: `${unlockedScales}/${SCALES.length} ITEMS`,
 				accuracy: scaleStats.attempts > 0 ? Math.round(scaleStats.accuracy * 100) : 0,
 				hasAttempts: scaleStats.attempts > 0, unlocked: true, color: typeColor },
 			{ id: 'modes', name: 'MODES', glyph: '\uE001', href: `${base}/quiz/modes`, count: MODES.length,
+				countLabel: `${unlockedModes}/${MODES.length} ITEMS`,
 				accuracy: modeStats.attempts > 0 ? Math.round(modeStats.accuracy * 100) : 0,
 				hasAttempts: modeStats.attempts > 0,
 				unlocked: isContentKindAvailable(state!, 'mode') || dev, color: typeColor },
@@ -203,7 +214,7 @@
 
 		<!-- By Type -->
 		<div class="section">
-			<label class="section-label">TYPE</label>
+			<label class="section-label">TYPES</label>
 			<div class="card-grid">
 				{#each types() as type}
 					{#if type.unlocked}
@@ -211,7 +222,7 @@
 							<span class="card-glyph" style="color: {type.color}">{type.glyph}</span>
 							<div class="card-info">
 								<span class="card-name" style="color: {type.color}">{type.name}</span>
-								<span class="card-count">{type.count} ITEMS</span>
+								<span class="card-count">{type.countLabel}</span>
 								{#if type.hasAttempts}
 									<span class="card-stat">{type.accuracy}% ACC</span>
 								{:else}
@@ -224,7 +235,7 @@
 							<span class="card-glyph" style="color: {type.color}">{type.glyph}</span>
 							<div class="card-info">
 								<span class="card-name" style="color: {type.color}">{type.name}</span>
-								<span class="card-count">{type.count} ITEMS</span>
+								<span class="card-count">{type.countLabel}</span>
 							</div>
 							<span class="pro-badge">PRO</span>
 						</span>
@@ -235,7 +246,9 @@
 
 		<!-- Quick Start -->
 		<div class="section">
-			<a href="{base}/quiz/adaptive" class="quick-start">QUICK START</a>
+			<a href="{base}/quiz/adaptive" class="quick-start">
+				<span class="qs-glyph">{'\uE014'}</span> QUICK START
+			</a>
 		</div>
 	{/if}
 </div>
@@ -355,6 +368,11 @@
 	.quick-start:active {
 		border-color: var(--accent);
 		color: var(--accent);
+	}
+
+	.qs-glyph {
+		font-family: var(--mono);
+		margin-right: 0.3rem;
 	}
 
 </style>
