@@ -81,10 +81,10 @@
 
 	.brand-accent {
 		font-family: var(--font-display);
-		font-size: 1.6rem;
+		font-size: 0.8rem;
 		font-weight: 400;
-		letter-spacing: 0.12em;
-		color: var(--accent);
+		letter-spacing: 0.15em;
+		color: var(--text-secondary);
 		line-height: 1;
 		margin-top: 0.25rem;
 	}
