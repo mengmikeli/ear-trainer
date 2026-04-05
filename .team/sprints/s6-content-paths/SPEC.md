@@ -10,7 +10,7 @@ Replace linear tiers with themed learning paths (BEGINNER/BLUES/JAZZ/ADVANCED). 
 - Chords: Major, Minor
 - Scales: Major, Natural Minor
 
-### BLUES/ROCK (Pro, 12 new = 22 cumulative)
+### BLUES (Pro, 12 new = 22 cumulative)
 - Intervals: m7, M2, TT
 - Chords: Dom7, Sus4, Power
 - Scales: Blues, Major Blues, Minor Pent, Major Pent, Dorian, Mixolydian
@@ -37,7 +37,7 @@ Replaces current adaptive quiz route. Same layout as settings/progress.
 
 Sections:
 1. QUICK START — adaptive across all unlocked content
-2. PATHS — BEGINNER, BLUES/ROCK, JAZZ, ADVANCED cards (locked ones show PRO badge)
+2. PATHS — BEGINNER, BLUES, JAZZ, ADVANCED cards (locked ones show PRO badge)
 3. BY TYPE — Intervals, Chords, Scales, Modes (existing content switcher style)
 
 Selecting a path starts quiz with that pack's content filter.

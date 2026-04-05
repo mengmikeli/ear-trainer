@@ -7,7 +7,7 @@ Path-colored quiz experience + Lissa rebrand. Each learning path has its own vis
 
 Colors (from Practice sub-home):
 - BEGINNER: #C2FE0C (CyberAcme green — same as current accent)
-- BLUES/ROCK: #FF3399 (NuCaloric pink)
+- BLUES: #FF3399 (NuCaloric pink)
 - JAZZ: #3388FF (MIDA blue)
 - ADVANCED: #FF8800 (Traxus orange)
 - By-type quizzes: keep current green accent (unchanged)
