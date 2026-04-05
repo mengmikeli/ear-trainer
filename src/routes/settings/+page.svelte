@@ -277,43 +277,94 @@
 				<div class="credits-header">TEAM</div>
 				<div class="credits-grid">
 					<div class="credit-entry">
-						<span class="credit-glyph">{'\uE014'}</span>
+						<span class="credit-glyph">🧑‍💻</span>
 						<div class="credit-info">
 							<span class="credit-name">MIKE</span>
 							<span class="credit-role">Creator / The Only Human</span>
 						</div>
 					</div>
 					<div class="credit-entry">
-						<span class="credit-glyph">{'\uE015'}</span>
+						<span class="credit-glyph">🗝️</span>
 						<div class="credit-info">
 							<span class="credit-name">MOTO</span>
 							<span class="credit-role">Lead / Architecture / Sprint Ops</span>
 						</div>
 					</div>
 					<div class="credit-entry">
-						<span class="credit-glyph">{'\uE002'}</span>
+						<span class="credit-glyph">🌉</span>
 						<div class="credit-info">
 							<span class="credit-name">PIXI</span>
 							<span class="credit-role">Design / Learning Systems / UI</span>
 						</div>
 					</div>
 					<div class="credit-entry">
-						<span class="credit-glyph">{'\uE000'}</span>
+						<span class="credit-glyph">🇫🇮</span>
 						<div class="credit-info">
 							<span class="credit-name">NOKI</span>
 							<span class="credit-role">Visualization / Chladni / Lissajous</span>
 						</div>
 					</div>
 					<div class="credit-entry">
-						<span class="credit-glyph">{'\uE012'}</span>
+						<span class="credit-glyph">🌴</span>
 						<div class="credit-info">
 							<span class="credit-name">PALM</span>
 							<span class="credit-role">QA / Testing / Visual Regression</span>
 						</div>
 					</div>
 				</div>
+
+				<div class="credits-header">FONTS</div>
+				<div class="credits-grid">
+					<div class="credit-entry">
+						<div class="credit-info">
+							<span class="credit-name">MARATYPE</span>
+							<span class="credit-role">Display headings</span>
+						</div>
+					</div>
+					<div class="credit-entry">
+						<div class="credit-info">
+							<span class="credit-name">MATRIX MONO</span>
+							<span class="credit-role">UI labels / glyphs</span>
+						</div>
+					</div>
+					<div class="credit-entry">
+						<div class="credit-info">
+							<span class="credit-name">BPDOTS</span>
+							<span class="credit-role">Content IDs (P5, MAJ, etc.)</span>
+						</div>
+					</div>
+				</div>
+
+				<div class="credits-header">BUILT WITH</div>
+				<div class="credits-grid">
+					<div class="credit-entry">
+						<div class="credit-info">
+							<span class="credit-name">SVELTEKIT</span>
+							<span class="credit-role">Framework</span>
+						</div>
+					</div>
+					<div class="credit-entry">
+						<div class="credit-info">
+							<span class="credit-name">WEB AUDIO API</span>
+							<span class="credit-role">Sound synthesis</span>
+						</div>
+					</div>
+					<div class="credit-entry">
+						<div class="credit-info">
+							<span class="credit-name">OPENCLAW</span>
+							<span class="credit-role">Agent orchestration</span>
+						</div>
+					</div>
+					<div class="credit-entry">
+						<div class="credit-info">
+							<span class="credit-name">CLOUDFLARE PAGES</span>
+							<span class="credit-role">Hosting</span>
+						</div>
+					</div>
+				</div>
+
 				<div class="credits-footer">
-					Built with <span class="credits-accent">OpenClaw</span> / Human-directed, agent-built
+					Human-directed, agent-built
 				</div>
 			</div>
 		</div>
