@@ -601,13 +601,13 @@
 	@keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-33.33%); } }
 	.top {
 		width: 100%;
-		margin-top: -1rem;
+		margin-top: -2px; /* overlay exactly on the heading's border-bottom */
+		position: relative;
+		z-index: 1;
 	}
-	/* Quiz heading: no border-bottom (different from page headings) */
-	.quiz :global(.page-heading),
-	.summary :global(.page-heading) {
-		border-bottom: none;
-		padding-bottom: 0;
+	/* Quiz heading: border serves as progress bar track */
+	.quiz :global(.page-heading) {
+		margin-bottom: 0;
 	}
 	.bar-track-full {
 		width: 100%;
