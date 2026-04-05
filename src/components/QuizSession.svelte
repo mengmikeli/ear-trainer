@@ -603,6 +603,12 @@
 		width: 100%;
 		margin-top: -1rem;
 	}
+	/* Quiz heading: no border-bottom (different from page headings) */
+	.quiz :global(.page-heading),
+	.summary :global(.page-heading) {
+		border-bottom: none;
+		padding-bottom: 0;
+	}
 	.bar-track-full {
 		width: 100%;
 	}
