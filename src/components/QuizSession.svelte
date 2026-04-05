@@ -601,12 +601,10 @@
 	@keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-33.33%); } }
 	.top {
 		width: 100%;
-		margin-top: -2px; /* overlay exactly on the heading's border-bottom */
-		position: relative;
-		z-index: 1;
 	}
-	/* Quiz heading: border serves as progress bar track */
+	/* Quiz heading: progress bar IS the divider */
 	.quiz :global(.page-heading) {
+		border-bottom: none;
 		margin-bottom: 0;
 	}
 	.bar-track-full {
