@@ -372,7 +372,9 @@
 
 	.qs-glyph {
 		font-family: var(--mono);
+		font-size: 1.2rem;
 		margin-right: 0.3rem;
+		vertical-align: middle;
 	}
 
 </style>
