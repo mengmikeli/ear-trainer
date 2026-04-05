@@ -95,11 +95,7 @@
 	<!-- ═══ BAND 1: Header strip ═══ -->
 	<header class="header-strip">
 		<div class="title-boot">
-			<h1 class="title">
-				{#each titleChars as char, i}
-					<span class="char" class:resolved={bootPhase >= 2 || (bootPhase === 1 && char === TITLE_TEXT[i])} class:space={TITLE_TEXT[i] === ' '}>{char}</span>
-				{/each}
-			</h1>
+			<h1 class="title">LISSA</h1>
 			<span class="title-sub">EAR TRAINING</span>
 		</div>
 		<div class="header-telemetry">
@@ -192,12 +188,12 @@
 		font-family: var(--font-display);
 		font-size: 3.2rem;
 		font-weight: 400;
-		letter-spacing: 0.12em;
+		letter-spacing: 0.05em;
 		line-height: 1;
 		color: var(--accent);
-		display: flex;
-		gap: 0;
-		justify-content: center;
+		text-align: center;
+		text-transform: uppercase;
+		margin: 0;
 	}
 
 	.title-boot {
