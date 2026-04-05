@@ -224,12 +224,13 @@
 
 	.title-sub {
 		font-family: var(--font-display);
-		font-size: 0.8rem;
+		font-size: 0.9rem;
 		font-weight: 400;
 		letter-spacing: 0.15em;
 		color: var(--text-secondary);
 		text-align: center;
 		margin-top: 0.15rem;
+		width: 100%;
 	}
 
 	.version-badge {
