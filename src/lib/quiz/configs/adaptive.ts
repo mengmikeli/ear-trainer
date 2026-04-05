@@ -493,6 +493,50 @@ export function createAdaptiveConfig(state: UserStateV4, pack?: ContentPack): Qu
 			};
 		},
 
+		async replayChoice(choiceId: string, question: UnifiedQuestion): Promise<void> {
+			if (question.kind === 'interval') {
+				const def = INTERVALS.find((i) => i.id === choiceId);
+				if (!def) return;
+				await playInterval(
+					question.rootNote,
+					def.semitones,
+					question.playback.direction! as 'ascending' | 'descending' | 'harmonic',
+					question.playback.toneType,
+				);
+			} else if (question.kind === 'chord') {
+				const def = CHORDS.find((c) => c.id === choiceId);
+				if (!def) return;
+				const voicing = (question.playback.voicing ?? 'root') as ChordVoicing;
+				await playChord(question.rootNote, def.intervals, voicing, question.playback.toneType);
+			} else if (question.kind === 'mode') {
+				const def = MODES.find((m) => m.id === choiceId);
+				if (!def) return;
+
+				noteTimeouts.forEach(clearTimeout);
+				noteTimeouts = [];
+				stopDrone();
+				drone = null;
+				const droneNote = (question.metadata?.droneNote as number) ?? question.rootNote;
+				startDrone(droneNote).then((h) => { drone = h; });
+				const tempo = question.playback.tempo ?? MODE_TEMPO;
+				const droneLeadIn = 400;
+				await new Promise<void>((resolve) => {
+					noteTimeouts.push(setTimeout(() => {
+						playScale(question.rootNote, def.intervals, question.playback.toneType, tempo);
+						resolve();
+					}, droneLeadIn));
+				});
+				const notesDur = def.intervals.length * tempo + 400;
+				noteTimeouts.push(setTimeout(() => { stopDrone(); drone = null; }, notesDur + 300));
+			} else {
+				// scale
+				const def = SCALES.find((s) => s.id === choiceId);
+				if (!def) return;
+				const tempo = question.playback.tempo ?? SCALE_TEMPO;
+				await playScale(question.rootNote, def.intervals, question.playback.toneType, tempo);
+			}
+		},
+
 		onAnswer(s: UserStateV4, q: UnifiedQuestion, result: QuestionResult) {
 			const statsKey = q.id;
 			if (!s.stats[statsKey]) s.stats[statsKey] = defaultContentStats();

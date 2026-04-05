@@ -312,6 +312,14 @@
 		ctrl.replayInResult();
 	}
 
+	function handleAnswerReplay(choiceId: string) {
+		if (!ctrl.question) return;
+		if (sessionConfig.replayChoice) {
+			sessionConfig.replayChoice(choiceId, ctrl.question, ctrl.userState);
+		}
+		ctrl.resetCountdown();
+	}
+
 	function handleSelectAnswer(choice: { id: string; name: string }) {
 		ctrl.selectAnswer(choice.id);
 	}
@@ -545,6 +553,7 @@
 					onCorrectClick={ctrl.selectedId ? (inResultMode ? handleNextQuestion : handleSkipCorrect) : null}
 					countdownPct={inResultMode ? ctrl.countdownPct : -1}
 					onWrongClick={inResultMode ? handleReplayInResult : null}
+					onAnswerReplay={inResultMode ? handleAnswerReplay : null}
 				/>
 			</div>
 		</div>

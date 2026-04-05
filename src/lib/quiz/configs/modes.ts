@@ -189,6 +189,45 @@ export function createModeConfig(state: UserStateV4): QuizSessionConfig {
 			};
 		},
 
+		async replayChoice(choiceId: string, question: UnifiedQuestion): Promise<void> {
+			const def = MODES.find((m) => m.id === choiceId);
+			if (!def) return;
+
+			// Clear pending note timeouts
+			noteTimeouts.forEach(clearTimeout);
+			noteTimeouts = [];
+
+			// Drone management — same as playAudio
+			const droneLeadIn = 400;
+			const droneTail = 300;
+
+			stopDrone();
+			drone = null;
+			const droneNote = (question.metadata?.droneNote as number) ?? question.rootNote;
+			startDrone(droneNote).then((h) => {
+				drone = h;
+				if (droneMuted) h.setMuted(true);
+			});
+
+			const tempo = question.playback.tempo ?? TEMPO;
+			await new Promise<void>((resolve) => {
+				noteTimeouts.push(
+					setTimeout(() => {
+						playScale(question.rootNote, def.intervals, question.playback.toneType, tempo);
+						resolve();
+					}, droneLeadIn),
+				);
+			});
+
+			const notesDur = def.intervals.length * tempo + 400;
+			noteTimeouts.push(
+				setTimeout(() => {
+					stopDrone();
+					drone = null;
+				}, notesDur + droneTail),
+			);
+		},
+
 		onAnswer(s: UserStateV4, q: UnifiedQuestion, result: QuestionResult) {
 			const statsKey = `mode:${q.correctAnswer.id}`;
 			if (!s.stats[statsKey]) s.stats[statsKey] = defaultContentStats();

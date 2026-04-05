@@ -194,6 +194,17 @@ export function createIntervalConfig(state: UserStateV4): QuizSessionConfig {
 			};
 		},
 
+		async replayChoice(choiceId: string, question: UnifiedQuestion): Promise<void> {
+			const def = INTERVALS.find((i) => i.id === choiceId);
+			if (!def) return;
+			await playInterval(
+				question.rootNote,
+				def.semitones,
+				question.playback.direction! as 'ascending' | 'descending' | 'harmonic',
+				question.playback.toneType,
+			);
+		},
+
 		onAnswer(s: UserStateV4, q: UnifiedQuestion, result: QuestionResult) {
 			const playMode = q.metadata?.playMode as PlayMode;
 			const statsKey = `interval:${q.correctAnswer.id}:${playMode}`;

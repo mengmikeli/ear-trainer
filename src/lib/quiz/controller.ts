@@ -266,6 +266,15 @@ export class QuizController {
 	}
 
 	/**
+	 * Reset the wrong-answer countdown timer without replaying question audio.
+	 * Used when replaying a specific answer choice's sound in result mode.
+	 */
+	resetCountdown(): void {
+		this.countdownStart = typeof performance !== 'undefined' ? performance.now() : Date.now();
+		this.countdownPct = 1.0;
+	}
+
+	/**
 	 * Skip the correct-answer auto-advance delay.
 	 */
 	skipCorrect(): void {
