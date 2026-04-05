@@ -186,7 +186,7 @@
 
 	.title {
 		font-family: var(--font-display);
-		font-size: 3rem;
+		font-size: 5rem;
 		font-weight: 400;
 		letter-spacing: 0.05em;
 		line-height: 1;
@@ -227,7 +227,7 @@
 
 	.title-sub {
 		font-family: var(--font-display);
-		font-size: 1rem;
+		font-size: 1.65rem;
 		font-weight: 400;
 		letter-spacing: 0.15em;
 		color: var(--text-secondary);
