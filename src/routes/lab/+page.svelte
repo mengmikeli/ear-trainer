@@ -20,6 +20,10 @@
 		m7: [9, 5],
 		M7: [15, 8],
 		P8: [2, 1],
+		m9: [32, 15],
+		M9: [9, 4],
+		m10: [12, 5],
+		M10: [5, 2],
 	};
 
 	const sortedIntervals = [...INTERVALS].sort((a, b) => a.semitones - b.semitones);
