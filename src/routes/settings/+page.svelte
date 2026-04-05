@@ -355,7 +355,7 @@
 						</div>
 					</div>
 					<div class="credit-entry">
-						<span class="credit-glyph">🤖</span>
+						<span class="credit-glyph">🦞</span>
 						<div class="credit-info">
 							<span class="credit-name">OPENCLAW</span>
 							<span class="credit-role">Agent orchestration</span>
