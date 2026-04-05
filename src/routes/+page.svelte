@@ -231,6 +231,7 @@
 		text-align: center;
 		margin-top: 0.15rem;
 		width: 100%;
+		display: block;
 	}
 
 	.version-badge {
