@@ -316,21 +316,24 @@
 				<div class="credits-header">FONTS</div>
 				<div class="credits-grid">
 					<div class="credit-entry">
+						<span class="credit-glyph" style="font-family: var(--font-display)">Aa</span>
 						<div class="credit-info">
 							<span class="credit-name">MARATYPE</span>
 							<span class="credit-role">Display headings</span>
 						</div>
 					</div>
 					<div class="credit-entry">
+						<span class="credit-glyph" style="font-family: var(--mono)">{'\uE014'}</span>
 						<div class="credit-info">
 							<span class="credit-name">MATRIX MONO</span>
 							<span class="credit-role">UI labels / glyphs</span>
 						</div>
 					</div>
 					<div class="credit-entry">
+						<span class="credit-glyph" style="font-family: 'BPdots', var(--mono)">P5</span>
 						<div class="credit-info">
 							<span class="credit-name">BPDOTS</span>
-							<span class="credit-role">Content IDs (P5, MAJ, etc.)</span>
+							<span class="credit-role">Content IDs</span>
 						</div>
 					</div>
 				</div>
@@ -338,24 +341,28 @@
 				<div class="credits-header">BUILT WITH</div>
 				<div class="credits-grid">
 					<div class="credit-entry">
+						<span class="credit-glyph">🔥</span>
 						<div class="credit-info">
 							<span class="credit-name">SVELTEKIT</span>
 							<span class="credit-role">Framework</span>
 						</div>
 					</div>
 					<div class="credit-entry">
+						<span class="credit-glyph">🔊</span>
 						<div class="credit-info">
 							<span class="credit-name">WEB AUDIO API</span>
 							<span class="credit-role">Sound synthesis</span>
 						</div>
 					</div>
 					<div class="credit-entry">
+						<span class="credit-glyph">🤖</span>
 						<div class="credit-info">
 							<span class="credit-name">OPENCLAW</span>
 							<span class="credit-role">Agent orchestration</span>
 						</div>
 					</div>
 					<div class="credit-entry">
+						<span class="credit-glyph">☁️</span>
 						<div class="credit-info">
 							<span class="credit-name">CLOUDFLARE PAGES</span>
 							<span class="credit-role">Hosting</span>
