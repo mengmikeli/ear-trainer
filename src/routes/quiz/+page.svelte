@@ -279,8 +279,7 @@
 		flex-direction: row;
 		align-items: center;
 		gap: 0.6rem;
-		min-height: 5rem;
-		padding: 0.6rem;
+		padding: 0.85rem;
 		background: var(--surface);
 		border: 1px solid var(--border-heavy);
 		border-left: 3px solid var(--accent); /* overridden by inline style */

@@ -17,7 +17,7 @@
 	let titleChars: string[] = $state([]);
 	let bootPhase = $state(0); // 0=glitch, 1=resolving, 2=done
 
-	const TITLE_TEXT = 'EAR TRAINER';
+	const TITLE_TEXT = 'LISSA';
 	const glitchChars = ['\uE000', '\uE001', '\uE002', '\uE003', '\uE004', '\uE005', '\uE006', '\uE007', '\uE008', '\uE010', '\uE013', '\uE014', '\uE017'];
 
 	onMount(() => {
@@ -95,11 +95,8 @@
 	<!-- ═══ BAND 1: Header strip ═══ -->
 	<header class="header-strip">
 		<div class="title-boot">
-			<h1 class="title">
-				{#each titleChars as char, i}
-					<span class="char" class:resolved={bootPhase >= 2 || (bootPhase === 1 && char === TITLE_TEXT[i])} class:space={TITLE_TEXT[i] === ' '}>{char}</span>
-				{/each}
-			</h1>
+			<h1 class="title">LISSA</h1>
+			<span class="title-sub">EAR TRAINING</span>
 		</div>
 		<div class="header-telemetry">
 			<div class="version-badge" role="button" tabindex="0" onclick={() => {
@@ -189,14 +186,21 @@
 
 	.title {
 		font-family: var(--font-display);
-		font-size: 3.2rem;
+		font-size: 5rem;
 		font-weight: 400;
-		letter-spacing: 0.12em;
+		letter-spacing: 0.05em;
 		line-height: 1;
 		color: var(--accent);
+		text-align: center;
+		text-transform: uppercase;
+		margin: 0;
+	}
+
+	.title-boot {
 		display: flex;
-		gap: 0;
-		justify-content: center;
+		flex-direction: column;
+		align-items: center;
+		text-align: center;
 	}
 
 	.char {
@@ -219,6 +223,19 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
+	}
+
+	.title-sub {
+		font-family: var(--font-display);
+		font-size: 1.65rem;
+		font-weight: 400;
+		letter-spacing: 0.15em;
+		color: var(--text-secondary);
+		line-height: 1;
+		text-align: center;
+		margin-top: 0.25rem;
+		width: 100%;
+		display: block;
 	}
 
 	.version-badge {

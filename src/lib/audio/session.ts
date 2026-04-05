@@ -28,8 +28,8 @@ export function claimAudioSession(): void {
 	// Set media session metadata
 	if ('mediaSession' in navigator) {
 		navigator.mediaSession.metadata = new MediaMetadata({
-			title: 'Ear Trainer',
-			artist: 'Ear Trainer',
+			title: 'Lissa',
+			artist: 'Lissa',
 			album: 'Practice',
 		});
 		navigator.mediaSession.playbackState = 'playing';
@@ -78,11 +78,11 @@ export function isSessionClaimed(): boolean {
 // ─── Legacy helpers (backward compat) ───────────────────────────────────────
 
 /** Set media session metadata so lock screen shows app name, not "localhost". */
-export function setMediaSessionMetadata(title: string = 'Ear Trainer'): void {
+export function setMediaSessionMetadata(title: string = 'Lissa'): void {
 	if ('mediaSession' in navigator) {
 		navigator.mediaSession.metadata = new MediaMetadata({
 			title,
-			artist: 'Ear Trainer',
+			artist: 'Lissa',
 			album: 'Practice',
 		});
 		navigator.mediaSession.playbackState = 'playing';

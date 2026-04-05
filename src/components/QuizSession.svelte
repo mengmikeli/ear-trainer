@@ -87,6 +87,9 @@
 	const sessionConfig = config;
 	const sessionInitialState = initialState;
 
+	// Path color override — cascades via --quiz-accent CSS variable
+	const accent = sessionConfig.accentColor ?? 'var(--accent)';
+
 	const wrappedConfig: QuizSessionConfig = {
 		...sessionConfig,
 		async playAudio(q, s) {
@@ -371,7 +374,7 @@
 {#if ctrl.phase === 'debrief'}
 {#if isFRE}
 <!-- FRE conclusion — terminal-style calibration complete screen -->
-<div class="summary fre-conclusion">
+<div class="summary fre-conclusion" style="--quiz-accent: {accent}">
 	<div class="fre-terminal">
 		<span class="corner-mark tl">+</span>
 		<span class="corner-mark tr">+</span>
@@ -404,7 +407,7 @@
 	</div>
 </div>
 {:else}
-<div class="summary">
+<div class="summary" style="--quiz-accent: {accent}">
 	<h2 class="page-heading">DEBRIEF</h2>
 
 	<div class="debrief-panels">
@@ -464,7 +467,7 @@
 {:else}
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="quiz" onclick={() => { if (ctrl.needsTap) handlePlay(); }}>
+<div class="quiz" style="--quiz-accent: {accent}" onclick={() => { if (ctrl.needsTap) handlePlay(); }}>
 	{#if ctrl.needsTap}
 		<TickerBanner message="NEURAL LINK OFFLINE -- TAP TO RECONNECT" onclick={() => handlePlay()} />
 	{/if}
@@ -598,7 +601,11 @@
 	@keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-33.33%); } }
 	.top {
 		width: 100%;
-		margin-top: -1rem;
+	}
+	/* Quiz heading: progress bar IS the divider */
+	.quiz :global(.page-heading) {
+		border-bottom: none;
+		margin-bottom: 0;
 	}
 	.bar-track-full {
 		width: 100%;
@@ -687,8 +694,8 @@
 		height: min(40vw, 160px);
 		border-radius: 50%;
 		background: transparent;
-		border: 1.5px solid var(--accent);
-		box-shadow: 0 0 8px rgba(194, 254, 12, 0.3);
+		border: 1.5px solid var(--quiz-accent, var(--accent));
+		box-shadow: 0 0 8px color-mix(in srgb, var(--quiz-accent, var(--accent)) 30%, transparent);
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -699,11 +706,11 @@
 		opacity: 0;
 		pointer-events: none;
 	}
-	.play-tap.feedback-correct { background: var(--correct); border-color: var(--correct); box-shadow: 0 0 12px var(--correct); }
+	.play-tap.feedback-correct { background: var(--quiz-accent, var(--correct)); border-color: var(--quiz-accent, var(--correct)); box-shadow: 0 0 12px var(--quiz-accent, var(--correct)); }
 	.play-tap.feedback-wrong { background: var(--hot); border-color: var(--hot); box-shadow: 0 0 12px var(--hot); transition: none; }
 	.play-tap:active { transform: scale(0.95); }
 	.orbit-track { position: absolute; inset: 0; border-radius: 50%; animation: orbit 7s linear infinite; pointer-events: none; }
-	.orbit-dot { position: absolute; top: -3px; left: 50%; transform: translateX(-50%); width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+	.orbit-dot { position: absolute; top: -3px; left: 50%; transform: translateX(-50%); width: 6px; height: 6px; border-radius: 50%; background: var(--quiz-accent, var(--accent)); box-shadow: 0 0 6px var(--quiz-accent, var(--accent)); }
 	.play-tap.feedback-wrong .orbit-dot { background: var(--hot); box-shadow: 0 0 6px var(--hot); }
 	@keyframes orbit { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 	.q-text {
@@ -711,7 +718,7 @@
 		font-size: 2rem;
 		font-weight: 700;
 		letter-spacing: 0.05em;
-		color: var(--accent);
+		color: var(--quiz-accent, var(--accent));
 	}
 	.q-text.feedback-correct { color: var(--base); transition: none; }
 	.q-text.feedback-wrong { color: var(--base); transition: none; }
@@ -838,7 +845,7 @@
 	}
 	.score-big {
 		font-size: 4rem; font-weight: 900;
-		font-family: var(--mono); color: var(--accent);
+		font-family: var(--mono); color: var(--quiz-accent, var(--accent));
 		letter-spacing: -0.02em; line-height: 1;
 	}
 	.section-label {
@@ -910,7 +917,7 @@
 	}
 	.perfect {
 		font-size: 0.6rem; font-weight: 900;
-		font-family: var(--mono); color: var(--accent);
+		font-family: var(--mono); color: var(--quiz-accent, var(--accent));
 		letter-spacing: 0.2em; padding: 1rem 0;
 		text-align: center;
 	}
@@ -928,8 +935,8 @@
 	}
 	.action-btn:active { background: var(--surface-raised); }
 	.action-btn.primary {
-		background: var(--accent); color: var(--base);
-		border-color: var(--accent);
+		background: var(--quiz-accent, var(--accent)); color: var(--base);
+		border-color: var(--quiz-accent, var(--accent));
 	}
 	.action-btn.primary:active { opacity: 0.85; }
 
@@ -950,7 +957,7 @@
 		font-size: 5rem;
 		font-weight: 900;
 		font-family: var(--mono);
-		color: var(--accent);
+		color: var(--quiz-accent, var(--accent));
 		letter-spacing: -0.02em;
 		line-height: 1;
 		text-align: center;

@@ -118,4 +118,6 @@ export interface QuizSessionConfig {
 	autoPlay?: boolean;
 	/** Replay a specific answer choice's sound (for answer card tap in result mode). */
 	replayChoice?: (choiceId: string, question: UnifiedQuestion, state: UserStateV4) => Promise<void>;
+	/** Path color override — if set, replaces var(--accent) for quiz visuals. */
+	accentColor?: string;
 }

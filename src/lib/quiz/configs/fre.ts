@@ -38,10 +38,10 @@ function buildChoices(correctId: string) {
 // ─── Boot sequence lines ────────────────────────────────────────────────────
 
 const BOOT_LINES = [
-	'SYSTEM CHECK...',
+	'LISSA INITIALIZING...',
 	'AUDIO ENGINE: ONLINE',
 	'FREQUENCY ANALYZER: CALIBRATED',
-	'EAR TRAINER v4.0',
+	'LISSA v4.4 ONLINE',
 	'',
 	'READY',
 ];

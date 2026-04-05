@@ -83,11 +83,11 @@
 		border: 1px solid var(--border-heavy); border-radius: 0;
 		text-align: center; transition: border-color 0.15s, background 0.15s;
 	}
-	.answer:not(:disabled):active { background: var(--surface-raised); border-color: var(--accent); }
+	.answer:not(:disabled):active { background: var(--surface-raised); border-color: var(--quiz-accent, var(--accent)); }
 	.id {
 		display: block; font-size: 2rem; font-weight: 900;
 		font-family: 'BPdots', 'JetBrains Mono', monospace; letter-spacing: -0.02em;
-		color: var(--accent);
+		color: var(--quiz-accent, var(--accent));
 		line-height: 1;
 		transform: translateY(-1px);
 	}
@@ -96,8 +96,8 @@
 		margin-top: 0.2rem; letter-spacing: 0.1em; font-weight: 400;
 		text-transform: uppercase; font-family: var(--font-display);
 	}
-	.correct { border-color: var(--correct); background: #C2FE0C10; }
-	.correct .id { color: var(--correct); }
+	.correct { border-color: var(--quiz-accent, var(--correct)); background: color-mix(in srgb, var(--quiz-accent, var(--correct)) 6%, transparent); }
+	.correct .id { color: var(--quiz-accent, var(--correct)); }
 	.offline .id { color: var(--hot, #ED174F); }
 	.offline .name { opacity: 0.4; }
 	.wrong { border-color: var(--wrong); background: #ED174F10; }
@@ -119,7 +119,7 @@
 		transform: translateY(-50%);
 		font-family: var(--mono);
 		font-size: 0.8rem;
-		color: var(--correct);
+		color: var(--quiz-accent, var(--correct));
 		opacity: 0.7;
 	}
 	/* Separate skip button — large tap target with border divider */
@@ -135,13 +135,13 @@
 		justify-content: center;
 		background: transparent;
 		border: none;
-		border-left: 1px solid color-mix(in srgb, var(--correct) 30%, transparent);
+		border-left: 1px solid color-mix(in srgb, var(--quiz-accent, var(--correct)) 30%, transparent);
 		cursor: pointer;
 		-webkit-tap-highlight-color: transparent;
 		z-index: 1;
 	}
 	.skip-btn:active {
-		background: color-mix(in srgb, var(--correct) 10%, transparent);
+		background: color-mix(in srgb, var(--quiz-accent, var(--correct)) 10%, transparent);
 	}
 	.skip-btn .skip-arrow {
 		position: static;

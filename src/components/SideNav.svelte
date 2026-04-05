@@ -18,8 +18,8 @@
 
 <nav class="side-nav">
 	<a href="{base}/" class="brand">
-		<span class="brand-title">EAR</span>
-		<span class="brand-accent">TRAINER</span>
+		<span class="brand-title">LISSA</span>
+		<span class="brand-accent">EAR TRAINING</span>
 	</a>
 
 	<div class="brand-divider"></div>
@@ -81,10 +81,10 @@
 
 	.brand-accent {
 		font-family: var(--font-display);
-		font-size: 1.6rem;
+		font-size: 1rem;
 		font-weight: 400;
-		letter-spacing: 0.12em;
-		color: var(--accent);
+		letter-spacing: 0.15em;
+		color: var(--text-secondary);
 		line-height: 1;
 		margin-top: 0.25rem;
 	}
