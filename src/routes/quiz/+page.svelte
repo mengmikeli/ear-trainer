@@ -15,7 +15,7 @@
 
 	// Marathon corporation colors — paths
 	const packColors: Record<string, string> = {
-		beginner: '#C2FE0C',  // CyberAcme — neon green
+		beginner: '#00FF41',  // CyberAcme — neon green
 		blues:    '#FF3399',  // NuCaloric — hot pink
 		jazz:     '#3388FF',  // MIDA — electric blue
 		advanced: '#FF8800',  // Traxus — orange

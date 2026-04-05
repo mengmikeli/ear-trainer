@@ -6,7 +6,7 @@
 	import type { ContentPack } from '$lib/state/schema';
 
 	const packColors: Record<string, string> = {
-		beginner: '#C2FE0C',
+		beginner: '#00FF41',
 		blues: '#FF3399',
 		jazz: '#3388FF',
 		advanced: '#FF8800',
