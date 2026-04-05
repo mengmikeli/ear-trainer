@@ -83,7 +83,7 @@
 		border: 1px solid var(--border-heavy); border-radius: 0;
 		text-align: center; transition: border-color 0.15s, background 0.15s;
 	}
-	.answer:not(:disabled):active { background: var(--surface-raised); border-color: var(--accent); }
+	.answer:not(:disabled):active { background: var(--surface-raised); border-color: var(--quiz-accent, var(--accent)); }
 	.id {
 		display: block; font-size: 2rem; font-weight: 900;
 		font-family: 'BPdots', 'JetBrains Mono', monospace; letter-spacing: -0.02em;
