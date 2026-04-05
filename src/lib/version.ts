@@ -1,4 +1,4 @@
-export const APP_VERSION = '4.4';
+export const APP_VERSION = '4.5';
 
 // Vite `define` injects this at build time -- declared to satisfy TypeScript
 declare const __BUILD_HASH__: string;
@@ -13,6 +13,17 @@ export interface ReleaseNote {
 }
 
 export const RELEASE_NOTES: ReleaseNote[] = [
+	{
+		version: '4.5',
+		date: '2026-04-05',
+		title: 'LISSA',
+		changes: [
+			'Rebranded to Lissa -- Ear Training',
+			'Path-colored quiz experience -- each path has its own accent color',
+			'Answer replay -- tap any answer to hear that sound',
+			'Mobile title matched to desktop sidebar',
+		],
+	},
 	{
 		version: '4.4',
 		date: '2026-04-05',
