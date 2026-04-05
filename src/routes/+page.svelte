@@ -186,7 +186,7 @@
 
 	.title {
 		font-family: var(--font-display);
-		font-size: 3.2rem;
+		font-size: 3rem;
 		font-weight: 400;
 		letter-spacing: 0.05em;
 		line-height: 1;
