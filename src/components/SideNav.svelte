@@ -81,7 +81,7 @@
 
 	.brand-accent {
 		font-family: var(--font-display);
-		font-size: 0.8rem;
+		font-size: 1rem;
 		font-weight: 400;
 		letter-spacing: 0.15em;
 		color: var(--text-secondary);

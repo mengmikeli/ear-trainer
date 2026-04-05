@@ -231,7 +231,7 @@
 
 	.title-sub {
 		font-family: var(--font-display);
-		font-size: 0.9rem;
+		font-size: 1.1rem;
 		font-weight: 400;
 		letter-spacing: 0.15em;
 		color: var(--text-secondary);
