@@ -186,8 +186,6 @@
 								<span class="card-count">{path.count} ITEMS</span>
 								{#if path.hasAttempts}
 									<span class="card-stat">{path.accuracy}% ACC</span>
-								{:else if path.id === 'beginner'}
-									<span class="card-stat card-free">FREE</span>
 								{:else}
 									<span class="card-stat">--</span>
 								{/if}
