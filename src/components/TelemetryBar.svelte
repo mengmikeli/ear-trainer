@@ -57,12 +57,12 @@
   .tag {
     display: inline-flex;
     align-items: center;
-    border: 1px solid var(--accent, #C2FE0C);
+    border: 1px solid var(--quiz-accent, var(--accent, #C2FE0C));
     padding: 0 6px;
     font-size: 0.4rem;
     font-family: var(--mono, 'Matrix Mono', 'JetBrains Mono', monospace);
     text-transform: uppercase;
-    color: var(--accent, #C2FE0C);
+    color: var(--quiz-accent, var(--accent, #C2FE0C));
     white-space: nowrap;
     line-height: 1.6;
     transition: padding 0.15s ease;

@@ -5,9 +5,17 @@
 	import { loadStateV4 } from '$lib/state/storage';
 	import type { ContentPack } from '$lib/state/schema';
 
+	const packColors: Record<string, string> = {
+		beginner: '#C2FE0C',
+		blues: '#FF3399',
+		jazz: '#3388FF',
+		advanced: '#FF8800',
+	};
+
 	const pack = page.params.pack as ContentPack;
 	const state = loadStateV4();
 	const config = createAdaptiveConfig(state, pack);
+	config.accentColor = packColors[pack];
 </script>
 
 <QuizSession {config} initialState={state} />

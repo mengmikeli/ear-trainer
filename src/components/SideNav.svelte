@@ -18,8 +18,8 @@
 
 <nav class="side-nav">
 	<a href="{base}/" class="brand">
-		<span class="brand-title">EAR</span>
-		<span class="brand-accent">TRAINER</span>
+		<span class="brand-title">LISSA</span>
+		<span class="brand-accent">EAR TRAINING</span>
 	</a>
 
 	<div class="brand-divider"></div>

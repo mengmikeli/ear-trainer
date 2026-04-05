@@ -17,7 +17,7 @@
 	let titleChars: string[] = $state([]);
 	let bootPhase = $state(0); // 0=glitch, 1=resolving, 2=done
 
-	const TITLE_TEXT = 'EAR TRAINER';
+	const TITLE_TEXT = 'LISSA';
 	const glitchChars = ['\uE000', '\uE001', '\uE002', '\uE003', '\uE004', '\uE005', '\uE006', '\uE007', '\uE008', '\uE010', '\uE013', '\uE014', '\uE017'];
 
 	onMount(() => {
@@ -100,6 +100,7 @@
 					<span class="char" class:resolved={bootPhase >= 2 || (bootPhase === 1 && char === TITLE_TEXT[i])} class:space={TITLE_TEXT[i] === ' '}>{char}</span>
 				{/each}
 			</h1>
+			<span class="title-sub">EAR TRAINING</span>
 		</div>
 		<div class="header-telemetry">
 			<div class="version-badge" role="button" tabindex="0" onclick={() => {
@@ -219,6 +220,17 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
+	}
+
+	.title-sub {
+		font-family: var(--font-display);
+		font-size: 1rem;
+		font-weight: 400;
+		letter-spacing: 0.2em;
+		color: var(--accent);
+		opacity: 0.6;
+		text-align: center;
+		margin-top: 0.15rem;
 	}
 
 	.version-badge {
