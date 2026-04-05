@@ -227,12 +227,13 @@
 
 	.title-sub {
 		font-family: var(--font-display);
-		font-size: 1.1rem;
+		font-size: 1rem;
 		font-weight: 400;
 		letter-spacing: 0.15em;
 		color: var(--text-secondary);
+		line-height: 1;
 		text-align: center;
-		margin-top: 0.15rem;
+		margin-top: 0.25rem;
 		width: 100%;
 		display: block;
 	}
