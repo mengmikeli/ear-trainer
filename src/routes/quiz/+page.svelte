@@ -97,7 +97,7 @@
 		if (!state) return [];
 		const settings = state.settings;
 		return [
-			{ id: 'beginner', name: 'BEGINNER', glyph: '\u00A4', unlocked: true, count: String(countPackItems('beginner')), ...getPackStats('beginner'), price: 'FREE', color: packColors.beginner },
+			{ id: 'beginner', name: 'BEGINNER', glyph: 'O', unlocked: true, count: String(countPackItems('beginner')), ...getPackStats('beginner'), price: 'FREE', color: packColors.beginner },
 			{ id: 'blues', name: 'BLUES / ROCK', glyph: '\uE012', unlocked: isPackUnlocked('blues', settings), count: String(countPackItems('blues')), ...getPackStats('blues'), price: '$1.99', color: packColors.blues },
 			{ id: 'jazz', name: 'JAZZ', glyph: '\uE016', unlocked: isPackUnlocked('jazz', settings), count: String(countPackItems('jazz')), ...getPackStats('jazz'), price: '$1.99', color: packColors.jazz },
 			{ id: 'advanced', name: 'ADVANCED', glyph: '\u00A4', unlocked: isPackUnlocked('advanced', settings), count: String(countPackItems('advanced')), ...getPackStats('advanced'), price: '$4.99', color: packColors.advanced },
@@ -170,15 +170,17 @@
 					{#if path.unlocked}
 						<a href="{base}/quiz/path/{path.id}" class="pack-card" style="border-left-color: {path.color}">
 							<span class="card-glyph" style="color: {path.color}">{path.glyph}</span>
-							<span class="card-name" style="color: {path.color}">{path.name}</span>
-							<span class="card-count">{path.count} ITEMS</span>
-							{#if path.hasAttempts}
-								<span class="card-stat">{path.accuracy}% ACC</span>
-							{:else if path.id === 'beginner'}
-								<span class="card-stat card-free">FREE</span>
-							{:else}
-								<span class="card-stat">--</span>
-							{/if}
+							<div class="card-info">
+								<span class="card-name" style="color: {path.color}">{path.name}</span>
+								<span class="card-count">{path.count} ITEMS</span>
+								{#if path.hasAttempts}
+									<span class="card-stat">{path.accuracy}% ACC</span>
+								{:else if path.id === 'beginner'}
+									<span class="card-stat card-free">FREE</span>
+								{:else}
+									<span class="card-stat">--</span>
+								{/if}
+							</div>
 						</a>
 					{:else}
 						<button
@@ -188,9 +190,11 @@
 							disabled={!state?.settings.devMode}
 						>
 							<span class="card-glyph" style="color: {path.color}">{path.glyph}</span>
-							<span class="card-name" style="color: {path.color}">{path.name}</span>
-							<span class="card-count">{path.count} ITEMS</span>
-							<span class="card-stat"><span class="pro-badge">PRO</span></span>
+							<div class="card-info">
+								<span class="card-name" style="color: {path.color}">{path.name}</span>
+								<span class="card-count">{path.count} ITEMS</span>
+							</div>
+							<span class="pro-badge">PRO</span>
 						</button>
 					{/if}
 				{/each}
@@ -205,20 +209,24 @@
 					{#if type.unlocked}
 						<a href={type.href} class="pack-card" style="border-left-color: {type.color}">
 							<span class="card-glyph" style="color: {type.color}">{type.glyph}</span>
-							<span class="card-name" style="color: {type.color}">{type.name}</span>
-							<span class="card-count">{type.count} ITEMS</span>
-							{#if type.hasAttempts}
-								<span class="card-stat">{type.accuracy}% ACC</span>
-							{:else}
-								<span class="card-stat">--</span>
-							{/if}
+							<div class="card-info">
+								<span class="card-name" style="color: {type.color}">{type.name}</span>
+								<span class="card-count">{type.count} ITEMS</span>
+								{#if type.hasAttempts}
+									<span class="card-stat">{type.accuracy}% ACC</span>
+								{:else}
+									<span class="card-stat">--</span>
+								{/if}
+							</div>
 						</a>
 					{:else}
 						<span class="pack-card locked" style="border-left-color: {type.color}; cursor: default">
 							<span class="card-glyph" style="color: {type.color}">{type.glyph}</span>
-							<span class="card-name">{type.name}</span>
-							<span class="card-count">{type.count} ITEMS</span>
-							<span class="card-stat"><span class="pro-badge">PRO</span></span>
+							<div class="card-info">
+								<span class="card-name" style="color: {type.color}">{type.name}</span>
+								<span class="card-count">{type.count} ITEMS</span>
+							</div>
+							<span class="pro-badge">PRO</span>
 						</span>
 					{/if}
 				{/each}
@@ -255,10 +263,9 @@
 	/* ─── Unified card: paths + types ─── */
 	.pack-card {
 		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		align-items: flex-start;
-		gap: 0.2rem;
+		flex-direction: row;
+		align-items: center;
+		gap: 0.6rem;
 		min-height: 5rem;
 		padding: 0.6rem;
 		background: var(--surface);
@@ -281,6 +288,15 @@
 		font-family: var(--mono);
 		font-size: 1.2rem;
 		line-height: 1;
+		width: 1.5rem;
+		text-align: center;
+		flex-shrink: 0;
+	}
+	.card-info {
+		display: flex;
+		flex-direction: column;
+		gap: 0.15rem;
+		flex: 1;
 	}
 	.card-name {
 		font-family: var(--mono);
@@ -316,6 +332,8 @@
 		font-size: 0.35rem;
 		font-weight: 900;
 		letter-spacing: 0.12em;
+		flex-shrink: 0;
+		margin-left: auto;
 	}
 
 	/* ─── Quick Start — secondary, full-width ─── */
