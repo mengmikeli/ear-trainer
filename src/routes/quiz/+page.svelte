@@ -98,7 +98,7 @@
 		const settings = state.settings;
 		return [
 			{ id: 'beginner', name: 'BEGINNER', glyph: 'O', unlocked: true, count: String(countPackItems('beginner')), ...getPackStats('beginner'), price: 'FREE', color: packColors.beginner },
-			{ id: 'blues', name: 'BLUES / ROCK', glyph: '\uE012', unlocked: isPackUnlocked('blues', settings), count: String(countPackItems('blues')), ...getPackStats('blues'), price: '$1.99', color: packColors.blues },
+			{ id: 'blues', name: 'BLUES', glyph: '\uE012', unlocked: isPackUnlocked('blues', settings), count: String(countPackItems('blues')), ...getPackStats('blues'), price: '$1.99', color: packColors.blues },
 			{ id: 'jazz', name: 'JAZZ', glyph: '\uE016', unlocked: isPackUnlocked('jazz', settings), count: String(countPackItems('jazz')), ...getPackStats('jazz'), price: '$1.99', color: packColors.jazz },
 			{ id: 'advanced', name: 'ADVANCED', glyph: '\u00A4', unlocked: isPackUnlocked('advanced', settings), count: String(countPackItems('advanced')), ...getPackStats('advanced'), price: '$4.99', color: packColors.advanced },
 		];

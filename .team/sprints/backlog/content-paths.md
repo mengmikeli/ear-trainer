@@ -1,7 +1,7 @@
 # Design: Content Paths + Practice Sub-Home
 
 ## Vision
-Replace linear tiers with themed learning paths. Users progress through musical contexts (Basic → Blues/Rock → Jazz → Advanced) instead of abstract tier numbers.
+Replace linear tiers with themed learning paths. Users progress through musical contexts (Basic → Blues → Jazz → Advanced) instead of abstract tier numbers.
 
 ## Practice Sub-Home (`/quiz`)
 Replaces current direct-to-quiz behavior. Same layout style as settings/progress.
@@ -14,7 +14,7 @@ QUICK START          ← adaptive across all unlocked paths
 ---
 
 PATHS
-[BASIC]  [BLUES/ROCK]  [JAZZ]  [ADVANCED]
+[BASIC]  [BLUES]  [JAZZ]  [ADVANCED]
 ---
 
 BY TYPE
@@ -31,7 +31,7 @@ BY TYPE
 | Scales | Major, Natural Minor |
 | **Total** | **10 items** |
 
-### BLUES / ROCK (Pro)
+### BLUES (Pro)
 | Type | Items |
 |------|-------|
 | Intervals | m7, M2, TT |
@@ -60,8 +60,8 @@ BY TYPE
 
 ## Unlock Flow
 1. BEGINNER -- always available (free). Beginner content only.
-2. BLUES/ROCK -- unlocks when BEGINNER is mastered (or Pro). Includes BEGINNER + Blues content.
-3. JAZZ -- unlocks when BLUES/ROCK is mastered (or Pro). Includes BEGINNER + Blues + Jazz content.
+2. BLUES -- unlocks when BEGINNER is mastered (or Pro). Includes BEGINNER + Blues content.
+3. JAZZ -- unlocks when BLUES is mastered (or Pro). Includes BEGINNER + Blues + Jazz content.
 4. ADVANCED -- unlocks when JAZZ started (or Pro). Includes EVERYTHING (all 50 items).
 5. QUICK START -- mixes all unlocked path content adaptively
 6. BY TYPE -- filters by content type across all unlocked paths

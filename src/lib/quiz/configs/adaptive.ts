@@ -287,7 +287,7 @@ const kindGlyph: Record<string, string> = {
 
 const PACK_HEADING: Record<string, string> = {
 	beginner: 'BEGINNER',
-	blues: 'BLUES / ROCK',
+	blues: 'BLUES',
 	jazz: 'JAZZ',
 	advanced: 'ADVANCED',
 };

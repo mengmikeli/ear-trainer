@@ -29,7 +29,7 @@ export const RELEASE_NOTES: ReleaseNote[] = [
 		date: '2026-04-05',
 		title: 'CONTENT PATHS',
 		changes: [
-			'4 learning paths -- Beginner (free), Blues/Rock, Jazz, Advanced',
+			'4 learning paths -- Beginner (free), Blues, Jazz, Advanced',
 			'Practice sub-home -- choose a path, type, or quick start',
 			'57 total items -- modal scales added (Dorian, Mixolydian, Lydian, Phrygian, Locrian)',
 			'Pack-based unlock -- buy Blues, Jazz, or Advanced separately',
