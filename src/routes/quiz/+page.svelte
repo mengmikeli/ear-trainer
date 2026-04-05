@@ -97,10 +97,10 @@
 		if (!state) return [];
 		const settings = state.settings;
 		return [
-			{ id: 'beginner', name: 'BEGINNER', glyph: '#', unlocked: true, count: String(countPackItems('beginner')), ...getPackStats('beginner'), price: 'FREE', color: packColors.beginner },
+			{ id: 'beginner', name: 'BEGINNER', glyph: '\u00A4', unlocked: true, count: String(countPackItems('beginner')), ...getPackStats('beginner'), price: 'FREE', color: packColors.beginner },
 			{ id: 'blues', name: 'BLUES / ROCK', glyph: '\uE012', unlocked: isPackUnlocked('blues', settings), count: String(countPackItems('blues')), ...getPackStats('blues'), price: '$1.99', color: packColors.blues },
 			{ id: 'jazz', name: 'JAZZ', glyph: '\uE016', unlocked: isPackUnlocked('jazz', settings), count: String(countPackItems('jazz')), ...getPackStats('jazz'), price: '$1.99', color: packColors.jazz },
-			{ id: 'advanced', name: 'ADVANCED', glyph: '\uE001', unlocked: isPackUnlocked('advanced', settings), count: String(countPackItems('advanced')), ...getPackStats('advanced'), price: '$4.99', color: packColors.advanced },
+			{ id: 'advanced', name: 'ADVANCED', glyph: '\u00A4', unlocked: isPackUnlocked('advanced', settings), count: String(countPackItems('advanced')), ...getPackStats('advanced'), price: '$4.99', color: packColors.advanced },
 		];
 	});
 
@@ -108,6 +108,7 @@
 	interface TypeInfo {
 		id: string;
 		name: string;
+		glyph: string;
 		href: string;
 		count: number;
 		accuracy: number;
@@ -126,16 +127,16 @@
 
 		const typeColor = 'var(--marathon-blue)';
 		return [
-			{ id: 'intervals', name: 'INTERVALS', href: `${base}/quiz/intervals`, count: INTERVALS.length,
+			{ id: 'intervals', name: 'INTERVALS', glyph: '\uE007', href: `${base}/quiz/intervals`, count: INTERVALS.length,
 				accuracy: intervalStats.attempts > 0 ? Math.round(intervalStats.accuracy * 100) : 0,
 				hasAttempts: intervalStats.attempts > 0, unlocked: true, color: typeColor },
-			{ id: 'chords', name: 'CHORDS', href: `${base}/quiz/chords`, count: CHORDS.length,
+			{ id: 'chords', name: 'CHORDS', glyph: '\uE000', href: `${base}/quiz/chords`, count: CHORDS.length,
 				accuracy: chordStats.attempts > 0 ? Math.round(chordStats.accuracy * 100) : 0,
 				hasAttempts: chordStats.attempts > 0, unlocked: true, color: typeColor },
-			{ id: 'scales', name: 'SCALES', href: `${base}/quiz/scales`, count: SCALES.length,
+			{ id: 'scales', name: 'SCALES', glyph: '\uE004', href: `${base}/quiz/scales`, count: SCALES.length,
 				accuracy: scaleStats.attempts > 0 ? Math.round(scaleStats.accuracy * 100) : 0,
 				hasAttempts: scaleStats.attempts > 0, unlocked: true, color: typeColor },
-			{ id: 'modes', name: 'MODES', href: `${base}/quiz/modes`, count: MODES.length,
+			{ id: 'modes', name: 'MODES', glyph: '\uE001', href: `${base}/quiz/modes`, count: MODES.length,
 				accuracy: modeStats.attempts > 0 ? Math.round(modeStats.accuracy * 100) : 0,
 				hasAttempts: modeStats.attempts > 0,
 				unlocked: isContentKindAvailable(state!, 'mode') || dev, color: typeColor },
@@ -203,6 +204,7 @@
 				{#each types() as type}
 					{#if type.unlocked}
 						<a href={type.href} class="pack-card" style="border-left-color: {type.color}">
+							<span class="card-glyph" style="color: {type.color}">{type.glyph}</span>
 							<span class="card-name" style="color: {type.color}">{type.name}</span>
 							<span class="card-count">{type.count} ITEMS</span>
 							{#if type.hasAttempts}
@@ -213,6 +215,7 @@
 						</a>
 					{:else}
 						<span class="pack-card locked" style="border-left-color: {type.color}; cursor: default">
+							<span class="card-glyph" style="color: {type.color}">{type.glyph}</span>
 							<span class="card-name">{type.name}</span>
 							<span class="card-count">{type.count} ITEMS</span>
 							<span class="card-stat"><span class="pro-badge">PRO</span></span>
