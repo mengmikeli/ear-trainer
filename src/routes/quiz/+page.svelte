@@ -17,7 +17,7 @@
 	const packColors: Record<string, string> = {
 		beginner: '#00FF41',  // CyberAcme — neon green
 		blues:    '#FF3399',  // NuCaloric — hot pink
-		jazz:     '#3388FF',  // MIDA — electric blue
+		jazz:     '#9B8EC4',  // MIDA — electric blue
 		advanced: '#FF8800',  // Traxus — orange
 	};
 

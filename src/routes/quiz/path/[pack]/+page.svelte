@@ -8,7 +8,7 @@
 	const packColors: Record<string, string> = {
 		beginner: '#00FF41',
 		blues: '#FF3399',
-		jazz: '#3388FF',
+		jazz: '#9B8EC4',
 		advanced: '#FF8800',
 	};
 
