@@ -62,9 +62,6 @@
 	<div class="card-content">
 		<div class="id-col">
 			{label}
-			{#if masteryDots}
-				<span class="mastery-dots" style="color: {masteryColor}">{masteryDots}</span>
-			{/if}
 		</div>
 		<div class="info">
 			<div class="name">{name}</div>
