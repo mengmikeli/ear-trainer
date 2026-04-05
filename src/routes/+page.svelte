@@ -200,6 +200,13 @@
 		justify-content: center;
 	}
 
+	.title-boot {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		text-align: center;
+	}
+
 	.char {
 		display: inline-block;
 		font-family: var(--mono);
