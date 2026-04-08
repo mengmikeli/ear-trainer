@@ -10,6 +10,7 @@ Built with SvelteKit 5 + Web Audio API. Runs on web and iOS.
 
 - **Adaptive quiz engine** — SM-2 spaced repetition across 50 items (intervals, chords, scales, modes)
 - **Lissajous visualizations** — real-time frequency ratio curves on every question
+- **Content paths** — BEGINNER (free), BLUES, JAZZ, ADVANCED — each with its own color and cumulative content
 - **Tiered progression** — unlock new content by mastering what you have, not by grinding
 - **First-run experience** — guided onboarding that teaches the loop in 30 seconds
 - **Lab** — explore Lissajous patterns, Chladni figures, scales, and chords interactively
