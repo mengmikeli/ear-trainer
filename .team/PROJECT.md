@@ -24,7 +24,7 @@ Local: ~/Projects/ear-trainer
 - Channel naming: {sprint-id} (e.g., v4-rearch, s5-onboarding)
 
 ## Current Version
-v4.0
+v4.2
 
 ## Active Sprint
-S5 Release Polish — Phase 7 (Integration + QA)
+S6 Content Paths (pending kickoff)

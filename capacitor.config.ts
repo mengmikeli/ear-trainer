@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'work.tasteful.eartrainer',
-  appName: 'Ear Trainer',
+  appName: 'Lissa',
   webDir: 'build'
 };
 
